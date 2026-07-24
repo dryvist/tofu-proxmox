@@ -113,7 +113,10 @@ Via Proxmox UI, create the following containers:
 
 **Splunk Cluster**:
 
-- See [splunk-cluster-spec.md](./splunk-cluster-spec.md) for detailed configuration
+- Topology and VMIDs: see the Splunk section of
+  [INFRASTRUCTURE_NUMBERING.md](./INFRASTRUCTURE_NUMBERING.md); the converge
+  design (roles, RF/SF, cluster-manager URI) is owned by `ansible-splunk`
+  (`docs/SPLUNK_CLUSTER_DESIGN.md`).
 - Configure cluster manager URI, replication, search head
 
 **Ansible**:
