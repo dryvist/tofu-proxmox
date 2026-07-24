@@ -195,6 +195,21 @@ locals {
         sso          = true # browser UI — gated
       }
     ] : [],
+    # Cribl Stream OTLP trace-span ingest: one otel.<domain> route load-balancing
+    # the cribl+stream LXCs' in_otel OTLP/HTTP listener. Backend is plain HTTP
+    # (default scheme) — Traefik terminates TLS at websecure and forwards http.
+    # No health check: the OTLP listener has no GET-able health path on its own
+    # port, and OTLP/HTTP producers retry, so a false-negative eviction would do
+    # more harm than a rare span drop to a down node.
+    length(local.cribl_stream_backends) > 0 ? [
+      {
+        name         = "otel"
+        backends     = local.cribl_stream_backends
+        port         = local.pipeline_constants.service_ports.otel_traces_http
+        health_check = false
+        sso          = false # OTLP trace-span producers (Claude Code, machines)
+      }
+    ] : [],
     # IaC automation platform (Terrakube + Semaphore UI) on the iac-platform VM
     # (DHCP/DNS-first, mgmt VLAN, pve3). Appended like the Splunk VM (VMs are not
     # in var.containers, so no ingress_services row), but conditionally — a
