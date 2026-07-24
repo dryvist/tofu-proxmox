@@ -67,11 +67,7 @@ locals {
     # Hermes agent inbound job-submission API: https://hermes-api.<domain>/v1/runs
     # -> hermes-agent container : hermes_api (`hermes gateway` api_server platform,
     # bearer-authenticated). The sanctioned non-exec job path; internal-only firewall.
-    "hermes-api" = { backend = "hermes-agent", port = local.pipeline_constants.service_ports.hermes_api, sso = false } # bearer-authenticated job API
-    # Operator Kanban board over the agent's task store. Browser-only surface —
-    # SSO-gated (sso omitted = true) because every mutation shells the
-    # `hermes kanban` CLI on the guest.
-    kanban          = { backend = "hermes-agent", port = local.pipeline_constants.service_ports.hermes_kanban }
+    "hermes-api"    = { backend = "hermes-agent", port = local.pipeline_constants.service_ports.hermes_api, sso = false } # bearer-authenticated job API
     smokeping       = { backend = "smokeping", port = local.pipeline_constants.service_ports.smokeping_web }
     "haproxy-stats" = { backend = "haproxy", port = local.pipeline_constants.service_ports.haproxy_stats }
   }

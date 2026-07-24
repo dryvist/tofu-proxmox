@@ -71,11 +71,6 @@ locals {
       # Traefik fronts it at https://hermes.<subdomain>; the webhook keeps the
       # /webhooks/ path on that same hostname.
       hermes_dashboard = 8080
-      # hermes_kanban — the operator's Kanban board over the agent's task store.
-      # Traefik fronts it at https://kanban.<subdomain>, SSO-gated. The upstream
-      # Dashboard has no board view, so this thin surface renders + mutates
-      # cards through the `hermes kanban` CLI (kanban.db stays authoritative).
-      hermes_kanban = 8646
       # hermes_api — the Hermes agent's inbound job-submission API (`hermes
       # gateway` api_server platform: POST /v1/runs, /api/jobs cron CRUD,
       # bearer-authenticated). Traefik-fronted as https://hermes-api.<sub>;

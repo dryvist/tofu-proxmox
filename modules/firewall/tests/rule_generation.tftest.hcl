@@ -57,7 +57,6 @@ variables {
       hermes_webhook   = 8644
       hermes_api       = 8642
       hermes_dashboard = 8080
-      hermes_kanban    = 8646
       # AI orchestration + observability (referenced by ai_orchestration rules)
       n8n_web           = 5678
       dify_web          = 80
