@@ -122,10 +122,24 @@ placement on a node's VLAN is driven by the tier, not the pool.
 
 ### Architecture
 
-Single all-in-one Splunk Enterprise VM plus a management container:
+**Target (Phase 3): a Splunk-native HA cluster** on the `siem` VLAN (tier 4),
+declared in the `vms` map of `deployment.json` (see the `_splunk_cluster_comment`
+in `deployment.json.example`) and converged by the ansible-splunk `splunk.splunk`
+role (`docs/SPLUNK_CLUSTER_DESIGN.md` there):
 
-- **Splunk VM**: Splunk Enterprise with all data roles, on the `siem` VLAN.
-- **splunk-mgmt container**: management roles (SH, DS, LM, MC, CM).
+- **`splunk-idx-10` / `splunk-idx-40`** (`421100` / `421110`): a 2-peer indexer
+  cluster, replication/search factor 2, one peer per node (proxmox-1, proxmox-4).
+- **`splunk-sh-10` / `splunk-sh-40`** (`421120` / `421130`): two independent
+  search heads (not an SHC — an SHC needs 3 members).
+- **`splunk-mgmt-40`** (`421140`): cluster manager + license master + monitoring
+  console + a third unclustered search head.
+
+Positional decode `4211I0` = tier 4 · sub 2 (SIEM data plane) · crit 1 · OS 1
+(VM) · instance I · env 0.
+
+**Legacy (being retired):** the single all-in-one Splunk Enterprise VM (`200`,
+`splunk_vm_id`) plus the `splunk-mgmt` container (`199`). The AIO is
+disable-never-delete and kept as a distributed search peer during migration.
 
 ### Port matrix
 
