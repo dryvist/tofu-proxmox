@@ -44,4 +44,15 @@ locals {
   # stateless (identical config from the agentgateway_docker role; targets are
   # themselves pooled or external), so no sticky.
   agentgateway_backends = local.tag_backend_pools["agentgateway"]
+
+  # Cribl Stream OTLP pool: LXCs tagged cribl + stream, fronting the in_otel
+  # OTLP/HTTP trace-span listener at otel.<domain>. Two-tag identity (matches
+  # cribl_stream_container_ids in locals.tf), so it stays a custom derivation
+  # rather than the single-tag generic pool. Stateless per request — no sticky.
+  cribl_stream_backends = [
+    for k in sort([
+      for k, v in var.containers : k
+      if contains(coalesce(try(v.tags, null), []), "cribl") && contains(coalesce(try(v.tags, null), []), "stream")
+    ]) : local.container_address[k]
+  ]
 }
