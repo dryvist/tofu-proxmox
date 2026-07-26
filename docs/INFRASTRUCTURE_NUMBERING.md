@@ -173,10 +173,15 @@ disks:
   live disk has drifted to `scsi0`/50G — see
   [`SPLUNK_VM_DISK_DRIFT.md`](./SPLUNK_VM_DISK_DRIFT.md).
 - **Legacy data disk (`virtio1`, 200G)**: current Splunk index storage, mounted
-  at `/opt/splunk/var`. Transitional — kept attached until a separate migration
-  moves data onto the tiered disks below.
+  at `/opt/splunk`. Transitional — kept attached until a separate migration
+  moves data onto the tiered disks below. The mount point matters: the volume
+  covers all of `/opt/splunk`, not just `/opt/splunk/var`, so a capacity check
+  aimed at the deeper path measures the wrong filesystem.
 - **`fast-splunk` (`virtio2`)**: hot + warm buckets on the fast/NVMe tier
-  (`datastore_id = fast-splunk`, backed up).
+  (`datastore_id = fast-splunk`, `backup = false` by design). Index data is
+  reconstructible, and block-level backups of it would roughly double the
+  storage consumed for no resilience gain. Durability for data worth keeping
+  comes from the frozen tier, not from backing up the index volumes.
 - **`bulk-splunk` (`virtio3`)**: cold buckets on the non-RAID cold tier
   (`datastore_id = bulk-splunk`, `backup = false` by design; archived to
   Backblaze B2).
