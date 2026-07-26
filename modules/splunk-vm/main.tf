@@ -27,11 +27,11 @@ terraform {
 # Backup posture per disk (see var.tiered_disks / docs/ARCHITECTURE.md):
 #   - boot + virtio1: backup=1 but NO backup job runs yet. ACTION NEEDED — stand
 #     up a real backup job (PBS / zfs-send) BEFORE the next risky change.
-#   - fast-splunk (virtio2, hot/warm): backup=true, but the actual job is still
-#     undecided. ACTION NEEDED — decide PBS vs. B2-only before it holds real data.
-#   - bulk-splunk (virtio3, cold): backup=false BY DESIGN. This tier is
-#     deliberately non-RAID and excluded from vzdump; its durability comes from
-#     the Backblaze B2 frozen archive (configured Splunk-side). NOT an open item.
+#   - fast-splunk (virtio2, hot/warm) and bulk-splunk (virtio3, cold): both
+#     backup=false BY DESIGN. Index data is reconstructible and a block backup
+#     would roughly double the storage consumed for no resilience gain;
+#     durability comes from the Backblaze B2 frozen archive (configured
+#     Splunk-side), never from vzdump. NOT an open item.
 # =============================================================================
 
 # Render cloud-init configuration with secrets and config files
@@ -119,9 +119,10 @@ resource "proxmox_virtual_environment_vm" "splunk_vm" {
   # map-driven shape as modules/proxmox-vm's additional_disks, so new tiers are
   # added by map entry, not by another hardcoded block. bpg keys disks by their
   # explicit `interface` (virtio2/virtio3), so map iteration order is irrelevant.
-  # bulk-splunk carries backup = false: it is the non-RAID cold tier whose
-  # durability comes from the Backblaze B2 frozen archive (configured Splunk-side
-  # in ansible-splunk), never from Proxmox vzdump.
+  # Both tiers carry backup = false: index data is reconstructible and a block
+  # backup would roughly double the storage consumed for no resilience gain.
+  # Durability comes from the Backblaze B2 frozen archive (configured
+  # Splunk-side in ansible-splunk), never from Proxmox vzdump.
   # NOTE: while `ignore_changes = [disk]` is active (see lifecycle below), adding
   # these blocks produces NO plan diff — actually attaching them is a
   # human-supervised step gated on the live disk-drift reconciliation. See

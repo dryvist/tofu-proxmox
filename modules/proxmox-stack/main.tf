@@ -165,10 +165,12 @@ module "splunk_vm" {
 
   # Tiered storage: fast-splunk (hot/warm) and bulk-splunk (cold). datastore_ids
   # are the Proxmox zfspool storage ids that ansible-proxmox registers from the
-  # matching node_storage datasets' pvesm_id. bulk carries backup = false — the
-  # non-RAID cold tier is archived to Backblaze B2, never to vzdump.
+  # matching node_storage datasets' pvesm_id. Both tiers carry backup = false —
+  # index data is reconstructible and a block backup would roughly double the
+  # storage consumed for no resilience gain; durability comes from the
+  # Backblaze B2 frozen archive (configured Splunk-side), never from vzdump.
   tiered_disks = {
-    fast = { datastore_id = "fast-splunk", interface = "virtio2", size = var.splunk_fast_disk_size, backup = true }
+    fast = { datastore_id = "fast-splunk", interface = "virtio2", size = var.splunk_fast_disk_size, backup = false }
     bulk = { datastore_id = "bulk-splunk", interface = "virtio3", size = var.splunk_bulk_disk_size, backup = false }
   }
 
