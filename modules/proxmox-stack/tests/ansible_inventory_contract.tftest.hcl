@@ -637,6 +637,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
   command = plan
 
   variables {
+    domain = "example.com"
     containers = {
       "openbao-31" = {
         vm_id     = 110031
@@ -680,13 +681,19 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
     condition = length([
       for r in output.ansible_inventory.ingress : r
       if r.name == "openbao"
-      && try(r.backends, []) == ["192.168.5.10", "192.168.5.20", "192.168.5.21", "192.168.5.30", "192.168.5.31"]
+      && try(r.backends, []) == [
+        "openbao-10.example.com",
+        "openbao-20.example.com",
+        "openbao-21.example.com",
+        "openbao-30.example.com",
+        "openbao-31.example.com",
+      ]
       && try(r.port, 0) == 8200
       && try(r.sticky, false)
       && try(r.health_check, false)
       && try(r.health_check_path, "") == "/v1/sys/health"
     ]) == 1
-    error_message = "ingress must front OpenBao with a sorted, sticky, active-only 5-backend HA pool (health check /v1/sys/health, no standbyok — routes to the Raft leader)"
+    error_message = "ingress must front OpenBao with a sorted, sticky, active-only 5-backend HA pool addressed by <hostname>.<domain> FQDN (never a bare/derived IP, which goes stale the moment a peer is rebuilt elsewhere) and a health check of /v1/sys/health with no standbyok — routes to the Raft leader"
   }
 }
 

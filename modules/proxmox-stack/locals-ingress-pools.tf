@@ -8,7 +8,7 @@ locals {
   # deterministic; skip-missing-peers falls out naturally (an undeclared or
   # gated-off instance simply isn't in var.containers). Adding the next pooled
   # app = add its tag here + one route entry below — nothing else.
-  pooled_backend_tags = ["openbao", "hindsight", "zammad", "agentgateway"]
+  pooled_backend_tags = ["hindsight", "zammad", "agentgateway"]
   tag_backend_pools = {
     for tag in local.pooled_backend_tags : tag => [
       for k in sort([
@@ -20,7 +20,27 @@ locals {
 
   # OpenBao Raft HA pool: standby peers forward to the active node; the
   # health-check path below deliberately evicts standbys (see route comment).
-  openbao_backends = local.tag_backend_pools["openbao"]
+  #
+  # Deliberately NOT folded into the generic tag_backend_pools map above (which
+  # stays local.container_address/IP-addressed for hindsight/zammad/
+  # agentgateway): openbao is addressed by FQDN (<hostname>.<domain>) instead,
+  # because every container already gets a <hostname>.<domain> A record from
+  # the technitium_dns role regardless of dhcp/static addressing, and Traefik
+  # re-resolves that name on every health-check probe. A bare-IP backend
+  # instead bakes in a point-in-time address that silently goes stale the
+  # moment a peer is rebuilt on a different node — exactly the failure mode
+  # that dropped this route to zero healthy backends after an out-of-band peer
+  # rebuild (the same class of drift that forced the temporary traefik/
+  # technitium-dns host_vars overrides after the pve1 hardware failure, Zammad
+  # #17136): the FQDN keeps resolving through a DNS fix alone, with no
+  # ansible-proxmox-apps re-converge required. Widening every pool to FQDN is a
+  # bigger blast radius than this incident fix warrants — scoped to openbao only.
+  openbao_backends = [
+    for k in sort([
+      for k, v in var.containers : k
+      if contains(coalesce(try(v.tags, null), []), "openbao")
+    ]) : "${var.containers[k].hostname}.${var.domain}"
+  ]
 
   # LiteLLM router pool: THE fabric endpoint (https://llm.<domain>/v1) for every
   # consumer, load-balanced across the stateless router guests. Name-keyed (not
