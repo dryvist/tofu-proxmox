@@ -113,10 +113,16 @@ locals {
     # health check (defaulting to "/" when unset).
     length(local.openbao_backends) > 0 ? [
       {
-        name              = "openbao"
-        backends          = local.openbao_backends
-        port              = local.pipeline_constants.service_ports.openbao_api
-        sticky            = true
+        name     = "openbao"
+        backends = local.openbao_backends
+        port     = local.pipeline_constants.service_ports.openbao_api
+        # No sticky: with active-only health checks the pool always contains
+        # exactly one healthy backend (the Raft leader), so a session cookie
+        # adds nothing — and a cookie minted before a fence/election pins the
+        # client to an evicted backend (observed 2026-07-27: persistent 503s
+        # from the ingress while Traefik's own health checks showed a healthy
+        # leader). Stateless API clients must always follow the health check.
+        sticky            = false
         health_check      = true
         health_check_path = "/v1/sys/health"
         sso               = false # token/AppRole/JWT API clients (CLI, Terrakube, roles)
