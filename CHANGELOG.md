@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.74.0](https://github.com/dryvist/tofu-proxmox/compare/v1.73.2...v1.74.0) (2026-07-27)
+
+
+### Features
+
+* **firewall:** add ai-github egress profile for headless AI runner ([#733](https://github.com/dryvist/tofu-proxmox/issues/733)) ([06a3084](https://github.com/dryvist/tofu-proxmox/commit/06a30848684cb117f8c9c4640202c215d6f11627))
+* **firewall:** add ai-terrakube and ai-full-net egress profiles ([#735](https://github.com/dryvist/tofu-proxmox/issues/735)) ([ffa164b](https://github.com/dryvist/tofu-proxmox/commit/ffa164bfa58f25a71d56b332c4581a1a345e2ffc))
+* **ingress:** add otel route fronting Cribl Stream OTLP trace ingest ([#743](https://github.com/dryvist/tofu-proxmox/issues/743)) ([cc018f6](https://github.com/dryvist/tofu-proxmox/commit/cc018f60663659dc5724ce1000a99f564706ac5c))
+* **ingress:** add secure shared-host UI routes ([#729](https://github.com/dryvist/tofu-proxmox/issues/729)) ([a0c856b](https://github.com/dryvist/tofu-proxmox/commit/a0c856bc217562f6067b58a379a307e68b19ed39))
+* **ingress:** SSO-gated Kanban board route for the Hermes task store ([#741](https://github.com/dryvist/tofu-proxmox/issues/741)) ([56f0c54](https://github.com/dryvist/tofu-proxmox/commit/56f0c5468db45d027eeadb0d65085c44b7f47c95))
+* **main:** agentgateway MCP-fabric HA — second node_services consumer + pooled routes ([#738](https://github.com/dryvist/tofu-proxmox/issues/738)) ([e212543](https://github.com/dryvist/tofu-proxmox/commit/e2125431d96a0c75296ab5f3f196e893b499b09a))
+* **main:** generic per-node (DaemonSet-style) service expansion, Traefik first consumer ([#737](https://github.com/dryvist/tofu-proxmox/issues/737)) ([ede93c1](https://github.com/dryvist/tofu-proxmox/commit/ede93c1d74ef3240245a4ea3c277cf5fb5d83491))
+* **splunk:** declare Splunk-native HA cluster VMs ([#739](https://github.com/dryvist/tofu-proxmox/issues/739)) ([26d4572](https://github.com/dryvist/tofu-proxmox/commit/26d45721bbc26f6e745bd3a0f689a787793b56f8))
+
+
+### Bug Fixes
+
+* **firewall:** shorten ai-terrakube egress group name to Proxmox 18-char limit ([#736](https://github.com/dryvist/tofu-proxmox/issues/736)) ([9a1349d](https://github.com/dryvist/tofu-proxmox/commit/9a1349d4ad980d622ddf787e25262c4fc5250e15))
+* **ingress:** address the OpenBao HA pool by FQDN, not a bare IP ([#748](https://github.com/dryvist/tofu-proxmox/issues/748)) ([e4b55b1](https://github.com/dryvist/tofu-proxmox/commit/e4b55b1954f0e99b5a17386df4062c9850a1eb71))
+* **splunk:** disable block backup on fast-splunk tier, correct docs ([#744](https://github.com/dryvist/tofu-proxmox/issues/744)) ([8a3f221](https://github.com/dryvist/tofu-proxmox/commit/8a3f221d1acd4d0d0a666fad1f3d10903120ee80))
+
 ## [1.73.2](https://github.com/dryvist/tofu-proxmox/compare/v1.73.1...v1.73.2) (2026-07-20)
 
 
