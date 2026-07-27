@@ -54,8 +54,9 @@ variables {
       agentgateway_admin   = 15000
       agentgateway_metrics = 15020
       # Hermes inbound webhook receiver + job API (referenced by hermes_webhook_services_rules)
-      hermes_webhook = 8644
-      hermes_api     = 8642
+      hermes_webhook   = 8644
+      hermes_api       = 8642
+      hermes_dashboard = 8080
       # AI orchestration + observability (referenced by ai_orchestration rules)
       n8n_web           = 5678
       dify_web          = 80
@@ -141,6 +142,14 @@ variables {
       redis       = 6379
       git         = 9418
       http_proxy  = 8080
+    }
+    # IaC platform ports (referenced by ai_terrakube_rules.tf egress rules)
+    iac_platform_ports = {
+      terrakube_ui       = 28080
+      terrakube_api      = 28081
+      terrakube_registry = 28082
+      terrakube_dex      = 28083
+      semaphore_web      = 28084
     }
   }
 }
@@ -363,6 +372,61 @@ run "ntp_rule_tracks_constant" {
   assert {
     condition     = local.ntp_server_rules[0].dport == tostring(var.pipeline_constants.service_ports.ntp)
     error_message = "ntp_server_rules[0].dport must equal tostring(service_ports.ntp), got '${local.ntp_server_rules[0].dport}'"
+  }
+}
+
+run "ai_terrakube_egress_tracks_constants_and_has_no_wan" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.0.0/16"]
+  }
+
+  # Terrakube API/registry + RustFS S3 ports derive from constants (no literals).
+  assert {
+    condition     = local.ai_terrakube_egress_rules[4].dport == tostring(var.pipeline_constants.iac_platform_ports.terrakube_api)
+    error_message = "ai_terrakube_egress_rules[4].dport must equal tostring(iac_platform_ports.terrakube_api), got '${local.ai_terrakube_egress_rules[4].dport}'"
+  }
+
+  assert {
+    condition     = local.ai_terrakube_egress_rules[5].dport == tostring(var.pipeline_constants.iac_platform_ports.terrakube_registry)
+    error_message = "ai_terrakube_egress_rules[5].dport must equal tostring(iac_platform_ports.terrakube_registry), got '${local.ai_terrakube_egress_rules[5].dport}'"
+  }
+
+  assert {
+    condition     = local.ai_terrakube_egress_rules[6].dport == tostring(var.pipeline_constants.service_ports.object_storage_s3)
+    error_message = "ai_terrakube_egress_rules[6].dport must equal tostring(service_ports.object_storage_s3), got '${local.ai_terrakube_egress_rules[6].dport}'"
+  }
+
+  # Every ai-terrakube egress rule targets internal only — no WAN (null dest).
+  assert {
+    condition     = alltrue([for r in local.ai_terrakube_egress_rules : r.dest == local.internal_src])
+    error_message = "ai_terrakube egress must be internal-only (every rule dest == internal_src), no WAN"
+  }
+}
+
+run "ai_full_net_egress_is_internal_infra_only" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.0.0/16"]
+  }
+
+  # ai-full-net internal egress is DNS/NTP/OpenBao only (4 rules); WAN is the
+  # separately-attached outbound_https group, not this list.
+  assert {
+    condition     = length(local.ai_full_net_egress_rules) == 4
+    error_message = "ai_full_net_egress_rules must be exactly 4 (DNS udp+tcp, NTP, OpenBao), got ${length(local.ai_full_net_egress_rules)}"
+  }
+
+  assert {
+    condition     = local.ai_full_net_egress_rules[3].dport == tostring(var.pipeline_constants.service_ports.openbao_api)
+    error_message = "ai_full_net_egress_rules[3].dport must equal tostring(service_ports.openbao_api), got '${local.ai_full_net_egress_rules[3].dport}'"
+  }
+
+  assert {
+    condition     = alltrue([for r in local.ai_full_net_egress_rules : r.dest == local.internal_src])
+    error_message = "ai_full_net internal egress must be internal-only (every rule dest == internal_src)"
   }
 }
 

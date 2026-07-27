@@ -93,6 +93,14 @@ module "firewall" {
   # agentgateway MCP/LLM/A2A data-plane proxy (agentgateway tag).
   agentgateway_container_ids = local.agentgateway_container_ids
 
+  # AI runner LXCs (ai-github tag) — headless coding agents, tight egress profile.
+  ai_github_container_ids = local.ai_github_container_ids
+
+  # AI runner LXCs (ai-terrakube tag) — headless OpenTofu runners, internal-only
+  # egress (no WAN). ai-full-net tag — coding agents with general 443-to-any.
+  ai_terrakube_container_ids = local.ai_terrakube_container_ids
+  ai_full_net_container_ids  = local.ai_full_net_container_ids
+
   # Honeypots (honeypot/notify/tpot tags); filters in locals-honeypot.tf.
   honeypot_container_ids        = local.honeypot_container_ids
   honeypot_notify_container_ids = local.honeypot_notify_container_ids

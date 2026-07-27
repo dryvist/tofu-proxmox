@@ -67,15 +67,20 @@ OpenBao KV mount rather than nesting under `secret/platform/...`:
 | `secret/` | Homelab-internal machine/service credentials (existing, unchanged). |
 | `secrets-external/` | Third-party SaaS API keys/credentials, least-privilege-scoped per consumer the same way `secret/` is. |
 
-First path:
+**The mount has no consumer yet.** This section previously listed the Backblaze
+B2 credential as its first path. That was aspirational, and following it cost
+real time: capability checks against `secrets-external/backblaze-b2` return
+**deny** for every role reachable from the converge environment, and a deny
+cannot be told apart from an absent path.
 
-| Path | Consumer | Fields |
-| --- | --- | --- |
-| `secrets-external/backblaze-b2` | `ansible-splunk` (Splunk B2 frozen tier) | `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET` |
+The credential in use today lives at `secret/platform/backblaze`, readable by
+the Ansible role, with fields `B2_S3_ENDPOINT`, `B2_BACKUPS_BUCKET`,
+`B2_BACKUPS_KEY_ID`, and `B2_BACKUPS_APP_KEY`. It is consumed by
+`ansible-splunk` for the Splunk frozen (archival) tier — **not** by this repo
+or Terrakube. No workspace role here reads `secrets-external/`.
 
-The Backblaze B2 credential is consumed by `ansible-splunk` to configure the
-Splunk frozen (archival) tier — **not** by this repo or Terrakube. No workspace
-role here reads `secrets-external/`.
+When a genuine first consumer appears, add it to a table here. Until then this
+mount is a convention, not a location anything resolves.
 
 > Enabling the new `secrets-external/` KV v2 engine and writing its first policy
 > is a **human-admin OpenBao action**. No dedicated secrets-platform Terraform

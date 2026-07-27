@@ -122,10 +122,24 @@ placement on a node's VLAN is driven by the tier, not the pool.
 
 ### Architecture
 
-Single all-in-one Splunk Enterprise VM plus a management container:
+**Target (Phase 3): a Splunk-native HA cluster** on the `siem` VLAN (tier 4),
+declared in the `vms` map of `deployment.json` (see the `_splunk_cluster_comment`
+in `deployment.json.example`) and converged by the ansible-splunk `splunk.splunk`
+role (`docs/SPLUNK_CLUSTER_DESIGN.md` there):
 
-- **Splunk VM**: Splunk Enterprise with all data roles, on the `siem` VLAN.
-- **splunk-mgmt container**: management roles (SH, DS, LM, MC, CM).
+- **`splunk-idx-10` / `splunk-idx-40`** (`421100` / `421110`): a 2-peer indexer
+  cluster, replication/search factor 2, one peer per node (proxmox-1, proxmox-4).
+- **`splunk-sh-10` / `splunk-sh-40`** (`421120` / `421130`): two independent
+  search heads (not an SHC — an SHC needs 3 members).
+- **`splunk-mgmt-40`** (`421140`): cluster manager + license master + monitoring
+  console + a third unclustered search head.
+
+Positional decode `4211I0` = tier 4 · sub 2 (SIEM data plane) · crit 1 · OS 1
+(VM) · instance I · env 0.
+
+**Legacy (being retired):** the single all-in-one Splunk Enterprise VM (`200`,
+`splunk_vm_id`) plus the `splunk-mgmt` container (`199`). The AIO is
+disable-never-delete and kept as a distributed search peer during migration.
 
 ### Port matrix
 
@@ -159,10 +173,15 @@ disks:
   live disk has drifted to `scsi0`/50G — see
   [`SPLUNK_VM_DISK_DRIFT.md`](./SPLUNK_VM_DISK_DRIFT.md).
 - **Legacy data disk (`virtio1`, 200G)**: current Splunk index storage, mounted
-  at `/opt/splunk/var`. Transitional — kept attached until a separate migration
-  moves data onto the tiered disks below.
+  at `/opt/splunk`. Transitional — kept attached until a separate migration
+  moves data onto the tiered disks below. The mount point matters: the volume
+  covers all of `/opt/splunk`, not just `/opt/splunk/var`, so a capacity check
+  aimed at the deeper path measures the wrong filesystem.
 - **`fast-splunk` (`virtio2`)**: hot + warm buckets on the fast/NVMe tier
-  (`datastore_id = fast-splunk`, backed up).
+  (`datastore_id = fast-splunk`, `backup = false` by design). Index data is
+  reconstructible, and block-level backups of it would roughly double the
+  storage consumed for no resilience gain. Durability for data worth keeping
+  comes from the frozen tier, not from backing up the index volumes.
 - **`bulk-splunk` (`virtio3`)**: cold buckets on the non-RAID cold tier
   (`datastore_id = bulk-splunk`, `backup = false` by design; archived to
   Backblaze B2).

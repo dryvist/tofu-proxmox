@@ -67,6 +67,13 @@ variable "nodes" {
     role         = string               # role label: node-1 | node-2 | node-3
     hardware     = optional(string)     # e.g. amd-desktop, dell-r410, dell-r710
     commissioned = optional(bool, true) # false = declared but not yet installed
+    # Distinct from commissioned: an already-installed node can still be
+    # temporarily ineligible for per-node ("DaemonSet-style") service
+    # placement, e.g. mid storage-rebuild. Gates the root main.tf
+    # per-node-service expansion (traefik_node_service_containers and future
+    # services built on the same pattern); does not affect anything else a
+    # commissioned node already runs.
+    services_enabled = optional(bool, true)
   }))
   default = {}
 }

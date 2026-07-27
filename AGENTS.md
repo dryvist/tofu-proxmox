@@ -136,7 +136,7 @@ local gitignored cache. See `docs/INVENTORY_PUBLISHING.md`.
 | --- | --- | --- |
 | `ansible-proxmox` | `ansible_inventory` (host_services, node_storage, nodes) | Host config (kernel, ZFS, monitoring, NAS/Samba) |
 | `ansible-proxmox-apps` | `ansible_inventory` (containers, docker_vms, constants, ingress) | Cribl, HAProxy, DNS, honeypots (`opencanary`, `apprise`, `tpot` roles — see `docs/HONEYPOTS.md`), etc. |
-| `ansible-splunk` | `ansible_inventory` (splunk_vm) | Splunk Enterprise (Docker); incl. the `honeypot` index |
+| `ansible-splunk` | `ansible_inventory` (splunk_vm + the Splunk-native HA cluster peers in `vms`) | Splunk Enterprise (Docker AIO, retiring) and the HA cluster; incl. the `honeypot` index |
 
 ### Inventory publish + sync (automatic)
 

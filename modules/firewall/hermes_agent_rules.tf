@@ -15,6 +15,8 @@
 #                        for arbitrary tool-calling).
 #   - hermes_webhook   : inbound webhook receiver (Traefik-fronted hermes.<domain>),
 #                        from internal only — event-driven agent trigger.
+#   - hermes_dashboard : authenticated interactive Dashboard (Traefik-fronted
+#                        hermes.<domain>), from internal only.
 #   - hermes_api       : inbound job-submission API (Traefik-fronted
 #                        hermes-api.<domain>), from internal only — bearer-authed
 #                        `api_server` platform (POST /v1/runs, /api/jobs).
@@ -30,13 +32,14 @@
 locals {
   hermes_webhook_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_webhook), source = local.internal_src, comment = "Hermes webhook receiver (TCP ${local.svc_ports.hermes_webhook}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.hermes_dashboard), source = local.internal_src, comment = "Hermes Dashboard (TCP ${local.svc_ports.hermes_dashboard}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_api), source = local.internal_src, comment = "Hermes job-submission API (TCP ${local.svc_ports.hermes_api}) from internal" },
   ]
 }
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "hermes_webhook_services" {
   name    = "hermes-webhook-svc"
-  comment = "Hermes agent inbound receivers (webhook ${local.svc_ports.hermes_webhook}, job API ${local.svc_ports.hermes_api}) from internal networks — Traefik-fronted"
+  comment = "Hermes agent services (dashboard ${local.svc_ports.hermes_dashboard}, webhook ${local.svc_ports.hermes_webhook}, job API ${local.svc_ports.hermes_api}) from internal networks — Traefik-fronted"
 
   dynamic "rule" {
     for_each = local.hermes_webhook_services_rules

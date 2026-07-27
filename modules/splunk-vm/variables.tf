@@ -184,7 +184,7 @@ variable "tiered_disks" {
     datastore_id = string
     interface    = string
     size         = number
-    backup       = optional(bool, true)
+    backup       = optional(bool, false)
     file_format  = optional(string, "raw")
     iothread     = optional(bool, true)
     ssd          = optional(bool, false)

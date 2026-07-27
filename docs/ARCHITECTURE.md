@@ -50,13 +50,28 @@ the frozen tier is configured Splunk-side in `ansible-splunk`.
 
 | Tier | Where | Pool / backing | RAID | Backup posture |
 | --- | --- | --- | --- | --- |
-| `fast-splunk` (hot + warm) | fast/NVMe node, `virtio2` | mirror pool, `pvesm_id = fast-splunk` | mirror | `backup = true`; job still undecided |
+| `fast-splunk` (hot + warm) | fast/NVMe node, `virtio2` | mirror pool, `pvesm_id = fast-splunk` | mirror | `backup = false` by design — B2 replaces it |
 | `bulk-splunk` (cold) | bulk-capable node, `virtio3` | dedicated non-RAID pool, `pvesm_id = bulk-splunk` | none (single disk) | `backup = false` by design — B2 replaces it |
-| B2-frozen (archive) | Backblaze B2 (off-site) | S3 bucket via `secrets-external/backblaze-b2` | n/a (cloud-durable) | is the durable copy |
+| B2-frozen (archive) | Backblaze B2 (off-site) | S3 bucket via `secret/platform/backblaze` | n/a (cloud-durable) | is the durable copy |
 
-`bulk-splunk` is deliberately non-RAID and excluded from Proxmox `vzdump`: ZFS
-RAID is pool-wide, so a non-RAID cold tier cannot share a raidz pool, and its
-durability comes from the B2 frozen archive rather than local redundancy. The
+The archive credential path above was corrected after the original one turned
+out not to be readable. Capability checks against `secrets-external/backblaze-b2`
+returned deny for every role reachable from the converge environment, while
+`secret/platform/backblaze` reads cleanly and holds the endpoint, bucket, key id
+and application key the archive needs. The Splunk-side configuration uses the
+corrected path, and the upload and restore were both exercised against the live
+endpoint before this was written.
+
+Neither Splunk index disk gets block-level backup. Index data is
+reconstructible, and block backups would roughly double the storage consumed
+for no resilience gain — resilience here comes from being cleanly
+rebuildable, not from disk backups. Durability for data worth keeping comes
+from the Backblaze B2 frozen tier at the Splunk layer, never from Proxmox
+`vzdump`. Do not re-enable `backup = true` on either tier without revisiting
+this decision.
+
+`bulk-splunk` is additionally non-RAID and excluded from Proxmox `vzdump`: ZFS
+RAID is pool-wide, so a non-RAID cold tier cannot share a raidz pool. The
 `fast-splunk` dataset is registered as its own Proxmox `zfspool` storage id (via
 its dataset `pvesm_id`) so the VM disk targets it directly instead of landing at
 the pool root. The legacy `virtio1` 200G data disk stays attached transitionally
@@ -64,11 +79,14 @@ until a separate migration moves data onto the tiers — see
 [`INFRASTRUCTURE_NUMBERING.md`](./INFRASTRUCTURE_NUMBERING.md) and
 [`SPLUNK_VM_DISK_DRIFT.md`](./SPLUNK_VM_DISK_DRIFT.md).
 
-The architectural rule enforced Splunk-side (in `ansible-splunk`, not here): a
+The architectural rule intended Splunk-side (in `ansible-splunk`, not here): a
 Splunk index may not be defined without pointing its `homePath`/`coldPath` at one
 of the two custom volumes (`fast-splunk` / `bulk-splunk`). This repo only
 declares the volumes and publishes them as `splunk_storage` in the inventory; it
-does not define indexes.
+does not define indexes. **Not yet enforced**: as of this writing,
+`ansible-splunk`'s `indexes.conf.j2` emits flat `$SPLUNK_DB` paths with no
+volume stanzas, so no index currently targets either tier — enforcement is in
+progress, not current state.
 
 ## Downstream inventory
 

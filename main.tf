@@ -110,7 +110,66 @@ locals {
       }
     )
   } : {}
-  containers = merge(try(local.deployment.containers, {}), local.openbao_generated_containers)
+  # Per-node ("DaemonSet-style") service expansion: one container per eligible
+  # node, generated from a single template instead of a hand-copied block per
+  # node (the pattern the `_ingress_ha_comment` in deployment.json.example
+  # used to document — "add another by copying the block and bumping
+  # vm_id/node_name"). `node_services` in the deployment object is a map of
+  # service name -> template; `deployment.json.example` documents the shape.
+  # Traefik is the first consumer. A future per-node service (e.g. a
+  # technitium secondary) is a new `node_services` entry, no code change here.
+  #
+  # Eligibility is `commissioned && services_enabled` on each node — distinct
+  # gates: `commissioned` means "hardware installed at all", `services_enabled`
+  # means "eligible for per-node service placement right now" (e.g. a
+  # commissioned node mid storage-rebuild keeps commissioned=true but sets
+  # services_enabled=false until the rebuild completes, and the DaemonSet
+  # expansion skips it without touching anything else the node already runs).
+  # A node with no entry in the template's `per_node` map is skipped even if
+  # otherwise eligible — vm_id/IP are reserved-octet allocations, never
+  # derived by formula, so an unlisted node has no safe address to assign.
+  node_service_templates = try(local.deployment.node_services, {})
+  # Naming law: every generated name ends in a two-digit <node-id><counter>
+  # suffix (pve3 instance 0 -> "-30"), never a single digit -- names are
+  # deliberately non-transferable (rebuild-from-scratch doctrine), same as
+  # the openbao_generated_containers suffix above. `suffix` is numeric in
+  # per_node and zero-padded here (%02d), matching that pattern exactly.
+  node_service_containers = merge([
+    for service_name, tmpl in local.node_service_templates : {
+      for node_name, node in local.deployment.nodes :
+      format("%s%02d", try(tmpl.name_prefix, "${service_name}-"), tmpl.per_node[node_name].suffix) => merge(
+        try(tmpl.container_defaults, {}),
+        {
+          vm_id     = tmpl.per_node[node_name].vm_id
+          vlan      = tmpl.vlan
+          hostname  = format("%s%02d", try(tmpl.name_prefix, "${service_name}-"), tmpl.per_node[node_name].suffix)
+          node_name = node_name
+        },
+        # Addressing: full DHCP is the standard (static assignment, when wanted,
+        # is UniFi's job driven by the Nautobot SSOT — not a tofu-side octet).
+        # A template that still carries per_node host_octet reservations (the
+        # pre-DHCP traefik/VIP allocation) keeps its static ip_config unchanged.
+        try(tmpl.dhcp, false) || !contains(keys(tmpl.per_node[node_name]), "host_octet") ? {
+          dhcp = true
+          } : {
+          ip_config = {
+            ipv4_address = format(
+              "%s/%s",
+              cidrhost(local.deployment.network_cidrs[tmpl.vlan], tmpl.per_node[node_name].host_octet),
+              split("/", local.deployment.network_cidrs[tmpl.vlan])[1],
+            )
+          }
+        }
+      )
+      if node.commissioned && try(node.services_enabled, true) && contains(keys(try(tmpl.per_node, {})), node_name)
+    }
+  ]...)
+
+  containers = merge(
+    try(local.deployment.containers, {}),
+    local.openbao_generated_containers,
+    local.node_service_containers,
+  )
 }
 
 check "deployment_contract" {

@@ -67,6 +67,10 @@ locals {
       # Traefik-fronted as https://hermes.<sub>/webhooks/<name>; gives the one
       # non-A2A agent an event-driven trigger channel on the agent plane.
       hermes_webhook = 8644
+      # hermes_dashboard — the authenticated interactive Hermes Dashboard.
+      # Traefik fronts it at https://hermes.<subdomain>; the webhook keeps the
+      # /webhooks/ path on that same hostname.
+      hermes_dashboard = 8080
       # hermes_api — the Hermes agent's inbound job-submission API (`hermes
       # gateway` api_server platform: POST /v1/runs, /api/jobs cron CRUD,
       # bearer-authenticated). Traefik-fronted as https://hermes-api.<sub>;
