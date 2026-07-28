@@ -169,9 +169,12 @@ resource "proxmox_virtual_environment_container" "containers" {
     create_before_destroy = false
     ignore_changes = [
       # Ignore changes to immutable attributes after import
-      # These can only be changed by replacing the container
-      initialization[0].user_account[0].password,
-      initialization[0].user_account[0].keys,
+      # These can only be changed by replacing the container. The whole
+      # user_account block (not just its attributes) must be ignored: an
+      # imported guest has no user_account in state at all, so a declared
+      # block is a 0->1 count diff that forces replacement — attribute-level
+      # ignores do not cover it.
+      initialization[0].user_account,
       operating_system[0].template_file_id,
       pool_id,
       # Ignore the runtime started status - this is a computed field that reflects
