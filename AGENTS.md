@@ -64,7 +64,7 @@ tofu plan                 # submits remote plan; streamed live from the executor
 ```text
 deployment.json (private RustFS) — desired state, topology, domain, public key
 OpenBao KV                       — provider and SSH credentials
-locals.tf derivations            — management_network, splunk_network_ips
+modules/proxmox-stack/locals*.tf — management_network, splunk_network_ips
 ```
 
 - `deployment.json` — resource definitions (containers, VMs, pools, sizing).
@@ -72,8 +72,8 @@ locals.tf derivations            — management_network, splunk_network_ips
   [`deployment-json-source-of-truth`](agentsmd/rules/infra/deployment-json-source-of-truth.md).
 - OpenBao native KV paths supply credentials through ephemeral resources; they
   are never copied into Terrakube variables or desired-state objects.
-- `management_network` and `splunk_network` are derived in `locals.tf` and
-  must never be set manually.
+- `management_network` and `splunk_network` are derived in
+  `modules/proxmox-stack/locals.tf` and must never be set manually.
 
 > **Warning**: `terraform.tfvars` is intentionally gitignored and must NOT
 > exist. It silently overrides `deployment.json` due to Terraform variable
@@ -105,9 +105,10 @@ containers, IPs, ports, and firewall rules.
 - **IP derivation**: every IP is `cidrhost(network_cidrs[vlan], vm_id)`. Example
   CIDRs are `192.168.<vlan_id>.0/24`, so a compute-VLAN (id 10) VM 42 →
   `192.168.10.42`. Never hardcode IPs in any repo — they come from terraform output.
-- **Pipeline constants**: `locals.tf` defines `pipeline_constants` with
-  service / syslog / netflow / notification / vector-db port mappings,
-  surfaced via `ansible_inventory.constants` in `outputs.tf`.
+- **Pipeline constants**: `modules/proxmox-stack/constants*.tf` define
+  `pipeline_constants` with service / syslog / netflow / notification /
+  vector-db / AI-log port mappings, surfaced via
+  `ansible_inventory.constants` in `outputs.tf`. There is no root `locals.tf`.
 - **Firewall model**: default-deny, two independent layers. The guest layer
   (`modules/firewall/*.tf`) is live today — every VM/LXC gets
   `input_policy = DROP` / `output_policy = DROP` plus per-service allow
