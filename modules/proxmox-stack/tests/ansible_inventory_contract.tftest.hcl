@@ -533,35 +533,41 @@ run "ansible_inventory_ingress_ha_vip" {
   command = plan
 
   variables {
-    # Two identical Traefik instances on the mgmt VLAN (vlan_id 5 -> 192.168.5.0/24
-    # in the test's derived CIDRs). vm_ids derive .101/.107; the VIP is .2.
+    # Two identical Traefik instances on the mgmt VLAN. Instances are pinned to
+    # the reserved .7/.8 pair (odd primary, even hot backup) and the floating
+    # VIP sits beside them at .9. Octets .1-.19 are reserved estate-wide for
+    # network and core services. Every address below is DERIVED via cidrhost
+    # from the test CIDR — never a literal host address.
     containers = {
-      "traefik" = {
-        vm_id    = 101
-        hostname = "traefik"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "ingress", "traefik"]
+      "traefik-10" = {
+        vm_id     = 101
+        hostname  = "traefik-10"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "ingress", "traefik"]
+        ip_config = { ipv4_address = "${cidrhost("192.168.5.0/24", 7)}/24" }
       }
-      "traefik-2" = {
-        vm_id    = 107
-        hostname = "traefik-2"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "ingress", "traefik"]
+      "traefik-30" = {
+        vm_id     = 107
+        hostname  = "traefik-30"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "ingress", "traefik"]
+        ip_config = { ipv4_address = "${cidrhost("192.168.5.0/24", 8)}/24" }
       }
     }
   }
 
-  # VIP = cidrhost(192.168.5.0/24, 2) — derived, never a literal.
+  # The VIP is the reserved octet beside the instance pair, derived via cidrhost.
   assert {
-    condition     = output.ansible_inventory.ingress_vip == "192.168.5.2"
-    error_message = "ingress_vip must be the .2 reserved octet of the ingress VLAN, derived via cidrhost"
+    condition     = output.ansible_inventory.ingress_vip == cidrhost("192.168.5.0/24", 9)
+    error_message = "ingress_vip must be the reserved VIP octet of the ingress VLAN, derived via cidrhost"
   }
 
-  # Both ingress instances are enrolled as keepalived unicast peers.
+  # Both ingress instances are enrolled as keepalived unicast peers. These must
+  # be addresses, never FQDNs — keepalived's unicast_src_ip rejects a name.
   assert {
     condition = length(output.ansible_inventory.ingress_hosts) == 2 && (
-      contains(output.ansible_inventory.ingress_hosts, "192.168.5.101") &&
-      contains(output.ansible_inventory.ingress_hosts, "192.168.5.107")
+      contains(output.ansible_inventory.ingress_hosts, cidrhost("192.168.5.0/24", 7)) &&
+      contains(output.ansible_inventory.ingress_hosts, cidrhost("192.168.5.0/24", 8))
     )
     error_message = "ingress_hosts must list every ingress-tagged instance's address (the unicast_peer set)"
   }
