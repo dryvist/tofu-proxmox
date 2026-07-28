@@ -47,6 +47,23 @@ locals {
     if contains(coalesce(try(v.tags, null), []), "ai-terrakube")
   }
 
+  # AI agent-pool LXCs (ai-proxied tag): the long-lived pooled agent guests.
+  # See modules/firewall/ai_proxied_rules.tf — internal DNS/NTP/OpenBao + the
+  # Squid proxy + Cribl log ingest, and NO direct 443-to-any. The per-CLI
+  # distinction (claude/codex/agy) is a Squid ACL group, not a separate tag:
+  # at L3/L4 those profiles are identical.
+  ai_proxied_container_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(coalesce(try(v.tags, null), []), "ai-proxied")
+  }
+
+  # Squid egress forward-proxy LXC (squid tag): the agent plane's WAN chokepoint.
+  # See modules/firewall/squid_proxy_rules.tf.
+  squid_proxy_container_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(coalesce(try(v.tags, null), []), "squid")
+  }
+
   # AI runner LXCs (ai-full-net tag): coding-agent guests needing general web
   # access. See modules/firewall/ai_full_net_rules.tf — internal DNS/NTP/OpenBao
   # + outbound HTTPS (443) to any; no blanket internal reach.

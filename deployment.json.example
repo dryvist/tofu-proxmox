@@ -748,6 +748,51 @@
       "root_disk": { "size": 24 }
     },
 
+    "_ai_agent_pool_comment": "AI agent POOL (`ai-proxied` profile, modules/firewall/ai_proxied_rules.tf). N identical long-lived guests that pull work from a queue, instead of one guest provisioned per run — provisioning is amortized and no IaC change is needed to run a task. The profile is strictly tighter than ai-full-net: internal DNS/NTP/OpenBao + the Squid forward proxy + the Cribl AI log-ingest frontends, and NO 443-to-any of its own. Every outbound web request therefore transits the squid guest below, which is where the DOMAIN allowlist is enforced (the Proxmox firewall filters IP/port only, never hostname/SNI). Per-CLI variants (claude / codex / agy) are Squid ACL groups keyed off the client address, NOT separate tags — at L3/L4 they would be identical rule sets. Grow the pool by copying an entry with the next vm_id + reserved_host; guests are interchangeable, so pool size is a capacity knob with no rule change. Every `ai-runner`-tagged guest must carry exactly one profile tag or the plan fails (variables-containers.tf validation) — a typo would otherwise leave an agent guest with no firewall at all. VMIDs/reserved_host octets are illustrative (6-digit positional convention, docs vmid-network-tiers); reconcile against your live deployment.json before applying.",
+    "ai-runner-pool-01": {
+      "vm_id": 515040,
+      "dhcp": true,
+      "reserved_host": 53,
+      "vlan": "ai",
+      "hostname": "ai-runner-pool-01",
+      "description": "Pooled AI agent — pulls jobs from the queue, confined by the ai-proxied firewall profile (no direct WAN; egress only via the Squid allowlist). Converged by the ansible-proxmox-ai ai_runner role.",
+      "cpu_cores": 4,
+      "memory_dedicated": 8192,
+      "tags": ["terraform", "container", "ai", "ai-runner", "ai-proxied"],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "root_disk": { "size": 24 }
+    },
+    "ai-runner-pool-02": {
+      "vm_id": 515041,
+      "dhcp": true,
+      "reserved_host": 54,
+      "vlan": "ai",
+      "hostname": "ai-runner-pool-02",
+      "description": "Pooled AI agent — identical to ai-runner-pool-01; pool members are interchangeable, so scaling out is a copied entry with the next vm_id + reserved_host.",
+      "cpu_cores": 4,
+      "memory_dedicated": 8192,
+      "tags": ["terraform", "container", "ai", "ai-runner", "ai-proxied"],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "root_disk": { "size": 24 }
+    },
+    "_squid_comment": "Egress forward proxy for the agent plane (`squid` tag, modules/firewall/squid_proxy_rules.tf). The one guest in the plane that holds general 80/443 to any; the in-guest domain allowlist (one ACL group per agent profile) is what makes that narrow. Inbound is scoped to the ai VLAN only, never all of internal, so nothing else on the estate can borrow it as an open relay. This closes the Squid hardening follow-up noted in ai_runner_rules.tf / ai_full_net_rules.tf / hermes_agent_rules.tf. It is deliberately NOT tagged ai-runner: it is infrastructure, not an agent.",
+    "squid": {
+      "vm_id": 515050,
+      "dhcp": true,
+      "reserved_host": 55,
+      "vlan": "ai",
+      "hostname": "squid",
+      "description": "Squid forward proxy — audited egress chokepoint for the ai-proxied agent pool; enforces the per-profile outbound domain allowlist the Proxmox firewall cannot express.",
+      "cpu_cores": 2,
+      "memory_dedicated": 2048,
+      "tags": ["terraform", "container", "ai", "squid"],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "root_disk": { "size": 16 }
+    },
+
     "_honeypot_comment": "DECEPTION FABRIC (see docs/HONEYPOTS.md). Three pieces: (1) honeypot-notify — the dedicated alert gateway (caronc/apprise-api). Honeypots POST one webhook; Apprise fans it to Slack + phone push (ntfy/Pushover). The `honeypot`+`notify` tags give it the apprise port inbound + OPEN egress (to reach external notifiers); Slack webhook/phone tokens come from OpenBao at runtime, never committed. (2) honeypot-tw-* — one lightweight OpenCanary tripwire PER VLAN (clone the example below for every entry in your network_cidrs map: lan_main, dns, mgmt, bmc, compute, siem, pipeline, data, ai, apps, media_svc, homeauto, nonprod). Each fakes SSH/HTTP/SMB/DB/RDP/SNMP/... and alerts instantly on any touch; the `honeypot` tag opens the decoy ports + internal-only egress (a poked sensor can reach the gateway + syslog 519 but never the internet). (3) the T-Pot VM above. VMID convention (positional, DNS-first): a tripwire adopts the TIER of the VLAN it defends (tier = VLAN/10; specials 1/5/53 use the 7-digit prefix form) · sub 9 (deception) · crit 5 · OS 0 (LXC) · instance 0 · env 0 — e.g. nonprod(90)=995000, apps(60)=695000, compute(10)=195000, mgmt(5)=0595000. Placement honors the node roles: gateway + most tripwires on proxmox-2; put 1-2 tripwires (highest-value VLANs) + the T-Pot VM on the fast node proxmox-1; warm/backup copies on the normally-off proxmox-3. reserved_host octets (.36-.39 + per-tripwire) are illustrative — reconcile every VMID + octet against your live deployment.json before applying.",
     "honeypot-notify": {
       "vm_id": 492000,

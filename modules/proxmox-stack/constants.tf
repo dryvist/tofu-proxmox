@@ -13,8 +13,14 @@ locals {
       # Cribl-to-Cribl (S2S/TCP-JSON) ingestion: remote Edge nodes -> HAProxy -> Stream
       cribl_s2s = 10300
       # Cribl Stream Prometheus remote_write receiver (internal-only; no Traefik/DNS)
-      cribl_prometheus_rw    = 9201
-      apt_cacher_ng          = 3142
+      cribl_prometheus_rw = 9201
+      apt_cacher_ng       = 3142
+      # Egress forward-proxy (Squid) for the confined AI agent plane. An
+      # `ai-proxied` guest has NO 443-to-any of its own: its only WAN path is
+      # CONNECT through this port, where the domain allowlist is enforced.
+      # The Proxmox firewall cannot filter on hostname/SNI, so the L3/L4 layer
+      # grants reach to the proxy and the proxy decides destinations.
+      squid_proxy            = 3128
       object_storage_s3      = 9000
       object_storage_console = 9001
       openbao_api            = 8200
