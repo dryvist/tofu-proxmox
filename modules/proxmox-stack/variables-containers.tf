@@ -127,4 +127,23 @@ variable "containers" {
     ])
     error_message = "Every dhcp = true container must set reserved_host: it is the host octet UniFi pins the deterministic MAC to (DHCP reservation) and the DNS A record resolves to."
   }
+
+  # An AI runner/agent guest runs a coding agent in permission-skipping mode, so
+  # the container firewall is the ONLY safety control. Its egress profile is
+  # selected by tag, and the firewall module's per-profile maps are built by
+  # filtering on that tag — which means a MISSING or MISSPELLED profile tag
+  # silently matches no map at all and the guest comes up with no firewall
+  # options and no rules. That failure mode is invisible in a plan diff, so it
+  # is a hard error here rather than an advisory check: every ai-runner-tagged
+  # guest must carry exactly one known profile tag.
+  validation {
+    condition = alltrue([
+      for k, v in var.containers : length(setintersection(
+        toset(coalesce(try(v.tags, null), [])),
+        toset(["ai-github", "ai-terrakube", "ai-full-net", "ai-proxied"]),
+      )) == 1
+      if contains(coalesce(try(v.tags, null), []), "ai-runner")
+    ])
+    error_message = "Every container tagged 'ai-runner' must carry exactly one egress-profile tag from: ai-github, ai-terrakube, ai-full-net, ai-proxied. A missing or misspelled profile tag would leave the agent guest with NO firewall; two would attach conflicting rule sets."
+  }
 }

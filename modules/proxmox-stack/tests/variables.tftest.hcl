@@ -488,3 +488,112 @@ run "acme_certificates_missing_path_combo_rejected" {
     var.acme_certificates,
   ]
 }
+
+# An ai-runner guest with a misspelled egress-profile tag would match no
+# firewall profile map and come up unfirewalled — the validation must catch it.
+run "ai_runner_with_unknown_profile_tag_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      agent-1 = {
+        vm_id         = 500101
+        hostname      = "agent-1"
+        vlan          = "ai"
+        dhcp          = true
+        reserved_host = 101
+        tags          = ["terraform", "container", "ai", "ai-runner", "ai-proxeed"]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.containers,
+  ]
+}
+
+run "ai_runner_with_no_profile_tag_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      agent-1 = {
+        vm_id         = 500101
+        hostname      = "agent-1"
+        vlan          = "ai"
+        dhcp          = true
+        reserved_host = 101
+        tags          = ["terraform", "container", "ai", "ai-runner"]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.containers,
+  ]
+}
+
+run "ai_runner_with_two_profile_tags_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      agent-1 = {
+        vm_id         = 500101
+        hostname      = "agent-1"
+        vlan          = "ai"
+        dhcp          = true
+        reserved_host = 101
+        tags          = ["terraform", "container", "ai", "ai-runner", "ai-proxied", "ai-full-net"]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.containers,
+  ]
+}
+
+# Positive: the agent pool + its Squid chokepoint is accepted as-is.
+run "agent_pool_with_squid_accepted" {
+  command = plan
+
+  variables {
+    containers = {
+      agent-1 = {
+        vm_id         = 500101
+        hostname      = "agent-1"
+        vlan          = "ai"
+        dhcp          = true
+        reserved_host = 101
+        tags          = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
+      }
+      agent-2 = {
+        vm_id         = 500102
+        hostname      = "agent-2"
+        vlan          = "ai"
+        dhcp          = true
+        reserved_host = 102
+        tags          = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
+      }
+      squid = {
+        vm_id         = 500110
+        hostname      = "squid"
+        vlan          = "ai"
+        dhcp          = true
+        reserved_host = 110
+        tags          = ["terraform", "container", "ai", "squid"]
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.ai_proxied_container_ids) == 2
+    error_message = "both ai-proxied guests must select the pooled-agent profile, got ${length(local.ai_proxied_container_ids)}"
+  }
+
+  assert {
+    condition     = length(local.squid_proxy_container_ids) == 1
+    error_message = "the squid-tagged guest must select the proxy profile, got ${length(local.squid_proxy_container_ids)}"
+  }
+}

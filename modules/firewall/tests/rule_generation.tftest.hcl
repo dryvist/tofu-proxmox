@@ -25,6 +25,8 @@ variables {
       cribl_s2s           = 10300
       cribl_prometheus_rw = 9201
       apt_cacher_ng       = 3142
+      # Agent-plane egress forward proxy (referenced by ai_proxied/squid rules)
+      squid_proxy = 3128
       # Object storage (RustFS) — referenced by s3_services_rules
       object_storage_s3      = 9000
       object_storage_console = 9001
@@ -816,5 +818,53 @@ run "vikunja_rule_tracks_constant_and_internal_scope" {
   assert {
     condition     = local.vikunja_services_rules[0].source == "192.168.10.0/24,192.168.20.0/24"
     error_message = "vikunja rule source must be the comma-joined internal networks, got '${local.vikunja_services_rules[0].source}'"
+  }
+}
+
+run "ai_proxied_egress_has_no_wan_and_routes_via_squid" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.0.0/16"]
+  }
+
+  # 4 internal-infra rules + Squid + one per ai_log_ports entry. The count is
+  # derived, not literal, so adding a log source cannot silently break it.
+  assert {
+    condition     = length(local.ai_proxied_egress_rules) == 5 + length(var.pipeline_constants.ai_log_ports)
+    error_message = "ai_proxied_egress_rules must be 5 + one per ai_log_ports entry, got ${length(local.ai_proxied_egress_rules)}"
+  }
+
+  assert {
+    condition     = local.ai_proxied_egress_rules[4].dport == tostring(var.pipeline_constants.service_ports.squid_proxy)
+    error_message = "ai_proxied_egress_rules[4].dport must equal tostring(service_ports.squid_proxy), got '${local.ai_proxied_egress_rules[4].dport}'"
+  }
+
+  # The whole point of the profile: every destination is internal. No 443-to-any
+  # rule exists here, so the Squid allowlist is the only WAN path.
+  assert {
+    condition     = alltrue([for r in local.ai_proxied_egress_rules : r.dest == local.internal_src])
+    error_message = "ai_proxied egress must be internal-only (every rule dest == internal_src) — no direct WAN"
+  }
+
+  assert {
+    condition     = length([for r in local.ai_proxied_egress_rules : r if r.dport == "443"]) == 0
+    error_message = "ai_proxied egress must NOT contain a 443 rule; WAN goes through Squid"
+  }
+}
+
+run "squid_proxy_service_is_ai_vlan_scoped" {
+  command = plan
+
+  # The proxy must not be reachable from all of internal — only the agent VLAN,
+  # or anything on the estate could borrow it as an open relay.
+  assert {
+    condition     = proxmox_virtual_environment_cluster_firewall_security_group.squid_proxy_services.rule[0].source == var.ai_network
+    error_message = "squid-proxy-svc inbound source must be var.ai_network, got '${proxmox_virtual_environment_cluster_firewall_security_group.squid_proxy_services.rule[0].source}'"
+  }
+
+  assert {
+    condition     = proxmox_virtual_environment_cluster_firewall_security_group.squid_proxy_services.rule[0].dport == tostring(var.pipeline_constants.service_ports.squid_proxy)
+    error_message = "squid-proxy-svc dport must equal tostring(service_ports.squid_proxy), got '${proxmox_virtual_environment_cluster_firewall_security_group.squid_proxy_services.rule[0].dport}'"
   }
 }
