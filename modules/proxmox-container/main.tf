@@ -88,10 +88,20 @@ resource "proxmox_virtual_environment_container" "containers" {
     cores = each.value.cpu_cores
   }
 
-  # Memory configuration
+  # Memory configuration.
+  #
+  # swap defaults to the container's own memory cap rather than being left unset.
+  # Unset lands on 0, which sets memory.swap.max=0 in the container's cgroup: the
+  # guest cannot page out AT ALL, so a spike past `dedicated` is an immediate
+  # cgroup OOM-kill even when the host has tens of GB of free swap. Measured
+  # 2026-07-29: 12 of 13 running containers on one node had memory.swap.max=0
+  # while the host sat on 95 GiB of completely unreachable swap.
+  #
+  # An explicit memory_swap = 0 is still honoured (coalesce only skips null), so a
+  # guest that genuinely must stay resident can opt out.
   memory {
     dedicated = each.value.memory_dedicated
-    swap      = each.value.memory_swap
+    swap      = coalesce(each.value.memory_swap, each.value.memory_dedicated)
   }
 
   # Root disk
