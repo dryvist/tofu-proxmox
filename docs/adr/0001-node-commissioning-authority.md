@@ -42,6 +42,17 @@ Nothing stops a workload landing on a node flagged `commissioned: false`. The
 the flag — so adding a fourth node's suffixes would create Raft voters on a node
 this repo calls uninstalled, silently and without warning.
 
+**Concretely, for voter placement:** adding a node's suffixes to the deployment
+object is by itself sufficient to place a Raft voter there. There is no
+interlock anywhere in that path — not in the generator, not in the node
+declaration, not in the Ansible role. A read of the fourth node's live state
+found every ZFS-backed storage definition inactive on it, so the voter would
+land on a node with **no registered pool**; the retirement-target node adds **no
+SSH CA trust** to the same picture. Neither condition raises so much as a
+warning today. That is the concrete harm this ADR exists to prevent, and it is
+not hypothetical — the same missing-interlock shape is what let a procedure to
+remove five live Raft voters pass review.
+
 Three findings, one root cause:
 
 1. A node flagged uninstalled here is a live cluster member elsewhere.
