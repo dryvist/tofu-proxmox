@@ -53,13 +53,16 @@ warning today. That is the concrete harm this ADR exists to prevent, and it is
 not hypothetical — the same missing-interlock shape is what let a procedure to
 remove five live Raft voters pass review.
 
-Three findings, one root cause:
+Four findings, one root cause:
 
 1. A node flagged uninstalled here is a live cluster member elsewhere.
 2. A node carrying multiple TiB of migrated data is declared by **neither** this
    repo's node list nor `ansible-proxmox` `host_vars/`.
 3. Guest `602000` runs a live `*/5` replication job while absent from the
    published inventory.
+4. The Proxmox node list in the secret store names **three** nodes while
+   **four** are online — this one lives outside any repo, in the secret store,
+   so repo review would never surface it.
 
 **Live state the IaC does not know about, and declared state the IaC does not
 enforce.** While two repos disagree about which nodes exist, no placement
@@ -118,5 +121,33 @@ Until this is decided:
   wrong place to discover we guessed wrong.
 - A `node_storage` layout for that node remains a prerequisite under all three
   options, since each keeps it as the storage gate.
-- Authoring that layout needs the node's real disk topology, which is in no
-  repo and cannot be derived without reading the host.
+- That layout is blocked on **one operator answer**, not on missing data. A
+  read-only inspection found the node has a healthy boot ZFS pool with ~500 GB
+  free and a second SSD carrying an **NTFS filesystem of unknown purpose**. So
+  the gap is *registration*, not hardware — there is no guest-usable registered
+  pool, but there is plenty of disk. The layout must either register the boot
+  pool as guest storage (which no other node does) or declare the second SSD —
+  and declaring it in `node_storage` is a declaration to **wipe** it. **Open
+  question: is that NTFS content disposable?**
+
+### Why a green health metric must not close this
+
+Measured during the drafting of this ADR, across a node returning from an
+outage:
+
+| | Before | After |
+| --- | --- | --- |
+| OpenBao autopilot | `healthy: false`, `failure_tolerance: 1` | `healthy: true`, `failure_tolerance: 3` |
+| Unhealthy voters | 2 | 0 |
+| Voter distribution | 2 / 3 / 2 / 0 | **2 / 3 / 2 / 0 — identical** |
+| Survivors if the 3-voter node is lost | 4, versus a quorum of 4 | **4, versus a quorum of 4 — identical** |
+
+The node rejoined, every health signal went green, and **the defect did not
+move.** `failure_tolerance` counts servers, not hypervisors, so it reports full
+health over a topology that one node loss still takes to exactly quorum with
+zero slack.
+
+This is recorded as a measurement rather than an argument because the
+misreading is the likely failure mode: someone checks the cluster, sees green,
+and concludes this was resolved. It was not. Nothing in the table's right-hand
+column is better than the left except the count of reachable voters.
