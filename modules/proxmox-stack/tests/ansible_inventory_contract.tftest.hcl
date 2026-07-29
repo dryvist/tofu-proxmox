@@ -314,7 +314,7 @@ run "ansible_inventory_container_node_override_propagated" {
         vlan       = "media_svc"
         node_name  = "proxmox-2"
         pool_id    = "media"
-        protection = true # has mount_points -> satisfies storage_guest_protection check
+        protection = true # exercises the attribute; no longer tied to a policy check
         tags       = ["terraform", "container", "media", "vpn"]
         device_passthrough = [
           { path = "/dev/net/tun", mode = "0666" }
