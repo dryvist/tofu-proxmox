@@ -642,18 +642,12 @@ run "ansible_inventory_ingress_apex_proxmox" {
 run "ansible_inventory_ingress_openbao_ha_pool" {
   command = plan
 
-  # This fixture is about the shape of the ingress backend pool, so it declares
-  # no node_name and every voter falls to the default node. That is a genuinely
-  # concentrated placement and check.openbao_voter_concentration is right to flag
-  # it; declare the failure rather than weakening the check. Voter spread is
-  # covered by its own runs in tests/locals.tftest.hcl.
-  expect_failures = [check.openbao_voter_concentration]
-
   variables {
     domain = "example.com"
     containers = {
       "openbao-31" = {
         vm_id     = 110031
+        node_name = "proxmox-5"
         hostname  = "openbao-31"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.31/24" }
@@ -661,6 +655,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-10" = {
         vm_id     = 110010
+        node_name = "proxmox-1"
         hostname  = "openbao-10"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.10/24" }
@@ -668,6 +663,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-21" = {
         vm_id     = 110021
+        node_name = "proxmox-3"
         hostname  = "openbao-21"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.21/24" }
@@ -675,6 +671,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-30" = {
         vm_id     = 110030
+        node_name = "proxmox-4"
         hostname  = "openbao-30"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.30/24" }
@@ -682,6 +679,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-20" = {
         vm_id     = 110020
+        node_name = "proxmox-2"
         hostname  = "openbao-20"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.20/24" }
