@@ -109,6 +109,12 @@ locals {
     node_storage = var.node_storage
     # Domain for FQDN resolution (e.g., example.com)
     domain = var.domain
+    # Base LXC appliance template every container is created from. Published so
+    # ansible-proxmox can ensure it is present on each node's local storage
+    # instead of re-declaring the filename in its own defaults. Both sides read
+    # deployment.json through this key, so bumping the base image is one edit
+    # there rather than two edits kept in sync by a comment.
+    ct_template = var.proxmox_ct_template_debian
   }
 }
 
@@ -148,6 +154,14 @@ resource "aws_s3_object" "ansible_inventory" {
         c.vmid != null
       ])
       error_message = "One or more containers have an empty ip/node/hostname/vmid in the inventory — the Ansible connection target and DNS A-records derive from these. Inspect module.containers output and deployment.json."
+    }
+    precondition {
+      # ansible-proxmox downloads this exact filename onto every node's local
+      # storage. Publishing an empty string would make it silently ensure
+      # nothing, and container creation then fails later with "volume
+      # local:vztmpl/ does not exist" on whichever node is next rebuilt.
+      condition     = try(local.ansible_inventory.ct_template, "") != ""
+      error_message = "ct_template is empty — ansible-proxmox ensures this template on each node's local storage and container creation references it by name. Set proxmox_ct_template_debian in deployment.json."
     }
     precondition {
       condition = alltrue([
