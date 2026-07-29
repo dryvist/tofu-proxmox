@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.75.0](https://github.com/dryvist/tofu-proxmox/compare/v1.74.0...v1.75.0) (2026-07-29)
+
+
+### Features
+
+* **firewall:** ai-proxied agent-pool profile behind a Squid egress chokepoint ([#753](https://github.com/dryvist/tofu-proxmox/issues/753)) ([6af9281](https://github.com/dryvist/tofu-proxmox/commit/6af92812ffb471c5f87ebf27bf948a1402c2a411))
+
+
+### Bug Fixes
+
+* **container:** ignore the whole user_account block, not just its attributes ([#756](https://github.com/dryvist/tofu-proxmox/issues/756)) ([bc7d500](https://github.com/dryvist/tofu-proxmox/commit/bc7d500da1b078c48883a56ea835e01dc6156999))
+
 ## [1.74.0](https://github.com/dryvist/tofu-proxmox/compare/v1.73.2...v1.74.0) (2026-07-27)
 
 
