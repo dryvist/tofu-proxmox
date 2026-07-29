@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.75.1](https://github.com/dryvist/tofu-proxmox/compare/v1.75.0...v1.75.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **containers:** default LXC swap to the container's memory cap ([a6c3b70](https://github.com/dryvist/tofu-proxmox/commit/a6c3b700e94cc57a9a99633020595d02822444fb))
+* **containers:** default LXC swap to the container's memory cap ([8127127](https://github.com/dryvist/tofu-proxmox/commit/8127127dfa08132cb5cfe07308b9727bcdaedaab))
+
 ## [1.75.0](https://github.com/dryvist/tofu-proxmox/compare/v1.74.0...v1.75.0) (2026-07-29)
 
 
