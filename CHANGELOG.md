@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.76.1](https://github.com/dryvist/tofu-proxmox/compare/v1.76.0...v1.76.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **checks:** drop the storage-protection check, it contradicts stated policy ([#780](https://github.com/dryvist/tofu-proxmox/issues/780)) ([e098536](https://github.com/dryvist/tofu-proxmox/commit/e0985360889c39dba81ae6f6c13e5c93ce578296))
+
 ## [1.76.0](https://github.com/dryvist/tofu-proxmox/compare/v1.75.1...v1.76.0) (2026-07-29)
 
 
