@@ -183,6 +183,18 @@ variable "ai_full_net_container_ids" {
   default     = {}
 }
 
+variable "ai_proxied_container_ids" {
+  description = "Map of AI agent-pool LXC names to IDs (tag-driven: ai-proxied). Long-lived pooled agent guest — inbound SSH/ICMP from internal (Ansible converge); egress to internal DNS/NTP/OpenBao, the Squid forward proxy, and the Cribl AI log-ingest frontends only. NO direct WAN: every outbound web request goes through Squid, where the domain allowlist is enforced."
+  type        = map(number)
+  default     = {}
+}
+
+variable "squid_proxy_container_ids" {
+  description = "Map of Squid forward-proxy LXC names to IDs (tag-driven: squid). The agent plane's audited egress chokepoint — inbound proxy port from the ai VLAN only, plus outbound 80/443 to any (narrowed by the in-guest domain allowlist)."
+  type        = map(number)
+  default     = {}
+}
+
 variable "honeypot_container_ids" {
   description = "Map of honeypot LXC names to IDs (honeypot tag): per-VLAN OpenCanary tripwires + the apprise-api notify gateway. Tag-driven, set by root locals."
   type        = map(number)

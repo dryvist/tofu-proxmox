@@ -101,6 +101,11 @@ module "firewall" {
   ai_terrakube_container_ids = local.ai_terrakube_container_ids
   ai_full_net_container_ids  = local.ai_full_net_container_ids
 
+  # AI agent pool (ai-proxied tag) + its Squid egress chokepoint (squid tag).
+  # The pooled agents hold NO direct WAN rule; Squid is their only way out.
+  ai_proxied_container_ids  = local.ai_proxied_container_ids
+  squid_proxy_container_ids = local.squid_proxy_container_ids
+
   # Honeypots (honeypot/notify/tpot tags); filters in locals-honeypot.tf.
   honeypot_container_ids        = local.honeypot_container_ids
   honeypot_notify_container_ids = local.honeypot_notify_container_ids
