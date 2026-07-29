@@ -801,3 +801,113 @@ run "media_container_ids_excludes_vpn_tagged_downloader" {
     error_message = "media_container_ids must contain exactly the media-minus-vpn set"
   }
 }
+
+# --- OpenBao Raft voter concentration arithmetic ---
+# Raft survives losing VOTERS; the estate loses HOSTS. These runs pin the
+# counting in checks.tf, including the counter-intuitive part: with three voters
+# stacked on one node, adding a single voter buys nothing because quorum rises
+# with it. Only the second added voter creates real slack.
+#
+# The two lopsided fixtures are expected to trip check.openbao_voter_concentration
+# — that firing IS the assertion. vm_ids here are the mgmt octet each voter owns,
+# because the module derives guest IPs with cidrhost(): a real six-digit VMID does
+# not fit a /24, and the containers variable rejects anything below 100.
+
+run "openbao_concentration_seven_voters_three_on_one_node_has_no_headroom" {
+  command = plan
+
+  expect_failures = [check.openbao_voter_concentration]
+
+  variables {
+    containers = {
+      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-10" = { vm_id = 110, hostname = "openbao-10", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-20" = { vm_id = 120, hostname = "openbao-20", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-21" = { vm_id = 121, hostname = "openbao-21", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-31" = { vm_id = 131, hostname = "openbao-31", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+    }
+  }
+
+  assert {
+    condition     = local.openbao_voter_count == 7 && local.openbao_quorum == 4
+    error_message = "7 voters must require a quorum of 4, got ${local.openbao_voter_count} voters / quorum ${local.openbao_quorum}"
+  }
+
+  # 4 survivors == quorum 4: the cluster stays up, with zero further slack.
+  assert {
+    condition     = local.openbao_voters_after_worst_node_loss == 4
+    error_message = "losing the node carrying 3 of 7 voters must leave 4, got ${local.openbao_voters_after_worst_node_loss}"
+  }
+}
+
+run "openbao_concentration_one_added_voter_still_has_no_headroom" {
+  command = plan
+
+  expect_failures = [check.openbao_voter_concentration]
+
+  variables {
+    containers = {
+      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-10" = { vm_id = 110, hostname = "openbao-10", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-20" = { vm_id = 120, hostname = "openbao-20", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-21" = { vm_id = 121, hostname = "openbao-21", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-31" = { vm_id = 131, hostname = "openbao-31", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-41" = { vm_id = 141, hostname = "openbao-41", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
+    }
+  }
+
+  # 8 voters, quorum 5, survivors 5. Quorum rose with the added voter, so the
+  # slack is still zero — one new voter does not fix concentration.
+  assert {
+    condition     = local.openbao_quorum == 5 && local.openbao_voters_after_worst_node_loss == 5
+    error_message = "8 voters must need quorum 5 and leave 5 after the worst node loss, got quorum ${local.openbao_quorum} / survivors ${local.openbao_voters_after_worst_node_loss}"
+  }
+}
+
+run "openbao_concentration_two_added_voters_create_headroom" {
+  command = plan
+
+  variables {
+    containers = {
+      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-10" = { vm_id = 110, hostname = "openbao-10", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-20" = { vm_id = 120, hostname = "openbao-20", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-21" = { vm_id = 121, hostname = "openbao-21", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-31" = { vm_id = 131, hostname = "openbao-31", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-41" = { vm_id = 141, hostname = "openbao-41", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
+      "openbao-42" = { vm_id = 142, hostname = "openbao-42", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
+    }
+  }
+
+  # 9 voters, quorum 5, survivors 6 — one voter of real slack after a node loss.
+  assert {
+    condition     = local.openbao_quorum == 5 && local.openbao_voters_after_worst_node_loss == 6
+    error_message = "9 voters must need quorum 5 and leave 6 after the worst node loss, got quorum ${local.openbao_quorum} / survivors ${local.openbao_voters_after_worst_node_loss}"
+  }
+
+  assert {
+    condition     = local.openbao_voters_after_worst_node_loss > local.openbao_quorum
+    error_message = "two added voters on a fourth node must produce headroom above quorum"
+  }
+}
+
+run "openbao_concentration_ignores_untagged_guests" {
+  command = plan
+
+  variables {
+    containers = {
+      "traefik" = { vm_id = 101, hostname = "traefik", vlan = "mgmt", node_name = "proxmox-1" }
+    }
+  }
+
+  assert {
+    condition     = local.openbao_voter_count == 0
+    error_message = "only openbao-tagged guests are voters, got ${local.openbao_voter_count}"
+  }
+}

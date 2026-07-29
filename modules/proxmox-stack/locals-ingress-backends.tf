@@ -96,27 +96,28 @@ locals {
     ] : [],
     # OpenBao HA: one openbao.<domain> route load-balancing the Raft peers.
     # backends (plural) -> multi-server loadBalancer; health_check drops a down
-    # node; sticky keeps a browser UI session pinned. Omitted if no peer exists.
+    # node. Omitted if no peer exists.
     #
-    # health_check_path is /v1/sys/health WITHOUT ?standbyok — so ONLY the active
-    # peer returns 200; standby peers return 429 and Traefik evicts them, routing
-    # every request straight to the active node. This is deliberate: a mint/write
-    # must be served by the Raft leader anyway, and the previous ?standbyok=true
-    # (which kept standbys in the pool) meant ~6/7 requests hit a standby that
-    # then had to FORWARD to the leader — and that inter-node forward path is the
-    # one that intermittently fails ("internal error"), so pooling standbys
-    # amplified the failure rather than adding resilience (verified 2026-07-20;
-    # see ansible-proxmox-apps#1125 for the underlying Raft comms issue). Trade-off:
-    # during a leader election there is a brief window until Traefik's health check
-    # re-converges on the new active — far cheaper than the continuous failure rate
-    # standby-pooling caused. The `traefik` role renders this path for the route's
-    # health check (defaulting to "/" when unset).
+    # health_check_path is /v1/sys/health WITHOUT ?standbyok — only the active
+    # peer returns 200; standbys return 429 and Traefik evicts them, routing
+    # every request straight to the active node. Deliberate: writes must hit the
+    # Raft leader anyway, and the previous ?standbyok=true pooling meant most
+    # requests hit a standby whose forward-to-leader hop is the path that
+    # intermittently fails ("internal error"), so pooling standbys amplified the
+    # failure (verified 2026-07-20; ansible-proxmox-apps#1125). Trade-off: a brief
+    # window during leader election until the health check re-converges — far
+    # cheaper than the continuous failure rate standby-pooling caused. The
+    # `traefik` role renders this path for the route's health check (default "/").
     length(local.openbao_backends) > 0 ? [
       {
-        name              = "openbao"
-        backends          = local.openbao_backends
-        port              = local.pipeline_constants.service_ports.openbao_api
-        sticky            = true
+        name     = "openbao"
+        backends = local.openbao_backends
+        port     = local.pipeline_constants.service_ports.openbao_api
+        # No sticky: active-only health checks leave exactly one healthy backend,
+        # so a cookie adds nothing — and one minted before a fence/election pins
+        # the client to an evicted backend (observed 2026-07-27: persistent 503s
+        # while the health check showed a healthy leader).
+        sticky            = false
         health_check      = true
         health_check_path = "/v1/sys/health"
         sso               = false # token/AppRole/JWT API clients (CLI, Terrakube, roles)

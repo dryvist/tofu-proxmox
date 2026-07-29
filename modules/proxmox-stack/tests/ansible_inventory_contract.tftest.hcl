@@ -360,7 +360,7 @@ run "ansible_inventory_container_node_override_propagated" {
         vlan       = "media_svc"
         node_name  = "proxmox-2"
         pool_id    = "media"
-        protection = true # has mount_points -> satisfies storage_guest_protection check
+        protection = true # exercises the attribute; no longer tied to a policy check
         tags       = ["terraform", "container", "media", "vpn"]
         device_passthrough = [
           { path = "/dev/net/tun", mode = "0666" }
@@ -579,35 +579,41 @@ run "ansible_inventory_ingress_ha_vip" {
   command = plan
 
   variables {
-    # Two identical Traefik instances on the mgmt VLAN (vlan_id 5 -> 192.168.5.0/24
-    # in the test's derived CIDRs). vm_ids derive .101/.107; the VIP is .2.
+    # Two identical Traefik instances on the mgmt VLAN. Instances are pinned to
+    # the reserved .7/.8 pair (odd primary, even hot backup) and the floating
+    # VIP sits beside them at .9. Octets .1-.19 are reserved estate-wide for
+    # network and core services. Every address below is DERIVED via cidrhost
+    # from the test CIDR — never a literal host address.
     containers = {
-      "traefik" = {
-        vm_id    = 101
-        hostname = "traefik"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "ingress", "traefik"]
+      "traefik-10" = {
+        vm_id     = 101
+        hostname  = "traefik-10"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "ingress", "traefik"]
+        ip_config = { ipv4_address = "${cidrhost("192.168.5.0/24", 7)}/24" }
       }
-      "traefik-2" = {
-        vm_id    = 107
-        hostname = "traefik-2"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "ingress", "traefik"]
+      "traefik-30" = {
+        vm_id     = 107
+        hostname  = "traefik-30"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "ingress", "traefik"]
+        ip_config = { ipv4_address = "${cidrhost("192.168.5.0/24", 8)}/24" }
       }
     }
   }
 
-  # VIP = cidrhost(192.168.5.0/24, 2) — derived, never a literal.
+  # The VIP is the reserved octet beside the instance pair, derived via cidrhost.
   assert {
-    condition     = output.ansible_inventory.ingress_vip == "192.168.5.2"
-    error_message = "ingress_vip must be the .2 reserved octet of the ingress VLAN, derived via cidrhost"
+    condition     = output.ansible_inventory.ingress_vip == cidrhost("192.168.5.0/24", 9)
+    error_message = "ingress_vip must be the reserved VIP octet of the ingress VLAN, derived via cidrhost"
   }
 
-  # Both ingress instances are enrolled as keepalived unicast peers.
+  # Both ingress instances are enrolled as keepalived unicast peers. These must
+  # be addresses, never FQDNs — keepalived's unicast_src_ip rejects a name.
   assert {
     condition = length(output.ansible_inventory.ingress_hosts) == 2 && (
-      contains(output.ansible_inventory.ingress_hosts, "192.168.5.101") &&
-      contains(output.ansible_inventory.ingress_hosts, "192.168.5.107")
+      contains(output.ansible_inventory.ingress_hosts, cidrhost("192.168.5.0/24", 7)) &&
+      contains(output.ansible_inventory.ingress_hosts, cidrhost("192.168.5.0/24", 8))
     )
     error_message = "ingress_hosts must list every ingress-tagged instance's address (the unicast_peer set)"
   }
@@ -687,6 +693,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
     containers = {
       "openbao-31" = {
         vm_id     = 110031
+        node_name = "proxmox-5"
         hostname  = "openbao-31"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.31/24" }
@@ -694,6 +701,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-10" = {
         vm_id     = 110010
+        node_name = "proxmox-1"
         hostname  = "openbao-10"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.10/24" }
@@ -701,6 +709,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-21" = {
         vm_id     = 110021
+        node_name = "proxmox-3"
         hostname  = "openbao-21"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.21/24" }
@@ -708,6 +717,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-30" = {
         vm_id     = 110030
+        node_name = "proxmox-4"
         hostname  = "openbao-30"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.30/24" }
@@ -715,6 +725,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-20" = {
         vm_id     = 110020
+        node_name = "proxmox-2"
         hostname  = "openbao-20"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.20/24" }
@@ -735,11 +746,11 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
         "openbao-31.example.com",
       ]
       && try(r.port, 0) == 8200
-      && try(r.sticky, false)
+      && !try(r.sticky, true)
       && try(r.health_check, false)
       && try(r.health_check_path, "") == "/v1/sys/health"
     ]) == 1
-    error_message = "ingress must front OpenBao with a sorted, sticky, active-only 5-backend HA pool addressed by <hostname>.<domain> FQDN (never a bare/derived IP, which goes stale the moment a peer is rebuilt elsewhere) and a health check of /v1/sys/health with no standbyok — routes to the Raft leader"
+    error_message = "ingress must front OpenBao with a sorted, non-sticky, active-only 5-backend HA pool addressed by <hostname>.<domain> FQDN (never a bare/derived IP, which goes stale the moment a peer is rebuilt elsewhere) and a health check of /v1/sys/health with no standbyok — routes to the Raft leader; no sticky cookie, or clients get pinned to an evicted backend across elections"
   }
 }
 
@@ -1064,5 +1075,34 @@ run "vm_iso_appliance_plans" {
   assert {
     condition     = output.ansible_inventory.vms["pbs"].node == "proxmox-2"
     error_message = "ISO-appliance VM (cdrom_file_id, extra disk, no clone_template) must plan and land on its node"
+  }
+}
+
+# --- base LXC template ---
+#
+# ansible-proxmox ensures this exact filename on every node's local storage
+# (pve_repositories role). It used to re-declare the value in its own defaults,
+# kept aligned with this module by a code comment; publishing it here makes
+# deployment.json the single place the base image is named.
+
+run "ansible_inventory_ct_template_published" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.ct_template != ""
+    error_message = "ansible_inventory must publish a non-empty ct_template — ansible-proxmox downloads this filename onto each node and container creation references it by name"
+  }
+}
+
+run "ansible_inventory_ct_template_reflects_input" {
+  command = plan
+
+  variables {
+    proxmox_ct_template_debian = "debian-13-standard_13.6-1_amd64.tar.zst"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.ct_template == "debian-13-standard_13.6-1_amd64.tar.zst"
+    error_message = "ct_template must carry the configured template through to the inventory, so bumping the base image in deployment.json reaches ansible-proxmox"
   }
 }
