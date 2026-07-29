@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.76.0](https://github.com/dryvist/tofu-proxmox/compare/v1.75.1...v1.76.0) (2026-07-29)
+
+
+### Features
+
+* **syslog:** add a hypervisor-health family instead of widening the os index ([6ea90e9](https://github.com/dryvist/tofu-proxmox/commit/6ea90e9605bee152fb75f1049c638a36a0815b65))
+* **syslog:** add a hypervisor-health family instead of widening the os index ([0eea655](https://github.com/dryvist/tofu-proxmox/commit/0eea655d3e98c360a856de4637236b063c30f4f8))
+
 ## [1.75.1](https://github.com/dryvist/tofu-proxmox/compare/v1.75.0...v1.75.1) (2026-07-29)
 
 
