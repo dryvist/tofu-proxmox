@@ -642,6 +642,13 @@ run "ansible_inventory_ingress_apex_proxmox" {
 run "ansible_inventory_ingress_openbao_ha_pool" {
   command = plan
 
+  # This fixture is about the shape of the ingress backend pool, so it declares
+  # no node_name and every voter falls to the default node. That is a genuinely
+  # concentrated placement and check.openbao_voter_concentration is right to flag
+  # it; declare the failure rather than weakening the check. Voter spread is
+  # covered by its own runs in tests/locals.tftest.hcl.
+  expect_failures = [check.openbao_voter_concentration]
+
   variables {
     domain = "example.com"
     containers = {
