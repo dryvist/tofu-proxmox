@@ -14,10 +14,16 @@ locals {
   # ingress_vip_host: the reserved HOST OCTET for the VIP inside the ingress
   # VLAN. It is NOT a literal IP — the address is derived via cidrhost() from the
   # private RustFS network_cidrs, so the real subnet never appears in-repo.
-  # Reserved-octet map for the ingress (mgmt) VLAN: .1 gateway, .4/.5 openbao,
-  # .33 unifi-metrics, .101/.107 the two Traefik LXCs (vm_id-derived). .2 is
-  # carved out here for the ingress VIP and must stay out of the DHCP pool.
-  ingress_vip_host = 2
+  #
+  # Octets .1-.19 are reserved in EVERY VLAN for network and core services, and
+  # the same octet means the same thing in each. Within that block the ingress
+  # instances take the .7/.8 pair (odd primary, even hot backup) and the
+  # floating VIP sits alongside them at .9, so an address is self-describing
+  # without a per-VLAN lookup table.
+  #
+  # .2 is NOT available: it is reserved for the network controller. This local
+  # previously resolved there, which collided with that reservation.
+  ingress_vip_host = 9
   ingress_container_keys = sort([
     for k, v in var.containers : k
     if contains(coalesce(try(v.tags, null), []), "ingress")
