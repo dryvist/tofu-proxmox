@@ -15,10 +15,26 @@
 #   N=8  quorum 5  survivors 5  -> 5 > 5 false, no headroom (one added voter buys nothing)
 #   N=9  quorum 5  survivors 6  -> 6 > 5 true, one voter of slack
 #
-# Advisory `check` rather than a hard validation, for the same reason as
-# storage_guest_protection above: a hard error would block the very applies that
-# fix the spread, and would fail closed on a cluster that is merely
-# suboptimal rather than broken.
+# Note what that table is really saying: it holds the concentration fixed at 3
+# and adds voters, which is the expensive way out. Spreading is the cheap way,
+# and it inverts the conclusion — with voters over FOUR nodes instead of three,
+# no node carries more than 2:
+#
+#   N=8 over 4 nodes  quorum 5  survivors 6  -> 6 > 5 true, one voter of slack
+#
+# So the same headroom the table only reaches at N=9 is available at N=8 simply
+# by using a node that currently carries none. Reducing concentration beats
+# adding voters; reach for a wider spread before a larger count.
+#
+# A hard limit is worth stating because it is not obvious and no voter count
+# escapes it: surviving the loss of K of M nodes needs the remaining M-K nodes to
+# hold a majority, so tolerating 2 of 4 is impossible (half is never a majority)
+# and tolerating 4 requires M >= 9. Beyond one-node tolerance the answer is more
+# nodes, or an out-of-band restore path — not more voters.
+#
+# Advisory `check` rather than a hard validation: a hard error would block the
+# very applies that fix the spread, and would fail closed on a cluster that is
+# merely suboptimal rather than broken.
 locals {
   # The node each OpenBao voter lands on. node_name is optional on a container
   # and falls back to the stack default, exactly as the container resource does.
