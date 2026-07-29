@@ -1031,3 +1031,32 @@ run "vm_iso_appliance_plans" {
     error_message = "ISO-appliance VM (cdrom_file_id, extra disk, no clone_template) must plan and land on its node"
   }
 }
+
+# --- base LXC template ---
+#
+# ansible-proxmox ensures this exact filename on every node's local storage
+# (pve_repositories role). It used to re-declare the value in its own defaults,
+# kept aligned with this module by a code comment; publishing it here makes
+# deployment.json the single place the base image is named.
+
+run "ansible_inventory_ct_template_published" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.ct_template != ""
+    error_message = "ansible_inventory must publish a non-empty ct_template — ansible-proxmox downloads this filename onto each node and container creation references it by name"
+  }
+}
+
+run "ansible_inventory_ct_template_reflects_input" {
+  command = plan
+
+  variables {
+    proxmox_ct_template_debian = "debian-13-standard_13.6-1_amd64.tar.zst"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.ct_template == "debian-13-standard_13.6-1_amd64.tar.zst"
+    error_message = "ct_template must carry the configured template through to the inventory, so bumping the base image in deployment.json reaches ansible-proxmox"
+  }
+}
