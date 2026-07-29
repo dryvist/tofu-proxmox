@@ -14,7 +14,7 @@ The tier-0 guests that must survive a node failure:
 | Guest(s) | Redundancy mechanism | DR wave |
 | --- | --- | --- |
 | ingress (`traefik`, future `traefik-2`) | keepalived VRRP VIP floats across nodes | W1 + W5 |
-| OpenBao (`openbao-01`, `openbao-02`, future `openbao-03`) | Raft quorum | W6 |
+| OpenBao (seven Raft voters, see W6) | Raft quorum | W6 |
 | DNS (`technitium-dns`, `technitium-dns-2`) | two independent instances | W5 |
 
 ## W4 — corosync vote integrity
@@ -38,9 +38,11 @@ When enabled it:
 1. Places each tier-0 LXC under HA (`ha-manager add ct:VMID --state started
    --max_restart 3 --max_relocate 1`). VMIDs resolve from the tofu inventory by
    hostname, so a renumber flows through with no edit.
-2. Adds `resource-affinity` **negative** rules so the two halves of each
-   redundant pair (the OpenBao voters, the Technitium DNS pair, the Traefik
-   ingress pair) never share a node.
+2. Adds `resource-affinity` **negative** rules so redundant peers never share a
+   node — the Technitium DNS pair and the Traefik ingress pair. The OpenBao
+   voters are a seven-member Raft set, not a pair; their spread is a placement
+   problem (see W6), and a negative rule over all seven would be unschedulable
+   on four nodes.
 
 **Why anti-affinity is the payload, not relocation.** These guests sit on
 **local ZFS**, not shared storage, and each already has a redundant peer on
@@ -54,66 +56,79 @@ A non-destructive failover drill
 (`ansible-proxmox` `scripts/ha-failover-drill.sh`) proves auto-restart +
 relocation against a disposable test guest only.
 
-## W6 — OpenBao 3-voter Raft
+## W6 — OpenBao Raft: seven voters, unevenly placed
 
-Today OpenBao is a fragile **2-voter** Raft (`openbao-01` at mgmt host octet
-`.4`, `openbao-02` at `.5`) — no quorum tolerance, a single node loss can wedge
-it. The target is **3 voters** (add `openbao-03` on `proxmox-4`, mgmt host octet
-`.6`), giving real quorum that survives one node loss.
+**Verified live** against `sys/storage/raft/configuration` and
+`sys/storage/raft/autopilot/state`: the cluster is **seven voters, all
+`voter=true`, all `healthy=true`, all on the same Raft term and index**, with
+one elected leader. Every one of them carries a real config and live Raft data —
+the `openbao_cluster` generator's guests are converged members, not shells.
 
-**No ansible role change is needed.** The `openbao` role
-(`ansible-proxmox-apps`) is already built for rolling expansion: every node
-carries a `retry_join` for each peer (built from the `openbao` group's
-container IPs), and `openbao_allow_fresh_init` defaults to `false`, so a new
-node joins the existing cluster and self-unseals via the shared static seal
-key — it never re-inits and never orphans the live data. Adding the guest to
-`deployment.json` and re-converging the `openbao` group is the whole job.
+| Voter | VMID | Node |
+| --- | --- | --- |
+| `openbao-01` | 110040 | `proxmox-1` |
+| `openbao-10` | 110010 | `proxmox-1` |
+| `openbao-02` | 110140 | `proxmox-2` |
+| `openbao-20` | 110020 | `proxmox-2` |
+| `openbao-21` | 110021 | `proxmox-2` |
+| `openbao-30` | 110030 | `proxmox-3` |
+| `openbao-31` | 110031 | `proxmox-3` |
 
-### Topology hazards to resolve BEFORE the live join
+Per node: **`proxmox-1` 2 · `proxmox-2` 3 · `proxmox-3` 2 · `proxmox-4` 0.**
+The explicit `openbao-01` / `openbao-02` entries in the `containers` map and the
+`openbao_cluster` generator's suffixes (10/20/21/30/31) are **both live** — they
+are one cluster, not two competing schemes.
 
-The OpenBao guests currently follow **two conflicting schemes** in
-`deployment.json`, and this must be reconciled first:
+### The real risk: voter concentration, not voter count
 
-- **Live cluster = explicit** `openbao-01` / `openbao-02` entries in the
-  `containers` map. These are the only nodes with a real `/etc/openbao` config
-  and live Raft data.
-- **`openbao_cluster` generator** (expanded by OpenTofu) currently emits
-  **five more** containers (suffixes 10/20/21/30/31). They exist as running
-  LXCs but have **no OpenBao config** — orphan shells that were created and
-  never converged. Because they carry the `openbao` tag, a full `openbao`
-  converge would try to configure and join **all seven**, producing an
-  unintended 7-node cluster rather than the intended 3.
-- **VMID collision:** the generator's suffix `40` maps to the same VMID as the
+Seven voters means **quorum is 4**. Losing `proxmox-2` removes **3** voters at
+once, leaving exactly 4 — quorum holds, with **zero remaining headroom**. Any
+further voter loss after that seals the cluster.
+
+**Autopilot's `failure_tolerance` hides this.** It reports `3`, because it
+counts *server* losses and is blind to which hypervisor each voter sits on.
+Three independent guest failures are survivable; **one hypervisor failure plus
+one guest is not.** Never read `failure_tolerance` as a node-loss budget.
+
+Rebalancing to an even spread (and using `proxmox-4`, which carries none) is the
+open work. It is a placement change in `deployment.json` plus a converge — never
+a hand-run membership edit.
+
+### Removing an OpenBao guest — mandatory precondition
+
+An earlier revision of this document described five of the above voters as
+"orphan shells ... never converged" and prescribed removing them. **That was
+false, and following it would have destroyed 5 of 7 voters including the
+leader**, sealing the cluster. The procedure is deleted; do not reconstruct it
+from history.
+
+If a future OpenBao guest genuinely is an unconverged shell, **prove it before
+removing anything**:
+
+```sh
+bao read -format=json sys/storage/raft/configuration \
+  | jq -r '.data.config.servers[].node_id'
+```
+
+A guest whose `node_id` **appears in that output is a live Raft voter.** It is
+removable only through a deliberate, gated peer-removal — never as inventory
+cleanup, never as a side effect of a `deployment.json` edit or a `tofu apply`.
+Removing a guest that is absent from that list is safe.
+
+Two standing hazards remain regardless:
+
+- **VMID collision:** generator suffix `40` maps to the same VMID as the
   explicit `openbao-01`. Any placement using suffix 40 collides.
-- **`protection: true`** on every OpenBao container (repo-law violation: no
-  destroy-protection) also blocks cleanly removing the orphan shells. Removed
-  from the generator defaults in `deployment.json.example` here; removing it on
-  the live containers is a gated apply.
+- **`protection: true`** on the OpenBao containers is a repo-law violation (no
+  destroy-protection). Removed from the generator defaults in
+  `deployment.json.example`; clearing it on the live containers is a gated
+  apply. Note that with a healthy cluster this flag has been the last thing
+  standing between the bad procedure above and a sealed cluster — clear it only
+  once the precondition check above is part of the workflow.
 
-**Reconciliation before adding a 3rd voter:** pick ONE scheme. The lazy, correct
-path for a single 3rd voter is to keep the live explicit pair and add an
-explicit `openbao-03` (host octet `.6`, on `proxmox-4`, `openbao` tags,
-`memory_swap: 0`), then either disable the `openbao_cluster` generator
-(`enabled: false`) or remove the five orphan shells so the `openbao` group is
-exactly the three real voters. Otherwise a converge joins the orphans too.
-
-### Live join sequence (gated — held for lead approval)
-
-1. Reconcile the orphans (disable generator / remove the 5 shells; drop
-   `protection` so they are removable). Verify the `openbao` group resolves to
-   exactly `openbao-01/02/03`.
-2. Add `openbao-03` to `deployment.json` (private S3 input) and `tofu
-   apply` (full apply, never `-target`) to create the LXC on `proxmox-4`.
-3. Converge the `openbao` group. `openbao-03` renders its config with
-   `retry_join` to `.4/.5`, joins as a 3rd voter, and self-unseals via the
-   shared static seal key. `openbao-01/02` re-render to also list `.6`.
-4. Verify 3 voters: `pvesh`/`bao operator raft list-peers` shows three voters,
-   one leader, all `voter=true`.
-
-**Unseal / recovery:** no new unseal step — the shared static-key auto-unseal
-means `openbao-03` unseals itself on start, same as the existing peers. The
-recovery shares and root token are unchanged (a join does not re-init). The new
-node inherits the automated raft-snapshot timer on converge.
+**Unseal / recovery:** the shared static-key auto-unseal means a peer unseals
+itself on start; a join never re-inits and never touches the recovery shares.
+Every member inherits the automated raft-snapshot timer on converge.
 
 ## Media tier
 
