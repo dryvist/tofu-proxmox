@@ -695,11 +695,11 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
         "openbao-31.example.com",
       ]
       && try(r.port, 0) == 8200
-      && try(r.sticky, false)
+      && !try(r.sticky, true)
       && try(r.health_check, false)
       && try(r.health_check_path, "") == "/v1/sys/health"
     ]) == 1
-    error_message = "ingress must front OpenBao with a sorted, sticky, active-only 5-backend HA pool addressed by <hostname>.<domain> FQDN (never a bare/derived IP, which goes stale the moment a peer is rebuilt elsewhere) and a health check of /v1/sys/health with no standbyok — routes to the Raft leader"
+    error_message = "ingress must front OpenBao with a sorted, non-sticky, active-only 5-backend HA pool addressed by <hostname>.<domain> FQDN (never a bare/derived IP, which goes stale the moment a peer is rebuilt elsewhere) and a health check of /v1/sys/health with no standbyok — routes to the Raft leader; no sticky cookie, or clients get pinned to an evicted backend across elections"
   }
 }
 
