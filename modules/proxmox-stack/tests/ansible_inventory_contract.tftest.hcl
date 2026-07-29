@@ -131,6 +131,52 @@ run "ansible_inventory_constants_syslog_ports_exists" {
   }
 }
 
+run "ansible_inventory_syslog_families_never_widen_the_os_catch_all" {
+  command = plan
+
+  # `os` is already the largest index while carrying three unrelated OS families
+  # (linux, windows, macos). Every family added from here routes somewhere
+  # narrower, so this asserts the exact set allowed to land there rather than
+  # asserting the new family alone — a future family quietly defaulting to `os`
+  # is the failure worth catching, and only a whitelist catches it.
+  assert {
+    condition = length([
+      for name, fam in output.ansible_inventory.constants.syslog_port_map :
+      name if fam.index == "os" && !contains(["linux", "windows", "macos"], name)
+    ]) == 0
+    error_message = "A syslog family outside {linux,windows,macos} routes to the 'os' catch-all. Give it a narrower index — os is already the largest and carries three unrelated families."
+  }
+
+  # Ports are the routing key, so a collision silently sends one family's data
+  # to another's index. Cheap to assert, effectively impossible to spot by eye.
+  assert {
+    condition     = length(values(output.ansible_inventory.constants.syslog_port_map)[*].standard) == length(distinct(values(output.ansible_inventory.constants.syslog_port_map)[*].standard))
+    error_message = "Two syslog families share a 'standard' port; each family needs its own HAProxy frontend port."
+  }
+
+  assert {
+    condition     = length(values(output.ansible_inventory.constants.syslog_port_map)[*].high) == length(distinct(values(output.ansible_inventory.constants.syslog_port_map)[*].high))
+    error_message = "Two syslog families share a 'high' port; each family needs its own Cribl Edge backend port."
+  }
+}
+
+run "ansible_inventory_pve_health_family_published" {
+  command = plan
+
+  # The host-config repo's telemetry role forwards to this family by port and the
+  # Cribl pipeline stamps the index from it, so an absent or renamed entry sends
+  # hypervisor health data nowhere (or into the wrong index) with no error.
+  assert {
+    condition     = try(output.ansible_inventory.constants.syslog_port_map.pve_health.standard, 0) == 524
+    error_message = "syslog_port_map.pve_health.standard must be 524 — the telemetry role's rsyslog forward targets this port."
+  }
+
+  assert {
+    condition     = try(output.ansible_inventory.constants.syslog_port_map.pve_health.index, "") == "os_proxmox"
+    error_message = "syslog_port_map.pve_health.index must be 'os_proxmox' — hypervisor-scoped, and deliberately not the 'os' catch-all."
+  }
+}
+
 run "ansible_inventory_constants_syslog_port_map_exists" {
   command = plan
 

@@ -43,5 +43,25 @@ locals {
     # ingress/L7 visibility. standard 523 = HAProxy frontend; high 1523 = Cribl Edge
     # backend. Traefik and HAProxy are distinguished by sourcetype in the pipeline.
     proxy = { standard = 523, high = 1523, index = "proxy", sourcetype = "haproxy" }
+    # Hypervisor health telemetry — one structured key=value line per node per
+    # sample interval (stall detection, clocksource, replication, HA state,
+    # memory pressure, guest drift). Emitted by the pve_health_telemetry role in
+    # the host-config repo via the journal, so it needs no agent and no new
+    # listener beyond this family.
+    #
+    # WHY its own family rather than riding the linux family: linux lands in the
+    # `os` catch-all, and `os` is already the largest index by a wide margin
+    # while carrying three unrelated OS families. Health telemetry is queried in
+    # a completely different way from host syslog — it is a dense, regular
+    # series that gets charted and alerted on, not read as event text — and
+    # burying a 1-line-per-minute series inside a high-volume free-text index
+    # makes both harder to use.
+    #
+    # Routing by listener (a dedicated port) rather than by payload inspection
+    # is the same pattern every other family here uses, and it means this works
+    # independently of the host-keyed `os` decomposition rather than waiting on
+    # it. Lands in the existing os_proxmox index — hypervisor-scoped and already
+    # declared — so this adds a route, not another index to manage.
+    pve_health = { standard = 524, high = 1524, index = "os_proxmox", sourcetype = "pve:health" }
   }
 }
