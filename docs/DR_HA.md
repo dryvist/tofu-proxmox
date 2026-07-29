@@ -143,14 +143,13 @@ the irreplaceable per-app state instead:
 - `bulk/appdata` is on the sanoid `critical` template (hourly, recursive) and
   syncoid-replicated from the bulk-storage node to the DR node. **The two
   cadences are not the same, and the off-node one is what an RPO is measured
-  against.** Snapshots are local and hourly; replication ships them only once
-  per DR-node power-on window, because the DR node is normally off and its
-  syncoid runs on the boot trigger (`syncoid_trigger: boot`), not on the daily
-  cron. **Off-node RPO for `bulk/appdata` is therefore ~24 h, not ~1 h** — up
-  to a full day of app config/DB changes exists only on the bulk-storage node.
-  Verified 2026-07-29: source snapshot 11:05, DR copy still at the 02:00 snap.
-  Shrinking it means changing how often the DR leg *pulls*; adding sanoid
-  frequency on the source does nothing for it.
+  against.** Snapshots are local and hourly; the DR leg pulls them on the
+  daily syncoid schedule, so a snapshot can wait a full day before a copy
+  exists off-node. **Off-node RPO for `bulk/appdata` is therefore ~24 h, not
+  ~1 h** — up to a day of app config/DB changes exists only on the
+  bulk-storage node. Shrinking it means raising how often the DR leg *pulls*
+  (the syncoid schedule on the DR node); adding sanoid frequency on the
+  source does nothing for it.
 - The `bulk/data` library itself is deliberately **unsnapshotted and
   unreplicated** (`com.sun:auto-snapshot=false`): torrent churn makes snapshots
   expensive and the payload is re-acquirable, so a loss is a re-download, not a
