@@ -83,7 +83,6 @@ module "vms" {
   environment       = var.environment
   default_datastore = var.datastore_default
   domain            = var.domain
-  dns_servers       = local.dns_servers
 
   # SSH credentials for provisioners (BPG provider reads auth from PROXMOX_VE_* env vars)
   proxmox_ssh_username    = var.proxmox_ssh_username
@@ -134,7 +133,6 @@ module "containers" {
   environment       = var.environment
   default_datastore = var.datastore_default
   domain            = var.domain
-  dns_servers       = local.dns_servers
 
   depends_on = [module.pools, module.storage]
 }
@@ -161,7 +159,6 @@ module "splunk_vm" {
   cpu_cores      = var.splunk_cpu_cores
   memory         = var.splunk_memory
   domain         = var.domain
-  dns_servers    = local.dns_servers
 
   # Tiered storage: fast-splunk (hot/warm) and bulk-splunk (cold). datastore_ids
   # are the Proxmox zfspool storage ids that ansible-proxmox registers from the

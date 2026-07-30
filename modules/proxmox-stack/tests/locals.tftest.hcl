@@ -102,17 +102,13 @@ run "container_ipv4_uses_vlan_cidr" {
     error_message = "dns-VLAN gateway should be 192.168.2.1, got ${local.container_gateway["technitium-dns"]}"
   }
 
-  # Guests must resolve via the homelab's own resolver (an internal address the
-  # outbound-internal firewall group permits), not the node's upstream gateway
-  # resolver a DROP-policy guest cannot reach. dns_servers is the technitium-dns
-  # address (CIDR stripped), fed into every container's initialization.dns.servers.
+  # A guest resolves via its own VLAN gateway (which forwards the internal zone
+  # onward), never via a resolver address baked in at provision time and never
+  # via the node's own VLAN gateway, which a guest elsewhere may not reach.
   # Asserted by derivation, not a literal, so no real address appears here.
   assert {
-    condition = contains(
-      local.dns_servers,
-      split("/", local.container_ipv4["technitium-dns"])[0]
-    )
-    error_message = "dns_servers must include the technitium-dns resolver address, got ${jsonencode(local.dns_servers)}"
+    condition     = local.container_gateway["technitium-dns"] == cidrhost(var.network_cidrs["dns"], 1)
+    error_message = "guest resolver must be its own VLAN gateway, got ${local.container_gateway["technitium-dns"]}"
   }
 
   # DHCP-first guest short-circuits cidrhost — the positional VMID must never
@@ -581,35 +577,62 @@ run "cribl_stream_ids_picks_up_stream_tagged" {
   }
 }
 
-run "dns_servers_derived_from_dns_containers" {
+# A guest's resolver is its own VLAN gateway, which conditionally forwards the
+# internal zone to the resolver fleet. container_gateway is the value the
+# container module now feeds into initialization.dns.servers, so pinning it here
+# pins the resolver each guest is handed.
+#
+# The point is what is ABSENT: no resolver address is baked into a guest, so
+# renaming or renumbering the fleet cannot leave a guest holding a stale list —
+# the failure this replaced, and the reason two resolvers ended up sharing one
+# address to stay reachable.
+run "guest_resolver_is_its_own_vlan_gateway" {
   command = plan
 
   variables {
     containers = {
-      "technitium-dns"   = { vm_id = 103, hostname = "technitium-dns", vlan = "dns", ip_config = { ipv4_address = "192.0.2.2/24" } }
-      "technitium-dns-2" = { vm_id = 113, hostname = "technitium-dns-2", vlan = "dns", ip_config = { ipv4_address = "192.0.2.3/24" } }
-      "pi-hole"          = { vm_id = 104, hostname = "pi-hole", vlan = "dns" }
+      # Static guest on the dns VLAN.
+      "technitium10" = {
+        vm_id     = 103, hostname = "technitium10", vlan = "dns"
+        ip_config = { ipv4_address = "192.0.2.2/24" }
+      }
+      # Static guest on a DIFFERENT VLAN — must get ITS gateway, not the dns
+      # VLAN's and not the Proxmox node's, which is the case that would leave a
+      # guest pointed at a gateway it may have no route to.
+      "traefik" = {
+        vm_id     = 101, hostname = "traefik", vlan = "mgmt"
+        ip_config = { ipv4_address = "192.168.5.101/24" }
+      }
     }
   }
 
-  # Every technitium-dns* node (static pins honored, sorted by key) for real
-  # cross-host HA; pi-hole is excluded (never brought up, VMID-derived IP).
   assert {
-    condition     = jsonencode(local.dns_servers) == jsonencode(["192.0.2.2", "192.0.2.3"])
-    error_message = "dns_servers must be all technitium nodes sorted, pi-hole excluded, got ${jsonencode(local.dns_servers)}"
+    condition     = local.container_gateway["technitium10"] == cidrhost(var.network_cidrs["dns"], 1)
+    error_message = "a dns-VLAN guest must resolve via the dns VLAN gateway, got ${local.container_gateway["technitium10"]}"
+  }
+
+  assert {
+    condition     = local.container_gateway["traefik"] == cidrhost(var.network_cidrs["mgmt"], 1)
+    error_message = "a guest must resolve via its OWN VLAN gateway, not another VLAN's, got ${local.container_gateway["traefik"]}"
   }
 }
 
-run "dns_servers_empty_without_dns_containers" {
+# DHCP guests take address and resolver from the lease. A null gateway is what
+# makes the container module omit servers entirely so the lease wins.
+run "dhcp_guest_takes_its_resolver_from_the_lease" {
   command = plan
 
   variables {
-    containers = {}
+    containers = {
+      # reserved_host is required for any dhcp guest (the octet UniFi pins the
+      # deterministic MAC to) — enforced by variables-containers.tf.
+      "dhcp-guest" = { vm_id = 601, hostname = "dhcp-guest", vlan = "apps", dhcp = true, reserved_host = 61 }
+    }
   }
 
   assert {
-    condition     = length(local.dns_servers) == 0
-    error_message = "dns_servers must be empty with no DNS containers, got ${jsonencode(local.dns_servers)}"
+    condition     = local.container_gateway["dhcp-guest"] == null
+    error_message = "a DHCP guest must have no derived gateway, so cloud-init omits servers and the lease supplies the resolver"
   }
 }
 
