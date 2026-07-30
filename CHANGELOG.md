@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.76.2](https://github.com/dryvist/tofu-proxmox/compare/v1.76.1...v1.76.2) (2026-07-30)
+
+
+### Bug Fixes
+
+* **openbao:** generate voters with a DHCP reservation, not a baked-in address ([#784](https://github.com/dryvist/tofu-proxmox/issues/784)) ([8ff414e](https://github.com/dryvist/tofu-proxmox/commit/8ff414e167aa543ac52805210c0b0fda618b6fcf))
+
 ## [1.76.1](https://github.com/dryvist/tofu-proxmox/compare/v1.76.0...v1.76.1) (2026-07-29)
 
 
