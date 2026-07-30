@@ -27,6 +27,19 @@
 # expressible in the Proxmox firewall. That distinction belongs in the Squid
 # ACLs (one ACL group per profile, keyed off the client address), not in a
 # duplicated security group. One profile here, N allowlists there.
+#
+# WHY THIS PROFILE IS SHAPED THIS WAY. The guests behind it run their agents in
+# permission-skipping mode on purpose, so nothing inside the guest is a control
+# — the rules in this file are. Anthropic's containment write-up puts the goal
+# plainly: "The engineering question becomes how to cap the blast radius."
+# https://www.anthropic.com/engineering/how-we-contain-claude
+#
+# Read that as a constraint on edits here. Adding an egress rule to this profile
+# does not "unblock" an agent; it enlarges what a misbehaving or prompt-injected
+# one can reach, permanently and for every guest in the pool. The absent
+# 443-to-any above is the single most important line in the file precisely
+# because it is absent — restoring it would move the entire domain boundary out
+# of Squid and delete it, with no test failing to say so.
 
 locals {
   # Egress destinations for a pooled agent. Every entry is internal — the guest
