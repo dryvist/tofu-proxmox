@@ -142,6 +142,20 @@ locals {
   # deliberately non-transferable (rebuild-from-scratch doctrine), same as
   # the openbao_generated_containers suffix above. `suffix` is numeric in
   # per_node and zero-padded here (%02d), matching that pattern exactly.
+  # Whether each generated instance is DNS-first (DHCP) or takes a static
+  # address, resolved ONCE per service/node. The addressing block below reads
+  # this three times — for `dhcp`, for `reserved_host`, and for `ip_config` —
+  # and those three must agree by construction: a guest that says dhcp = true
+  # while carrying an ip_config, or dhcp = true with no reserved_host, is a
+  # guest whose declared address and actual address can disagree.
+  node_service_use_dhcp = {
+    for service_name, tmpl in local.node_service_templates :
+    service_name => {
+      for node_name, entry in try(tmpl.per_node, {}) :
+      node_name => try(tmpl.dhcp, false) || !contains(keys(entry), "host_octet")
+    }
+  }
+
   node_service_containers = merge([
     for service_name, tmpl in local.node_service_templates : {
       for node_name, node in local.deployment.nodes :
@@ -157,16 +171,46 @@ locals {
         # is UniFi's job driven by the Nautobot SSOT — not a tofu-side octet).
         # A template that still carries per_node host_octet reservations (the
         # pre-DHCP traefik/VIP allocation) keeps its static ip_config unchanged.
-        try(tmpl.dhcp, false) || !contains(keys(tmpl.per_node[node_name]), "host_octet") ? {
-          dhcp = true
-          } : {
-          ip_config = {
-            ipv4_address = format(
-              "%s/%s",
-              cidrhost(local.deployment.network_cidrs[tmpl.vlan], tmpl.per_node[node_name].host_octet),
-              split("/", local.deployment.network_cidrs[tmpl.vlan])[1],
-            )
-          }
+        #
+        # ONE object with null-valued branches, never a conditional BETWEEN two
+        # object shapes. HCL type-checks both arms of a conditional regardless
+        # of which one the condition selects, and objects only unify when their
+        # attribute sets match — so `... ? { dhcp = ... } : { ip_config = ... }`
+        # is a hard error on every evaluation:
+        #
+        #   Error: Inconsistent conditional result types
+        #   'true' value includes object attribute "dhcp", which is absent in
+        #   the 'false' value.
+        #
+        # That is a static failure, so it fired for any template at all and was
+        # the second of the two reasons nothing could adopt this generator.
+        # Emitting both attributes with a null on the inapplicable one keeps the
+        # type constant; the container schema declares both optional, and an
+        # explicit null falls back to the declared default.
+        {
+          dhcp = local.node_service_use_dhcp[service_name][node_name]
+          # Required whenever dhcp = true — var.containers validates it, because
+          # it is the octet UniFi pins the deterministic MAC to and the octet the
+          # DNS A record resolves to. A template may pin one per node; absent
+          # that it defaults to the name suffix, exactly as the openbao voters
+          # derive theirs (`reserved_host = peer.suffix`), so the reservation and
+          # the two-digit name cannot drift apart.
+          reserved_host = (
+            local.node_service_use_dhcp[service_name][node_name]
+            ? try(tmpl.per_node[node_name].reserved_host, tmpl.per_node[node_name].suffix)
+            : null
+          )
+          ip_config = (
+            local.node_service_use_dhcp[service_name][node_name]
+            ? null
+            : {
+              ipv4_address = format(
+                "%s/%s",
+                cidrhost(local.deployment.network_cidrs[tmpl.vlan], tmpl.per_node[node_name].host_octet),
+                split("/", local.deployment.network_cidrs[tmpl.vlan])[1],
+              )
+            }
+          )
         }
       )
       # `commissioned` is read through try() for the same reason
