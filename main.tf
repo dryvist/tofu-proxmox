@@ -96,13 +96,21 @@ locals {
         vlan      = local.openbao_cluster.vlan
         hostname  = format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix)
         node_name = peer.node_name
-        ip_config = {
-          ipv4_address = format(
-            "%s/%s",
-            cidrhost(local.deployment.network_cidrs[local.openbao_cluster.vlan], peer.suffix),
-            split("/", local.deployment.network_cidrs[local.openbao_cluster.vlan])[1],
-          )
-        }
+        # DHCP reservation, not a static address baked into the guest config.
+        # Every other guest in this stack takes `dhcp = true` + `reserved_host`
+        # (41 of them); this generator was still writing a literal `ip_config`
+        # from cidrhost(), making its voters part of a five-guest legacy
+        # exception rather than following the rule.
+        #
+        # `reserved_host` is the host octet UniFi pins the guest's deterministic
+        # MAC to, and the DNS A record resolves to that same address. Keeping it
+        # equal to the suffix preserves the addressing intent exactly — the voter
+        # still lands on the same octet — while moving the authority for the
+        # address out of the guest config and into the reservation, so the
+        # reservation and the DNS record cannot disagree with what the guest
+        # actually holds.
+        dhcp          = true
+        reserved_host = peer.suffix
         root_disk = {
           size         = tonumber(local.openbao_cluster.root_disk.size)
           datastore_id = try(local.openbao_cluster.root_disk_datastore_by_node[peer.node_name], try(local.openbao_cluster.root_disk.datastore_id, null))
