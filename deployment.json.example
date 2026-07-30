@@ -167,6 +167,24 @@
         "features": { "nesting": true }
       }
     },
+    "apt-cacher-ng": {
+      "name_prefix": "apt-cacher-ng-",
+      "vlan": "apps",
+      "dhcp": true,
+      "per_node": {
+        "proxmox-1": { "suffix": 10, "vm_id": 613010 },
+        "proxmox-3": { "suffix": 30, "vm_id": 613030 }
+      },
+      "_per_node_comment": "APT proxy HA: one cache per node that hosts package-installing guests, so a node restart cannot take apt down estate-wide. Each instance is an independent cache — there is no shared state to replicate, which is what makes this service a natural fit for the per-node pattern rather than a clustered one. Clients reach the pool by name and rely on apt trying the next address for the host on a connect failure, so no client carries an instance address. VMIDs decode as apps(6) - mgmt(1) - crit3 - LXC(0) - instance == node id - prd(0), matching how the openbao voters put the node id in the instance digit.",
+      "container_defaults": {
+        "description": "apt-cacher-ng — APT package caching proxy (per-node instance)",
+        "cpu_cores": 1,
+        "memory_dedicated": 512,
+        "tags": ["terraform", "container", "infrastructure", "apt-cache"],
+        "pool_id": "infrastructure",
+        "root_disk": { "size": 16 }
+      }
+    },
     "traefik": {
       "name_prefix": "traefik-",
       "vlan": "mgmt",
