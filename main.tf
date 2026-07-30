@@ -169,7 +169,17 @@ locals {
           }
         }
       )
-      if node.commissioned && try(node.services_enabled, true) && contains(keys(try(tmpl.per_node, {})), node_name)
+      # `commissioned` is read through try() for the same reason
+      # `services_enabled` is: this iterates the RAW deployment object, which
+      # jsondecode gives no schema defaults. The typed `nodes` variable in
+      # modules/proxmox-stack declares `commissioned = optional(bool, true)`,
+      # so a node that omits the key IS commissioned everywhere else in the
+      # stack — reading it bare here made this expansion the one place that
+      # disagreed, and it disagreed by erroring the whole plan
+      # ("This object does not have an attribute named commissioned") rather
+      # than by skipping the node. That is why no service could adopt this
+      # generator while any node omitted the key.
+      if try(node.commissioned, true) && try(node.services_enabled, true) && contains(keys(try(tmpl.per_node, {})), node_name)
     }
   ]...)
 
