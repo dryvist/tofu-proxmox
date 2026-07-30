@@ -96,21 +96,29 @@ locals {
         vlan      = local.openbao_cluster.vlan
         hostname  = format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix)
         node_name = peer.node_name
-        # DHCP reservation, not a static address baked into the guest config.
-        # Every other guest in this stack takes `dhcp = true` + `reserved_host`
-        # (41 of them); this generator was still writing a literal `ip_config`
-        # from cidrhost(), making its voters part of a five-guest legacy
-        # exception rather than following the rule.
+        # Static, and deliberately so: OpenBao is critical-tier. Every guest in
+        # the estate resolves its credentials here, so a voter that changed
+        # address on a lease renewal would force a re-converge of everything
+        # pointing at it. Critical and network guests (resolvers, ingress,
+        # secrets) are the one exception to the pool-lease default — see the
+        # `dhcp` field in modules/proxmox-stack/variables-containers.tf.
         #
-        # `reserved_host` is the host octet UniFi pins the guest's deterministic
-        # MAC to, and the DNS A record resolves to that same address. Keeping it
-        # equal to the suffix preserves the addressing intent exactly — the voter
-        # still lands on the same octet — while moving the authority for the
-        # address out of the guest config and into the reservation, so the
-        # reservation and the DNS record cannot disagree with what the guest
-        # actually holds.
-        dhcp          = true
-        reserved_host = peer.suffix
+        # The address is DERIVED, not hand-typed: cidrhost() over the cluster's
+        # own VLAN CIDR and the peer suffix. It appears in exactly one place —
+        # here — and nothing mirrors it into a reservation or a separately
+        # published record, so there is no second copy to disagree with.
+        #
+        # (This briefly moved to dhcp + a reserved octet. That was the wrong
+        # direction twice over: it made a critical service's address depend on a
+        # lease, and it did so by declaring the address a second and third time,
+        # in the controller's reservation and the DNS zone.)
+        ip_config = {
+          ipv4_address = format(
+            "%s/%s",
+            cidrhost(local.deployment.network_cidrs[local.openbao_cluster.vlan], peer.suffix),
+            split("/", local.deployment.network_cidrs[local.openbao_cluster.vlan])[1],
+          )
+        }
         root_disk = {
           size         = tonumber(local.openbao_cluster.root_disk.size)
           datastore_id = try(local.openbao_cluster.root_disk_datastore_by_node[peer.node_name], try(local.openbao_cluster.root_disk.datastore_id, null))

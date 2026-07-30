@@ -63,7 +63,7 @@ module "vms" {
         ipv4_gateway = local.vm_gateway[k]
       }
       # NIC onto the VM's service VLAN; DHCP-first VMs get a deterministic MAC
-      # (local.vm_mac) for a stable reservation, same pattern as containers.
+      # (local.vm_mac) so the lease survives a rebuild, same pattern as containers.
       network_interfaces = [
         for ni in v.network_interfaces : merge(ni, {
           vlan_id     = lookup(var.vlan_ids, v.vlan, null)
@@ -109,8 +109,9 @@ module "containers" {
         ipv4_gateway = local.container_gateway[k]
       }
       # Tag every NIC onto the LXC's service VLAN (802.1Q id from var.vlan_ids).
-      # DHCP-first guests also get a deterministic MAC (local.container_mac) so
-      # tofu-unifi can pin a stable DHCP reservation; static guests keep a null MAC
+      # DHCP-first guests also get a deterministic MAC (local.container_mac) so a
+      # rebuilt guest renews the SAME lease and keeps its address and its name —
+      # nothing reserves an address for it. Static guests keep a null MAC
       # (provider auto-generates) so they are not replaced.
       network_interfaces = [
         for ni in v.network_interfaces : merge(ni, {

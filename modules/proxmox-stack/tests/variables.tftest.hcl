@@ -497,12 +497,11 @@ run "ai_runner_with_unknown_profile_tag_rejected" {
   variables {
     containers = {
       agent-1 = {
-        vm_id         = 500101
-        hostname      = "agent-1"
-        vlan          = "ai"
-        dhcp          = true
-        reserved_host = 101
-        tags          = ["terraform", "container", "ai", "ai-runner", "ai-proxeed"]
+        vm_id    = 500101
+        hostname = "agent-1"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container", "ai", "ai-runner", "ai-proxeed"]
       }
     }
   }
@@ -518,12 +517,11 @@ run "ai_runner_with_no_profile_tag_rejected" {
   variables {
     containers = {
       agent-1 = {
-        vm_id         = 500101
-        hostname      = "agent-1"
-        vlan          = "ai"
-        dhcp          = true
-        reserved_host = 101
-        tags          = ["terraform", "container", "ai", "ai-runner"]
+        vm_id    = 500101
+        hostname = "agent-1"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container", "ai", "ai-runner"]
       }
     }
   }
@@ -539,12 +537,11 @@ run "ai_runner_with_two_profile_tags_rejected" {
   variables {
     containers = {
       agent-1 = {
-        vm_id         = 500101
-        hostname      = "agent-1"
-        vlan          = "ai"
-        dhcp          = true
-        reserved_host = 101
-        tags          = ["terraform", "container", "ai", "ai-runner", "ai-proxied", "ai-full-net"]
+        vm_id    = 500101
+        hostname = "agent-1"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container", "ai", "ai-runner", "ai-proxied", "ai-full-net"]
       }
     }
   }
@@ -561,28 +558,25 @@ run "agent_pool_with_squid_accepted" {
   variables {
     containers = {
       agent-1 = {
-        vm_id         = 500101
-        hostname      = "agent-1"
-        vlan          = "ai"
-        dhcp          = true
-        reserved_host = 101
-        tags          = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
+        vm_id    = 500101
+        hostname = "agent-1"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
       }
       agent-2 = {
-        vm_id         = 500102
-        hostname      = "agent-2"
-        vlan          = "ai"
-        dhcp          = true
-        reserved_host = 102
-        tags          = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
+        vm_id    = 500102
+        hostname = "agent-2"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
       }
       squid = {
-        vm_id         = 500110
-        hostname      = "squid"
-        vlan          = "ai"
-        dhcp          = true
-        reserved_host = 110
-        tags          = ["terraform", "container", "ai", "squid"]
+        vm_id    = 500110
+        hostname = "squid"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container", "ai", "squid"]
       }
     }
   }

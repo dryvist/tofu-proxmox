@@ -57,12 +57,25 @@ Special-purpose VLANs sit **outside** the tier numbering: `1` Default, `5` Manag
 ## Addressing: DHCP / DNS-first, with a static exception
 
 Guests do not carry hardcoded IPs. The default is **DHCP + DNS-first**: a guest is referenced
-everywhere by `{hostname}.{subdomain}` and DNS owns the actual lease. In `deployment.json` a
-DHCP-first guest sets `dhcp: true` (+ optional `reserved_host` octet for a deterministic
-DHCP reservation pinned by tofu-unifi). IaC carries hostnames, not octets.
+everywhere by `{hostname}.{subdomain}`, and the lease is the only authority for its address.
+In `deployment.json` a DHCP-first guest sets `dhcp: true` and declares **nothing else about
+its address** — no octet, no reservation. IaC carries hostnames, not octets.
 
-The **exception** is core gear that must be reachable *before* DNS is up — most importantly
-**DNS servers**. These pin a static `ip_config.ipv4_address` instead.
+That is the whole mechanism, and the reason it is so small: the gateway answers DNS for the
+clients in its own lease table, so a leased guest is reachable by name with its address
+written down in exactly one place — the lease itself.
+
+> **Do not reintroduce a reserved octet.** A `reserved_host` field used to sit here, pinning a
+> controller-side DHCP reservation and a published A record to a hand-chosen octet. That put one
+> address in three systems — this repo, the controller, and the DNS zone — any two of which could
+> disagree, and repeatedly did. A reservation adds nothing a lease does not already provide,
+> because the name resolves either way.
+
+The **exception** is **network and critical guests** — resolvers, ingress/load balancers, and the
+secrets cluster. They pin a static `ip_config.ipv4_address` (derived from the VMID, not typed by
+hand), for two reasons: they must be reachable *before* DNS is up, and every other guest points at
+them, so an address change under a lease renewal would force a fleet-wide re-converge. Their
+address still lives in exactly one place — the guest declaration — and nothing mirrors it.
 
 How `locals.tf` resolves a guest's address (`container_ipv4`):
 
