@@ -95,14 +95,31 @@ locals {
   # VGA type validation helper
   valid_vga_types = ["std", "cirrus", "vmware", "qxl"]
 
-  # Resolver list for guest cloud-init DNS: every technitium-dns* node (each on
-  # its own Proxmox host) for real cross-host HA. Derived via container_ipv4
-  # (honors static ip pins; no literal IPs in-repo) and self-extending. Pi-hole
-  # is excluded — never brought up, VMID-derived IP was the 2026-07-19 outage.
+  # Resolver list for guest DNS: every resolver instance (one per Proxmox host)
+  # for real cross-host HA. Every guest receives the WHOLE list and its stub
+  # resolver fails over between entries natively — which is exactly why
+  # resolvers take unique addresses and never share one.
+  #
+  # Selected by the `dns` tag, NOT by a name prefix. The prefix form
+  # (`^technitium-dns`) silently excluded any instance named under the current
+  # law, where the host digit and instance counter follow the app name. A
+  # correctly-named new resolver would therefore have been given its own
+  # address and then reached by nobody, with no error raised anywhere — and the
+  # observable workaround for that invisibility is to pin the new instance to a
+  # retired one's address, which is how two containers came to be statically
+  # configured on a single IP.
+  #
+  # A tag survives renames; a name prefix encodes the naming law into a regex
+  # and breaks the moment that law moves. Selection is unchanged today
+  # (asserted in tests/dns_resolver_selection.tftest.hcl); the coupling is gone.
+  #
+  # Derived via container_ipv4 (honors static pins; no literal IPs in-repo) and
+  # self-extending. Pi-hole is excluded — never brought up, VMID-derived IP was
+  # the 2026-07-19 outage.
   dns_servers = [
     for name in sort(keys(var.containers)) :
     split("/", local.container_ipv4[name])[0]
-    if can(regex("^technitium-dns", name))
+    if contains(coalesce(try(var.containers[name].tags, null), []), "dns")
   ]
 
   # Internal networks for guest-firewall source scoping — derived from the
