@@ -26,7 +26,7 @@ OpenBao AppRole login
 secret/platform/terrakube/main
     → TF_CLOUD_HOSTNAME, TF_CLOUD_ORGANIZATION  (passed to cloud {} block)
     ↓
-tofu init / tofu plan / tofu apply
+tofu init / tofu plan  (apply = Terrakube job, confirmed in the workspace UI)
     (authenticates via ~/.terraform.d/credentials.tfrc.json from human tofu login)
 ```
 

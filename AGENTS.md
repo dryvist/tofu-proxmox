@@ -160,11 +160,11 @@ To sync manually after importing state without applying, see
 Static checks (`tofu fmt -check`, `tofu validate`, `tofu test`) run
 automatically in pre-commit and CI — no manual invocation needed.
 
-Credentialed operations (`tofu plan` against the live state
-backend, `tofu apply`) only run in CI under OIDC, or interactively
-when explicitly preparing to apply. Do not gate commits on them.
+Credentialed operations (`tofu plan` against the live state backend) run
+interactively when explicitly preparing to apply; the apply itself is a
+Terrakube job (see above). Do not gate commits on them.
 
-> **Never run `tofu apply -target=...`.** A partial apply still runs
+> **Never apply a targeted (`-target=...`) plan.** A partial apply still runs
 > the inventory publish (see above) with an incomplete `ansible_inventory`,
 > overwriting the full published artifact that all three consumer repos read.
 > Always apply the whole plan.
