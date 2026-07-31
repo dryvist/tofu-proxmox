@@ -842,15 +842,16 @@ run "media_container_ids_excludes_vpn_tagged_downloader" {
 # stacked on one node, adding a single voter buys nothing because quorum rises
 # with it. Only the second added voter creates real slack.
 #
-# The two lopsided fixtures are expected to trip check.openbao_voter_concentration
-# — that firing IS the assertion. vm_ids here are the mgmt octet each voter owns,
+# The two lopsided fixtures are expected to fail the
+# terraform_data.openbao_voter_spread_guard precondition (a hard plan error
+# since the advisory check was converted) — that failure IS the assertion. vm_ids here are the mgmt octet each voter owns,
 # because the module derives guest IPs with cidrhost(): a real six-digit VMID does
 # not fit a /24, and the containers variable rejects anything below 100.
 
 run "openbao_concentration_seven_voters_three_on_one_node_has_no_headroom" {
   command = plan
 
-  expect_failures = [check.openbao_voter_concentration]
+  expect_failures = [terraform_data.openbao_voter_spread_guard]
 
   variables {
     containers = {
@@ -879,7 +880,7 @@ run "openbao_concentration_seven_voters_three_on_one_node_has_no_headroom" {
 run "openbao_concentration_one_added_voter_still_has_no_headroom" {
   command = plan
 
-  expect_failures = [check.openbao_voter_concentration]
+  expect_failures = [terraform_data.openbao_voter_spread_guard]
 
   variables {
     containers = {

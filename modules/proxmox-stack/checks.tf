@@ -32,9 +32,16 @@
 # and tolerating 4 requires M >= 9. Beyond one-node tolerance the answer is more
 # nodes, or an out-of-band restore path — not more voters.
 #
-# Advisory `check` rather than a hard validation: a hard error would block the
-# very applies that fix the spread, and would fail closed on a cluster that is
-# merely suboptimal rather than broken.
+# Hard precondition, not the advisory `check` this started as: a failed check
+# only WARNS (verified on the pinned OpenTofu 1.11 — the plan completes with
+# exit 0), so a plan concentrating the secrets cluster's voters onto one node
+# applied clean. The original fail-closed worry ("a hard error would block the
+# very applies that fix the spread") does not hold for config-driven
+# evaluation: the condition sees the PLANNED voter map, and a fix-the-spread
+# plan has a healthy planned map. What a hard error does block is a plan whose
+# desired end state is itself concentrated (e.g. evacuating a node without
+# adding voters elsewhere in the same change) — which is the plan this exists
+# to stop.
 locals {
   # The node each OpenBao voter lands on. node_name is optional on a container
   # and falls back to the stack default, exactly as the container resource does.
@@ -53,12 +60,18 @@ locals {
   ])...)
 }
 
-check "openbao_voter_concentration" {
-  assert {
-    condition = (
-      local.openbao_voter_count == 0 ||
-      local.openbao_voters_after_worst_node_loss > local.openbao_quorum
-    )
-    error_message = "OpenBao Raft voter concentration: ${local.openbao_voter_count} voters need a quorum of ${local.openbao_quorum}, but losing the single node carrying the most of them leaves only ${local.openbao_voters_after_worst_node_loss}. Spread voters over more nodes until a one-node loss leaves at least one voter above quorum. Adding one voter typically does not help — it raises quorum too."
+# terraform_data is a provider-less plan-time anchor: its precondition is the
+# assertion, evaluated against the planned voter map on every plan/apply.
+resource "terraform_data" "openbao_voter_spread_guard" {
+  input = local.openbao_voters_after_worst_node_loss
+
+  lifecycle {
+    precondition {
+      condition = (
+        local.openbao_voter_count == 0 ||
+        local.openbao_voters_after_worst_node_loss > local.openbao_quorum
+      )
+      error_message = "OpenBao Raft voter concentration: ${local.openbao_voter_count} voters need a quorum of ${local.openbao_quorum}, but losing the single node carrying the most of them leaves only ${local.openbao_voters_after_worst_node_loss}. Spread voters over more nodes until a one-node loss leaves at least one voter above quorum. Adding one voter typically does not help — it raises quorum too."
+    }
   }
 }

@@ -186,6 +186,13 @@ For slow operations and "context deadline exceeded" debugging:
 
 - Modular resource definitions; document variables with descriptions +
   validation; mark secrets `sensitive = true`.
+- **Never use a `check` block for a load-bearing assertion.** A failed check
+  only WARNS — the plan completes with exit 0 (verified on the pinned
+  OpenTofu 1.11) — so the guard looks present and does nothing, the same
+  silent-success shape the assertions exist to catch. Use a
+  `precondition`/`postcondition` (or variable `validation`), which fail the
+  plan. `check` is acceptable only for genuinely advisory telemetry where
+  proceeding is correct.
 - Terrakube state encrypted and restricted to workspace-scoped identities.
 - Never update VMs directly; use OpenTofu or Ansible.
 - Ansible: roles under `ansible/roles/` with Molecule tests; collections

@@ -73,17 +73,32 @@ data "aws_s3_object" "deployment" {
   bucket = var.deployment_bucket
   key    = var.deployment_key
 
+  # Both guards below are postconditions rather than `check` blocks: a failed
+  # check only WARNS (verified on the pinned OpenTofu 1.11 — the plan completes
+  # with exit 0), while a postcondition fails the plan hard, against the real
+  # fetched object, on every run. They read self.body because a local derived
+  # from this data source cannot be referenced from its own lifecycle block.
   lifecycle {
+    # Deployment contract: a truncated or half-written object would otherwise
+    # proceed to plan the destruction of every guest it no longer mentions.
+    postcondition {
+      condition = (
+        try(length(jsondecode(self.body).containers), 0) > 0 &&
+        try(length(jsondecode(self.body).nodes), 0) > 0 &&
+        try(length(jsondecode(self.body).pools), 0) > 0 &&
+        try(jsondecode(self.body).proxmox_node, "") != "" &&
+        try(jsondecode(self.body).domain, "") != "" &&
+        try(length(jsondecode(self.body).network_cidrs), 0) > 0 &&
+        try(jsondecode(self.body).vm_ssh_public_key, "") != ""
+      )
+      error_message = "The RustFS deployment object must contain non-empty containers, nodes, pools, proxmox_node, domain, network_cidrs, and vm_ssh_public_key before a plan can run. An empty or truncated object would otherwise plan the destruction of every guest it no longer mentions."
+    }
+
     # A node_services per_node key that is not a key of `nodes` does not error:
     # the generator's `contains(keys(per_node), node_name)` filter simply skips
     # it, so the instance is SILENTLY DROPPED from the plan — the plan looks
     # fine, the guest just never exists. JSON Schema cannot express this
-    # cross-sibling constraint, and a `check` block only WARNS (verified on the
-    # pinned OpenTofu 1.11: the plan completes with a warning), so this is a
-    # postcondition — it fails the plan hard, against the real fetched object,
-    # on every run. It reads self.body rather than local.deployment because a
-    # local derived from this data source cannot be referenced from its own
-    # lifecycle block.
+    # cross-sibling constraint.
     postcondition {
       condition = alltrue([
         for service_name, tmpl in try(jsondecode(self.body).node_services, {}) :
@@ -164,21 +179,6 @@ locals {
     local.openbao_generated_containers,
     local.node_service_containers,
   )
-}
-
-check "deployment_contract" {
-  assert {
-    condition = (
-      try(length(local.deployment.containers), 0) > 0 &&
-      try(length(local.deployment.nodes), 0) > 0 &&
-      try(length(local.deployment.pools), 0) > 0 &&
-      try(local.deployment.proxmox_node, "") != "" &&
-      try(local.deployment.domain, "") != "" &&
-      try(length(local.deployment.network_cidrs), 0) > 0 &&
-      try(local.deployment.vm_ssh_public_key, "") != ""
-    )
-    error_message = "The RustFS deployment object must contain non-empty containers, nodes, pools, proxmox_node, domain, network_cidrs, and vm_ssh_public_key before a plan can run."
-  }
 }
 
 module "homelab" {
