@@ -18,6 +18,15 @@ variable "vms" {
     # (the primary node). Set to "proxmox-2"/"proxmox-3" to place a VM on another cluster node.
     node_name = optional(string)
 
+    # Whether a change to node_name migrates the VM or rebuilds it. The provider
+    # decides this in CustomizeDiff, not in the schema: a node_name change forces
+    # replacement UNLESS migrate is true. So moving a VM between nodes without
+    # this set destroys its disks and reclones from the template — measured on a
+    # 150 GB guest, which planned "must be replaced" until migrate was declared.
+    # Left false by default: replacement is the safe outcome for a guest whose
+    # disks are disposable, and an accidental migration of a large VM is not.
+    migrate = optional(bool, false)
+
     # DHCP/DNS-first addressing (optional), mirroring containers. dhcp = true
     # means no vm_id-derived IP — the lease provides the address and the guest is
     # reached by {name}.{domain}; this is what lets a VM carry a 6-7-digit
