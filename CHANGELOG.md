@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.76.5](https://github.com/dryvist/tofu-proxmox/compare/v1.76.4...v1.76.5) (2026-07-31)
+
+
+### Bug Fixes
+
+* **checks:** convert both advisory check blocks to hard plan failures ([#802](https://github.com/dryvist/tofu-proxmox/issues/802)) ([794849b](https://github.com/dryvist/tofu-proxmox/commit/794849bda37a0758c5e24bb7f652dee34bd9a86d))
+
 ## [1.76.4](https://github.com/dryvist/tofu-proxmox/compare/v1.76.3...v1.76.4) (2026-07-31)
 
 
