@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.76.4](https://github.com/dryvist/tofu-proxmox/compare/v1.76.3...v1.76.4) (2026-07-31)
+
+
+### Bug Fixes
+
+* **addressing:** delete reserved_host — a lease is the only authority for a leased address ([#791](https://github.com/dryvist/tofu-proxmox/issues/791)) ([a89e66c](https://github.com/dryvist/tofu-proxmox/commit/a89e66cb1c8566eeb5dcf1218dfc52afa33497fc))
+* **node-services:** fail the plan on a per_node key that names no known node ([#801](https://github.com/dryvist/tofu-proxmox/issues/801)) ([bdaf493](https://github.com/dryvist/tofu-proxmox/commit/bdaf493f3e991b96ad208cc963a4e5eda32a322d))
+* **node-services:** stop emitting reserved_host — the schema no longer declares it ([#800](https://github.com/dryvist/tofu-proxmox/issues/800)) ([846348c](https://github.com/dryvist/tofu-proxmox/commit/846348c57d1faca71702dbc1201ae515badadef0))
+
 ## [1.76.3](https://github.com/dryvist/tofu-proxmox/compare/v1.76.2...v1.76.3) (2026-07-31)
 
 
