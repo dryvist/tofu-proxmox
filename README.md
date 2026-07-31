@@ -57,15 +57,27 @@ private `tofu-proxmox` Terrakube workspace.
 
 ## How to apply / redeploy
 
-Authenticate once per machine, then plan and apply like any other `tofu`
-command — the run executes remotely on a Terrakube executor, so no local
-Proxmox, AWS, or GitHub credential is ever needed:
+Authenticate once per machine, then plan like any other `tofu` command — the run
+executes remotely on a Terrakube executor, so no local Proxmox, AWS, or GitHub
+credential is ever needed:
 
 ```bash
 tofu login terrakube-api.<domain>   # one-time per machine
 tofu init
-tofu apply
+tofu plan
 ```
+
+**Applying is not a CLI step.** Every workspace sets `allowRemoteApply = false`,
+so a CLI-driven apply is refused server-side regardless of who runs it. An apply
+is a **Terrakube job**, started from the Terrakube UI or its API, and executed by
+Terrakube itself — which is what puts every apply in the run audit, under the
+workspace lock, and on the workspace's own OpenBao workload identity instead of
+an operator's ambient shell.
+
+Run the CLI half from the `iac-platform` guest rather than a macOS workstation:
+macOS Local Network privacy denies the ad-hoc-signed `tofu` binary, and the
+symptom is a misleading `connect: no route to host` against a Terrakube that is
+in fact healthy.
 
 Full runbook (access model, credential lifecycle, token scoping):
 [docs.jacobpevans.com/infrastructure/applying-via-terrakube](https://docs.jacobpevans.com/infrastructure/applying-via-terrakube).
