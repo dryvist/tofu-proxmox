@@ -32,9 +32,16 @@
 # and tolerating 4 requires M >= 9. Beyond one-node tolerance the answer is more
 # nodes, or an out-of-band restore path — not more voters.
 #
-# Advisory `check` rather than a hard validation: a hard error would block the
-# very applies that fix the spread, and would fail closed on a cluster that is
-# merely suboptimal rather than broken.
+# Hard precondition, not the advisory `check` this started as: a failed check
+# only WARNS (verified on the pinned OpenTofu 1.11 — the plan completes with
+# exit 0), so a plan concentrating the secrets cluster's voters onto one node
+# applied clean. The original fail-closed worry ("a hard error would block the
+# very applies that fix the spread") does not hold for config-driven
+# evaluation: the condition sees the PLANNED voter map, and a fix-the-spread
+# plan has a healthy planned map. What a hard error does block is a plan whose
+# desired end state is itself concentrated (e.g. evacuating a node without
+# adding voters elsewhere in the same change) — which is the plan this exists
+# to stop.
 locals {
   # The node each OpenBao voter lands on. node_name is optional on a container
   # and falls back to the stack default, exactly as the container resource does.
@@ -53,12 +60,33 @@ locals {
   ])...)
 }
 
-check "openbao_voter_concentration" {
-  assert {
-    condition = (
-      local.openbao_voter_count == 0 ||
-      local.openbao_voters_after_worst_node_loss > local.openbao_quorum
-    )
-    error_message = "OpenBao Raft voter concentration: ${local.openbao_voter_count} voters need a quorum of ${local.openbao_quorum}, but losing the single node carrying the most of them leaves only ${local.openbao_voters_after_worst_node_loss}. Spread voters over more nodes until a one-node loss leaves at least one voter above quorum. Adding one voter typically does not help — it raises quorum too."
+# Deliberate degraded-window escape hatch: some maintenance plans legitimately
+# WANT a temporarily concentrated end state (e.g. evacuating a node's voters
+# before its rebuild, with the respread landing in a later apply). Setting this
+# acknowledges, for this run, that losing one node may leave the OpenBao
+# cluster at or below Raft quorum — a sealed secrets cluster, not a degraded
+# one. Default false; set per-run (TF_VAR_...) for the window and unset after.
+# This is an acknowledgement on top of a hard failure, never a return to
+# advisory severity.
+variable "openbao_accept_quorum_loss_on_node_failure" {
+  description = "Acknowledge that the planned OpenBao voter placement may not survive a one-node loss (cluster at or below Raft quorum). Only for a deliberate degraded maintenance window; default false."
+  type        = bool
+  default     = false
+}
+
+# terraform_data is a provider-less plan-time anchor: its precondition is the
+# assertion, evaluated against the planned voter map on every plan/apply.
+resource "terraform_data" "openbao_voter_spread_guard" {
+  input = local.openbao_voters_after_worst_node_loss
+
+  lifecycle {
+    precondition {
+      condition = (
+        var.openbao_accept_quorum_loss_on_node_failure ||
+        local.openbao_voter_count == 0 ||
+        local.openbao_voters_after_worst_node_loss > local.openbao_quorum
+      )
+      error_message = "OpenBao Raft voter concentration: ${local.openbao_voter_count} voters need a quorum of ${local.openbao_quorum}, but losing the single node carrying the most of them leaves only ${local.openbao_voters_after_worst_node_loss}. Spread voters over more nodes until a one-node loss leaves at least one voter above quorum. Adding one voter typically does not help — it raises quorum too. For a DELIBERATE degraded maintenance window only, set openbao_accept_quorum_loss_on_node_failure = true to acknowledge that a one-node loss may seal the cluster."
+    }
   }
 }
