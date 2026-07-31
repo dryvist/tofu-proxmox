@@ -212,4 +212,5 @@ posture.
 
 All guests, pools, and firewall rules are 100% Terraform-managed; the live set of resources is
 defined in `deployment.json` and surfaced to downstream Ansible via the `ansible_inventory`
-output. Deploy from scratch with `tofu apply`.
+output. Deploy from scratch by planning remotely and confirming the apply as
+a Terrakube job.
