@@ -10,8 +10,11 @@ terraform {
 resource "proxmox_virtual_environment_vm" "vms" {
   for_each = var.vms
 
-  vm_id       = each.value.vm_id
-  node_name   = each.value.node_name
+  vm_id     = each.value.vm_id
+  node_name = each.value.node_name
+  # Governs what a node_name change means: migrate the guest, or destroy and
+  # recreate it. The provider forces replacement unless this is true.
+  migrate     = each.value.migrate
   name        = each.value.name
   description = each.value.description != null ? each.value.description : "TF VM ${each.value.name} - ${var.environment}"
 
@@ -167,13 +170,20 @@ resource "proxmox_virtual_environment_vm" "vms" {
   }
 
   # Timeout configurations - operation-level timeouts
-  timeout_clone       = 1800 # 30 min - disk copy can be slow
-  timeout_create      = 1800 # 30 min - cloud-init execution
-  timeout_migrate     = 900  # 15 min - standard
-  timeout_reboot      = 900  # 15 min - standard
-  timeout_shutdown_vm = 900  # 15 min - standard
-  timeout_start_vm    = 900  # 15 min - standard
-  timeout_stop_vm     = 900  # 15 min - standard
+  timeout_clone  = 1800 # 30 min - disk copy can be slow
+  timeout_create = 1800 # 30 min - cloud-init execution
+  # A migration moves the guest's disks, so it scales with disk size, not with
+  # a fixed "operation" cost like the others here. 15 min only covered a
+  # migration that never actually ran: the first VM this repo moves carries
+  # 150 GB, which does not finish in that window on a 1 GbE path. A timeout is
+  # an upper bound before tofu declares failure, not a delay, so a generous
+  # value costs nothing on fast paths and prevents a half-migrated guest.
+  timeout_migrate = 7200 # 2 h - scales with disk size, not a fixed op
+
+  timeout_reboot      = 900 # 15 min - standard
+  timeout_shutdown_vm = 900 # 15 min - standard
+  timeout_start_vm    = 900 # 15 min - standard
+  timeout_stop_vm     = 900 # 15 min - standard
 
   lifecycle {
     create_before_destroy = false

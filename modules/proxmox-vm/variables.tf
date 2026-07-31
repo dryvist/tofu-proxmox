@@ -10,6 +10,11 @@ variable "vms" {
     # Node configuration
     node_name = string
 
+    # See the extended rationale on this field in the proxmox-stack VM schema.
+    # Short version: the provider forces replacement on a node_name change
+    # unless this is true, so a move without it destroys the VM's disks.
+    migrate = optional(bool, false)
+
     # Resource configuration
     cpu_cores = optional(number, 2)
     # cpu_type: "host" for single-node homelab stability (zero CPU emulation overhead)
