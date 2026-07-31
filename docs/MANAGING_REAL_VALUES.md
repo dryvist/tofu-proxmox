@@ -97,8 +97,12 @@ terraform.tfvars.prod # Gitignored via *.tfvars
 
 # Use with:
 tofu plan -var-file=terraform.tfvars.dev
-tofu apply -var-file=terraform.tfvars.prod
 ```
+
+Note there is no `tofu apply` line here: applies are Terrakube jobs, refused at
+the API for any CLI caller (`allowRemoteApply = false`). A var-file selects what
+a *plan* evaluates; the job that applies it carries the workspace's own
+variables.
 
 ### Method 2: Worktree-Based Configuration (Recommended)
 
