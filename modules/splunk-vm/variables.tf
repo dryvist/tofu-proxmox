@@ -166,12 +166,6 @@ variable "memory" {
   }
 }
 
-variable "dns_servers" {
-  description = "Resolver IPs for guest cloud-init DNS. Derived by the root module from the DNS containers' addresses — never literals."
-  type        = list(string)
-  default     = []
-}
-
 variable "startup_delay" {
   description = "Delay in seconds after this VM starts before the next tier starts"
   type        = number

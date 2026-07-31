@@ -82,12 +82,11 @@ run "haproxy_tagged_container_in_pipeline_ids" {
   variables {
     containers = {
       "haproxy" = {
-        vm_id         = 421040
-        dhcp          = true
-        reserved_host = 21
-        hostname      = "haproxy"
-        vlan          = "siem"
-        tags          = ["terraform", "haproxy", "container"]
+        vm_id    = 421040
+        dhcp     = true
+        hostname = "haproxy"
+        vlan     = "siem"
+        tags     = ["terraform", "haproxy", "container"]
       }
     }
   }
@@ -109,12 +108,11 @@ run "cribl_edge_tagged_container_in_pipeline_ids" {
   variables {
     containers = {
       "cribl-edge" = {
-        vm_id         = 423040
-        dhcp          = true
-        reserved_host = 23
-        hostname      = "cribl-edge"
-        vlan          = "siem"
-        tags          = ["terraform", "cribl", "edge", "container"]
+        vm_id    = 423040
+        dhcp     = true
+        hostname = "cribl-edge"
+        vlan     = "siem"
+        tags     = ["terraform", "cribl", "edge", "container"]
       }
     }
   }
@@ -209,12 +207,11 @@ run "cribl_without_edge_not_in_pipeline_ids" {
   variables {
     containers = {
       "cribl-stream" = {
-        vm_id         = 425040
-        dhcp          = true
-        reserved_host = 25
-        hostname      = "cribl-stream"
-        vlan          = "siem"
-        tags          = ["terraform", "cribl", "stream", "container"]
+        vm_id    = 425040
+        dhcp     = true
+        hostname = "cribl-stream"
+        vlan     = "siem"
+        tags     = ["terraform", "cribl", "stream", "container"]
       }
     }
   }
@@ -233,12 +230,11 @@ run "cribl_stream_tagged_container_in_cribl_stream_ids" {
   variables {
     containers = {
       "cribl-stream" = {
-        vm_id         = 425040
-        dhcp          = true
-        reserved_host = 25
-        hostname      = "cribl-stream"
-        vlan          = "siem"
-        tags          = ["terraform", "cribl", "stream", "pipeline", "container"]
+        vm_id    = 425040
+        dhcp     = true
+        hostname = "cribl-stream"
+        vlan     = "siem"
+        tags     = ["terraform", "cribl", "stream", "pipeline", "container"]
       }
     }
   }
@@ -265,12 +261,11 @@ run "cribl_edge_not_in_cribl_stream_ids" {
   variables {
     containers = {
       "cribl-edge-01" = {
-        vm_id         = 423040
-        dhcp          = true
-        reserved_host = 23
-        hostname      = "cribl-edge-01"
-        vlan          = "siem"
-        tags          = ["terraform", "cribl", "edge", "pipeline", "container"]
+        vm_id    = 423040
+        dhcp     = true
+        hostname = "cribl-edge-01"
+        vlan     = "siem"
+        tags     = ["terraform", "cribl", "edge", "pipeline", "container"]
       }
     }
   }
@@ -294,12 +289,11 @@ run "object_storage_tagged_container_in_s3_ids" {
   variables {
     containers = {
       "s3" = {
-        vm_id         = 990004
-        hostname      = "object-storage"
-        vlan          = "siem"
-        dhcp          = true
-        reserved_host = 20
-        tags          = ["terraform", "container", "object-storage", "storage", "infrastructure"]
+        vm_id    = 990004
+        hostname = "object-storage"
+        vlan     = "siem"
+        dhcp     = true
+        tags     = ["terraform", "container", "object-storage", "storage", "infrastructure"]
       }
     }
   }
@@ -331,28 +325,25 @@ run "pipeline_and_stream_containers_mutually_exclusive" {
   variables {
     containers = {
       "haproxy" = {
-        vm_id         = 421040
-        dhcp          = true
-        reserved_host = 21
-        hostname      = "haproxy"
-        vlan          = "siem"
-        tags          = ["terraform", "haproxy", "pipeline", "container"]
+        vm_id    = 421040
+        dhcp     = true
+        hostname = "haproxy"
+        vlan     = "siem"
+        tags     = ["terraform", "haproxy", "pipeline", "container"]
       }
       "cribl-edge-01" = {
-        vm_id         = 423040
-        dhcp          = true
-        reserved_host = 23
-        hostname      = "cribl-edge-01"
-        vlan          = "siem"
-        tags          = ["terraform", "cribl", "edge", "pipeline", "container"]
+        vm_id    = 423040
+        dhcp     = true
+        hostname = "cribl-edge-01"
+        vlan     = "siem"
+        tags     = ["terraform", "cribl", "edge", "pipeline", "container"]
       }
       "cribl-stream" = {
-        vm_id         = 425040
-        dhcp          = true
-        reserved_host = 25
-        hostname      = "cribl-stream"
-        vlan          = "siem"
-        tags          = ["terraform", "cribl", "stream", "pipeline", "container"]
+        vm_id    = 425040
+        dhcp     = true
+        hostname = "cribl-stream"
+        vlan     = "siem"
+        tags     = ["terraform", "cribl", "stream", "pipeline", "container"]
       }
     }
   }
@@ -433,20 +424,18 @@ run "honeypot_tagged_containers_split_tripwire_vs_notify" {
   variables {
     containers = {
       "honeypot-tw-apps" = {
-        vm_id         = 695000
-        hostname      = "honeypot-tw-apps"
-        vlan          = "apps"
-        dhcp          = true
-        reserved_host = 66
-        tags          = ["terraform", "container", "honeypot", "docker"]
+        vm_id    = 695000
+        hostname = "honeypot-tw-apps"
+        vlan     = "apps"
+        dhcp     = true
+        tags     = ["terraform", "container", "honeypot", "docker"]
       }
       "honeypot-notify" = {
-        vm_id         = 492000
-        hostname      = "honeypot-notify"
-        vlan          = "mgmt"
-        dhcp          = true
-        reserved_host = 36
-        tags          = ["terraform", "container", "honeypot", "notify", "docker"]
+        vm_id    = 492000
+        hostname = "honeypot-notify"
+        vlan     = "mgmt"
+        dhcp     = true
+        tags     = ["terraform", "container", "honeypot", "notify", "docker"]
       }
     }
   }
@@ -498,20 +487,18 @@ run "postgres_and_nautobot_tags_filter_correctly" {
   variables {
     containers = {
       "postgres" = {
-        vm_id         = 303000
-        hostname      = "postgres"
-        vlan          = "data"
-        dhcp          = true
-        reserved_host = 51
-        tags          = ["terraform", "container", "postgres"]
+        vm_id    = 303000
+        hostname = "postgres"
+        vlan     = "data"
+        dhcp     = true
+        tags     = ["terraform", "container", "postgres"]
       }
       "nautobot" = {
-        vm_id         = 605000
-        hostname      = "nautobot"
-        vlan          = "apps"
-        dhcp          = true
-        reserved_host = 52
-        tags          = ["terraform", "container", "nautobot"]
+        vm_id    = 605000
+        hostname = "nautobot"
+        vlan     = "apps"
+        dhcp     = true
+        tags     = ["terraform", "container", "nautobot"]
       }
     }
   }
@@ -546,12 +533,11 @@ run "vikunja_tag_filters_correctly" {
   variables {
     containers = {
       "vikunja" = {
-        vm_id         = 605010
-        hostname      = "vikunja"
-        vlan          = "apps"
-        dhcp          = true
-        reserved_host = 53
-        tags          = ["terraform", "container", "vikunja"]
+        vm_id    = 605010
+        hostname = "vikunja"
+        vlan     = "apps"
+        dhcp     = true
+        tags     = ["terraform", "container", "vikunja"]
       }
     }
   }

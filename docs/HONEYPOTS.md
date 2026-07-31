@@ -52,8 +52,8 @@ uses the exact same Docker-in-LXC pattern as a tripwire — tag it `honeypot`.
 Honeypots follow the current 6-7-digit positional scheme
 (`[Tier][Sub-tier][Crit][OS][Instance][Env]`, see
 [INFRASTRUCTURE_NUMBERING.md](./INFRASTRUCTURE_NUMBERING.md)) and are
-**DHCP/DNS-first** (`dhcp: true` + a `reserved_host` octet; reached by
-`{hostname}.{subdomain}`). VMs now support this too — `locals.tf` short-circuits
+**DHCP/DNS-first** (`dhcp: true` and nothing else about the address — a plain
+pool lease; reached by `{hostname}.{subdomain}`). VMs now support this too — `locals.tf` short-circuits
 `cidrhost()` for any guest with `dhcp = true` or a static `ip_config`, so a VM
 can carry a 7-digit positional VMID (the T-Pot VM does).
 
@@ -63,9 +63,10 @@ the VM OS-digit `1`), **instance/env `0`**. A tripwire adopts the **tier of the
 VLAN it defends** (tier = VLAN ÷ 10; special VLANs 1/5/53 use the 7-digit prefix
 form), so the number tells you which segment it watches.
 
-> The VMIDs and `reserved_host` octets in `deployment.json.example` are
-> **illustrative** — reconcile every value against the live (gitignored)
-> `deployment.json` for collisions before applying.
+> The VMIDs in `deployment.json.example` are **illustrative** — reconcile every
+> value against the live (gitignored) `deployment.json` for collisions before
+> applying. Addresses need no reconciling: these guests take pool leases and
+> declare no address at all.
 
 ## Per-VLAN tripwire map
 
@@ -138,10 +139,10 @@ ingress table (`ingress.tf`).
 ## Adding / removing a sensor
 
 1. **Tripwire:** add a `honeypot-tw-<vlan>` container in `deployment.json`
-   (clone the `honeypot-tw-nonprod` example) with `dhcp: true`, a free
-   `reserved_host`, the VLAN's positional VMID, tags
-   `["terraform","container","docker","honeypot"]`, `pool_id: "security"`. The
-   firewall + inventory + DNS reservation follow automatically from the tags.
+   (clone the `honeypot-tw-nonprod` example) with `dhcp: true`, the VLAN's
+   positional VMID, tags `["terraform","container","docker","honeypot"]`,
+   `pool_id: "security"`. No address to pick: the firewall + inventory follow
+   from the tags, and the guest's name resolves off its lease.
 2. **Notify gateway / T-Pot:** already in the example — adjust `node_name` and
    resources to taste.
 3. Remove by deleting the entry; the tag-driven maps shrink automatically.

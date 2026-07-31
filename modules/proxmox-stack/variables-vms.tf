@@ -21,11 +21,11 @@ variable "vms" {
     # DHCP/DNS-first addressing (optional), mirroring containers. dhcp = true
     # means no vm_id-derived IP — the lease provides the address and the guest is
     # reached by {name}.{domain}; this is what lets a VM carry a 6-7-digit
-    # positional VMID (which would overflow the /24 host space). reserved_host is
-    # the host octet tofu-unifi pins the deterministic MAC to (and the DNS A
-    # record resolves to). Omit both for legacy ≤254 static-derived VMs.
-    dhcp          = optional(bool, false)
-    reserved_host = optional(number)
+    # positional VMID (which would overflow the /24 host space). The lease is the
+    # only authority for the address: nothing reserves it, and the gateway answers
+    # DNS for its own lease-table clients. See the extended rationale on the
+    # containers `dhcp` field in variables-containers.tf.
+    dhcp = optional(bool, false)
 
     # Resource configuration
     cpu_cores        = optional(number, 4)
