@@ -71,6 +71,16 @@
     "openbao_cluster": {
       "$ref": "#/definitions/openbao_cluster_input"
     },
+    "node_services": {
+      "type": "object",
+      "description": "Per-node (DaemonSet-style) service templates, keyed by service name. OpenTofu expands each into one container per node listed in per_node (locals-node-services.tf). `_`-prefixed keys are inline comment docs.",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/node_service_template"
+      }
+    },
     "proxmox_node": {
       "type": "string",
       "minLength": 1
@@ -81,6 +91,62 @@
     }
   },
   "definitions": {
+    "node_service_template": {
+      "type": "object",
+      "description": "One per-node service template. Only the shape the generator dereferences unconditionally is required; per_node keys MUST be keys of `nodes` — JSON Schema cannot express that cross-sibling constraint, so it is enforced by the postcondition on data.aws_s3_object.deployment in main.tf.",
+      "required": [
+        "vlan",
+        "per_node"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "vlan": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dhcp": {
+          "type": "boolean"
+        },
+        "name_prefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "container_defaults": {
+          "type": "object"
+        },
+        "per_node": {
+          "type": "object",
+          "description": "Node key -> instance allocation. `_`-prefixed keys are inline comment docs.",
+          "minProperties": 1,
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "suffix",
+              "vm_id"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "suffix": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "vm_id": {
+                "type": "integer",
+                "minimum": 100
+              },
+              "host_octet": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 254
+              }
+            }
+          }
+        }
+      }
+    },
     "container_input": {
       "type": "object",
       "description": "A single container's desired-state. Only the fields that break addressing/identity if absent are required; everything else is free.",
