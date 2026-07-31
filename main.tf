@@ -73,17 +73,32 @@ data "aws_s3_object" "deployment" {
   bucket = var.deployment_bucket
   key    = var.deployment_key
 
+  # Both guards below are postconditions rather than `check` blocks: a failed
+  # check only WARNS (verified on the pinned OpenTofu 1.11 — the plan completes
+  # with exit 0), while a postcondition fails the plan hard, against the real
+  # fetched object, on every run. They read self.body because a local derived
+  # from this data source cannot be referenced from its own lifecycle block.
   lifecycle {
+    # Deployment contract: a truncated or half-written object would otherwise
+    # proceed to plan the destruction of every guest it no longer mentions.
+    postcondition {
+      condition = (
+        try(length(jsondecode(self.body).containers), 0) > 0 &&
+        try(length(jsondecode(self.body).nodes), 0) > 0 &&
+        try(length(jsondecode(self.body).pools), 0) > 0 &&
+        try(jsondecode(self.body).proxmox_node, "") != "" &&
+        try(jsondecode(self.body).domain, "") != "" &&
+        try(length(jsondecode(self.body).network_cidrs), 0) > 0 &&
+        try(jsondecode(self.body).vm_ssh_public_key, "") != ""
+      )
+      error_message = "The RustFS deployment object must contain non-empty containers, nodes, pools, proxmox_node, domain, network_cidrs, and vm_ssh_public_key before a plan can run. An empty or truncated object would otherwise plan the destruction of every guest it no longer mentions."
+    }
+
     # A node_services per_node key that is not a key of `nodes` does not error:
     # the generator's `contains(keys(per_node), node_name)` filter simply skips
     # it, so the instance is SILENTLY DROPPED from the plan — the plan looks
     # fine, the guest just never exists. JSON Schema cannot express this
-    # cross-sibling constraint, and a `check` block only WARNS (verified on the
-    # pinned OpenTofu 1.11: the plan completes with a warning), so this is a
-    # postcondition — it fails the plan hard, against the real fetched object,
-    # on every run. It reads self.body rather than local.deployment because a
-    # local derived from this data source cannot be referenced from its own
-    # lifecycle block.
+    # cross-sibling constraint.
     postcondition {
       condition = alltrue([
         for service_name, tmpl in try(jsondecode(self.body).node_services, {}) :
@@ -166,59 +181,47 @@ locals {
   )
 }
 
-check "deployment_contract" {
-  assert {
-    condition = (
-      try(length(local.deployment.containers), 0) > 0 &&
-      try(length(local.deployment.nodes), 0) > 0 &&
-      try(length(local.deployment.pools), 0) > 0 &&
-      try(local.deployment.proxmox_node, "") != "" &&
-      try(local.deployment.domain, "") != "" &&
-      try(length(local.deployment.network_cidrs), 0) > 0 &&
-      try(local.deployment.vm_ssh_public_key, "") != ""
-    )
-    error_message = "The RustFS deployment object must contain non-empty containers, nodes, pools, proxmox_node, domain, network_cidrs, and vm_ssh_public_key before a plan can run."
-  }
-}
-
 module "homelab" {
   source = "./modules/proxmox-stack"
 
-  acme_accounts              = try(local.deployment.acme_accounts, {})
-  acme_certificates          = try(local.deployment.acme_certificates, {})
-  ansible_cloud_init_file    = "${path.root}/${try(local.deployment.ansible_cloud_init_file, "cloud-init/ansible-server-example.yml")}"
-  bridge                     = try(local.deployment.bridge, "vmbr0")
-  containers                 = local.containers
-  datastore_default          = try(local.deployment.datastore_default, "local-zfs")
-  datastore_id               = try(local.deployment.datastore_id, "local-zfs")
-  datastore_iso              = try(local.deployment.datastore_iso, "local")
-  datastores                 = try(local.deployment.datastores, {})
-  dns_plugins                = try(local.deployment.dns_plugins, {})
-  domain                     = local.deployment.domain
-  environment                = try(local.deployment.environment, "homelab")
-  host_services              = try(local.deployment.host_services, {})
-  network_cidrs              = local.deployment.network_cidrs
-  node_storage               = try(local.deployment.node_storage, {})
-  nodes                      = local.deployment.nodes
-  pools                      = local.deployment.pools
-  proxmox_ct_template_debian = try(local.deployment.proxmox_ct_template_debian, "debian-13-standard_13.1-2_amd64.tar.zst")
-  proxmox_iso_debian         = try(local.deployment.proxmox_iso_debian, "debian-13.2.0-amd64-netinst.iso")
-  proxmox_node               = local.deployment.proxmox_node
-  proxmox_ssh_host           = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_VE_HOSTNAME
-  proxmox_ssh_private_key    = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_PRIVATE_KEY
-  proxmox_ssh_username       = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_USERNAME
-  rack_servers               = try(local.deployment.rack_servers, {})
-  splunk_boot_disk_size      = try(local.deployment.splunk_boot_disk_size, 25)
-  splunk_bulk_disk_size      = try(local.deployment.splunk_bulk_disk_size, 2048)
-  splunk_cpu_cores           = try(local.deployment.splunk_cpu_cores, 8)
-  splunk_data_disk_size      = try(local.deployment.splunk_data_disk_size, 200)
-  splunk_fast_disk_size      = try(local.deployment.splunk_fast_disk_size, 1024)
-  splunk_memory              = try(local.deployment.splunk_memory, 12288)
-  splunk_vm_id               = try(local.deployment.splunk_vm_id, 99)
-  splunk_vm_name             = try(local.deployment.splunk_vm_name, "splunk-vm")
-  splunk_vm_pool_id          = try(local.deployment.splunk_vm_pool_id, "")
-  ssh_public_key             = try(local.deployment.ssh_public_key, "")
-  template_id                = try(local.deployment.template_id, 9201)
+  acme_accounts           = try(local.deployment.acme_accounts, {})
+  acme_certificates       = try(local.deployment.acme_certificates, {})
+  ansible_cloud_init_file = "${path.root}/${try(local.deployment.ansible_cloud_init_file, "cloud-init/ansible-server-example.yml")}"
+  bridge                  = try(local.deployment.bridge, "vmbr0")
+  containers              = local.containers
+  datastore_default       = try(local.deployment.datastore_default, "local-zfs")
+  datastore_id            = try(local.deployment.datastore_id, "local-zfs")
+  datastore_iso           = try(local.deployment.datastore_iso, "local")
+  datastores              = try(local.deployment.datastores, {})
+  dns_plugins             = try(local.deployment.dns_plugins, {})
+  domain                  = local.deployment.domain
+  environment             = try(local.deployment.environment, "homelab")
+  host_services           = try(local.deployment.host_services, {})
+  network_cidrs           = local.deployment.network_cidrs
+  node_storage            = try(local.deployment.node_storage, {})
+  nodes                   = local.deployment.nodes
+  # Degraded-window acknowledgement for the OpenBao voter-spread guard —
+  # per-run via TF_VAR_openbao_accept_quorum_loss_on_node_failure, default off.
+  openbao_accept_quorum_loss_on_node_failure = var.openbao_accept_quorum_loss_on_node_failure
+  pools                                      = local.deployment.pools
+  proxmox_ct_template_debian                 = try(local.deployment.proxmox_ct_template_debian, "debian-13-standard_13.1-2_amd64.tar.zst")
+  proxmox_iso_debian                         = try(local.deployment.proxmox_iso_debian, "debian-13.2.0-amd64-netinst.iso")
+  proxmox_node                               = local.deployment.proxmox_node
+  proxmox_ssh_host                           = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_VE_HOSTNAME
+  proxmox_ssh_private_key                    = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_PRIVATE_KEY
+  proxmox_ssh_username                       = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_USERNAME
+  rack_servers                               = try(local.deployment.rack_servers, {})
+  splunk_boot_disk_size                      = try(local.deployment.splunk_boot_disk_size, 25)
+  splunk_bulk_disk_size                      = try(local.deployment.splunk_bulk_disk_size, 2048)
+  splunk_cpu_cores                           = try(local.deployment.splunk_cpu_cores, 8)
+  splunk_data_disk_size                      = try(local.deployment.splunk_data_disk_size, 200)
+  splunk_fast_disk_size                      = try(local.deployment.splunk_fast_disk_size, 1024)
+  splunk_memory                              = try(local.deployment.splunk_memory, 12288)
+  splunk_vm_id                               = try(local.deployment.splunk_vm_id, 99)
+  splunk_vm_name                             = try(local.deployment.splunk_vm_name, "splunk-vm")
+  splunk_vm_pool_id                          = try(local.deployment.splunk_vm_pool_id, "")
+  ssh_public_key                             = try(local.deployment.ssh_public_key, "")
+  template_id                                = try(local.deployment.template_id, 9201)
   vlan_ids = try(local.deployment.vlan_ids, {
     lan_main  = 1
     dns       = 2
