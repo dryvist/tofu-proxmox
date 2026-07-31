@@ -37,7 +37,7 @@ containers, IPs, ports, and firewall rules.
   follows this pattern with no `/data` media mount, since it never touches
   media files directly.
 
-### Downstream repos
+## Downstream repos
 
 All three consumers resolve the inventory the same way (their
 `load_tofu.yml`): `TOFU_INVENTORY_PATH` (explicit pin) → the **S3 published
@@ -51,7 +51,7 @@ local gitignored cache. See `docs/INVENTORY_PUBLISHING.md`.
 | `ansible-proxmox-apps` | `ansible_inventory` (containers, docker_vms, constants, ingress) | Cribl, HAProxy, DNS, honeypots (`opencanary`, `apprise`, `tpot` roles — see `docs/HONEYPOTS.md`), etc. |
 | `ansible-splunk` | `ansible_inventory` (splunk_vm + the Splunk-native HA cluster peers in `vms`) | Splunk Enterprise (Docker AIO, retiring) and the HA cluster; incl. the `honeypot` index |
 
-### Inventory publish + sync (automatic)
+## Inventory publish + sync (automatic)
 
 Every apply publishes the inventory **natively** to the versioned state bucket
 (`inventory_publish.tf`, `aws_s3_object.ansible_inventory`). `lifecycle`
