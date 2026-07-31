@@ -60,6 +60,20 @@ locals {
   ])...)
 }
 
+# Deliberate degraded-window escape hatch: some maintenance plans legitimately
+# WANT a temporarily concentrated end state (e.g. evacuating a node's voters
+# before its rebuild, with the respread landing in a later apply). Setting this
+# acknowledges, for this run, that losing one node may leave the OpenBao
+# cluster at or below Raft quorum — a sealed secrets cluster, not a degraded
+# one. Default false; set per-run (TF_VAR_...) for the window and unset after.
+# This is an acknowledgement on top of a hard failure, never a return to
+# advisory severity.
+variable "openbao_accept_quorum_loss_on_node_failure" {
+  description = "Acknowledge that the planned OpenBao voter placement may not survive a one-node loss (cluster at or below Raft quorum). Only for a deliberate degraded maintenance window; default false."
+  type        = bool
+  default     = false
+}
+
 # terraform_data is a provider-less plan-time anchor: its precondition is the
 # assertion, evaluated against the planned voter map on every plan/apply.
 resource "terraform_data" "openbao_voter_spread_guard" {
@@ -68,10 +82,11 @@ resource "terraform_data" "openbao_voter_spread_guard" {
   lifecycle {
     precondition {
       condition = (
+        var.openbao_accept_quorum_loss_on_node_failure ||
         local.openbao_voter_count == 0 ||
         local.openbao_voters_after_worst_node_loss > local.openbao_quorum
       )
-      error_message = "OpenBao Raft voter concentration: ${local.openbao_voter_count} voters need a quorum of ${local.openbao_quorum}, but losing the single node carrying the most of them leaves only ${local.openbao_voters_after_worst_node_loss}. Spread voters over more nodes until a one-node loss leaves at least one voter above quorum. Adding one voter typically does not help — it raises quorum too."
+      error_message = "OpenBao Raft voter concentration: ${local.openbao_voter_count} voters need a quorum of ${local.openbao_quorum}, but losing the single node carrying the most of them leaves only ${local.openbao_voters_after_worst_node_loss}. Spread voters over more nodes until a one-node loss leaves at least one voter above quorum. Adding one voter typically does not help — it raises quorum too. For a DELIBERATE degraded maintenance window only, set openbao_accept_quorum_loss_on_node_failure = true to acknowledge that a one-node loss may seal the cluster."
     }
   }
 }

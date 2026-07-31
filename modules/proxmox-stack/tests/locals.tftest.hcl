@@ -932,6 +932,32 @@ run "openbao_concentration_two_added_voters_create_headroom" {
   }
 }
 
+# The escape hatch must actually escape: the SAME no-headroom fixture as the
+# seven-voter run above, but with the degraded-window acknowledgement set —
+# the plan must pass (no expect_failures) despite the concentrated map.
+run "openbao_concentration_acknowledgement_permits_degraded_window" {
+  command = plan
+
+  variables {
+    openbao_accept_quorum_loss_on_node_failure = true
+    containers = {
+      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-10" = { vm_id = 110, hostname = "openbao-10", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-20" = { vm_id = 120, hostname = "openbao-20", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-21" = { vm_id = 121, hostname = "openbao-21", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-31" = { vm_id = 131, hostname = "openbao-31", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+    }
+  }
+
+  # Still no headroom — the acknowledgement changes the verdict, not the math.
+  assert {
+    condition     = local.openbao_voters_after_worst_node_loss == local.openbao_quorum
+    error_message = "fixture must still be at exactly quorum after worst-node loss, got ${local.openbao_voters_after_worst_node_loss} vs quorum ${local.openbao_quorum}"
+  }
+}
+
 run "openbao_concentration_ignores_untagged_guests" {
   command = plan
 
