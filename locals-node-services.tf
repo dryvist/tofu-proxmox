@@ -30,10 +30,9 @@ locals {
   # per_node and zero-padded here (%02d), matching that pattern exactly.
   # Whether each generated instance is DNS-first (DHCP) or takes a static
   # address, resolved ONCE per service/node. The addressing block below reads
-  # this three times — for `dhcp`, for `reserved_host`, and for `ip_config` —
-  # and those three must agree by construction: a guest that says dhcp = true
-  # while carrying an ip_config, or dhcp = true with no reserved_host, is a
-  # guest whose declared address and actual address can disagree.
+  # this twice — for `dhcp` and for `ip_config` — and those two must agree by
+  # construction: a guest that says dhcp = true while carrying an ip_config is
+  # a guest whose declared address and actual address can disagree.
   node_service_use_dhcp = {
     for service_name, tmpl in local.node_service_templates :
     service_name => {
@@ -75,17 +74,10 @@ locals {
         # explicit null falls back to the declared default.
         {
           dhcp = local.node_service_use_dhcp[service_name][node_name]
-          # Required whenever dhcp = true — var.containers validates it, because
-          # it is the octet UniFi pins the deterministic MAC to and the octet the
-          # DNS A record resolves to. A template may pin one per node; absent
-          # that it defaults to the name suffix, exactly as the openbao voters
-          # derive theirs (`reserved_host = peer.suffix`), so the reservation and
-          # the two-digit name cannot drift apart.
-          reserved_host = (
-            local.node_service_use_dhcp[service_name][node_name]
-            ? try(tmpl.per_node[node_name].reserved_host, tmpl.per_node[node_name].suffix)
-            : null
-          )
+          # A leased instance declares no octet: the gateway answers DNS for its
+          # own lease-table clients, so the guest is reachable by name with its
+          # address written down nowhere. Only the static branch below names an
+          # address, and it names it exactly once.
           ip_config = (
             local.node_service_use_dhcp[service_name][node_name]
             ? null
