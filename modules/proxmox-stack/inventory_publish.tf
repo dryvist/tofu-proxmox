@@ -22,12 +22,14 @@ locals {
         vmid     = v.id
         hostname = var.containers[k].hostname
         ip       = local.container_address[k] # static: per-VLAN cidrhost IP (CIDR stripped); DHCP guests: FQDN (DNS-first)
-        # Deterministic MAC + reserved IP for DHCP-first guests (both null for
-        # static guests). tofu-unifi reads {mac, reserved_ip} to build the DHCP
-        # reservation; the technitium_dns role points the A record at reserved_ip.
-        mac         = try(var.containers[k].dhcp, false) ? local.container_mac[k] : null
-        reserved_ip = local.container_reserved_ip[k]
-        node        = v.node_name
+        # Deterministic MAC for DHCP-first guests (null for static guests). It
+        # keeps the guest's lease — and therefore its address and its lease-table
+        # DNS name — stable across a rebuild. It is NOT a reservation key: this
+        # inventory no longer publishes a reserved address, because a leased
+        # guest's address exists only in the lease. Consumers address these guests
+        # by the FQDN in `ip`, which is the single name for them.
+        mac  = try(var.containers[k].dhcp, false) ? local.container_mac[k] : null
+        node = v.node_name
         # Connection settings for proxmox_pct_remote (community.proxmox)
         ansible_connection = "community.proxmox.proxmox_pct_remote"
         ansible_pct_vmid   = v.id
@@ -37,15 +39,14 @@ locals {
     }
     # Regular VMs - using SSH connection
     # DRY: static VMs advertise their vm_id-derived IP; DHCP-first VMs advertise
-    # their FQDN (local.vm_address) with a deterministic MAC + reserved IP, exactly
-    # like the containers block above.
+    # their FQDN (local.vm_address) with a lease-stabilizing deterministic MAC,
+    # exactly like the containers block above.
     vms = {
       for k, v in module.vms.vm_details : k => {
         vmid               = v.id
         hostname           = v.name
         ip                 = local.vm_address[k]
         mac                = try(var.vms[k].dhcp, false) ? local.vm_mac[k] : null
-        reserved_ip        = local.vm_reserved_ip[k]
         node               = v.node_name
         ansible_connection = "ssh"
         tags               = v.tags
@@ -59,7 +60,6 @@ locals {
         hostname           = v.name
         ip                 = local.vm_address[k]
         mac                = try(var.vms[k].dhcp, false) ? local.vm_mac[k] : null
-        reserved_ip        = local.vm_reserved_ip[k]
         node               = v.node_name
         ansible_connection = "ssh"
         tags               = v.tags

@@ -20,15 +20,21 @@ variable "containers" {
     # its address by DHCP and is referenced by FQDN ({hostname}.{domain}) everywhere
     # — no vm_id-derived IP is computed, so the guest may carry a 6-digit positional
     # VMID that the /24 cidrhost math could not express. DNS owns the address; the
-    # guest stays reachable across re-IP/rebuild. Defaults false (legacy static IP).
+    # guest stays reachable across re-IP/rebuild.
+    #
+    # This is the DEFAULT for ordinary guests, and it is a plain pool lease: there
+    # is no reserved octet to declare, because there is nothing to declare it
+    # against. The gateway answers DNS for its own lease-table clients, so a
+    # leased guest is reachable by name with its address written down nowhere.
+    # (A `reserved_host` field used to live here, pinning a UniFi reservation and
+    # a published A record to a hand-chosen octet. That put one address in three
+    # systems — this repo, the controller, and the DNS zone — which is precisely
+    # the shape that drifted repeatedly. Removed; do not reintroduce it.)
+    #
+    # Set dhcp = false ONLY for network and critical guests (resolvers, ingress,
+    # secrets) — they pin ip_config.ipv4_address so that relocating one of them
+    # never requires touching the guests that point at it.
     dhcp = optional(bool, false)
-
-    # DHCP-reservation host octet for dhcp guests. UniFi pins the guest's
-    # deterministic MAC (local.container_mac) to cidrhost(network_cidrs[vlan],
-    # reserved_host), and the DNS A record points at that same address. Decoupled
-    # from the 6-digit positional vm_id so the reserved address is a real host in the
-    # guest's VLAN /24. Required whenever dhcp = true (see the validation below).
-    reserved_host = optional(number)
 
     # Node placement (optional). When unset, main.tf defaults to var.proxmox_node
     # (the primary node). Set to "proxmox-2"/"proxmox-3" to place an LXC on another cluster node.
@@ -121,11 +127,19 @@ variable "containers" {
     error_message = "Container memory must be between 64 MB and 64 GB."
   }
 
+  # A static guest must actually declare its address. dhcp = false with no
+  # ipv4_address falls through to the vm_id-derived cidrhost() branch, which
+  # silently produces a wrong (or out-of-range) address for any guest carrying a
+  # positional 6-digit VMID. This is the inverse of the rule that used to live
+  # here: the old one demanded a hand-picked octet from every LEASED guest, which
+  # is exactly backwards — leases need no declaration, static addresses do.
   validation {
     condition = alltrue([
-      for k, v in var.containers : try(v.reserved_host, null) != null if try(v.dhcp, false)
+      for k, v in var.containers :
+      try(v.ip_config.ipv4_address, null) != null || v.vm_id <= 254
+      if !try(v.dhcp, false)
     ])
-    error_message = "Every dhcp = true container must set reserved_host: it is the host octet UniFi pins the deterministic MAC to (DHCP reservation) and the DNS A record resolves to."
+    error_message = "A static container (dhcp = false) with a positional VMID above 254 must pin ip_config.ipv4_address — the vm_id-derived fallback cannot express it. Static addressing is reserved for network/critical guests; everything else should take dhcp = true and a pool lease."
   }
 
   # An AI runner/agent guest runs a coding agent in permission-skipping mode, so

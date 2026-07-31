@@ -418,12 +418,11 @@ run "ansible_inventory_ingress_route_table" {
       # Network-quality monitoring LXC — DNS-first (dhcp) with a 6-digit positional
       # VMID (observability tier 4). No vm_id-derived IP; fronted by FQDN.
       "smokeping" = {
-        vm_id         = 990001
-        dhcp          = true
-        reserved_host = 30
-        hostname      = "smokeping"
-        vlan          = "mgmt"
-        tags          = ["terraform", "container", "monitoring", "docker"]
+        vm_id    = 990001
+        dhcp     = true
+        hostname = "smokeping"
+        vlan     = "mgmt"
+        tags     = ["terraform", "container", "monitoring", "docker"]
       }
     }
     domain = "example.com"
@@ -505,20 +504,18 @@ run "ansible_inventory_ingress_nautobot_not_postgres" {
     domain = "example.com"
     containers = {
       "nautobot" = {
-        vm_id         = 605000
-        hostname      = "nautobot"
-        vlan          = "apps"
-        dhcp          = true
-        reserved_host = 52
-        tags          = ["terraform", "container", "nautobot"]
+        vm_id    = 605000
+        hostname = "nautobot"
+        vlan     = "apps"
+        dhcp     = true
+        tags     = ["terraform", "container", "nautobot"]
       }
       "postgres" = {
-        vm_id         = 303000
-        hostname      = "postgres"
-        vlan          = "data"
-        dhcp          = true
-        reserved_host = 51
-        tags          = ["terraform", "container", "postgres"]
+        vm_id    = 303000
+        hostname = "postgres"
+        vlan     = "data"
+        dhcp     = true
+        tags     = ["terraform", "container", "postgres"]
       }
     }
   }
@@ -547,12 +544,11 @@ run "ansible_inventory_ingress_vikunja_fronted" {
     domain = "example.com"
     containers = {
       "vikunja" = {
-        vm_id         = 605010
-        hostname      = "vikunja"
-        vlan          = "apps"
-        dhcp          = true
-        reserved_host = 53
-        tags          = ["terraform", "container", "vikunja"]
+        vm_id    = 605010
+        hostname = "vikunja"
+        vlan     = "apps"
+        dhcp     = true
+        tags     = ["terraform", "container", "vikunja"]
       }
     }
   }

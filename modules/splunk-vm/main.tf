@@ -158,12 +158,12 @@ resource "proxmox_virtual_environment_vm" "splunk_vm" {
   initialization {
     datastore_id = var.datastore_id
 
-    # Explicit resolvers — see modules/proxmox-vm for rationale.
+    # Explicit resolver, the VM's own gateway — see modules/proxmox-vm for rationale.
     dynamic "dns" {
-      for_each = var.domain != "" || length(var.dns_servers) > 0 ? [1] : []
+      for_each = var.domain != "" || var.gateway != "" ? [1] : []
       content {
         domain  = var.domain != "" ? var.domain : null
-        servers = length(var.dns_servers) > 0 ? var.dns_servers : null
+        servers = var.gateway != "" ? [var.gateway] : null
       }
     }
 

@@ -315,7 +315,6 @@
     "tpot": {
       "vm_id": 495100,
       "dhcp": true,
-      "reserved_host": 38,
       "vlan": "nonprod",
       "name": "tpot",
       "description": "T-Pot all-in-one multi-honeypot platform (Cowrie, Dionaea, Conpot, Galah/Beelzebub LLM, Log4pot, ...) + attack-map dashboard",
@@ -331,7 +330,6 @@
     "tpot-warm": {
       "vm_id": 495110,
       "dhcp": true,
-      "reserved_host": 39,
       "vlan": "nonprod",
       "name": "tpot-warm",
       "description": "Warm-standby T-Pot (DR copy) on the backup node proxmox-3",
@@ -357,11 +355,10 @@
       "pool_id": "infrastructure",
       "root_disk": { "size": 8 }
     },
-    "_ipam_dcim_comment": "Shared Postgres (data VLAN) + native Nautobot IPAM/DCIM (apps VLAN). Both DHCP/DNS-first with a reserved_host octet; VMIDs follow the tier-positional scheme (3=data, 6=apps). Native installs — no `features.nesting` (not Docker-in-LXC). Postgres carries a persistent /var/lib/postgresql data mount (survives rebuilds); Nautobot a /opt/nautobot mount and colocated Redis. Postgres has NO Traefik ingress (in-cluster 5432 only); Nautobot's web UI (8080) is fronted by Traefik. Illustrative placeholders only — the live values live in the gitignored deployment.json.",
+    "_ipam_dcim_comment": "Shared Postgres (data VLAN) + native Nautobot IPAM/DCIM (apps VLAN). Both DHCP/DNS-first (a plain pool lease, no declared address); VMIDs follow the tier-positional scheme (3=data, 6=apps). Native installs — no `features.nesting` (not Docker-in-LXC). Postgres carries a persistent /var/lib/postgresql data mount (survives rebuilds); Nautobot a /opt/nautobot mount and colocated Redis. Postgres has NO Traefik ingress (in-cluster 5432 only); Nautobot's web UI (8080) is fronted by Traefik. Illustrative placeholders only — the live values live in the gitignored deployment.json.",
     "postgres": {
       "vm_id": 303000,
       "dhcp": true,
-      "reserved_host": 51,
       "vlan": "data",
       "hostname": "postgres",
       "description": "Shared native Postgres — inventory/apps datastore (Nautobot now; Vikunja/EspoCRM later). Persistent data mount + pgdump backups.",
@@ -379,7 +376,6 @@
     "postgres-apps": {
       "vm_id": 602000,
       "dhcp": true,
-      "reserved_host": 56,
       "vlan": "apps",
       "hostname": "postgres-apps",
       "description": "Apps-tier primary Postgres — native Postgres backing Nautobot/Vikunja/Zammad, on the applications VLAN alongside its dependents. Streaming-replication primary; persistent data mount + pgdump backups.",
@@ -397,7 +393,6 @@
     "nautobot": {
       "vm_id": 605000,
       "dhcp": true,
-      "reserved_host": 52,
       "vlan": "apps",
       "hostname": "nautobot",
       "description": "Native Nautobot IPAM/DCIM source of truth (venv + uwsgi + worker + scheduler; Redis colocated). Web UI on 8080, fronted by Traefik.",
@@ -415,7 +410,6 @@
     "vikunja": {
       "vm_id": 605010,
       "dhcp": true,
-      "reserved_host": 53,
       "vlan": "apps",
       "hostname": "vikunja",
       "description": "Vikunja task management — native Go binary, web/API on 3456 fronted by Traefik; state in the shared Postgres; persistent /var/lib/vikunja for file attachments.",
@@ -450,7 +444,6 @@
     "zammad-20": {
       "vm_id": 605020,
       "dhcp": true,
-      "reserved_host": 54,
       "vlan": "apps",
       "hostname": "zammad-20",
       "description": "Zammad ITSM/ticketing + knowledge base — the incident-management system of record. Native DEB (Rails web/worker/websocket + colocated Elasticsearch for full-text incident search + colocated Redis); nginx/API on zammad_web (8080) fronted by Traefik; state in the shared Postgres; persistent /opt/zammad holds app state + attachments. The ES index is derived/rebuildable and stays on the ephemeral rootfs (rake zammad:searchindex:rebuild).",
@@ -468,7 +461,6 @@
     "zammad-30": {
       "vm_id": 605030,
       "dhcp": true,
-      "reserved_host": 55,
       "vlan": "apps",
       "hostname": "zammad-30",
       "description": "Zammad ITSM/ticketing + knowledge base (HA Instance 2).",
@@ -488,7 +480,6 @@
     "smokeping": {
       "vm_id": 410000,
       "dhcp": true,
-      "reserved_host": 30,
       "vlan": "mgmt",
       "hostname": "smokeping",
       "description": "Central network-quality stack: smokeping_prober + blackbox_exporter + atlas_exporter + irtt server (+ optional SmokePing UI). Scraped by Prometheus.",
@@ -503,7 +494,6 @@
     "speedtest": {
       "vm_id": 410010,
       "dhcp": true,
-      "reserved_host": 31,
       "vlan": "mgmt",
       "hostname": "speedtest",
       "description": "Decoupled throughput exporter (speedtest-exporter :9798). Separate host (pin off the prober's node) so a saturating speedtest never corrupts latency/loss probes. Scrape hourly, off-peak.",
@@ -519,7 +509,6 @@
     "netq-probe-media": {
       "vm_id": 410020,
       "dhcp": true,
-      "reserved_host": 32,
       "vlan": "media_svc",
       "hostname": "netq-probe-media",
       "description": "Per-segment vantage prober (smokeping_prober + blackbox_exporter + irtt) measuring network quality FROM the media VLAN's perspective. Clone one per VLAN you care about — mgmt-only probing can't see each segment's real path. Add a WAN-edge vantage for true ISP-link quality.",
@@ -558,11 +547,10 @@
       "unprivileged": true,
       "features": { "nesting": true, "keyctl": true }
     },
-    "_unifi_metrics_comment": "UniFi controller telemetry collector (Docker-in-LXC, observability tier 4). Runs unpoller (polls the UniFi controller API, exposes Prometheus) + a Telegraf inputs.prometheus scrape that ships Splunk-HEC to Cribl Edge then the Splunk unifi_metrics index. Captures device cpu/mem/temp/uptime, per-port bytes/errors/drops/PoE/STP, per-client signal/rate/satisfaction, and WAN quality. Controller creds via UNIFI_* env. See ansible-proxmox-apps roles/unifi_metrics. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. DNS-first (dhcp:true + reserved_host); features carry only nesting because the API token cannot set keyctl/fuse on unprivileged containers (root@pam adds those via ansible-proxmox, same as the media guests).",
+    "_unifi_metrics_comment": "UniFi controller telemetry collector (Docker-in-LXC, observability tier 4). Runs unpoller (polls the UniFi controller API, exposes Prometheus) + a Telegraf inputs.prometheus scrape that ships Splunk-HEC to Cribl Edge then the Splunk unifi_metrics index. Captures device cpu/mem/temp/uptime, per-port bytes/errors/drops/PoE/STP, per-client signal/rate/satisfaction, and WAN quality. Controller creds via UNIFI_* env. See ansible-proxmox-apps roles/unifi_metrics. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. DNS-first (dhcp:true, pool lease); features carry only nesting because the API token cannot set keyctl/fuse on unprivileged containers (root@pam adds those via ansible-proxmox, same as the media guests).",
     "unifi-metrics": {
       "vm_id": 410030,
       "dhcp": true,
-      "reserved_host": 33,
       "vlan": "mgmt",
       "hostname": "unifi-metrics",
       "description": "UniFi controller telemetry: unpoller + Telegraf into the Splunk unifi_metrics index",
@@ -578,7 +566,6 @@
     "llm-fast": {
       "vm_id": 503000,
       "dhcp": true,
-      "reserved_host": 44,
       "vlan": "ai",
       "hostname": "llm-fast",
       "description": "GPU fast/small-model server (llama-swap, OpenAI-compatible on llm_fast_api). Privileged LXC with AMD ROCm passthrough.",
@@ -597,7 +584,6 @@
     "open-webui": {
       "vm_id": 505000,
       "dhcp": true,
-      "reserved_host": 45,
       "vlan": "ai",
       "hostname": "open-webui",
       "description": "Open WebUI chat frontend for the LLM fabric (open_webui_web; Docker-in-LXC)",
@@ -612,7 +598,6 @@
     "llm-router-1": {
       "vm_id": 512000,
       "dhcp": true,
-      "reserved_host": 46,
       "vlan": "ai",
       "hostname": "llm-router-1",
       "description": "LiteLLM proxy fronting the fabric (llm_router_api) — routes to llm-fast + off-box model endpoints (Docker-in-LXC)",
@@ -624,11 +609,10 @@
       "root_disk": { "size": 16 },
       "features": { "nesting": true }
     },
-    "_ai_orchestration_comment": "AI orchestration tier (AI/ML tier 5). n8n/Dify/LangFlow are Docker-in-LXC visual builders; LangGraph is a Docker-in-LXC zero-cloud `langgraph dev` (in-memory) server + self-hosted Agent Chat UI; agent-exec is a plain Python LXC running CrewAI + LangChain code with OpenLLMetry. VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); the values here are illustrative. They sit on the 'ai' VLAN (tier 5) and 'siem' VLAN (tier 4) — the committed end-state of the vlan_ids map — addressed DNS-first (dhcp + reserved_host). Each tool's model provider + vector store is configured per its own install standard; Dify keeps its bundled vector store rather than the shared qdrant. Docker guests carry only nesting (the API token cannot set keyctl/fuse on unprivileged LXC; ansible-proxmox adds those via root@pam, same as the media guests). Firewall: ai-orch-svc (UI ports) + native OTLP egress to Cribl Edge; Langfuse adds langfuse-svc (3000). Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
+    "_ai_orchestration_comment": "AI orchestration tier (AI/ML tier 5). n8n/Dify/LangFlow are Docker-in-LXC visual builders; LangGraph is a Docker-in-LXC zero-cloud `langgraph dev` (in-memory) server + self-hosted Agent Chat UI; agent-exec is a plain Python LXC running CrewAI + LangChain code with OpenLLMetry. VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); the values here are illustrative. They sit on the 'ai' VLAN (tier 5) and 'siem' VLAN (tier 4) — the committed end-state of the vlan_ids map — addressed DNS-first (dhcp, pool lease). Each tool's model provider + vector store is configured per its own install standard; Dify keeps its bundled vector store rather than the shared qdrant. Docker guests carry only nesting (the API token cannot set keyctl/fuse on unprivileged LXC; ansible-proxmox adds those via root@pam, same as the media guests). Firewall: ai-orch-svc (UI ports) + native OTLP egress to Cribl Edge; Langfuse adds langfuse-svc (3000). Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
     "n8n": {
       "vm_id": 505030,
       "dhcp": true,
-      "reserved_host": 49,
       "vlan": "ai",
       "hostname": "n8n",
       "description": "n8n workflow automation, Community Edition (Docker-in-LXC)",
@@ -644,7 +628,6 @@
     "dify": {
       "vm_id": 505010,
       "dhcp": true,
-      "reserved_host": 41,
       "vlan": "ai",
       "hostname": "dify",
       "description": "Dify LLMOps platform - RAG, prompts, evals, agents (own vector store; Docker-in-LXC)",
@@ -660,7 +643,6 @@
     "langflow": {
       "vm_id": 505020,
       "dhcp": true,
-      "reserved_host": 42,
       "vlan": "ai",
       "hostname": "langflow",
       "description": "LangFlow visual LangChain prototyping -> Python export (Docker-in-LXC)",
@@ -676,7 +658,6 @@
     "langgraph": {
       "vm_id": 505040,
       "dhcp": true,
-      "reserved_host": 50,
       "vlan": "ai",
       "hostname": "langgraph",
       "description": "LangGraph server (zero-cloud `langgraph dev`, in-memory) + self-hosted Agent Chat UI (Docker-in-LXC)",
@@ -692,7 +673,6 @@
     "agent-exec": {
       "vm_id": 515000,
       "dhcp": true,
-      "reserved_host": 43,
       "vlan": "ai",
       "hostname": "agent-exec",
       "description": "Python runtime for CrewAI + LangChain agent code with OpenLLMetry (plain LXC)",
@@ -704,11 +684,10 @@
       "root_disk": { "size": 24 }
     },
 
-    "_ai_runner_profiles_comment": "Additional headless AI-runner egress profiles (siblings of the `ai-github` runner). Each is a tag that selects one firewall profile in modules/firewall: `ai-terrakube` (ai_terrakube_rules.tf) = internal-only egress for a runner that drives OpenTofu against the private Terrakube backend — DNS/NTP/OpenBao + Terrakube API/registry + RustFS S3, and NO WAN at all. `ai-full-net` (ai_full_net_rules.tf) = a coding-agent guest needing general web access — internal DNS/NTP/OpenBao only + outbound HTTPS (443) to any, still no blanket internal reach. The `ai-runner` tag is the ansible-proxmox-ai inventory group. VMIDs/reserved_host octets below are illustrative (6-digit positional convention, docs vmid-network-tiers) — reconcile vm_id + reserved_host against your live deployment.json before applying.",
+    "_ai_runner_profiles_comment": "Additional headless AI-runner egress profiles (siblings of the `ai-github` runner). Each is a tag that selects one firewall profile in modules/firewall: `ai-terrakube` (ai_terrakube_rules.tf) = internal-only egress for a runner that drives OpenTofu against the private Terrakube backend — DNS/NTP/OpenBao + Terrakube API/registry + RustFS S3, and NO WAN at all. `ai-full-net` (ai_full_net_rules.tf) = a coding-agent guest needing general web access — internal DNS/NTP/OpenBao only + outbound HTTPS (443) to any, still no blanket internal reach. The `ai-runner` tag is the ansible-proxmox-ai inventory group. VMIDs below are illustrative (6-digit positional convention, docs vmid-network-tiers) — reconcile vm_id against your live deployment.json before applying.",
     "ai-runner-terrakube-01": {
       "vm_id": 515020,
       "dhcp": true,
-      "reserved_host": 49,
       "vlan": "ai",
       "hostname": "ai-runner-terrakube-01",
       "description": "Headless OpenTofu runner — drives `tofu` against the private Terrakube backend, confined by the ai-terrakube firewall profile (internal-only egress, no WAN). Converged by the ansible-proxmox-ai ai_runner role.",
@@ -722,7 +701,6 @@
     "ai-runner-fullnet-01": {
       "vm_id": 515030,
       "dhcp": true,
-      "reserved_host": 51,
       "vlan": "ai",
       "hostname": "ai-runner-fullnet-01",
       "description": "Headless AI coding-agent runner needing general web access — confined by the ai-full-net firewall profile (internal DNS/NTP/OpenBao + outbound HTTPS to any). Converged by the ansible-proxmox-ai ai_runner role.",
@@ -737,7 +715,6 @@
     "langfuse": {
       "vm_id": 405000,
       "dhcp": true,
-      "reserved_host": 40,
       "vlan": "siem",
       "hostname": "langfuse",
       "description": "Langfuse LLM observability - trace/cost/eval backend (Docker-in-LXC)",
@@ -751,11 +728,10 @@
       "features": { "nesting": true }
     },
 
-    "_ai_runner_comment": "Headless AI execution plane (AI/ML tier 5, ai VLAN). An ai-runner is a confined guest that runs a coding agent (Claude Code / Codex) in permission-skipping mode; the LXC boundary is the ONLY safety control, so the firewall profile is load-bearing. The `ai-github` tag selects the tightest egress profile (modules/firewall/ai_runner_rules.tf): outbound to internal DNS/NTP/OpenBao only + outbound HTTPS to any (github.com + Anthropic/OpenAI are CDN-fronted, no stable dest CIDR). The `ai-runner` tag is the inventory group the ansible-proxmox-ai `ai_runner` role converges. Native installs (Node + npm CLIs) — plain LXC, no Docker/nesting. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. This example omits node_name and uses the default node (same as the sibling AI guests) — the live guest pins its node in the private deployment.json (the runner host is an idle-capacity node). Reconcile vm_id + reserved_host against your live deployment.json before applying. Other profiles (ai-terrakube, ai-full-net) are follow-ups: each is a new tag + rules file.",
+    "_ai_runner_comment": "Headless AI execution plane (AI/ML tier 5, ai VLAN). An ai-runner is a confined guest that runs a coding agent (Claude Code / Codex) in permission-skipping mode; the LXC boundary is the ONLY safety control, so the firewall profile is load-bearing. The `ai-github` tag selects the tightest egress profile (modules/firewall/ai_runner_rules.tf): outbound to internal DNS/NTP/OpenBao only + outbound HTTPS to any (github.com + Anthropic/OpenAI are CDN-fronted, no stable dest CIDR). The `ai-runner` tag is the inventory group the ansible-proxmox-ai `ai_runner` role converges. Native installs (Node + npm CLIs) — plain LXC, no Docker/nesting. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. This example omits node_name and uses the default node (same as the sibling AI guests) — the live guest pins its node in the private deployment.json (the runner host is an idle-capacity node). Reconcile vm_id against your live deployment.json before applying. Other profiles (ai-terrakube, ai-full-net) are follow-ups: each is a new tag + rules file.",
     "ai-runner-01": {
       "vm_id": 515010,
       "dhcp": true,
-      "reserved_host": 48,
       "vlan": "ai",
       "hostname": "ai-runner-01",
       "description": "Headless AI job runner — Claude Code + Codex CLIs in permission-skipping mode, confined by the ai-github firewall egress profile. Polls the Vikunja AI Jobs queue; converged by the ansible-proxmox-ai ai_runner role.",
@@ -767,11 +743,10 @@
       "root_disk": { "size": 24 }
     },
 
-    "_ai_agent_pool_comment": "AI agent POOL (`ai-proxied` profile, modules/firewall/ai_proxied_rules.tf). N identical long-lived guests that pull work from a queue, instead of one guest provisioned per run — provisioning is amortized and no IaC change is needed to run a task. The profile is strictly tighter than ai-full-net: internal DNS/NTP/OpenBao + the Squid forward proxy + the Cribl AI log-ingest frontends, and NO 443-to-any of its own. Every outbound web request therefore transits the squid guest below, which is where the DOMAIN allowlist is enforced (the Proxmox firewall filters IP/port only, never hostname/SNI). Per-CLI variants (claude / codex / agy) are Squid ACL groups keyed off the client address, NOT separate tags — at L3/L4 they would be identical rule sets. Grow the pool by copying an entry with the next vm_id + reserved_host; guests are interchangeable, so pool size is a capacity knob with no rule change. Every `ai-runner`-tagged guest must carry exactly one profile tag or the plan fails (variables-containers.tf validation) — a typo would otherwise leave an agent guest with no firewall at all. VMIDs/reserved_host octets are illustrative (6-digit positional convention, docs vmid-network-tiers); reconcile against your live deployment.json before applying.",
+    "_ai_agent_pool_comment": "AI agent POOL (`ai-proxied` profile, modules/firewall/ai_proxied_rules.tf). N identical long-lived guests that pull work from a queue, instead of one guest provisioned per run — provisioning is amortized and no IaC change is needed to run a task. The profile is strictly tighter than ai-full-net: internal DNS/NTP/OpenBao + the Squid forward proxy + the Cribl AI log-ingest frontends, and NO 443-to-any of its own. Every outbound web request therefore transits the squid guest below, which is where the DOMAIN allowlist is enforced (the Proxmox firewall filters IP/port only, never hostname/SNI). Per-CLI variants (claude / codex / agy) are Squid ACL groups keyed off the client address, NOT separate tags — at L3/L4 they would be identical rule sets. Grow the pool by copying an entry with the next vm_id; guests are interchangeable, so pool size is a capacity knob with no rule change. Every `ai-runner`-tagged guest must carry exactly one profile tag or the plan fails (variables-containers.tf validation) — a typo would otherwise leave an agent guest with no firewall at all. VMIDs are illustrative (6-digit positional convention, docs vmid-network-tiers); reconcile against your live deployment.json before applying.",
     "ai-runner-pool-01": {
       "vm_id": 515040,
       "dhcp": true,
-      "reserved_host": 53,
       "vlan": "ai",
       "hostname": "ai-runner-pool-01",
       "description": "Pooled AI agent — pulls jobs from the queue, confined by the ai-proxied firewall profile (no direct WAN; egress only via the Squid allowlist). Converged by the ansible-proxmox-ai ai_runner role.",
@@ -785,10 +760,9 @@
     "ai-runner-pool-02": {
       "vm_id": 515041,
       "dhcp": true,
-      "reserved_host": 54,
       "vlan": "ai",
       "hostname": "ai-runner-pool-02",
-      "description": "Pooled AI agent — identical to ai-runner-pool-01; pool members are interchangeable, so scaling out is a copied entry with the next vm_id + reserved_host.",
+      "description": "Pooled AI agent — identical to ai-runner-pool-01; pool members are interchangeable, so scaling out is a copied entry with the next vm_id.",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
       "tags": ["terraform", "container", "ai", "ai-runner", "ai-proxied"],
@@ -800,7 +774,6 @@
     "squid": {
       "vm_id": 515050,
       "dhcp": true,
-      "reserved_host": 55,
       "vlan": "ai",
       "hostname": "squid",
       "description": "Squid forward proxy — audited egress chokepoint for the ai-proxied agent pool; enforces the per-profile outbound domain allowlist the Proxmox firewall cannot express.",
@@ -812,11 +785,10 @@
       "root_disk": { "size": 16 }
     },
 
-    "_honeypot_comment": "DECEPTION FABRIC (see docs/HONEYPOTS.md). Three pieces: (1) honeypot-notify — the dedicated alert gateway (caronc/apprise-api). Honeypots POST one webhook; Apprise fans it to Slack + phone push (ntfy/Pushover). The `honeypot`+`notify` tags give it the apprise port inbound + OPEN egress (to reach external notifiers); Slack webhook/phone tokens come from OpenBao at runtime, never committed. (2) honeypot-tw-* — one lightweight OpenCanary tripwire PER VLAN (clone the example below for every entry in your network_cidrs map: lan_main, dns, mgmt, bmc, compute, siem, pipeline, data, ai, apps, media_svc, homeauto, nonprod). Each fakes SSH/HTTP/SMB/DB/RDP/SNMP/... and alerts instantly on any touch; the `honeypot` tag opens the decoy ports + internal-only egress (a poked sensor can reach the gateway + syslog 519 but never the internet). (3) the T-Pot VM above. VMID convention (positional, DNS-first): a tripwire adopts the TIER of the VLAN it defends (tier = VLAN/10; specials 1/5/53 use the 7-digit prefix form) · sub 9 (deception) · crit 5 · OS 0 (LXC) · instance 0 · env 0 — e.g. nonprod(90)=995000, apps(60)=695000, compute(10)=195000, mgmt(5)=0595000. Placement honors the node roles: gateway + most tripwires on proxmox-2; put 1-2 tripwires (highest-value VLANs) + the T-Pot VM on the fast node proxmox-1; warm/backup copies on the normally-off proxmox-3. reserved_host octets (.36-.39 + per-tripwire) are illustrative — reconcile every VMID + octet against your live deployment.json before applying.",
+    "_honeypot_comment": "DECEPTION FABRIC (see docs/HONEYPOTS.md). Three pieces: (1) honeypot-notify — the dedicated alert gateway (caronc/apprise-api). Honeypots POST one webhook; Apprise fans it to Slack + phone push (ntfy/Pushover). The `honeypot`+`notify` tags give it the apprise port inbound + OPEN egress (to reach external notifiers); Slack webhook/phone tokens come from OpenBao at runtime, never committed. (2) honeypot-tw-* — one lightweight OpenCanary tripwire PER VLAN (clone the example below for every entry in your network_cidrs map: lan_main, dns, mgmt, bmc, compute, siem, pipeline, data, ai, apps, media_svc, homeauto, nonprod). Each fakes SSH/HTTP/SMB/DB/RDP/SNMP/... and alerts instantly on any touch; the `honeypot` tag opens the decoy ports + internal-only egress (a poked sensor can reach the gateway + syslog 519 but never the internet). (3) the T-Pot VM above. VMID convention (positional, DNS-first): a tripwire adopts the TIER of the VLAN it defends (tier = VLAN/10; specials 1/5/53 use the 7-digit prefix form) · sub 9 (deception) · crit 5 · OS 0 (LXC) · instance 0 · env 0 — e.g. nonprod(90)=995000, apps(60)=695000, compute(10)=195000, mgmt(5)=0595000. Placement honors the node roles: gateway + most tripwires on proxmox-2; put 1-2 tripwires (highest-value VLANs) + the T-Pot VM on the fast node proxmox-1; warm/backup copies on the normally-off proxmox-3. Every guest here takes a pool lease, so only the VMIDs need reconciling against your live deployment.json before applying.",
     "honeypot-notify": {
       "vm_id": 492000,
       "dhcp": true,
-      "reserved_host": 36,
       "vlan": "mgmt",
       "hostname": "honeypot-notify",
       "description": "Honeypot alert gateway (caronc/apprise-api): fans honeypot hits out to Slack + phone push. Open egress for external notifiers.",
@@ -833,7 +805,6 @@
     "honeypot-notify-warm": {
       "vm_id": 492010,
       "dhcp": true,
-      "reserved_host": 37,
       "vlan": "mgmt",
       "hostname": "honeypot-notify-warm",
       "description": "Warm-standby apprise gateway (cold spare of the alert path) on proxmox-3",
@@ -851,7 +822,6 @@
     "honeypot-tw-nonprod": {
       "vm_id": 995000,
       "dhcp": true,
-      "reserved_host": 66,
       "vlan": "nonprod",
       "hostname": "honeypot-tw-nonprod",
       "description": "OpenCanary tripwire on the nonprod VLAN — fakes SSH/HTTP/SMB/DB/RDP/SNMP/... and alerts instantly via the apprise gateway + Splunk honeypot index",

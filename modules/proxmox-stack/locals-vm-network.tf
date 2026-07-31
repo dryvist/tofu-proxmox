@@ -24,20 +24,15 @@ locals {
     )
   }
 
-  # Deterministic MAC + reserved IP + advertised address for DHCP-first VMs —
-  # identical join-key shape to the container_* locals so tofu-unifi pins the
-  # reservation and technitium_dns points the A record at the same address.
+  # Deterministic MAC + advertised address for DHCP-first VMs — same shape and
+  # same rationale as the container_* locals in locals.tf: the MAC is stable so
+  # the lease (and therefore the address and the lease-table DNS name) survives a
+  # rebuild. Nothing reserves an address against it.
   vm_mac = {
     for k, v in var.vms : k => format("02:%s:%s:%s:%s:%s",
       substr(md5(v.name), 0, 2), substr(md5(v.name), 2, 2),
       substr(md5(v.name), 4, 2), substr(md5(v.name), 6, 2),
     substr(md5(v.name), 8, 2))
-  }
-  vm_reserved_ip = {
-    for k, v in var.vms : k => (
-      try(v.dhcp, false) && try(v.reserved_host, null) != null
-      ? nonsensitive(cidrhost(var.network_cidrs[v.vlan], v.reserved_host)) : null
-    )
   }
   vm_address = {
     for k, v in var.vms : k => (
