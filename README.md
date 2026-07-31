@@ -87,6 +87,7 @@ Full runbook (access model, credential lifecycle, token scoping):
 | Doc | Purpose |
 | --- | --- |
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Pipeline architecture and IP derivation |
+| [docs/EXECUTION_HOSTS.md](./docs/EXECUTION_HOSTS.md) | Which commands may apply, and which host to run them from |
 | [docs/INVENTORY_PUBLISHING.md](./docs/INVENTORY_PUBLISHING.md) | Native RustFS inventory contract |
 | [docs/SECRETS_ROADMAP.md](./docs/SECRETS_ROADMAP.md) | OpenBao and Terrakube secret contract |
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Operational recovery guidance |
