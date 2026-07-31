@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.76.6](https://github.com/dryvist/tofu-proxmox/compare/v1.76.5...v1.76.6) (2026-07-31)
+
+
+### Bug Fixes
+
+* **state:** adopt nautobot and vikunja instead of planning failing creates ([#810](https://github.com/dryvist/tofu-proxmox/issues/810)) ([b7e4c2a](https://github.com/dryvist/tofu-proxmox/commit/b7e4c2aab694e980b16ca9b54d9f3b1222241a74))
+* **vms:** let a node_name change migrate a VM instead of destroying it ([#812](https://github.com/dryvist/tofu-proxmox/issues/812)) ([0d726e5](https://github.com/dryvist/tofu-proxmox/commit/0d726e5a983100b509c5b31cb9e6692a27fdd9a1))
+
 ## [1.76.5](https://github.com/dryvist/tofu-proxmox/compare/v1.76.4...v1.76.5) (2026-07-31)
 
 
