@@ -72,10 +72,10 @@ tofu plan # run in Terrakube
 
 ### 2. Deploy Terraform-Managed Resources
 
-```bash
-# Deploy VMs and managed container
-tofu apply # run in Terrakube
+Plan remotely, then confirm the apply as a Terrakube job in the workspace UI
+— a CLI `tofu apply` is refused server-side (`allowRemoteApply = false`).
 
+```bash
 # Verify deployment
 tofu state list
 ```
@@ -149,8 +149,8 @@ ssh root@<container-ip>
 **To modify Terraform-managed resources**:
 
 1. Update `terraform.tfvars` with desired changes
-2. Run `tofu plan` to preview
-3. Run `tofu apply` to execute
+2. Run `tofu plan` to preview (remote Terrakube run)
+3. Confirm the apply as a Terrakube job in the workspace UI
 4. Commit `.example` file changes to git (never commit `terraform.tfvars`)
 
 **To modify manual containers**:

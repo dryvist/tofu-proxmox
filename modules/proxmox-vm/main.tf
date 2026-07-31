@@ -115,15 +115,25 @@ resource "proxmox_virtual_environment_vm" "vms" {
   initialization {
     datastore_id = var.default_datastore
 
-    # DNS search domain + explicit resolvers for FQDN resolution. Without
-    # servers, guests inherit the node's resolvers at provision time and
-    # silently keep them forever — stale-resolver drift broke docker-host
-    # DNS entirely (2026-06-10). Takes effect on cloud-init re-run/reboot.
+    # DNS search domain + resolver. Explicit rather than inherited: a guest that
+    # inherits the node's resolvers at provision time silently keeps them
+    # forever, and that stale-resolver drift broke docker-host DNS entirely
+    # (2026-06-10).
+    #
+    # The explicit value is the guest's OWN VLAN gateway, which conditionally
+    # forwards the internal zone to the resolver fleet. Pointing at the resolver
+    # addresses instead would bake a copy of the fleet's addressing into every
+    # guest — the same stale-forever problem, one level up: renumber a resolver
+    # and each guest holds the old list until rebuilt. A guest's gateway does
+    # not move when the fleet changes.
+    #
+    # Takes effect on cloud-init re-run/reboot; the lifecycle block below
+    # ignores dns diffs on existing VMs, so this reaches new VMs only.
     dynamic "dns" {
-      for_each = var.domain != "" || length(var.dns_servers) > 0 ? [1] : []
+      for_each = var.domain != "" || each.value.ip_config.ipv4_gateway != null ? [1] : []
       content {
         domain  = var.domain != "" ? var.domain : null
-        servers = length(var.dns_servers) > 0 ? var.dns_servers : null
+        servers = each.value.ip_config.ipv4_gateway != null ? [each.value.ip_config.ipv4_gateway] : null
       }
     }
 

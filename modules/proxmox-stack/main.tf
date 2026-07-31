@@ -63,7 +63,7 @@ module "vms" {
         ipv4_gateway = local.vm_gateway[k]
       }
       # NIC onto the VM's service VLAN; DHCP-first VMs get a deterministic MAC
-      # (local.vm_mac) for a stable reservation, same pattern as containers.
+      # (local.vm_mac) so the lease survives a rebuild, same pattern as containers.
       network_interfaces = [
         for ni in v.network_interfaces : merge(ni, {
           vlan_id     = lookup(var.vlan_ids, v.vlan, null)
@@ -83,7 +83,6 @@ module "vms" {
   environment       = var.environment
   default_datastore = var.datastore_default
   domain            = var.domain
-  dns_servers       = local.dns_servers
 
   # SSH credentials for provisioners (BPG provider reads auth from PROXMOX_VE_* env vars)
   proxmox_ssh_username    = var.proxmox_ssh_username
@@ -110,8 +109,9 @@ module "containers" {
         ipv4_gateway = local.container_gateway[k]
       }
       # Tag every NIC onto the LXC's service VLAN (802.1Q id from var.vlan_ids).
-      # DHCP-first guests also get a deterministic MAC (local.container_mac) so
-      # tofu-unifi can pin a stable DHCP reservation; static guests keep a null MAC
+      # DHCP-first guests also get a deterministic MAC (local.container_mac) so a
+      # rebuilt guest renews the SAME lease and keeps its address and its name —
+      # nothing reserves an address for it. Static guests keep a null MAC
       # (provider auto-generates) so they are not replaced.
       network_interfaces = [
         for ni in v.network_interfaces : merge(ni, {
@@ -134,7 +134,6 @@ module "containers" {
   environment       = var.environment
   default_datastore = var.datastore_default
   domain            = var.domain
-  dns_servers       = local.dns_servers
 
   depends_on = [module.pools, module.storage]
 }
@@ -161,7 +160,6 @@ module "splunk_vm" {
   cpu_cores      = var.splunk_cpu_cores
   memory         = var.splunk_memory
   domain         = var.domain
-  dns_servers    = local.dns_servers
 
   # Tiered storage: fast-splunk (hot/warm) and bulk-splunk (cold). datastore_ids
   # are the Proxmox zfspool storage ids that ansible-proxmox registers from the

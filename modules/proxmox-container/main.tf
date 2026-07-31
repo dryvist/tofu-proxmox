@@ -60,16 +60,27 @@ resource "proxmox_virtual_environment_container" "containers" {
       }
     }
 
-    # DNS search domain + explicit nameservers. servers points guests at the
-    # homelab's own resolvers (Technitium nodes, inside the internal networks
-    # the outbound-internal firewall group already permits) instead of inheriting
-    # the node's upstream gateway resolver, which a DROP-policy guest cannot reach.
-    # Empty servers list => omit the arg => inherit the node's resolv.conf.
+    # DNS search domain + resolver. A static guest resolves through its OWN VLAN
+    # gateway, which conditionally forwards the internal zone to the resolver
+    # fleet — the same thing DHCP guests already receive in their lease.
+    #
+    # It used to be the resolver addresses themselves. That bakes a copy of the
+    # fleet's addressing into every guest at provision time, and cloud-init does
+    # not revisit it: rename or renumber a resolver and every guest holding the
+    # old list is stale until rebuilt, with nothing reporting it. The gateway is
+    # the guest's own and never moves when the fleet changes.
+    #
+    # Inheriting the node's resolv.conf is NOT the fallback to want — the node
+    # sits on its own VLAN, so a guest elsewhere would be pointed at a gateway
+    # it may have no route to. Hence an explicit per-guest value.
+    #
+    # DHCP guests have a null gateway here (the lease supplies both address and
+    # resolver), so servers is omitted for them and the lease wins.
     dynamic "dns" {
-      for_each = var.domain != "" || length(var.dns_servers) > 0 ? [1] : []
+      for_each = var.domain != "" || each.value.ip_config.ipv4_gateway != null ? [1] : []
       content {
         domain  = var.domain != "" ? var.domain : null
-        servers = length(var.dns_servers) > 0 ? var.dns_servers : null
+        servers = each.value.ip_config.ipv4_gateway != null ? [each.value.ip_config.ipv4_gateway] : null
       }
     }
 

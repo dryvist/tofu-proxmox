@@ -30,9 +30,9 @@ Terraform (local) ──► BPG Proxmox Provider ──► Proxmox VE API
 
 ### Secret Flow
 
-**Initial provisioning (Terraform apply):**
+**Initial provisioning (Terrakube apply run):**
 
-1. Run: `tofu apply # run in Terrakube`
+1. Apply via a Terrakube job (plan remotely, confirm the run in the workspace UI — a CLI `tofu apply` is refused server-side)
 2. OpenBao injects `ROUTE53_ACCESS_KEY`, `ROUTE53_SECRET_KEY`, `ROUTE53_ZONE_ID`, `ACME_EMAIL`, `ACME_DOMAIN`
 3. Terraform configures the BPG Proxmox DNS plugin via API
 4. Proxmox stores credentials in `/etc/pve/priv/acme/plugins.cfg` (encrypted cluster filesystem)
@@ -94,7 +94,7 @@ the standard `AWS_*` keys that the BPG Proxmox provider expects via the
 [OpenBao config name-transformer](https://docs.OpenBao.com/docs/cli-name-transformers)
 configured for this project. The Terraform variable `dns_plugins` then references
 those (now-canonically-named) secrets via the `TF_VAR_dns_plugins` env var that
-`tofu apply # run in Terrakube` injects — `terraform.tfvars` itself does not
+the Terrakube run injects — `terraform.tfvars` itself does not
 read environment variables.
 
 ```hcl
@@ -135,9 +135,9 @@ testing to avoid production rate limits.
 
 ### Applying
 
-```bash
-tofu apply # run in Terrakube
-```
+Plan remotely (`tofu plan` streams from the Terrakube executor), then confirm
+the apply as a Terrakube job in the workspace UI — a CLI `tofu apply` is
+refused server-side (`allowRemoteApply = false`).
 
 ---
 
@@ -181,11 +181,8 @@ If Route53 IAM credentials are rotated:
 
 1. Update secrets in OpenBao
 
-2. Re-apply Terraform to push new credentials to Proxmox:
-
-   ```bash
-   tofu apply # run in Terrakube
-   ```
+2. Re-apply to push new credentials to Proxmox: plan remotely, then confirm
+   the run as a Terrakube job in the workspace UI.
 
 3. Verify Proxmox has the updated credentials:
 
@@ -232,7 +229,7 @@ After import, run `terraform plan` and verify zero drift. If the plan shows chan
 
 ### DNS validation fails during certificate order
 
-**Symptoms:** `terraform apply` fails with ACME DNS-01 challenge error; Let's Encrypt reports
+**Symptoms:** the Terrakube apply run fails with an ACME DNS-01 challenge error; Let's Encrypt reports
 it cannot find the `_acme-challenge` TXT record.
 
 **Checks:**
@@ -266,10 +263,8 @@ it cannot find the `_acme-challenge` TXT record.
 
 2. Verify Route53 credentials have not expired:
 
-   ```bash
-   # Re-apply Terraform to refresh credentials
-   tofu apply # run in Terrakube
-   ```
+   Re-apply to refresh credentials: plan remotely, then confirm the run as a
+   Terrakube job in the workspace UI.
 
 3. Confirm `pveproxy` is running:
 

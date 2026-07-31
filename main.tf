@@ -72,6 +72,38 @@ provider "proxmox" {
 data "aws_s3_object" "deployment" {
   bucket = var.deployment_bucket
   key    = var.deployment_key
+
+  lifecycle {
+    # A node_services per_node key that is not a key of `nodes` does not error:
+    # the generator's `contains(keys(per_node), node_name)` filter simply skips
+    # it, so the instance is SILENTLY DROPPED from the plan — the plan looks
+    # fine, the guest just never exists. JSON Schema cannot express this
+    # cross-sibling constraint, and a `check` block only WARNS (verified on the
+    # pinned OpenTofu 1.11: the plan completes with a warning), so this is a
+    # postcondition — it fails the plan hard, against the real fetched object,
+    # on every run. It reads self.body rather than local.deployment because a
+    # local derived from this data source cannot be referenced from its own
+    # lifecycle block.
+    postcondition {
+      condition = alltrue([
+        for service_name, tmpl in try(jsondecode(self.body).node_services, {}) :
+        length(setsubtract(keys(try(tmpl.per_node, {})), keys(try(jsondecode(self.body).nodes, {})))) == 0
+      ])
+      error_message = format(
+        "node_services placement names node keys that do not exist in `nodes` — those instances would be silently dropped from the plan, not errored: %s. Fix the per_node key or add the node to `nodes`.",
+        join("; ", [
+          for service_name, tmpl in try(jsondecode(self.body).node_services, {}) :
+          format(
+            "template %q -> unknown node key(s) %s (known: %s)",
+            service_name,
+            jsonencode(setsubtract(keys(try(tmpl.per_node, {})), keys(try(jsondecode(self.body).nodes, {})))),
+            jsonencode(keys(try(jsondecode(self.body).nodes, {}))),
+          )
+          if length(setsubtract(keys(try(tmpl.per_node, {})), keys(try(jsondecode(self.body).nodes, {})))) > 0
+        ]),
+      )
+    }
+  }
 }
 
 locals {
@@ -96,21 +128,29 @@ locals {
         vlan      = local.openbao_cluster.vlan
         hostname  = format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix)
         node_name = peer.node_name
-        # DHCP reservation, not a static address baked into the guest config.
-        # Every other guest in this stack takes `dhcp = true` + `reserved_host`
-        # (41 of them); this generator was still writing a literal `ip_config`
-        # from cidrhost(), making its voters part of a five-guest legacy
-        # exception rather than following the rule.
+        # Static, and deliberately so: OpenBao is critical-tier. Every guest in
+        # the estate resolves its credentials here, so a voter that changed
+        # address on a lease renewal would force a re-converge of everything
+        # pointing at it. Critical and network guests (resolvers, ingress,
+        # secrets) are the one exception to the pool-lease default — see the
+        # `dhcp` field in modules/proxmox-stack/variables-containers.tf.
         #
-        # `reserved_host` is the host octet UniFi pins the guest's deterministic
-        # MAC to, and the DNS A record resolves to that same address. Keeping it
-        # equal to the suffix preserves the addressing intent exactly — the voter
-        # still lands on the same octet — while moving the authority for the
-        # address out of the guest config and into the reservation, so the
-        # reservation and the DNS record cannot disagree with what the guest
-        # actually holds.
-        dhcp          = true
-        reserved_host = peer.suffix
+        # The address is DERIVED, not hand-typed: cidrhost() over the cluster's
+        # own VLAN CIDR and the peer suffix. It appears in exactly one place —
+        # here — and nothing mirrors it into a reservation or a separately
+        # published record, so there is no second copy to disagree with.
+        #
+        # (This briefly moved to dhcp + a reserved octet. That was the wrong
+        # direction twice over: it made a critical service's address depend on a
+        # lease, and it did so by declaring the address a second and third time,
+        # in the controller's reservation and the DNS zone.)
+        ip_config = {
+          ipv4_address = format(
+            "%s/%s",
+            cidrhost(local.deployment.network_cidrs[local.openbao_cluster.vlan], peer.suffix),
+            split("/", local.deployment.network_cidrs[local.openbao_cluster.vlan])[1],
+          )
+        }
         root_disk = {
           size         = tonumber(local.openbao_cluster.root_disk.size)
           datastore_id = try(local.openbao_cluster.root_disk_datastore_by_node[peer.node_name], try(local.openbao_cluster.root_disk.datastore_id, null))
