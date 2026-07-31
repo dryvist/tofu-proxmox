@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.76.3](https://github.com/dryvist/tofu-proxmox/compare/v1.76.2...v1.76.3) (2026-07-31)
+
+
+### Bug Fixes
+
+* **node-services:** emit one object shape, and the reserved_host dhcp requires ([#796](https://github.com/dryvist/tofu-proxmox/issues/796)) ([793867e](https://github.com/dryvist/tofu-proxmox/commit/793867e4c86a33d948b411d7544bb016212f27a2))
+* **node-services:** honour the commissioned default so the generator is usable ([#794](https://github.com/dryvist/tofu-proxmox/issues/794)) ([1e21ce5](https://github.com/dryvist/tofu-proxmox/commit/1e21ce5160b4925e2843d88231b2363676bc26fb))
+
 ## [1.76.2](https://github.com/dryvist/tofu-proxmox/compare/v1.76.1...v1.76.2) (2026-07-30)
 
 
