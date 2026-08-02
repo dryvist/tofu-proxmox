@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.76.7](https://github.com/dryvist/tofu-proxmox/compare/v1.76.6...v1.76.7) (2026-08-02)
+
+
+### Bug Fixes
+
+* **constants:** add serving.llm_concurrency as the single source of truth ([#817](https://github.com/dryvist/tofu-proxmox/issues/817)) ([b9e5dda](https://github.com/dryvist/tofu-proxmox/commit/b9e5dda4b22839ca4d2dd6f9f65d2f07c8039fb9))
+
 ## [1.76.6](https://github.com/dryvist/tofu-proxmox/compare/v1.76.5...v1.76.6) (2026-07-31)
 
 
