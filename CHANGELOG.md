@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.76.8](https://github.com/dryvist/tofu-proxmox/compare/v1.76.7...v1.76.8) (2026-08-02)
+
+
+### Bug Fixes
+
+* **ci:** guard ci-fix.yml against fork-origin workflow_run privilege escalation ([#822](https://github.com/dryvist/tofu-proxmox/issues/822)) ([2679c1b](https://github.com/dryvist/tofu-proxmox/commit/2679c1b2650882f7edf70fe8e58ea924f66c4d7b))
+
 ## [1.76.7](https://github.com/dryvist/tofu-proxmox/compare/v1.76.6...v1.76.7) (2026-08-02)
 
 
