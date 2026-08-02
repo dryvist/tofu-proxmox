@@ -984,3 +984,51 @@ run "openbao_concentration_ignores_untagged_guests" {
     error_message = "only openbao-tagged guests are voters, got ${local.openbao_voter_count}"
   }
 }
+
+# The spend store is a SEPARATE guest from the routers it serves, and the tag
+# filter is what keeps it that way. A store colocated with a router member would
+# give each member a private spend counter, which is the miscount that made an
+# earlier ceiling dishonest — so a router picking up the llm-redis tag, or the
+# store picking up llm-router, is a defect and not a deployment choice.
+run "llm_redis_container_ids_are_disjoint_from_the_router_pool" {
+  command = plan
+
+  variables {
+    containers = {
+      "llm-router-1" = {
+        vm_id    = 301
+        hostname = "llm-router-1"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container", "llm-router"]
+      }
+      "llm-redis-1" = {
+        vm_id    = 302
+        hostname = "llm-redis-1"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container", "llm-redis"]
+      }
+      "untagged" = {
+        vm_id    = 303
+        hostname = "untagged"
+        vlan     = "ai"
+        dhcp     = true
+        tags     = ["terraform", "container"]
+      }
+    }
+  }
+
+  assert {
+    condition     = keys(local.llm_redis_container_ids) == ["llm-redis-1"]
+    error_message = "llm_redis_container_ids must select exactly the llm-redis-tagged guests"
+  }
+
+  assert {
+    condition = length(setintersection(
+      keys(local.llm_redis_container_ids),
+      keys(local.llm_router_container_ids),
+    )) == 0
+    error_message = "the spend store must never be colocated with a router member — a store inside one member gives every member a private counter, which is the miscount a shared store exists to remove"
+  }
+}

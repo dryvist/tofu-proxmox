@@ -175,3 +175,83 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_fast_container" {
 
   depends_on = [proxmox_virtual_environment_firewall_options.llm_fast_container]
 }
+
+# llm-redis — the shared store the LiteLLM router pool counts spend in.
+#
+# Scoped to the AI VLAN, NOT internal_src like its neighbours above. Those serve
+# callers across the estate; this one has exactly one client population, the
+# router guests, which all sit on the ai VLAN. The routers are DHCP-first
+# guests, so their individual addresses are not usable as a firewall source and
+# the VLAN CIDR is the tightest scope this layer can express — still a real
+# narrowing over "every internal network".
+#
+# The narrowing matters more here than for an API port. An unauthenticated Redis
+# is a remote-code-execution primitive (CONFIG SET dir + SAVE), and while the
+# role sets requirepass and renames CONFIG away, that is defence in depth rather
+# than a reason to widen the reachable set.
+locals {
+  llm_redis_services_rules = [
+    { proto = "tcp", dport = tostring(local.svc_ports.redis_default), source = var.ai_network, comment = "LLM router spend store (TCP ${local.svc_ports.redis_default}) from the ai VLAN only" },
+  ]
+}
+
+resource "proxmox_virtual_environment_cluster_firewall_security_group" "llm_redis_services" {
+  name    = "llm-redis-svc"
+  comment = "LLM router spend store (${local.svc_ports.redis_default}) from the ai VLAN"
+
+  dynamic "rule" {
+    for_each = local.llm_redis_services_rules
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = rule.value.proto
+      dport   = rule.value.dport
+      source  = rule.value.source
+      comment = rule.value.comment
+    }
+  }
+}
+
+resource "proxmox_virtual_environment_firewall_options" "llm_redis_container" {
+  for_each = var.llm_redis_container_ids
+
+  node_name     = var.node_name
+  container_id  = each.value
+  enabled       = local.firewall_defaults.enabled
+  input_policy  = local.firewall_defaults.input_policy
+  output_policy = local.firewall_defaults.output_policy
+  log_level_in  = local.firewall_defaults.log_level_in
+  log_level_out = local.firewall_defaults.log_level_out
+
+  dhcp = true
+
+  depends_on = [proxmox_virtual_environment_cluster_firewall.main]
+}
+
+resource "proxmox_virtual_environment_firewall_rules" "llm_redis_container" {
+  for_each = var.llm_redis_container_ids
+
+  node_name    = var.node_name
+  container_id = each.value
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name
+    comment        = "Internal access (SSH, ICMP)"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.llm_redis_services.name
+    comment        = "Spend store from the ai VLAN"
+  }
+
+  # Outbound INTERNAL only, and deliberately no outbound_https. This guest
+  # serves one port to one VLAN and originates nothing toward the internet; apt
+  # reaches the internal cacher over the same internal egress. Omitting the WAN
+  # rule keeps a data store off the list of things that can call out.
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
+    comment        = "Outbound to internal (DNS, NTP, apt cacher)"
+  }
+
+  depends_on = [proxmox_virtual_environment_firewall_options.llm_redis_container]
+}

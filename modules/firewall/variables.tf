@@ -274,3 +274,9 @@ variable "internal_networks" {
     error_message = "Each internal_networks entry must be a valid CIDR block, for example 192.168.0.0/16."
   }
 }
+
+variable "llm_redis_container_ids" {
+  description = "Map of LLM spend-store LXC names to IDs (tag-driven: llm-redis). Shared Redis backing the LiteLLM router pool's cross-instance spend accounting — inbound redis_default from the ai VLAN only, outbound internal only (no WAN)."
+  type        = map(number)
+  default     = {}
+}
