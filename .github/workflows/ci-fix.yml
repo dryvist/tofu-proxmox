@@ -13,12 +13,18 @@ on:
 permissions:
   actions: read
   contents: write
-  id-token: write
   issues: write
   pull-requests: write
 
 jobs:
   ci-fix:
+    # Fail closed before invoking the reusable workflow: workflow_run executes
+    # in this repo's privileged context even for a run that originated from a
+    # fork PR. Mirrors the same guard cc-ci-fix.yml already applies internally
+    # to its sensitive jobs (github.event.workflow_run.head_repository).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.head_repository.full_name == github.repository
     uses: dryvist/ai-workflows/.github/workflows/cc-ci-fix.yml@main
     secrets: inherit
     with:
