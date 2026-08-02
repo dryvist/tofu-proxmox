@@ -147,18 +147,6 @@ variable "langfuse_container_ids" {
   default     = {}
 }
 
-variable "llm_router_container_ids" {
-  description = "Map of LLM router LXC names to IDs (tag-driven: llm-router). LiteLLM proxy fronting the fabric — inbound llm_router_api from internal + outbound internal/HTTPS (llm-fast + off-box model endpoints)."
-  type        = map(number)
-  default     = {}
-}
-
-variable "llm_fast_container_ids" {
-  description = "Map of LLM fast-server LXC names to IDs (tag-driven: llm-fast). GPU llama-swap server — inbound llm_fast_api from internal + outbound internal/HTTPS (model/weight fetch)."
-  type        = map(number)
-  default     = {}
-}
-
 variable "agentgateway_container_ids" {
   description = "Map of agentgateway MCP/LLM/A2A proxy LXC names to IDs (tag-driven: agentgateway). AI-first data plane — inbound proxy (8080) + admin UI (15000) + metrics (15020) from internal; outbound internal (local LLM fabric) + HTTPS (external MCP servers, upstream LLM APIs)."
   type        = map(number)
@@ -274,3 +262,4 @@ variable "internal_networks" {
     error_message = "Each internal_networks entry must be a valid CIDR block, for example 192.168.0.0/16."
   }
 }
+

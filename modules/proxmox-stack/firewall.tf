@@ -90,6 +90,12 @@ module "firewall" {
   llm_router_container_ids = local.llm_router_container_ids
   llm_fast_container_ids   = local.llm_fast_container_ids
 
+  # Shared spend store for the router pool (llm-redis tag). Reachable from the
+  # ai VLAN only — one client population, and an unauthenticated Redis is an RCE
+  # primitive, so it does not get the estate-wide internal scope its neighbours
+  # have.
+  llm_redis_container_ids = local.llm_redis_container_ids
+
   # agentgateway MCP/LLM/A2A data-plane proxy (agentgateway tag).
   agentgateway_container_ids = local.agentgateway_container_ids
 
