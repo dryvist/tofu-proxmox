@@ -147,18 +147,6 @@ variable "langfuse_container_ids" {
   default     = {}
 }
 
-variable "llm_router_container_ids" {
-  description = "Map of LLM router LXC names to IDs (tag-driven: llm-router). LiteLLM proxy fronting the fabric — inbound llm_router_api from internal + outbound internal/HTTPS (llm-fast + off-box model endpoints)."
-  type        = map(number)
-  default     = {}
-}
-
-variable "llm_fast_container_ids" {
-  description = "Map of LLM fast-server LXC names to IDs (tag-driven: llm-fast). GPU llama-swap server — inbound llm_fast_api from internal + outbound internal/HTTPS (model/weight fetch)."
-  type        = map(number)
-  default     = {}
-}
-
 variable "agentgateway_container_ids" {
   description = "Map of agentgateway MCP/LLM/A2A proxy LXC names to IDs (tag-driven: agentgateway). AI-first data plane — inbound proxy (8080) + admin UI (15000) + metrics (15020) from internal; outbound internal (local LLM fabric) + HTTPS (external MCP servers, upstream LLM APIs)."
   type        = map(number)
@@ -275,8 +263,3 @@ variable "internal_networks" {
   }
 }
 
-variable "llm_redis_container_ids" {
-  description = "Map of LLM spend-store LXC names to IDs (tag-driven: llm-redis). Shared Redis backing the LiteLLM router pool's cross-instance spend accounting — inbound redis_default from the ai VLAN only, outbound internal only (no WAN)."
-  type        = map(number)
-  default     = {}
-}
