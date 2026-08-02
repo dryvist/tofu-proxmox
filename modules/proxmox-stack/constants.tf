@@ -222,22 +222,6 @@ locals {
       seerr_web       = 5055
       sortarr_web     = 8787
     }
-    # Per-model serving concurrency ceiling for the LLM serving tier. THE
-    # single numeric definition of this value repo-wide — previously it was
-    # ALSO a bare literal in ansible-proxmox-ai's inventory/group_vars/all.yml
-    # (ai_llm_concurrency) and nix-darwin's lib/hosts/mac-studio.nix
-    # (serveConcurrency), "kept in sync by convention." ansible-proxmox-ai now
-    # derives ai_llm_concurrency from tofu_data.constants.serving.llm_concurrency
-    # via the existing tofu_data channel (dryvist.homelab.inventory_resolve) —
-    # the same mechanism every other pipeline_constants family already uses.
-    # nix-darwin's flake evaluation is hermetic (no network access), so it
-    # cannot derive this the same way; instead its CI runs a parity check
-    # (.github/workflows/_llm-concurrency-parity.yml in dryvist/nix-darwin)
-    # against this repo's `main` branch and fails the build on drift. Raising
-    # this value requires raising serveConcurrency in the SAME change (or the
-    # parity check fails) — mechanically enforced now, not by convention.
-    serving = {
-      llm_concurrency = 1
-    }
+    serving = local.serving
   }
 }
