@@ -448,6 +448,42 @@ run "pipeline_constants_serving" {
     condition     = local.pipeline_constants.serving.llm_concurrency == 1
     error_message = "serving.llm_concurrency should be 1"
   }
+
+  # The serving host publishes as EMPTY when the deployment object does not
+  # describe it. This is the property that keeps its address out of public git:
+  # the repository holds the shape, the private deployment object holds the
+  # value. A committed default here — any address at all — would put the value
+  # back into every clone, which is the defect this pair of keys exists to fix.
+  assert {
+    condition     = local.pipeline_constants.serving.host == ""
+    error_message = "serving.host must publish empty when unset — a committed default would recreate the literal this key replaced."
+  }
+  assert {
+    condition     = local.pipeline_constants.serving.ip == ""
+    error_message = "serving.ip must publish empty when unset — a committed default would recreate the literal this key replaced."
+  }
+}
+
+run "pipeline_constants_serving_published_when_supplied" {
+  command = plan
+
+  # The other half of the contract: a value supplied at apply time reaches
+  # consumers unchanged. Without this the empty-by-default assertions above
+  # would also pass on a key that is hardcoded empty and never wired to
+  # anything, which is a shape that publishes nothing and fails silently.
+  variables {
+    llm_large_serving_host = "llm-large-example"
+    llm_large_serving_ip   = "192.0.2.10"
+  }
+
+  assert {
+    condition     = local.pipeline_constants.serving.host == "llm-large-example"
+    error_message = "serving.host must publish the supplied hostname unchanged."
+  }
+  assert {
+    condition     = local.pipeline_constants.serving.ip == "192.0.2.10"
+    error_message = "serving.ip must publish the supplied address unchanged."
+  }
 }
 
 # --- tag-filtering locals isolation ---

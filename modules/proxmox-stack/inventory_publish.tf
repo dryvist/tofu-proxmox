@@ -212,10 +212,10 @@ resource "aws_s3_object" "ansible_inventory" {
         for k in [
           "service_ports", "syslog_ports", "syslog_port_map", "netflow_ports",
           "notification_ports", "vector_db_ports", "memory_ports", "media_ports",
-          "ai_log_ports", "ai_log_routing",
+          "ai_log_ports", "ai_log_routing", "serving",
         ] : can(local.ansible_inventory.constants[k])
       ])
-      error_message = "pipeline_constants is missing one or more required keys (service_ports, syslog_ports, syslog_port_map, netflow_ports, notification_ports, vector_db_ports, memory_ports, media_ports, ai_log_ports, ai_log_routing). Inspect constants.tf."
+      error_message = "pipeline_constants is missing one or more required keys (service_ports, syslog_ports, syslog_port_map, netflow_ports, notification_ports, vector_db_ports, memory_ports, media_ports, ai_log_ports, ai_log_routing, serving). Inspect constants.tf."
     }
     precondition {
       condition = alltrue([

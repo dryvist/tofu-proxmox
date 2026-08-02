@@ -26,6 +26,16 @@
         "pattern": "^[0-9.]+/[0-9]+$"
       }
     },
+    "llm_large_serving_host": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short hostname of the heavy-tier LLM serving host. Optional: this host is a fixed-address reservation rather than a PVE guest, so it is absent from `containers` and cannot be derived. Published to consumers as constants.serving.host."
+    },
+    "llm_large_serving_ip": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Reserved address of the heavy-tier LLM serving host (bare IPv4, no mask). Optional, and omitted rather than guessed: consumers fail loudly on absence. Published to consumers as constants.serving.ip."
+    },
     "vm_ssh_public_key": {
       "type": "string",
       "pattern": "^(ssh-|ecdsa-)"
