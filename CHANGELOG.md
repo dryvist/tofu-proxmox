@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.77.0](https://github.com/dryvist/tofu-proxmox/compare/v1.76.8...v1.77.0) (2026-08-03)
+
+
+### Features
+
+* **constants:** publish the heavy-tier serving host identity ([#827](https://github.com/dryvist/tofu-proxmox/issues/827)) ([07812dd](https://github.com/dryvist/tofu-proxmox/commit/07812dd2600d4a0d5b6d79d7c548e1c62d6f2a12))
+* **firewall:** admit the LLM router pool's shared spend store ([#829](https://github.com/dryvist/tofu-proxmox/issues/829)) ([9b9c3c9](https://github.com/dryvist/tofu-proxmox/commit/9b9c3c925ed16b6375f9bc7d1406d3dcc5efc977))
+
 ## [1.76.8](https://github.com/dryvist/tofu-proxmox/compare/v1.76.7...v1.76.8) (2026-08-02)
 
 
