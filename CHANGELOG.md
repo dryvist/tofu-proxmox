@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.77.2](https://github.com/dryvist/tofu-proxmox/compare/v1.77.1...v1.77.2) (2026-08-03)
+
+
+### Bug Fixes
+
+* adopt nautobot after an HA relocation ([#840](https://github.com/dryvist/tofu-proxmox/issues/840)) ([00b1d76](https://github.com/dryvist/tofu-proxmox/commit/00b1d768c915641d337d31fa53f66b4354f17cd9))
+
 ## [1.77.1](https://github.com/dryvist/tofu-proxmox/compare/v1.77.0...v1.77.1) (2026-08-03)
 
 
