@@ -42,6 +42,7 @@ locals {
       homeassistant_web = 8123
       openproject_web   = 80
       prometheus_web    = 9090
+      docs_static_web   = 80 # nginx document root on the static file host
       # Proxmox cluster web UI (:8006) — fronted by Traefik at the ingress
       # subdomain apex, load-balanced across every commissioned node's UI.
       proxmox_web = 8006
