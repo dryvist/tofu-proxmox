@@ -149,9 +149,6 @@ For slow operations and "context deadline exceeded" debugging:
 | Need | Location |
 | --- | --- |
 | Architecture (canonical) | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) |
-| Secrets roadmap | [`docs/SECRETS_ROADMAP.md`](./docs/SECRETS_ROADMAP.md) |
-| Secrets hierarchy & RBAC (OpenBao KV layout, AI-agent groups) | [`docs/SECRETS_HIERARCHY.md`](./docs/SECRETS_HIERARCHY.md) |
-| Secrets architecture | [`docs/SECRETS_ROADMAP.md`](./docs/SECRETS_ROADMAP.md) |
 | Network-quality monitoring (SmokePing) | [`docs/SMOKEPING.md`](./docs/SMOKEPING.md) |
 | Honeypots / deception fabric + phone alerting | [`docs/HONEYPOTS.md`](./docs/HONEYPOTS.md) |
 | Per-WAN network diagnosis (modem/WAN telemetry) | [`docs/NETWORK_DIAGNOSIS.md`](./docs/NETWORK_DIAGNOSIS.md) |

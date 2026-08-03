@@ -197,9 +197,16 @@ module "homelab" {
   domain                  = local.deployment.domain
   environment             = try(local.deployment.environment, "homelab")
   host_services           = try(local.deployment.host_services, {})
-  network_cidrs           = local.deployment.network_cidrs
-  node_storage            = try(local.deployment.node_storage, {})
-  nodes                   = local.deployment.nodes
+  # Heavy-tier LLM serving host: a tofu-unifi reservation rather than a PVE
+  # guest, so it has no vm_id to derive an address from and must be described
+  # explicitly. Optional (try/"") because most applies have nothing to do with
+  # the LLM fabric; the consuming roles fail loudly when it is absent rather
+  # than substituting a default. See modules/proxmox-stack/variables-serving.tf.
+  llm_large_serving_host = try(local.deployment.llm_large_serving_host, "")
+  llm_large_serving_ip   = try(local.deployment.llm_large_serving_ip, "")
+  network_cidrs          = local.deployment.network_cidrs
+  node_storage           = try(local.deployment.node_storage, {})
+  nodes                  = local.deployment.nodes
   # Degraded-window acknowledgement for the OpenBao voter-spread guard —
   # per-run via TF_VAR_openbao_accept_quorum_loss_on_node_failure, default off.
   openbao_accept_quorum_loss_on_node_failure = var.openbao_accept_quorum_loss_on_node_failure
