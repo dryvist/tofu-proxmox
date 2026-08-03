@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.78.0](https://github.com/dryvist/tofu-proxmox/compare/v1.77.2...v1.78.0) (2026-08-03)
+
+
+### Features
+
+* **deployment:** add static file web host guest and SSO-gated route ([#845](https://github.com/dryvist/tofu-proxmox/issues/845)) ([973f5d7](https://github.com/dryvist/tofu-proxmox/commit/973f5d72065e2574f9a5a3564bad163c39eb983e))
+
 ## [1.77.2](https://github.com/dryvist/tofu-proxmox/compare/v1.77.1...v1.77.2) (2026-08-03)
 
 
