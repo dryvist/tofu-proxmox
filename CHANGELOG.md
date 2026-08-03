@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.77.1](https://github.com/dryvist/tofu-proxmox/compare/v1.77.0...v1.77.1) (2026-08-03)
+
+
+### Bug Fixes
+
+* adopt the vikunja container into state ([#835](https://github.com/dryvist/tofu-proxmox/issues/835)) ([59a5314](https://github.com/dryvist/tofu-proxmox/commit/59a53143867db90f6d8e4aee26cdb0bff3752157))
+
 ## [1.77.0](https://github.com/dryvist/tofu-proxmox/compare/v1.76.8...v1.77.0) (2026-08-03)
 
 
