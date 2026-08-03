@@ -1,38 +1,34 @@
-# Adoption of guests that exist in Proxmox but not in tofu state.
+# Adoption of guests whose state entry points at a node they no longer run on.
 #
-# TRANSIENT. Delete this file in a follow-up PR once the adopting apply has run;
-# an import block for an already-managed resource is a no-op, so leaving it here
-# is harmless but misleading — it reads as "these are still unmanaged" forever.
+# WHY THIS RECURS. These guests are HA-managed, so Proxmox relocates them
+# whenever a node is lost. Refresh looks a guest up by the node recorded in
+# STATE, so after a relocation it 404s, drops the resource, and plans a CREATE.
+# Proxmox VMIDs are cluster-unique, so that create can never succeed against the
+# live guest: the apply sits until "timeout while waiting for container <vmid>
+# configuration to become unlocked", then fails. Everything downstream of the
+# containers is skipped with it — notably aws_s3_object.ansible_inventory, whose
+# content iterates container_details — so one relocated guest freezes the
+# published inventory that the consumer repos read.
 #
-# WHY AN IMPORT AND NOT A DATA EDIT. `vikunja` (605010) is live but absent from
-# state. Refresh looks a guest up by the node recorded in STATE, so with no
-# state entry it plans a CREATE. Proxmox VMIDs are cluster-unique, so that
-# create can never succeed against the live guest: the apply hangs waiting for
-# the container configuration to unlock and then errors, and everything
-# downstream of the containers (notably aws_s3_object.ansible_inventory, whose
-# content iterates container_details) is skipped along with it.
-#
-# Correcting node_name in the deployment object alone does NOT fix this — that
-# is measured, not assumed: with node_name set to the real node the plan still
-# reported a create, because config cannot retroactively change what refresh
-# already looked for. The edit is still a prerequisite, because node_name is
-# ForceNew in the pinned bpg/proxmox v0.111.1: importing while the declared
-# node disagreed with reality would plan destroy+recreate of a running guest
-# rather than an adoption. The deployment object now declares the node the
-# guest actually runs on, so the import adopts in place.
+# ORDER MATTERS, and it is measured rather than assumed:
+#   1. Correct node_name in the deployment object FIRST. node_name is ForceNew
+#      in the pinned bpg/proxmox provider, so importing while the declared node
+#      disagrees with reality plans destroy+recreate of a running guest instead
+#      of an adoption.
+#   2. Remove the stale state entry. An import block whose address is already
+#      present in state is a SILENT no-op — the plan still reports a create.
+#   3. Then apply, and the import adopts in place.
 #
 # The ids are derived from the deployment object rather than written out, so no
 # real node name is committed here and the block cannot drift from the declared
-# placement it is adopting. Format is `node/vmid`, per parseImportIDWithNodeName
-# in the pinned provider.
+# placement it is adopting. Format is `node/vmid`.
 #
-# This guest is HA-managed, so Proxmox may relocate it and reopen the same
-# divergence. Verify the declared node still matches reality immediately before
-# the adopting apply.
+# Verify the declared node still matches reality immediately before an adopting
+# apply — HA can relocate a guest again between the edit and the run.
 locals {
-  # Guests that exist in Proxmox but are absent from tofu state. Empty is the
-  # steady state; a name here is a claim that the guest is live and unmanaged.
-  adopt_containers = ["vikunja"]
+  # Guests whose live node and state node have diverged. Empty is the steady
+  # state; a name here is a claim that the guest is live and mis-tracked.
+  adopt_containers = ["nautobot"]
 }
 
 import {
