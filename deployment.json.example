@@ -478,6 +478,20 @@
         { "volume": "local-zfs", "size": "40G", "path": "/opt/zammad" }
       ]
     },
+    "docs-static": {
+      "vm_id": 605040,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "docs-static",
+      "description": "Static file web host — nginx serving a read-only document root on docs_static_web (80), fronted by Traefik and SSO-gated. Smallest useful shape: no datastore of its own and no persistent mount, because the document root is published onto the rootfs and a rebuild is simply a re-publish.",
+      "cpu_cores": 1,
+      "memory_dedicated": 1024,
+      "tags": ["terraform", "container", "docs-static"],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-3",
+      "unprivileged": true,
+      "root_disk": { "size": 8 }
+    },
     "_ingress_ha_comment": "Ingress is HA: identical Traefik LXCs on every eligible node carry the `ingress` tag; keepalived floats one VRRP virtual IP across them (ingress.tf derives ingress_vip/ingress_hosts from the `ingress` tag + network_cidrs). A VIP is synthesized only with at least two ingress nodes. The Traefik containers themselves are generated from `node_services.traefik` below (main.tf `node_service_containers`), one per commissioned + services_enabled node listed in `per_node` -- add a node by adding its vm_id/host_octet there, not by copying a container block.",
     "_smokeping_comment": "Network-quality monitoring — Prometheus-native stack (Docker-in-LXC). The central `smokeping` collector runs smokeping_prober (:9374, ICMP/UDP latency-distribution histograms = system of record), blackbox_exporter (:9115, DNS/HTTP/TLS/TCP + SLO probes), atlas_exporter (:9400, RIPE Atlas outside-in), an irtt server (:2112/udp, real RFC-3393 jitter/MOS), and optionally the classic SmokePing RRD/CGI UI (:80). Throughput is DECOUPLED onto its own `speedtest` host so saturation never corrupts latency samples. Add a per-segment `netq-probe-*` vantage on each VLAN you care about (multi-vantage) — one example below. See docs/SMOKEPING.md for the full blueprint the ansible-proxmox-apps roles apply. These adopt the 6-digit positional VMID + DNS-first convention (docs.jacobpevans.com/infrastructure/vmid-network-tiers): observability = tier 4, so VMIDs are 41xxxx; `dhcp:true` means no vm_id-derived IP — DHCP leases the address and each guest is reached by {hostname}.{domain}. `vlan` stays at today's value during the incremental tier renumber.",
     "smokeping": {

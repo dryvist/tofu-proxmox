@@ -70,5 +70,8 @@ locals {
     "hermes-api"    = { backend = "hermes-agent", port = local.pipeline_constants.service_ports.hermes_api, sso = false } # bearer-authenticated job API
     smokeping       = { backend = "smokeping", port = local.pipeline_constants.service_ports.smokeping_web }
     "haproxy-stats" = { backend = "haproxy", port = local.pipeline_constants.service_ports.haproxy_stats }
+    # Static file host. Browser-only, so it takes the default gate (sso omitted
+    # -> true) rather than opting out the way the machine/API rows above do.
+    "docs-static" = { backend = "docs-static", port = local.pipeline_constants.service_ports.docs_static_web }
   }
 }
