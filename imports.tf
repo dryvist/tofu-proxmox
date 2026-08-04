@@ -59,5 +59,10 @@ import {
   # alone: the OpenBao voters are synthesised from `openbao_cluster.placement`
   # and exist only in the merged map, so deriving from the raw deployment
   # object fails on exactly the guests a placement change relocates.
-  id = "${local.containers[each.value].node_name}/${local.containers[each.value].vm_id}"
+  #
+  # node_name is OPTIONAL in the schema, and the stack defaults an unset value
+  # to the primary node. Mirror that same coalesce here: taking the raw
+  # attribute would yield an import id of `null/<vmid>` for any container
+  # relying on the default, which fails to adopt with a confusing error.
+  id = "${coalesce(try(local.containers[each.value].node_name, null), local.deployment.proxmox_node)}/${local.containers[each.value].vm_id}"
 }
