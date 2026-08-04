@@ -79,8 +79,45 @@ run "ansible_inventory_schema_version" {
   command = plan
 
   assert {
-    condition     = output.ansible_inventory.schema_version == "2.0.0"
-    error_message = "ansible_inventory must carry schema_version \"2.0.0\" so the homelab-contracts schema gate can confirm the emitted shape"
+    condition     = output.ansible_inventory.schema_version == "2.1.0"
+    error_message = "ansible_inventory must carry schema_version \"2.1.0\" so the homelab-contracts schema gate can confirm the emitted shape"
+  }
+}
+
+# --- desired-state fingerprint ---
+#
+# The staleness check downstream is only as good as this key's presence: a
+# consumer that cannot find it cannot tell a current artifact from one rendered
+# before the last desired-state edit, and silently falls back to assuming it is
+# current. Assert the key exists and carries the module inputs verbatim, so
+# dropping or renaming it fails here rather than degrading the detector in
+# place.
+
+run "ansible_inventory_desired_state_fingerprint" {
+  command = plan
+
+  variables {
+    desired_state_etag          = "d41d8cd98f00b204e9800998ecf8427e"
+    desired_state_last_modified = "2026-01-01T00:00:00Z"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.desired_state.etag == "d41d8cd98f00b204e9800998ecf8427e"
+    error_message = "ansible_inventory.desired_state.etag must carry the desired-state object's ETag — it is what tells a consumer whether an apply is owed before it converges"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.desired_state.last_modified == "2026-01-01T00:00:00Z"
+    error_message = "ansible_inventory.desired_state.last_modified must carry the desired-state object's timestamp for diagnosis"
+  }
+}
+
+run "ansible_inventory_desired_state_defaults_empty" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.desired_state.etag == ""
+    error_message = "desired_state.etag must default to empty, so a store that returns no ETag disables the downstream check instead of failing every converge"
   }
 }
 

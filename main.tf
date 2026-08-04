@@ -249,4 +249,10 @@ module "homelab" {
 
   inventory_bucket = var.inventory_bucket
   inventory_key    = var.inventory_key
+
+  # Fingerprint of the desired-state object this run is rendering from. Carried
+  # into the published inventory so the artifact says which desired state it was
+  # built from — see modules/proxmox-stack/inventory_publish.tf.
+  desired_state_etag          = data.aws_s3_object.deployment.etag
+  desired_state_last_modified = data.aws_s3_object.deployment.last_modified
 }

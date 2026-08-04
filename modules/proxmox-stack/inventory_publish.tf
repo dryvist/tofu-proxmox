@@ -15,7 +15,27 @@ locals {
     # Contract version of this published artifact. Consumers (and the
     # homelab-contracts JSON schema that gates the publish) read this to confirm
     # they understand the emitted shape. Bump only on a breaking key-set change.
-    schema_version = "2.0.0"
+    schema_version = "2.1.0"
+    # Fingerprint of the desired-state object this artifact was rendered from.
+    #
+    # An apply is the only thing that refreshes it, so a consumer that compares
+    # this against the LIVE desired-state object's ETag learns, before it acts,
+    # whether an apply is owed. That link has no other signal: a desired-state
+    # edit that is never applied leaves this artifact silently contradicting it,
+    # and a converge then consumes the artifact and produces a confidently wrong
+    # result rather than an error.
+    #
+    # An ETag, not a timestamp, and it is deliberately part of the published
+    # CONTENT. The publish resource rewrites the object only when its content
+    # changes, so a desired-state edit that happens to alter nothing else here
+    # would never refresh a timestamp — the artifact would read as permanently
+    # stale. Embedding the fingerprint makes every desired-state change change
+    # this content, so "artifact matches desired state" is exact in both
+    # directions.
+    desired_state = {
+      etag          = var.desired_state_etag
+      last_modified = var.desired_state_last_modified
+    }
     # LXC Containers - using proxmox_pct_remote connection
     containers = {
       for k, v in(length(var.containers) > 0 ? module.containers[0].container_details : {}) : k => {
