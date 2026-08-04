@@ -113,10 +113,11 @@ run "vm_with_invalid_vga_type_rejected" {
   variables {
     vms = {
       test = {
-        vm_id    = 100
-        name     = "test-vm"
-        vlan     = "apps"
-        vga_type = "invalid-vga"
+        vm_id     = 100
+        node_name = "proxmox-1"
+        name      = "test-vm"
+        vlan      = "apps"
+        vga_type  = "invalid-vga"
       }
     }
   }
@@ -132,9 +133,10 @@ run "vm_with_id_below_minimum_rejected" {
   variables {
     vms = {
       test = {
-        vm_id = 1
-        name  = "test-vm"
-        vlan  = "apps"
+        vm_id     = 1
+        node_name = "proxmox-1"
+        name      = "test-vm"
+        vlan      = "apps"
       }
     }
   }
@@ -150,9 +152,10 @@ run "container_with_id_below_minimum_rejected" {
   variables {
     containers = {
       test = {
-        vm_id    = 1
-        hostname = "test"
-        vlan     = "apps"
+        vm_id     = 1
+        node_name = "proxmox-1"
+        hostname  = "test"
+        vlan      = "apps"
       }
     }
   }
@@ -169,6 +172,7 @@ run "container_with_excessive_cpu_rejected" {
     containers = {
       test = {
         vm_id     = 100
+        node_name = "proxmox-1"
         hostname  = "test"
         vlan      = "apps"
         cpu_cores = 64
@@ -188,6 +192,7 @@ run "container_with_memory_below_minimum_rejected" {
     containers = {
       test = {
         vm_id            = 100
+        node_name        = "proxmox-1"
         hostname         = "test"
         vlan             = "apps"
         memory_dedicated = 0
@@ -266,6 +271,7 @@ run "vm_with_excessive_cpu_cores_rejected" {
     vms = {
       test = {
         vm_id     = 100
+        node_name = "proxmox-1"
         name      = "test-vm"
         vlan      = "apps"
         cpu_cores = 64
@@ -285,6 +291,7 @@ run "vm_with_memory_above_maximum_rejected" {
     vms = {
       test = {
         vm_id            = 100
+        node_name        = "proxmox-1"
         name             = "test-vm"
         vlan             = "apps"
         memory_dedicated = 131072
@@ -497,11 +504,12 @@ run "ai_runner_with_unknown_profile_tag_rejected" {
   variables {
     containers = {
       agent-1 = {
-        vm_id    = 500101
-        hostname = "agent-1"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container", "ai", "ai-runner", "ai-proxeed"]
+        vm_id     = 500101
+        node_name = "proxmox-1"
+        hostname  = "agent-1"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "ai", "ai-runner", "ai-proxeed"]
       }
     }
   }
@@ -517,11 +525,12 @@ run "ai_runner_with_no_profile_tag_rejected" {
   variables {
     containers = {
       agent-1 = {
-        vm_id    = 500101
-        hostname = "agent-1"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container", "ai", "ai-runner"]
+        vm_id     = 500101
+        node_name = "proxmox-1"
+        hostname  = "agent-1"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "ai", "ai-runner"]
       }
     }
   }
@@ -537,11 +546,12 @@ run "ai_runner_with_two_profile_tags_rejected" {
   variables {
     containers = {
       agent-1 = {
-        vm_id    = 500101
-        hostname = "agent-1"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container", "ai", "ai-runner", "ai-proxied", "ai-full-net"]
+        vm_id     = 500101
+        node_name = "proxmox-1"
+        hostname  = "agent-1"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "ai", "ai-runner", "ai-proxied", "ai-full-net"]
       }
     }
   }
@@ -558,25 +568,28 @@ run "agent_pool_with_squid_accepted" {
   variables {
     containers = {
       agent-1 = {
-        vm_id    = 500101
-        hostname = "agent-1"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
+        vm_id     = 500101
+        node_name = "proxmox-1"
+        hostname  = "agent-1"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
       }
       agent-2 = {
-        vm_id    = 500102
-        hostname = "agent-2"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
+        vm_id     = 500102
+        node_name = "proxmox-1"
+        hostname  = "agent-2"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "ai", "ai-runner", "ai-proxied"]
       }
       squid = {
-        vm_id    = 500110
-        hostname = "squid"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container", "ai", "squid"]
+        vm_id     = 500110
+        node_name = "proxmox-1"
+        hostname  = "squid"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "ai", "squid"]
       }
     }
   }

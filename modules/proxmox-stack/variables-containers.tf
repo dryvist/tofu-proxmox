@@ -36,9 +36,14 @@ variable "containers" {
     # never requires touching the guests that point at it.
     dhcp = optional(bool, false)
 
-    # Node placement (optional). When unset, main.tf defaults to var.proxmox_node
-    # (the primary node). Set to "proxmox-2"/"proxmox-3" to place an LXC on another cluster node.
-    node_name = optional(string)
+    # Node placement. REQUIRED, deliberately: this was `optional(string)` with
+    # main.tf falling back to var.proxmox_node, and the fallback was silent — a
+    # guest that simply omitted the field landed on the primary node with no
+    # signal that a placement decision had been skipped. That is how the primary
+    # node accumulated the majority of the estate's containers, including every
+    # tier of the log pipeline, without anyone choosing to put them there.
+    # Placement is now an explicit declaration; there is no default to inherit.
+    node_name = string
 
     # Resource configuration
     cpu_cores        = optional(number, 2)

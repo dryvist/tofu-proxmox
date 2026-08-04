@@ -136,4 +136,3 @@ variable "startup_delay" {
   type        = number
   default     = 10
 }
-

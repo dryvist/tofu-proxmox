@@ -88,11 +88,11 @@ run "container_ipv4_uses_vlan_cidr" {
     # name-not-address contract below.
     domain = "example.com"
     containers = {
-      "technitium-dns" = { vm_id = 103, hostname = "technitium-dns", vlan = "dns" }
+      "technitium-dns" = { node_name = "proxmox-1", vm_id = 103, hostname = "technitium-dns", vlan = "dns" }
       # Rebuilt pipeline-tier guest: siem VLAN (40), DHCP-first with a positional
       # VMID (candidate id — final allocation confirmed against the private
       # allocation table before the rebuild apply).
-      "haproxy" = { vm_id = 421040, hostname = "haproxy", vlan = "siem", dhcp = true }
+      "haproxy" = { node_name = "proxmox-1", vm_id = 421040, hostname = "haproxy", vlan = "siem", dhcp = true }
     }
   }
 
@@ -135,8 +135,8 @@ run "vm_ipv4_uses_vlan_cidr" {
 
   variables {
     vms = {
-      "docker-host" = { vm_id = 250, name = "docker", vlan = "nonprod" }
-      "idrac-kvm"   = { vm_id = 251, name = "idrac-kvm", vlan = "apps" }
+      "docker-host" = { node_name = "proxmox-1", vm_id = 250, name = "docker", vlan = "nonprod" }
+      "idrac-kvm"   = { node_name = "proxmox-1", vm_id = 251, name = "idrac-kvm", vlan = "apps" }
     }
   }
 
@@ -222,10 +222,11 @@ run "splunk_network_ips_includes_splunk_tagged_container" {
   variables {
     containers = {
       "splunk-mgmt" = {
-        vm_id    = 199
-        hostname = "splunk-mgmt"
-        vlan     = "siem"
-        tags     = ["terraform", "splunk", "container"]
+        vm_id     = 199
+        node_name = "proxmox-1"
+        hostname  = "splunk-mgmt"
+        vlan      = "siem"
+        tags      = ["terraform", "splunk", "container"]
       }
     }
   }
@@ -520,11 +521,12 @@ run "monitoring_ids_picks_up_monitoring_tagged" {
   variables {
     containers = {
       "smokeping" = {
-        vm_id    = 990001
-        dhcp     = true
-        hostname = "smokeping"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "monitoring", "docker"]
+        vm_id     = 990001
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "smokeping"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "monitoring", "docker"]
       }
     }
   }
@@ -552,11 +554,12 @@ run "container_dhcp_resolves_fqdn_and_null_gateway" {
     domain = "example.com"
     containers = {
       "speedtest" = {
-        vm_id    = 990002
-        dhcp     = true
-        hostname = "speedtest"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "monitoring", "docker"]
+        vm_id     = 990002
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "speedtest"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "monitoring", "docker"]
       }
     }
   }
@@ -583,6 +586,7 @@ run "container_static_ip_with_positional_vmid_skips_cidrhost" {
     containers = {
       "technitium-dns-2" = {
         vm_id     = 9900001
+        node_name = "proxmox-1"
         hostname  = "technitium-dns-2"
         vlan      = "dns"
         ip_config = { ipv4_address = "192.168.2.3/24" }
@@ -608,11 +612,12 @@ run "cribl_stream_ids_picks_up_stream_tagged" {
   variables {
     containers = {
       "cribl-stream" = {
-        vm_id    = 425040
-        dhcp     = true
-        hostname = "cribl-stream"
-        vlan     = "siem"
-        tags     = ["terraform", "cribl", "stream", "container"]
+        vm_id     = 425040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "cribl-stream"
+        vlan      = "siem"
+        tags      = ["terraform", "cribl", "stream", "container"]
       }
     }
   }
@@ -645,6 +650,7 @@ run "guest_resolver_is_its_own_vlan_gateway" {
       # Static guest on the dns VLAN.
       "technitium10" = {
         vm_id     = 103, hostname = "technitium10", vlan = "dns"
+        node_name = "proxmox-1"
         ip_config = { ipv4_address = "192.0.2.2/24" }
       }
       # Static guest on a DIFFERENT VLAN — must get ITS gateway, not the dns
@@ -652,6 +658,7 @@ run "guest_resolver_is_its_own_vlan_gateway" {
       # guest pointed at a gateway it may have no route to.
       "traefik" = {
         vm_id     = 101, hostname = "traefik", vlan = "mgmt"
+        node_name = "proxmox-1"
         ip_config = { ipv4_address = "192.168.5.101/24" }
       }
     }
@@ -677,7 +684,7 @@ run "dhcp_guest_takes_its_resolver_from_the_lease" {
     containers = {
       # A leased guest declares nothing about its address — no octet, no
       # reservation. That is the whole point.
-      "dhcp-guest" = { vm_id = 601, hostname = "dhcp-guest", vlan = "apps", dhcp = true }
+      "dhcp-guest" = { node_name = "proxmox-1", vm_id = 601, hostname = "dhcp-guest", vlan = "apps", dhcp = true }
     }
   }
 
@@ -701,11 +708,12 @@ run "container_mac_is_deterministic_locally_administered" {
   variables {
     containers = {
       "smokeping" = {
-        vm_id    = 990001
-        dhcp     = true
-        hostname = "smokeping"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "monitoring", "docker"]
+        vm_id     = 990001
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "smokeping"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "monitoring", "docker"]
       }
     }
   }
@@ -746,17 +754,19 @@ run "inventory_publishes_one_address_authority_per_guest" {
       # Leased guest with a 6-digit positional VMID — the /24 cidrhost math
       # cannot express it, which is exactly why it must not carry an address.
       "netq-probe-media" = {
-        vm_id    = 990003
-        dhcp     = true
-        hostname = "netq-probe-media"
-        vlan     = "media_svc"
-        tags     = ["terraform", "container", "monitoring", "docker"]
+        vm_id     = 990003
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "netq-probe-media"
+        vlan      = "media_svc"
+        tags      = ["terraform", "container", "monitoring", "docker"]
       }
       # Static guest: its address is declared once, by derivation from its VMID.
       "apt-cacher-ng" = {
-        vm_id    = 108
-        hostname = "apt-cacher-ng"
-        vlan     = "compute"
+        vm_id     = 108
+        node_name = "proxmox-1"
+        hostname  = "apt-cacher-ng"
+        vlan      = "compute"
       }
     }
   }
@@ -848,22 +858,25 @@ run "media_container_ids_excludes_vpn_tagged_downloader" {
   variables {
     containers = {
       "download-vpn" = {
-        vm_id    = 210
-        hostname = "download-vpn"
-        vlan     = "media_svc"
-        tags     = ["terraform", "container", "media", "vpn"]
+        vm_id     = 210
+        node_name = "proxmox-1"
+        hostname  = "download-vpn"
+        vlan      = "media_svc"
+        tags      = ["terraform", "container", "media", "vpn"]
       }
       "sonarr" = {
-        vm_id    = 211
-        hostname = "sonarr"
-        vlan     = "media_svc"
-        tags     = ["terraform", "container", "media", "sonarr"]
+        vm_id     = 211
+        node_name = "proxmox-1"
+        hostname  = "sonarr"
+        vlan      = "media_svc"
+        tags      = ["terraform", "container", "media", "sonarr"]
       }
       "no-media-tag" = {
-        vm_id    = 212
-        hostname = "no-media-tag"
-        vlan     = "apps"
-        tags     = ["terraform", "container"]
+        vm_id     = 212
+        node_name = "proxmox-1"
+        hostname  = "no-media-tag"
+        vlan      = "apps"
+        tags      = ["terraform", "container"]
       }
     }
   }
@@ -1032,25 +1045,28 @@ run "llm_redis_container_ids_are_disjoint_from_the_router_pool" {
   variables {
     containers = {
       "llm-router-1" = {
-        vm_id    = 301
-        hostname = "llm-router-1"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container", "llm-router"]
+        vm_id     = 301
+        node_name = "proxmox-1"
+        hostname  = "llm-router-1"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "llm-router"]
       }
       "llm-redis-1" = {
-        vm_id    = 302
-        hostname = "llm-redis-1"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container", "llm-redis"]
+        vm_id     = 302
+        node_name = "proxmox-1"
+        hostname  = "llm-redis-1"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "llm-redis"]
       }
       "untagged" = {
-        vm_id    = 303
-        hostname = "untagged"
-        vlan     = "ai"
-        dhcp     = true
-        tags     = ["terraform", "container"]
+        vm_id     = 303
+        node_name = "proxmox-1"
+        hostname  = "untagged"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container"]
       }
     }
   }
