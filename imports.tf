@@ -28,12 +28,41 @@
 locals {
   # Guests whose live node and state node have diverged. Empty is the steady
   # state; a name here is a claim that the guest is live and mis-tracked.
-  adopt_containers = ["nautobot"]
+  adopt_containers = [
+    "nautobot",
+    "download-vpn",
+    "hindsight-2",
+    "langfuse",
+    "llamaindex",
+    "llm-router-2",
+    "openbao-02",
+    "openbao-20",
+    "openbao-21",
+    "plex",
+    "postgres-ai-2",
+    "postgres-apps",
+    "qdrant",
+    "radarr",
+    "seerr",
+    "sonarr",
+    "sortarr",
+    "technitium-dns-2",
+  ]
 }
 
 import {
   for_each = toset(local.adopt_containers)
 
   to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers[each.value]
-  id = "${local.deployment.containers[each.value].node_name}/${local.deployment.containers[each.value].vm_id}"
+
+  # Resolved against the MERGED container map, not `deployment.containers`
+  # alone: the OpenBao voters are synthesised from `openbao_cluster.placement`
+  # and exist only in the merged map, so deriving from the raw deployment
+  # object fails on exactly the guests a placement change relocates.
+  #
+  # node_name is OPTIONAL in the schema, and the stack defaults an unset value
+  # to the primary node. Mirror that same coalesce here: taking the raw
+  # attribute would yield an import id of `null/<vmid>` for any container
+  # relying on the default, which fails to adopt with a confusing error.
+  id = "${coalesce(try(local.containers[each.value].node_name, null), local.deployment.proxmox_node)}/${local.containers[each.value].vm_id}"
 }
