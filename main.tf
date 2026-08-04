@@ -254,7 +254,5 @@ module "homelab" {
   inventory_bucket = var.inventory_bucket
   inventory_key    = var.inventory_key
 
-  # Published into the inventory — see modules/proxmox-stack/inventory_publish.tf.
-  desired_state_etag          = data.aws_s3_object.deployment.etag
-  desired_state_last_modified = data.aws_s3_object.deployment.last_modified
+  desired_state_etag = data.aws_s3_object.deployment.etag
 }

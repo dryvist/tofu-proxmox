@@ -97,18 +97,12 @@ run "ansible_inventory_desired_state_fingerprint" {
   command = plan
 
   variables {
-    desired_state_etag          = "d41d8cd98f00b204e9800998ecf8427e"
-    desired_state_last_modified = "2026-01-01T00:00:00Z"
+    desired_state_etag = "d41d8cd98f00b204e9800998ecf8427e"
   }
 
   assert {
     condition     = output.ansible_inventory.desired_state.etag == "d41d8cd98f00b204e9800998ecf8427e"
     error_message = "ansible_inventory.desired_state.etag must carry the desired-state object's ETag — it is what tells a consumer whether an apply is owed before it converges"
-  }
-
-  assert {
-    condition     = output.ansible_inventory.desired_state.last_modified == "2026-01-01T00:00:00Z"
-    error_message = "ansible_inventory.desired_state.last_modified must carry the desired-state object's timestamp for diagnosis"
   }
 }
 

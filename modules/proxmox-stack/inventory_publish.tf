@@ -18,8 +18,7 @@ locals {
     schema_version = "2.1.0"
     # Which desired state this came from — see the variables' own descriptions.
     desired_state = {
-      etag          = var.desired_state_etag
-      last_modified = var.desired_state_last_modified
+      etag = var.desired_state_etag
     }
     # LXC Containers - using proxmox_pct_remote connection
     containers = {

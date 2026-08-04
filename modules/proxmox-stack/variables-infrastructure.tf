@@ -61,12 +61,6 @@ variable "desired_state_etag" {
   default     = ""
 }
 
-variable "desired_state_last_modified" {
-  description = "Last-modified timestamp of the desired-state object, published alongside the ETag for human diagnosis only. The ETag is the correctness signal; a timestamp cannot be one, because an apply rewrites the published object only when its content changed."
-  type        = string
-  default     = ""
-}
-
 # Proxmox cluster nodes. Keyed by Proxmox node_name (e.g. "proxmox-1", "proxmox-2", "proxmox-3").
 # Non-secret identity only — real management/BMC IPs live in private RustFS deployment object
 # (see the rack_server_cluster module). A node with commissioned = false is
