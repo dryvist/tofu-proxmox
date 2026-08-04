@@ -66,3 +66,30 @@ import {
   # relying on the default, which fails to adopt with a confusing error.
   id = "${coalesce(try(local.containers[each.value].node_name, null), local.deployment.proxmox_node)}/${local.containers[each.value].vm_id}"
 }
+
+# Adoption of a guest that was never declared at all, as opposed to the
+# relocation case above. The container previously declared at this static
+# address is powered off and stays that way (deliberately — its own
+# description explains why); this is the guest actually answering on that
+# address today, declared under its own identity so the declaration matches
+# reality instead of pretending to be the old one.
+#
+# The retired entry (formerly "technitium-dns") is a genuinely different case
+# from the relocations above: it is still live in Proxmox (merely powered
+# off), so simply deleting it from the containers map plans a destroy of a
+# real container, not an adoption. A `removed` block cannot express this
+# either — OpenTofu cannot target one instance of a for_each'd resource in a
+# `removed` block (github.com/opentofu/opentofu/issues/1995, open as of this
+# writing). The only correct sequence is therefore imperative, run once,
+# immediately before the apply that includes this change:
+#
+#   tofu state rm 'module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["technitium-dns"]'
+#
+# That drops the entry from state without touching the physical container
+# (state rm never calls the provider). Only after that should this PR's
+# plan be run — it should then show zero destroys for either container: an
+# add for technitium-30, nothing for the entry that already left state.
+import {
+  to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["technitium-30"]
+  id = "${local.deployment.containers["technitium-30"].node_name}/${local.deployment.containers["technitium-30"].vm_id}"
+}
