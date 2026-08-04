@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.80.0](https://github.com/dryvist/tofu-proxmox/compare/v1.79.0...v1.80.0) (2026-08-04)
+
+
+### Features
+
+* **firewall:** allow outbound HTTPS from object-storage containers ([d139fb3](https://github.com/dryvist/tofu-proxmox/commit/d139fb3dd3cfcc7ae11a7952bb2e472a2cbf3fb2))
+* **inventory:** publish the desired-state fingerprint into the artifact ([#856](https://github.com/dryvist/tofu-proxmox/issues/856)) ([b47efcd](https://github.com/dryvist/tofu-proxmox/commit/b47efcd538151feffd751175c38dd22afe81454b))
+
 ## [1.79.0](https://github.com/dryvist/tofu-proxmox/compare/v1.78.0...v1.79.0) (2026-08-04)
 
 
