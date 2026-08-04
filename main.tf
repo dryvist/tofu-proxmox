@@ -253,4 +253,6 @@ module "homelab" {
 
   inventory_bucket = var.inventory_bucket
   inventory_key    = var.inventory_key
+
+  desired_state_etag = data.aws_s3_object.deployment.etag
 }

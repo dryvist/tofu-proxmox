@@ -15,7 +15,11 @@ locals {
     # Contract version of this published artifact. Consumers (and the
     # homelab-contracts JSON schema that gates the publish) read this to confirm
     # they understand the emitted shape. Bump only on a breaking key-set change.
-    schema_version = "2.0.0"
+    schema_version = "2.1.0"
+    # Which desired state this came from — see the variables' own descriptions.
+    desired_state = {
+      etag = var.desired_state_etag
+    }
     # LXC Containers - using proxmox_pct_remote connection
     containers = {
       for k, v in(length(var.containers) > 0 ? module.containers[0].container_details : {}) : k => {
