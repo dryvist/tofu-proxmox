@@ -41,7 +41,17 @@ resource "proxmox_virtual_environment_firewall_rules" "s3_container" {
 
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
-    comment        = "Outbound to internal only"
+    comment        = "Outbound to internal"
+  }
+
+  # TCP 443 outbound. This guest is the only holder of every object it stores,
+  # so its buckets are copied to an offsite S3-compatible target on a schedule
+  # (ansible-proxmox-apps roles/object_storage). That copy is the sole reason
+  # for this grant: without it the guest reaches nothing off-network and the
+  # timers fail every run. Inbound is unchanged — still internal-only.
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
+    comment        = "Outbound HTTPS for scheduled offsite bucket copies"
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.s3_container]
