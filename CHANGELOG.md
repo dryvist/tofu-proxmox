@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.81.0](https://github.com/dryvist/tofu-proxmox/compare/v1.80.0...v1.81.0) (2026-08-04)
+
+
+### Features
+
+* **imports:** adopt the untracked live DNS container under its own identity ([26b6a75](https://github.com/dryvist/tofu-proxmox/commit/26b6a7505192ac0e1cd0dc34c8af1fbffe2720d7))
+
 ## [1.80.0](https://github.com/dryvist/tofu-proxmox/compare/v1.79.0...v1.80.0) (2026-08-04)
 
 
