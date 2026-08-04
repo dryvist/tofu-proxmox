@@ -262,4 +262,3 @@ variable "internal_networks" {
     error_message = "Each internal_networks entry must be a valid CIDR block, for example 192.168.0.0/16."
   }
 }
-

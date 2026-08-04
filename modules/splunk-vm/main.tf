@@ -77,11 +77,19 @@ resource "proxmox_virtual_environment_vm" "splunk_vm" {
     type    = "virtio"
   }
 
-  # CPU configuration: "host" exposes all host CPU features directly
-  # to the VM with zero emulation overhead
+  # Governs what a node_name change means: migrate the VM, or destroy and
+  # recreate it. The provider forces replacement unless this is true, and a
+  # replacement here would destroy the index volumes.
+  migrate = var.migrate
+
+  # CPU configuration. "host" exposes every host CPU feature with zero emulation
+  # overhead, but it also pins the guest to one CPU vendor: a "host" guest cannot
+  # migrate between an AMD node and an Intel one, because the feature set it was
+  # booted with does not exist on the destination. A portable model name
+  # (x86-64-v2 / v3) trades a small amount of that for the ability to move.
   cpu {
     cores      = var.cpu_cores
-    type       = "host"
+    type       = var.cpu_type
     hotplugged = 0
   }
 
