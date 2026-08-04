@@ -14,9 +14,9 @@ variable "vms" {
     # Must be a key in both var.network_cidrs and var.vlan_ids.
     vlan = string
 
-    # Node placement (optional). When unset, main.tf defaults to var.proxmox_node
-    # (the primary node). Set to "proxmox-2"/"proxmox-3" to place a VM on another cluster node.
-    node_name = optional(string)
+    # Node placement. REQUIRED — see the same field on var.containers for why the
+    # silent fallback to var.proxmox_node was removed.
+    node_name = string
 
     # Whether a change to node_name migrates the VM or rebuilds it. The provider
     # decides this in CustomizeDiff, not in the schema: a node_name change forces

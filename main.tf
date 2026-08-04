@@ -223,12 +223,16 @@ module "homelab" {
   splunk_cpu_cores                           = try(local.deployment.splunk_cpu_cores, 8)
   splunk_data_disk_size                      = try(local.deployment.splunk_data_disk_size, 200)
   splunk_fast_disk_size                      = try(local.deployment.splunk_fast_disk_size, 1024)
+  splunk_cpu_type                            = try(local.deployment.splunk_cpu_type, "host")
   splunk_memory                              = try(local.deployment.splunk_memory, 12288)
-  splunk_vm_id                               = try(local.deployment.splunk_vm_id, 99)
-  splunk_vm_name                             = try(local.deployment.splunk_vm_name, "splunk-vm")
-  splunk_vm_pool_id                          = try(local.deployment.splunk_vm_pool_id, "")
-  ssh_public_key                             = try(local.deployment.ssh_public_key, "")
-  template_id                                = try(local.deployment.template_id, 9201)
+  splunk_migrate                             = try(local.deployment.splunk_migrate, false)
+  # Fallback rationale: modules/proxmox-stack/variables-splunk.tf.
+  splunk_node_name  = try(local.deployment.splunk_node_name, local.deployment.proxmox_node)
+  splunk_vm_id      = try(local.deployment.splunk_vm_id, 99)
+  splunk_vm_name    = try(local.deployment.splunk_vm_name, "splunk-vm")
+  splunk_vm_pool_id = try(local.deployment.splunk_vm_pool_id, "")
+  ssh_public_key    = try(local.deployment.ssh_public_key, "")
+  template_id       = try(local.deployment.template_id, 9201)
   vlan_ids = try(local.deployment.vlan_ids, {
     lan_main  = 1
     dns       = 2

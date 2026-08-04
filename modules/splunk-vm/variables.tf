@@ -155,6 +155,18 @@ variable "cpu_cores" {
   }
 }
 
+variable "cpu_type" {
+  description = "QEMU CPU model for the Splunk VM. \"host\" is fastest but pins the guest to one CPU vendor, so it cannot migrate between AMD and Intel nodes. Set a portable model (x86-64-v2 for any node in the estate, x86-64-v3 where every candidate node supports AVX2) before relocating the VM. Changing this needs a guest reboot to take effect."
+  type        = string
+  default     = "host"
+}
+
+variable "migrate" {
+  description = "Whether a node_name change migrates the Splunk VM or destroys and recreates it. Must be true before any relocation — a recreate would destroy the index volumes."
+  type        = bool
+  default     = false
+}
+
 variable "memory" {
   description = "Memory in MB for the Splunk VM"
   type        = number

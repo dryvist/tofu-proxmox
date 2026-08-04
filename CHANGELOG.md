@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.79.0](https://github.com/dryvist/tofu-proxmox/compare/v1.78.0...v1.79.0) (2026-08-04)
+
+
+### Features
+
+* **imports:** adopt relocated guests and resolve ids from the merged map ([#850](https://github.com/dryvist/tofu-proxmox/issues/850)) ([1e616e4](https://github.com/dryvist/tofu-proxmox/commit/1e616e4fc4dfa1635a593b3f40de0546ea00ad0b))
+
 ## [1.78.0](https://github.com/dryvist/tofu-proxmox/compare/v1.77.2...v1.78.0) (2026-08-03)
 
 

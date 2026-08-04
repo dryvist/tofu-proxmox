@@ -393,6 +393,7 @@ run "ansible_inventory_container_node_override_propagated" {
     containers = {
       "download-vpn" = {
         vm_id      = 210
+        node_name  = "proxmox-1"
         hostname   = "download-vpn"
         vlan       = "media_svc"
         node_name  = "proxmox-2"
@@ -407,9 +408,10 @@ run "ansible_inventory_container_node_override_propagated" {
         ]
       }
       "lan-default-node" = {
-        vm_id    = 211
-        hostname = "lan-default-node"
-        vlan     = "apps"
+        vm_id     = 211
+        node_name = "proxmox-1"
+        hostname  = "lan-default-node"
+        vlan      = "apps"
       }
     }
   }
@@ -443,23 +445,26 @@ run "ansible_inventory_ingress_route_table" {
     # the ingress_services map must be filtered out.
     containers = {
       "plex" = {
-        vm_id    = 210
-        hostname = "plex"
-        vlan     = "media_svc"
+        vm_id     = 210
+        node_name = "proxmox-1"
+        hostname  = "plex"
+        vlan      = "media_svc"
       }
       "seerr" = {
-        vm_id    = 211
-        hostname = "seerr"
-        vlan     = "media_svc"
+        vm_id     = 211
+        node_name = "proxmox-1"
+        hostname  = "seerr"
+        vlan      = "media_svc"
       }
       # Network-quality monitoring LXC — DNS-first (dhcp) with a 6-digit positional
       # VMID (observability tier 4). No vm_id-derived IP; fronted by FQDN.
       "smokeping" = {
-        vm_id    = 990001
-        dhcp     = true
-        hostname = "smokeping"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "monitoring", "docker"]
+        vm_id     = 990001
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "smokeping"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "monitoring", "docker"]
       }
     }
     domain = "example.com"
@@ -541,18 +546,20 @@ run "ansible_inventory_ingress_nautobot_not_postgres" {
     domain = "example.com"
     containers = {
       "nautobot" = {
-        vm_id    = 605000
-        hostname = "nautobot"
-        vlan     = "apps"
-        dhcp     = true
-        tags     = ["terraform", "container", "nautobot"]
+        vm_id     = 605000
+        node_name = "proxmox-1"
+        hostname  = "nautobot"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "nautobot"]
       }
       "postgres" = {
-        vm_id    = 303000
-        hostname = "postgres"
-        vlan     = "data"
-        dhcp     = true
-        tags     = ["terraform", "container", "postgres"]
+        vm_id     = 303000
+        node_name = "proxmox-1"
+        hostname  = "postgres"
+        vlan      = "data"
+        dhcp      = true
+        tags      = ["terraform", "container", "postgres"]
       }
     }
   }
@@ -581,11 +588,12 @@ run "ansible_inventory_ingress_vikunja_fronted" {
     domain = "example.com"
     containers = {
       "vikunja" = {
-        vm_id    = 605010
-        hostname = "vikunja"
-        vlan     = "apps"
-        dhcp     = true
-        tags     = ["terraform", "container", "vikunja"]
+        vm_id     = 605010
+        node_name = "proxmox-1"
+        hostname  = "vikunja"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "vikunja"]
       }
     }
   }
@@ -620,6 +628,7 @@ run "ansible_inventory_ingress_ha_vip" {
     containers = {
       "traefik-10" = {
         vm_id     = 101
+        node_name = "proxmox-1"
         hostname  = "traefik-10"
         vlan      = "mgmt"
         tags      = ["terraform", "container", "ingress", "traefik"]
@@ -627,6 +636,7 @@ run "ansible_inventory_ingress_ha_vip" {
       }
       "traefik-30" = {
         vm_id     = 107
+        node_name = "proxmox-1"
         hostname  = "traefik-30"
         vlan      = "mgmt"
         tags      = ["terraform", "container", "ingress", "traefik"]
@@ -666,10 +676,11 @@ run "ansible_inventory_ingress_ha_single_node_no_vip" {
   variables {
     containers = {
       "traefik" = {
-        vm_id    = 101
-        hostname = "traefik"
-        vlan     = "mgmt"
-        tags     = ["terraform", "container", "ingress", "traefik"]
+        vm_id     = 101
+        node_name = "proxmox-1"
+        hostname  = "traefik"
+        vlan      = "mgmt"
+        tags      = ["terraform", "container", "ingress", "traefik"]
       }
     }
   }
@@ -726,6 +737,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
     containers = {
       "openbao-31" = {
         vm_id     = 110031
+        node_name = "proxmox-1"
         node_name = "proxmox-5"
         hostname  = "openbao-31"
         vlan      = "mgmt"
@@ -735,6 +747,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       "openbao-10" = {
         vm_id     = 110010
         node_name = "proxmox-1"
+        node_name = "proxmox-1"
         hostname  = "openbao-10"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.10/24" }
@@ -742,6 +755,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-21" = {
         vm_id     = 110021
+        node_name = "proxmox-1"
         node_name = "proxmox-3"
         hostname  = "openbao-21"
         vlan      = "mgmt"
@@ -750,6 +764,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-30" = {
         vm_id     = 110030
+        node_name = "proxmox-1"
         node_name = "proxmox-4"
         hostname  = "openbao-30"
         vlan      = "mgmt"
@@ -758,6 +773,7 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       }
       "openbao-20" = {
         vm_id     = 110020
+        node_name = "proxmox-1"
         node_name = "proxmox-2"
         hostname  = "openbao-20"
         vlan      = "mgmt"
@@ -837,13 +853,15 @@ run "ansible_inventory_untagged_native_and_static_ip" {
       # On an untagged key; planning at all proves lookup(var.vlan_ids, vlan, null)
       # avoids the missing-key error. IP derives from vm_id.
       "dns-derived" = {
-        vm_id    = 110
-        hostname = "dns-derived"
-        vlan     = "mgmt_native"
+        vm_id     = 110
+        node_name = "proxmox-1"
+        hostname  = "dns-derived"
+        vlan      = "mgmt_native"
       }
       # Static ipv4_address must override the vm_id-derived address.
       "dns-static" = {
         vm_id     = 111
+        node_name = "proxmox-1"
         hostname  = "dns-static"
         vlan      = "mgmt_native"
         ip_config = { ipv4_address = "192.168.5.10/24" }
@@ -1051,9 +1069,10 @@ run "vm_node_placement_defaults_to_primary" {
   variables {
     vms = {
       placement = {
-        vm_id = 210
-        name  = "placement-default"
-        vlan  = "apps"
+        vm_id     = 210
+        node_name = "proxmox-1"
+        name      = "placement-default"
+        vlan      = "apps"
       }
     }
   }
@@ -1071,6 +1090,7 @@ run "vm_node_placement_override" {
     vms = {
       placement = {
         vm_id     = 211
+        node_name = "proxmox-1"
         name      = "placement-proxmox-2"
         vlan      = "apps"
         node_name = "proxmox-2"
@@ -1093,6 +1113,7 @@ run "vm_iso_appliance_plans" {
     vms = {
       pbs = {
         vm_id            = 240
+        node_name        = "proxmox-1"
         name             = "pbs"
         vlan             = "compute"
         node_name        = "proxmox-2"

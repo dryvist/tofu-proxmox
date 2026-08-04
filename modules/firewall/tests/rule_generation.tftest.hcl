@@ -655,6 +655,33 @@ run "openbao_receives_outbound_https" {
   }
 }
 
+# The scheduled offsite copy of this guest's buckets is the only thing that
+# reaches off-network, and it fails silently on every run without this grant.
+run "object_storage_receives_outbound_https" {
+  command = plan
+
+  variables {
+    s3_container_ids = { object_storage = 900 }
+  }
+
+  assert {
+    condition = contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.s3_container["object_storage"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+    )
+    error_message = "Object storage containers must attach the outbound-https security group for offsite copies"
+  }
+
+  # Egress only — the S3 API and console stay internal.
+  assert {
+    condition = !contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.s3_container["object_storage"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_http.name,
+    )
+    error_message = "Object storage containers must not attach outbound-http; the offsite copy is HTTPS only"
+  }
+}
+
 run "node_exporter_rule_tracks_constant_and_siem_scope" {
   command = plan
 
