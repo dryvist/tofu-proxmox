@@ -70,6 +70,24 @@ variable "splunk_bulk_disk_size" {
   }
 }
 
+variable "splunk_node_name" {
+  description = "Proxmox node the Splunk VM is placed on. Previously hardwired to var.proxmox_node, which made the VM unplaceable anywhere but the primary node. The root module falls back to proxmox_node when the deployment object names no node, so this stays a no-op until one does — a fallback covering one explicitly-named guest, not the whole-class fallback that var.containers.node_name used to carry. This default is the same non-production placeholder var.proxmox_node uses, so tests and standalone plans resolve without redeclaring it."
+  type        = string
+  default     = "proxmox-1"
+}
+
+variable "splunk_cpu_type" {
+  description = "QEMU CPU model for the Splunk VM. See modules/splunk-vm/variables.tf — \"host\" blocks cross-vendor migration."
+  type        = string
+  default     = "host"
+}
+
+variable "splunk_migrate" {
+  description = "Whether a splunk_node_name change migrates the VM or destroys and recreates it."
+  type        = bool
+  default     = false
+}
+
 variable "splunk_cpu_cores" {
   description = "Number of CPU cores for the Splunk VM"
   type        = number

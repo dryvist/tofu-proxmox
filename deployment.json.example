@@ -44,6 +44,11 @@
   "splunk_boot_disk_size": 25,
   "splunk_data_disk_size": 200,
 
+  "_splunk_placement_comment": "Placement for the all-in-one Splunk VM. splunk_node_name was previously hardwired to proxmox_node, so the indexer could not be placed anywhere but the primary node. Relocating it has THREE prerequisites and they are ordered: (1) splunk_cpu_type must leave \"host\" — a host-CPU guest cannot move between CPU vendors, because the feature set it booted with does not exist on the destination; x86-64-v2 is portable to every node here, x86-64-v3 where every candidate node has AVX2. The change needs a guest reboot to take effect, so verify the VM is healthy on the portable model BEFORE going further. (2) splunk_migrate must be true — otherwise a splunk_node_name change is a destroy-and-recreate, which destroys the index volumes. (3) Every storage id the VM's disks target must exist on the destination node; a node-scoped pool id is the real constraint on where this VM can go, independent of CPU and memory.",
+  "splunk_node_name": "proxmox-1",
+  "splunk_cpu_type": "host",
+  "splunk_migrate": false,
+
   "pools": {
     "logging": { "comment": "Logging and observability infrastructure" },
     "infrastructure": { "comment": "Core infrastructure services" },
@@ -210,6 +215,7 @@
   "vms": {
     "example-vm": {
       "vm_id": 250,
+      "node_name": "proxmox-1",
       "vlan": "nonprod",
       "name": "example-vm",
       "description": "Example VM entry — replace with your own",
@@ -347,8 +353,10 @@
   },
 
   "containers": {
+    "_placement_comment": "node_name is REQUIRED on every entry. It used to be optional, with tofu falling back to proxmox_node when it was absent — which meant a guest that simply never named a node was indistinguishable from one deliberately placed on the primary, and nothing anywhere reported the difference. That fallback is how the primary node came to hold the majority of the estate's containers, log pipeline included. There is no default to inherit now: name the node, and name it for a reason (spare memory, spare CPU, or keeping the two halves of a redundant pair apart).",
     "example-container": {
       "vm_id": 100,
+      "node_name": "proxmox-1",
       "vlan": "apps",
       "hostname": "example-container",
       "description": "Example LXC container entry — replace with your own",
@@ -496,6 +504,7 @@
     "_smokeping_comment": "Network-quality monitoring — Prometheus-native stack (Docker-in-LXC). The central `smokeping` collector runs smokeping_prober (:9374, ICMP/UDP latency-distribution histograms = system of record), blackbox_exporter (:9115, DNS/HTTP/TLS/TCP + SLO probes), atlas_exporter (:9400, RIPE Atlas outside-in), an irtt server (:2112/udp, real RFC-3393 jitter/MOS), and optionally the classic SmokePing RRD/CGI UI (:80). Throughput is DECOUPLED onto its own `speedtest` host so saturation never corrupts latency samples. Add a per-segment `netq-probe-*` vantage on each VLAN you care about (multi-vantage) — one example below. See docs/SMOKEPING.md for the full blueprint the ansible-proxmox-apps roles apply. These adopt the 6-digit positional VMID + DNS-first convention (docs.jacobpevans.com/infrastructure/vmid-network-tiers): observability = tier 4, so VMIDs are 41xxxx; `dhcp:true` means no vm_id-derived IP — DHCP leases the address and each guest is reached by {hostname}.{domain}. `vlan` stays at today's value during the incremental tier renumber.",
     "smokeping": {
       "vm_id": 410000,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "mgmt",
       "hostname": "smokeping",
@@ -525,6 +534,7 @@
     },
     "netq-probe-media": {
       "vm_id": 410020,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "media_svc",
       "hostname": "netq-probe-media",
@@ -540,6 +550,7 @@
     "_netmon_comment": "Per-uplink network-diagnosis probers (Docker-in-LXC on mgmt VLAN, tag netmon). Each runs one Telegraf agent: native ping/dns_query/http_response probes, inputs.snmp to a DOCSIS modem, and inputs.prometheus scraping a satellite gRPC exporter plus the speedtest-exporter; results push to Cribl Edge (HEC) then the Splunk netmon index. A prober measures its assigned uplink only once tofu-unifi applies a source-IP policy route per prober. See docs/NETWORK_DIAGNOSIS.md. vm_ids 197/198 are illustrative; pick free mgmt /24 hosts.",
     "netmon-cable": {
       "vm_id": 197,
+      "node_name": "proxmox-1",
       "vlan": "mgmt",
       "hostname": "netmon-cable",
       "description": "Per-WAN diagnostics for the cable (DOCSIS) uplink: Telegraf active probes + modem SNMP into the Splunk netmon index",
@@ -553,6 +564,7 @@
     },
     "netmon-sat": {
       "vm_id": 198,
+      "node_name": "proxmox-4",
       "vlan": "mgmt",
       "hostname": "netmon-sat",
       "description": "Per-uplink diagnostics for the satellite uplink: Telegraf active probes + satellite gRPC exporter into the Splunk netmon index",
@@ -567,6 +579,7 @@
     "_unifi_metrics_comment": "UniFi controller telemetry collector (Docker-in-LXC, observability tier 4). Runs unpoller (polls the UniFi controller API, exposes Prometheus) + a Telegraf inputs.prometheus scrape that ships Splunk-HEC to Cribl Edge then the Splunk unifi_metrics index. Captures device cpu/mem/temp/uptime, per-port bytes/errors/drops/PoE/STP, per-client signal/rate/satisfaction, and WAN quality. Controller creds via UNIFI_* env. See ansible-proxmox-apps roles/unifi_metrics. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. DNS-first (dhcp:true, pool lease); features carry only nesting because the API token cannot set keyctl/fuse on unprivileged containers (root@pam adds those via ansible-proxmox, same as the media guests).",
     "unifi-metrics": {
       "vm_id": 410030,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "mgmt",
       "hostname": "unifi-metrics",
@@ -582,6 +595,7 @@
     "_llm_fabric_comment": "Local LLM fabric (AI tier 5, ai VLAN). llm-fast is a PRIVILEGED LXC with GPU passthrough (/dev/kfd + a /dev/dri render node) running the fast/small-model server (llama-swap, OpenAI-compatible on llm_fast_api). llm-router-* front the fabric with a LiteLLM proxy (llm_router_api) that routes to llm-fast plus the larger off-box model endpoints. open-webui is the chat UI (open_webui_web). VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); values here are illustrative. GPU passthrough requires a privileged container (unprivileged:false), so the API token cannot create it — root@pam does (ansible-proxmox / hands-on), the same constraint as the media guests' keyctl/fuse. Tag llm-fast opens llm_fast_api from internal; tag llm-router opens llm_router_api. Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
     "llm-fast": {
       "vm_id": 503000,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "llm-fast",
@@ -600,6 +614,7 @@
     },
     "open-webui": {
       "vm_id": 505000,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "open-webui",
@@ -614,6 +629,7 @@
     },
     "llm-router-1": {
       "vm_id": 512000,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "llm-router-1",
@@ -629,6 +645,7 @@
     "_ai_orchestration_comment": "AI orchestration tier (AI/ML tier 5). n8n/Dify/LangFlow are Docker-in-LXC visual builders; LangGraph is a Docker-in-LXC zero-cloud `langgraph dev` (in-memory) server + self-hosted Agent Chat UI; agent-exec is a plain Python LXC running CrewAI + LangChain code with OpenLLMetry. VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); the values here are illustrative. They sit on the 'ai' VLAN (tier 5) and 'siem' VLAN (tier 4) — the committed end-state of the vlan_ids map — addressed DNS-first (dhcp, pool lease). Each tool's model provider + vector store is configured per its own install standard; Dify keeps its bundled vector store rather than the shared qdrant. Docker guests carry only nesting (the API token cannot set keyctl/fuse on unprivileged LXC; ansible-proxmox adds those via root@pam, same as the media guests). Firewall: ai-orch-svc (UI ports) + native OTLP egress to Cribl Edge; Langfuse adds langfuse-svc (3000). Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
     "n8n": {
       "vm_id": 505030,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "n8n",
@@ -644,6 +661,7 @@
     },
     "dify": {
       "vm_id": 505010,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "dify",
@@ -659,6 +677,7 @@
     },
     "langflow": {
       "vm_id": 505020,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "langflow",
@@ -674,6 +693,7 @@
     },
     "langgraph": {
       "vm_id": 505040,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "langgraph",
@@ -689,6 +709,7 @@
     },
     "agent-exec": {
       "vm_id": 515000,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "agent-exec",
@@ -704,6 +725,7 @@
     "_ai_runner_profiles_comment": "Additional headless AI-runner egress profiles (siblings of the `ai-github` runner). Each is a tag that selects one firewall profile in modules/firewall: `ai-terrakube` (ai_terrakube_rules.tf) = internal-only egress for a runner that drives OpenTofu against the private Terrakube backend — DNS/NTP/OpenBao + Terrakube API/registry + RustFS S3, and NO WAN at all. `ai-full-net` (ai_full_net_rules.tf) = a coding-agent guest needing general web access — internal DNS/NTP/OpenBao only + outbound HTTPS (443) to any, still no blanket internal reach. The `ai-runner` tag is the ansible-proxmox-ai inventory group. VMIDs below are illustrative (6-digit positional convention, docs vmid-network-tiers) — reconcile vm_id against your live deployment.json before applying.",
     "ai-runner-terrakube-01": {
       "vm_id": 515020,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-terrakube-01",
@@ -717,6 +739,7 @@
     },
     "ai-runner-fullnet-01": {
       "vm_id": 515030,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-fullnet-01",
@@ -731,6 +754,7 @@
 
     "langfuse": {
       "vm_id": 405000,
+      "node_name": "proxmox-3",
       "dhcp": true,
       "vlan": "siem",
       "hostname": "langfuse",
@@ -748,6 +772,7 @@
     "_ai_runner_comment": "Headless AI execution plane (AI/ML tier 5, ai VLAN). An ai-runner is a confined guest that runs a coding agent (Claude Code / Codex) in permission-skipping mode; the LXC boundary is the ONLY safety control, so the firewall profile is load-bearing. The `ai-github` tag selects the tightest egress profile (modules/firewall/ai_runner_rules.tf): outbound to internal DNS/NTP/OpenBao only + outbound HTTPS to any (github.com + Anthropic/OpenAI are CDN-fronted, no stable dest CIDR). The `ai-runner` tag is the inventory group the ansible-proxmox-ai `ai_runner` role converges. Native installs (Node + npm CLIs) — plain LXC, no Docker/nesting. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. This example omits node_name and uses the default node (same as the sibling AI guests) — the live guest pins its node in the private deployment.json (the runner host is an idle-capacity node). Reconcile vm_id against your live deployment.json before applying. Other profiles (ai-terrakube, ai-full-net) are follow-ups: each is a new tag + rules file.",
     "ai-runner-01": {
       "vm_id": 515010,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-01",
@@ -763,6 +788,7 @@
     "_ai_agent_pool_comment": "AI agent POOL (`ai-proxied` profile, modules/firewall/ai_proxied_rules.tf). N identical long-lived guests that pull work from a queue, instead of one guest provisioned per run — provisioning is amortized and no IaC change is needed to run a task. The profile is strictly tighter than ai-full-net: internal DNS/NTP/OpenBao + the Squid forward proxy + the Cribl AI log-ingest frontends, and NO 443-to-any of its own. Every outbound web request therefore transits the squid guest below, which is where the DOMAIN allowlist is enforced (the Proxmox firewall filters IP/port only, never hostname/SNI). Per-CLI variants (claude / codex / agy) are Squid ACL groups keyed off the client address, NOT separate tags — at L3/L4 they would be identical rule sets. Grow the pool by copying an entry with the next vm_id; guests are interchangeable, so pool size is a capacity knob with no rule change. Every `ai-runner`-tagged guest must carry exactly one profile tag or the plan fails (variables-containers.tf validation) — a typo would otherwise leave an agent guest with no firewall at all. VMIDs are illustrative (6-digit positional convention, docs vmid-network-tiers); reconcile against your live deployment.json before applying.",
     "ai-runner-pool-01": {
       "vm_id": 515040,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-pool-01",
@@ -776,6 +802,7 @@
     },
     "ai-runner-pool-02": {
       "vm_id": 515041,
+      "node_name": "proxmox-4",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-pool-02",
@@ -790,6 +817,7 @@
     "_squid_comment": "Egress forward proxy for the agent plane (`squid` tag, modules/firewall/squid_proxy_rules.tf). The one guest in the plane that holds general 80/443 to any; the in-guest domain allowlist (one ACL group per agent profile) is what makes that narrow. Inbound is scoped to the ai VLAN only, never all of internal, so nothing else on the estate can borrow it as an open relay. This closes the Squid hardening follow-up noted in ai_runner_rules.tf / ai_full_net_rules.tf / hermes_agent_rules.tf. It is deliberately NOT tagged ai-runner: it is infrastructure, not an agent.",
     "squid": {
       "vm_id": 515050,
+      "node_name": "proxmox-3",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "squid",

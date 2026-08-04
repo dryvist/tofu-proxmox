@@ -53,8 +53,7 @@ module "vms" {
 
   vms = {
     for k, v in var.vms : k => merge(v, {
-      # Per-VM node placement; falls back to the primary node when unset.
-      node_name      = coalesce(try(v.node_name, null), var.proxmox_node)
+      node_name      = v.node_name
       cdrom_file_id  = v.cdrom_file_id != null ? "${var.datastore_iso}:iso/${var.proxmox_iso_debian}" : null
       clone_template = v.clone_template
       # DRY: IP/gateway derived from the VM's VLAN CIDR + vm_id (see locals.tf).
@@ -99,8 +98,7 @@ module "containers" {
 
   containers = {
     for k, v in var.containers : k => merge(v, {
-      # Per-LXC node placement; falls back to the primary node when unset.
-      node_name        = coalesce(try(v.node_name, null), var.proxmox_node)
+      node_name        = v.node_name
       template_file_id = "${var.datastore_iso}:vztmpl/${var.proxmox_ct_template_debian}"
       # DRY: IP/gateway derived from the LXC's VLAN CIDR + vm_id (see locals.tf).
       # local.container_ipv4 already honors a per-container static ipv4_address override.
@@ -148,7 +146,9 @@ module "splunk_vm" {
   name           = var.splunk_vm_name
   ip_address     = local.splunk_derived_ip # DRY: derived from splunk_vm_id
   gateway        = local.splunk_network_gateway
-  node_name      = var.proxmox_node
+  node_name      = var.splunk_node_name
+  cpu_type       = var.splunk_cpu_type
+  migrate        = var.splunk_migrate
   pool_id        = var.splunk_vm_pool_id
   template_id    = var.template_id
   datastore_id   = var.datastore_id

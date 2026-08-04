@@ -42,7 +42,7 @@
     },
     "containers": {
       "type": "object",
-      "description": "LXC desired-state, keyed by name. At least one is required — an empty map is the empty-{} destroy footgun this schema exists to catch. `_`-prefixed keys are inline `_*comment` docs (tofu strips them) and are exempt from the entry shape.",
+      "description": "LXC desired-state, keyed by name. At least one is required \u2014 an empty map is the empty-{} destroy footgun this schema exists to catch. `_`-prefixed keys are inline `_*comment` docs (tofu strips them) and are exempt from the entry shape.",
       "minProperties": 1,
       "patternProperties": {
         "^_": {}
@@ -103,7 +103,7 @@
   "definitions": {
     "node_service_template": {
       "type": "object",
-      "description": "One per-node service template. Only the shape the generator dereferences unconditionally is required; per_node keys MUST be keys of `nodes` — JSON Schema cannot express that cross-sibling constraint, so it is enforced by the postcondition on data.aws_s3_object.deployment in main.tf.",
+      "description": "One per-node service template. Only the shape the generator dereferences unconditionally is required; per_node keys MUST be keys of `nodes` \u2014 JSON Schema cannot express that cross-sibling constraint, so it is enforced by the postcondition on data.aws_s3_object.deployment in main.tf.",
       "required": [
         "vlan",
         "per_node"
@@ -159,11 +159,12 @@
     },
     "container_input": {
       "type": "object",
-      "description": "A single container's desired-state. Only the fields that break addressing/identity if absent are required; everything else is free.",
+      "description": "A single container's desired-state. Only the fields that break addressing/identity if absent are required; everything else is free. node_name is among them: it used to be optional and tofu silently fell back to the primary node, so omitting it was indistinguishable from choosing it.",
       "required": [
         "vm_id",
         "hostname",
-        "vlan"
+        "vlan",
+        "node_name"
       ],
       "additionalProperties": true,
       "properties": {
@@ -182,6 +183,11 @@
         "pool_id": {
           "type": "string",
           "minLength": 1
+        },
+        "node_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Proxmox node this container is placed on. Must be a key of `nodes`."
         }
       }
     },

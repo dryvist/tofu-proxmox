@@ -82,11 +82,12 @@ run "haproxy_tagged_container_in_pipeline_ids" {
   variables {
     containers = {
       "haproxy" = {
-        vm_id    = 421040
-        dhcp     = true
-        hostname = "haproxy"
-        vlan     = "siem"
-        tags     = ["terraform", "haproxy", "container"]
+        vm_id     = 421040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "haproxy"
+        vlan      = "siem"
+        tags      = ["terraform", "haproxy", "container"]
       }
     }
   }
@@ -108,11 +109,12 @@ run "cribl_edge_tagged_container_in_pipeline_ids" {
   variables {
     containers = {
       "cribl-edge" = {
-        vm_id    = 423040
-        dhcp     = true
-        hostname = "cribl-edge"
-        vlan     = "siem"
-        tags     = ["terraform", "cribl", "edge", "container"]
+        vm_id     = 423040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "cribl-edge"
+        vlan      = "siem"
+        tags      = ["terraform", "cribl", "edge", "container"]
       }
     }
   }
@@ -134,10 +136,11 @@ run "notifications_tagged_container_in_notification_ids" {
   variables {
     containers = {
       "mailpit" = {
-        vm_id    = 185
-        hostname = "mailpit"
-        vlan     = "apps"
-        tags     = ["terraform", "notifications", "container"]
+        vm_id     = 185
+        node_name = "proxmox-1"
+        hostname  = "mailpit"
+        vlan      = "apps"
+        tags      = ["terraform", "notifications", "container"]
       }
     }
   }
@@ -164,10 +167,11 @@ run "database_tagged_container_in_neither_set" {
   variables {
     containers = {
       "postgres" = {
-        vm_id    = 170
-        hostname = "postgres"
-        vlan     = "data"
-        tags     = ["terraform", "database", "container"]
+        vm_id     = 170
+        node_name = "proxmox-1"
+        hostname  = "postgres"
+        vlan      = "data"
+        tags      = ["terraform", "database", "container"]
       }
     }
   }
@@ -207,11 +211,12 @@ run "cribl_without_edge_not_in_pipeline_ids" {
   variables {
     containers = {
       "cribl-stream" = {
-        vm_id    = 425040
-        dhcp     = true
-        hostname = "cribl-stream"
-        vlan     = "siem"
-        tags     = ["terraform", "cribl", "stream", "container"]
+        vm_id     = 425040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "cribl-stream"
+        vlan      = "siem"
+        tags      = ["terraform", "cribl", "stream", "container"]
       }
     }
   }
@@ -230,11 +235,12 @@ run "cribl_stream_tagged_container_in_cribl_stream_ids" {
   variables {
     containers = {
       "cribl-stream" = {
-        vm_id    = 425040
-        dhcp     = true
-        hostname = "cribl-stream"
-        vlan     = "siem"
-        tags     = ["terraform", "cribl", "stream", "pipeline", "container"]
+        vm_id     = 425040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "cribl-stream"
+        vlan      = "siem"
+        tags      = ["terraform", "cribl", "stream", "pipeline", "container"]
       }
     }
   }
@@ -261,11 +267,12 @@ run "cribl_edge_not_in_cribl_stream_ids" {
   variables {
     containers = {
       "cribl-edge-01" = {
-        vm_id    = 423040
-        dhcp     = true
-        hostname = "cribl-edge-01"
-        vlan     = "siem"
-        tags     = ["terraform", "cribl", "edge", "pipeline", "container"]
+        vm_id     = 423040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "cribl-edge-01"
+        vlan      = "siem"
+        tags      = ["terraform", "cribl", "edge", "pipeline", "container"]
       }
     }
   }
@@ -289,11 +296,12 @@ run "object_storage_tagged_container_in_s3_ids" {
   variables {
     containers = {
       "s3" = {
-        vm_id    = 990004
-        hostname = "object-storage"
-        vlan     = "siem"
-        dhcp     = true
-        tags     = ["terraform", "container", "object-storage", "storage", "infrastructure"]
+        vm_id     = 990004
+        node_name = "proxmox-1"
+        hostname  = "object-storage"
+        vlan      = "siem"
+        dhcp      = true
+        tags      = ["terraform", "container", "object-storage", "storage", "infrastructure"]
       }
     }
   }
@@ -325,25 +333,28 @@ run "pipeline_and_stream_containers_mutually_exclusive" {
   variables {
     containers = {
       "haproxy" = {
-        vm_id    = 421040
-        dhcp     = true
-        hostname = "haproxy"
-        vlan     = "siem"
-        tags     = ["terraform", "haproxy", "pipeline", "container"]
+        vm_id     = 421040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "haproxy"
+        vlan      = "siem"
+        tags      = ["terraform", "haproxy", "pipeline", "container"]
       }
       "cribl-edge-01" = {
-        vm_id    = 423040
-        dhcp     = true
-        hostname = "cribl-edge-01"
-        vlan     = "siem"
-        tags     = ["terraform", "cribl", "edge", "pipeline", "container"]
+        vm_id     = 423040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "cribl-edge-01"
+        vlan      = "siem"
+        tags      = ["terraform", "cribl", "edge", "pipeline", "container"]
       }
       "cribl-stream" = {
-        vm_id    = 425040
-        dhcp     = true
-        hostname = "cribl-stream"
-        vlan     = "siem"
-        tags     = ["terraform", "cribl", "stream", "pipeline", "container"]
+        vm_id     = 425040
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "cribl-stream"
+        vlan      = "siem"
+        tags      = ["terraform", "cribl", "stream", "pipeline", "container"]
       }
     }
   }
@@ -372,10 +383,11 @@ run "idrac_tagged_container_in_idrac_kvm_container_ids" {
   variables {
     containers = {
       "idrac-kvm" = {
-        vm_id    = 251
-        hostname = "idrac-kvm"
-        vlan     = "apps"
-        tags     = ["terraform", "container", "idrac", "oob", "management", "docker"]
+        vm_id     = 251
+        node_name = "proxmox-1"
+        hostname  = "idrac-kvm"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "idrac", "oob", "management", "docker"]
       }
     }
   }
@@ -397,10 +409,11 @@ run "non_idrac_container_not_in_idrac_kvm_container_ids" {
   variables {
     containers = {
       "mailpit" = {
-        vm_id    = 110
-        hostname = "mailpit"
-        vlan     = "apps"
-        tags     = ["terraform", "container", "notifications", "docker"]
+        vm_id     = 110
+        node_name = "proxmox-1"
+        hostname  = "mailpit"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "notifications", "docker"]
       }
     }
   }
@@ -424,18 +437,20 @@ run "honeypot_tagged_containers_split_tripwire_vs_notify" {
   variables {
     containers = {
       "honeypot-tw-apps" = {
-        vm_id    = 695000
-        hostname = "honeypot-tw-apps"
-        vlan     = "apps"
-        dhcp     = true
-        tags     = ["terraform", "container", "honeypot", "docker"]
+        vm_id     = 695000
+        node_name = "proxmox-1"
+        hostname  = "honeypot-tw-apps"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "honeypot", "docker"]
       }
       "honeypot-notify" = {
-        vm_id    = 492000
-        hostname = "honeypot-notify"
-        vlan     = "mgmt"
-        dhcp     = true
-        tags     = ["terraform", "container", "honeypot", "notify", "docker"]
+        vm_id     = 492000
+        node_name = "proxmox-1"
+        hostname  = "honeypot-notify"
+        vlan      = "mgmt"
+        dhcp      = true
+        tags      = ["terraform", "container", "honeypot", "notify", "docker"]
       }
     }
   }
@@ -465,10 +480,11 @@ run "non_honeypot_container_not_in_honeypot_ids" {
   variables {
     containers = {
       "mailpit" = {
-        vm_id    = 110
-        hostname = "mailpit"
-        vlan     = "apps"
-        tags     = ["terraform", "container", "notifications", "docker"]
+        vm_id     = 110
+        node_name = "proxmox-1"
+        hostname  = "mailpit"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "notifications", "docker"]
       }
     }
   }
@@ -487,18 +503,20 @@ run "postgres_and_nautobot_tags_filter_correctly" {
   variables {
     containers = {
       "postgres" = {
-        vm_id    = 303000
-        hostname = "postgres"
-        vlan     = "data"
-        dhcp     = true
-        tags     = ["terraform", "container", "postgres"]
+        vm_id     = 303000
+        node_name = "proxmox-1"
+        hostname  = "postgres"
+        vlan      = "data"
+        dhcp      = true
+        tags      = ["terraform", "container", "postgres"]
       }
       "nautobot" = {
-        vm_id    = 605000
-        hostname = "nautobot"
-        vlan     = "apps"
-        dhcp     = true
-        tags     = ["terraform", "container", "nautobot"]
+        vm_id     = 605000
+        node_name = "proxmox-1"
+        hostname  = "nautobot"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "nautobot"]
       }
     }
   }
@@ -533,11 +551,12 @@ run "vikunja_tag_filters_correctly" {
   variables {
     containers = {
       "vikunja" = {
-        vm_id    = 605010
-        hostname = "vikunja"
-        vlan     = "apps"
-        dhcp     = true
-        tags     = ["terraform", "container", "vikunja"]
+        vm_id     = 605010
+        node_name = "proxmox-1"
+        hostname  = "vikunja"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "vikunja"]
       }
     }
   }
@@ -562,6 +581,7 @@ run "authelia_tag_filters_correctly" {
     containers = {
       "authelia" = {
         vm_id     = 100050
+        node_name = "proxmox-1"
         hostname  = "authelia"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.6/24" }
@@ -589,10 +609,11 @@ run "generic_database_tag_not_in_postgres_ids" {
   variables {
     containers = {
       "mssql" = {
-        vm_id    = 130
-        hostname = "mssql"
-        vlan     = "data"
-        tags     = ["terraform", "container", "database"]
+        vm_id     = 130
+        node_name = "proxmox-1"
+        hostname  = "mssql"
+        vlan      = "data"
+        tags      = ["terraform", "container", "database"]
       }
     }
   }
