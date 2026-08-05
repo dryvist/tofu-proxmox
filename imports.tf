@@ -93,3 +93,28 @@ import {
   to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["technitium-30"]
   id = "${local.deployment.containers["technitium-30"].node_name}/${local.deployment.containers["technitium-30"].vm_id}"
 }
+
+# Adoption of a live, running Traefik ingress instance that Terraform has
+# never declared -- the same shape as the technitium-30 adoption in the
+# sibling PR, but resolved through a different path: this guest has never
+# been in state at all, so there is no stale entry to remove first, only a
+# first-time adopt.
+#
+# Traefik is the first consumer of the per-node "DaemonSet" service pattern
+# (locals-node-services.tf / node_service_containers), documented in
+# deployment.json.example under node_services.traefik. That template was
+# never populated in the live private object, so the generator currently
+# expands zero per_node entries and produces no "traefik-30" key. The
+# companion (uncommitted) deployment.json change adds one per_node entry
+# matching this guest's live spec (vm_id, tags, disk, unprivileged flag)
+# exactly, so the import adopts in place instead of planning a
+# destroy-and-recreate of a running guest.
+#
+# The id is resolved against local.containers (the merged map), never
+# local.deployment.containers, for the same reason the relocation block
+# above does: "traefik-30" is synthesised by node_service_containers and
+# does not exist in the raw declared map.
+import {
+  to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["traefik-30"]
+  id = "${local.containers["traefik-30"].node_name}/${local.containers["traefik-30"].vm_id}"
+}
