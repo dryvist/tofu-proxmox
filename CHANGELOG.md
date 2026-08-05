@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.82.0](https://github.com/dryvist/tofu-proxmox/compare/v1.81.0...v1.82.0) (2026-08-05)
+
+
+### Features
+
+* **imports:** adopt the untracked live Traefik ingress container ([6e25e5b](https://github.com/dryvist/tofu-proxmox/commit/6e25e5ba965f74895f4b37353b4dbb25f4e9f168))
+* **imports:** populate node_services.traefik and import the running ingress guest ([ddf16e0](https://github.com/dryvist/tofu-proxmox/commit/ddf16e06a649c2ff8adbc1ded64755346e9d918c))
+
 ## [1.81.0](https://github.com/dryvist/tofu-proxmox/compare/v1.80.0...v1.81.0) (2026-08-04)
 
 
