@@ -262,3 +262,9 @@ variable "internal_networks" {
     error_message = "Each internal_networks entry must be a valid CIDR block, for example 192.168.0.0/16."
   }
 }
+
+variable "rdp_vm_ids" {
+  description = "Map of VM IDs for RDP-enabled virtual machines"
+  type        = map(number)
+  default     = {}
+}
