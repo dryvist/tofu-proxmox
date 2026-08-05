@@ -72,11 +72,11 @@ module "vms" {
           mac_address = try(v.dhcp, false) ? local.vm_mac[k] : null
         })
       ]
-      user_account = {
+      user_account = v.user_account != null ? {
         username = v.user_account.username
         password = v.user_account.password
         keys     = [trimspace(var.vm_ssh_public_key)]
-      }
+      } : null
       # Override cloud-init for ansible VM to use external file
       cloud_init_user_data = k == "ansible" ? local.ansible_cloud_init : v.cloud_init_user_data
     })
