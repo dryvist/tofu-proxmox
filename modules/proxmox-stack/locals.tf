@@ -226,4 +226,10 @@ locals {
     for k, v in var.containers : k => v.vm_id
     if contains(coalesce(try(v.tags, null), []), "nautobot")
   }
+
+  # RDP accessible VMs (rdp tag)
+  rdp_vm_ids = {
+    for k, v in var.vms : k => v.vm_id
+    if contains(coalesce(try(v.tags, null), []), "rdp")
+  }
 }

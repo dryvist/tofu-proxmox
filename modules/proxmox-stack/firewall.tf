@@ -116,7 +116,7 @@ module "firewall" {
   honeypot_container_ids        = local.honeypot_container_ids
   honeypot_notify_container_ids = local.honeypot_notify_container_ids
   tpot_vm_ids                   = local.tpot_vm_ids
-
+  rdp_vm_ids                    = local.rdp_vm_ids
 
   # Pipeline constants: single source of truth for service ports (DRY)
   pipeline_constants = local.pipeline_constants
