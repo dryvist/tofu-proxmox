@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.83.0](https://github.com/dryvist/tofu-proxmox/compare/v1.82.0...v1.83.0) (2026-08-05)
+
+
+### Features
+
+* add Windows VM support and 3 VDI instances ([afd57da](https://github.com/dryvist/tofu-proxmox/commit/afd57da2464967c7cff0abf2d4ef35d300676d4f))
+* add Windows VM support and VDI instances ([c32e95c](https://github.com/dryvist/tofu-proxmox/commit/c32e95c00283cdf68dd11fbf4d346d74710e5bbb))
+
+
+### Bug Fixes
+
+* **firewall:** move the OTLP ingest accept to the tier that terminates it ([#866](https://github.com/dryvist/tofu-proxmox/issues/866)) ([9e7b560](https://github.com/dryvist/tofu-proxmox/commit/9e7b5609ab8cbda231f68b111460a2418d05be3d))
+
 ## [1.82.0](https://github.com/dryvist/tofu-proxmox/compare/v1.81.0...v1.82.0) (2026-08-05)
 
 
