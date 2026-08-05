@@ -30,7 +30,8 @@ locals {
   ansible_cloud_init = file(startswith(var.ansible_cloud_init_file, "/") ? var.ansible_cloud_init_file : "${path.module}/../../${var.ansible_cloud_init_file}")
 }
 
-# Storage module - manages datastores and storage configuration
+# Storage module - manages datastores# Terraform Proxmox Configuration
+# trigger terrakube apply
 module "storage" {
   source = "../storage"
 
