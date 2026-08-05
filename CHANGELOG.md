@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.83.1](https://github.com/dryvist/tofu-proxmox/compare/v1.83.0...v1.83.1) (2026-08-05)
+
+
+### Bug Fixes
+
+* **vm:** handle null user_account gracefully for Windows VMs ([#871](https://github.com/dryvist/tofu-proxmox/issues/871)) ([a2c454c](https://github.com/dryvist/tofu-proxmox/commit/a2c454c203a6d9006f68b4e1c532dfead3a331e6))
+
 ## [1.83.0](https://github.com/dryvist/tofu-proxmox/compare/v1.82.0...v1.83.0) (2026-08-05)
 
 
