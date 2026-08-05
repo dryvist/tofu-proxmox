@@ -102,7 +102,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
   }
 
   dynamic "cdrom" {
-    for_each = each.value.cdrom_file_id != null ? [each.value.cdrom_file_id] : []
+    for_each = length(each.value.cdrom_file_ids) > 0 ? each.value.cdrom_file_ids : (each.value.cdrom_file_id != null ? [each.value.cdrom_file_id] : [])
     content {
       file_id = cdrom.value
     }
@@ -112,6 +112,23 @@ resource "proxmox_virtual_environment_vm" "vms" {
     for_each = each.value.clone_template != null ? [each.value.clone_template] : []
     content {
       vm_id = clone.value.template_id
+    }
+  }
+
+  dynamic "tpm_state" {
+    for_each = each.value.tpm_state != null ? [each.value.tpm_state] : []
+    content {
+      version      = tpm_state.value.version
+      datastore_id = tpm_state.value.datastore_id
+    }
+  }
+
+  dynamic "efi_disk" {
+    for_each = each.value.efi_disk != null ? [each.value.efi_disk] : []
+    content {
+      type              = efi_disk.value.type
+      pre_enrolled_keys = efi_disk.value.pre_enrolled_keys
+      datastore_id      = efi_disk.value.datastore_id
     }
   }
 

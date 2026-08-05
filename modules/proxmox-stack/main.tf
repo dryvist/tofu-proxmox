@@ -54,7 +54,10 @@ module "vms" {
   vms = {
     for k, v in var.vms : k => merge(v, {
       node_name      = v.node_name
-      cdrom_file_id  = v.cdrom_file_id != null ? "${var.datastore_iso}:iso/${var.proxmox_iso_debian}" : null
+      cdrom_file_id  = v.cdrom_file_id
+      cdrom_file_ids = v.cdrom_file_ids
+      tpm_state      = v.tpm_state
+      efi_disk       = v.efi_disk
       clone_template = v.clone_template
       # DRY: IP/gateway derived from the VM's VLAN CIDR + vm_id (see locals.tf).
       ip_config = {

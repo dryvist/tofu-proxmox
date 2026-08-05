@@ -63,7 +63,8 @@ variable "vms" {
     }), {})
 
     # Cloud-init / OS configuration
-    cdrom_file_id = optional(string)
+    cdrom_file_id  = optional(string)
+    cdrom_file_ids = optional(list(string), [])
     clone_template = optional(object({
       template_id = number
     }))
@@ -88,6 +89,17 @@ variable "vms" {
 
     # Startup configuration
     on_boot = optional(bool, true)
+
+    # Windows features
+    tpm_state = optional(object({
+      version      = optional(string, "v2.0")
+      datastore_id = string
+    }))
+    efi_disk = optional(object({
+      type              = optional(string, "4m")
+      pre_enrolled_keys = optional(bool, false)
+      datastore_id      = string
+    }))
 
   }))
   default = {}

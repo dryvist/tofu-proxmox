@@ -55,6 +55,18 @@ resource "proxmox_virtual_environment_firewall_rules" "cribl_stream_container" {
     comment        = "AI/LLM log-ingest backends (HAProxy -> per-port in_ai_* listeners)"
   }
 
+  # OTLP trace ingest. The OTLP listener lives on Stream, not Edge — trace
+  # fan-out (Splunk plus the LLM-observability backend) consolidated here and
+  # the Edge input was removed. The accept did not move with it, so exporters
+  # resolved the right host, connected to nothing, and retried until their
+  # batches aged out. That failure is invisible from both ends: an OTLP
+  # exporter reports export failure only in its own service log, and a
+  # listener nothing reaches has nothing to log.
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.otlp_ingest.name
+    comment        = "OTLP trace ingest (producers -> in_otel listener)"
+  }
+
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
     comment        = "Outbound to internal only (reaches Splunk HEC 8088)"
