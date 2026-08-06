@@ -30,7 +30,8 @@ locals {
   ansible_cloud_init = file(startswith(var.ansible_cloud_init_file, "/") ? var.ansible_cloud_init_file : "${path.module}/../../${var.ansible_cloud_init_file}")
 }
 
-# Storage module - manages datastores and storage configuration
+# Storage module - manages datastores# Terraform Proxmox Configuration
+# trigger terrakube apply
 module "storage" {
   source = "../storage"
 
@@ -90,7 +91,13 @@ module "vms" {
   proxmox_ssh_username    = var.proxmox_ssh_username
   proxmox_ssh_private_key = var.proxmox_ssh_private_key
 
-  depends_on = [module.pools]
+  depends_on = [
+    module.pools,
+    proxmox_download_file.virtio_iso,
+    proxmox_download_file.win10_iso,
+    proxmox_download_file.win11_iso,
+    proxmox_download_file.win25_iso
+  ]
 }
 
 # Container module - creates and manages containers (optional)

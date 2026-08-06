@@ -57,8 +57,11 @@ Both in full: [docs/EXECUTION_HOSTS.md](./docs/EXECUTION_HOSTS.md).
 > `tofu init` and `plan` autonomously for the session, on the pre-existing
 > `tofu login` token. **`apply` is not in that set** — it is refused
 > server-side and belongs to a Terrakube job: a deliberate, audited action
-> rather than a step in an autonomous loop. Setup and prerequisites for the
-> remote plan are in [docs/EXECUTION_HOSTS.md](./docs/EXECUTION_HOSTS.md).
+> rather than a step in an autonomous loop. GitHub pushes do **not** automatically
+> trigger Terrakube jobs. To trigger an apply, you must directly call the Terrakube
+> API using the token in `~/.terraform.d/credentials.tfrc.json` on the `iac-platform`
+> guest (e.g. `curl -X POST .../api/v1/organization/<org-id>/job`). Setup and
+> prerequisites for the remote plan are in [docs/EXECUTION_HOSTS.md](./docs/EXECUTION_HOSTS.md).
 
 ## Config-file architecture (single source of truth)
 
