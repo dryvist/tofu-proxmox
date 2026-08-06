@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<unattend xmlns="urn:schemas-microsoft-com:unattend">
+<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
 
   <settings pass="windowsPE">
     <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
@@ -12,6 +12,29 @@
       <UserLocale>en-US</UserLocale>
     </component>
     <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <!-- The boot disk is scsi0 behind a virtio-scsi-pci controller, so
+           windowsPE cannot see any disk until vioscsi is loaded - without this
+           setup halts at drive selection. Attaching virtio-win.iso is necessary
+           but not sufficient. Setup persists this boot-critical driver into the
+           installed image; the remaining virtio drivers (NetKVM in particular)
+           come from virtio-win-guest-tools.exe at first logon.
+           Every letter is listed because windowsPE assigns cdrom letters
+           unpredictably with three discs attached; paths that do not exist are
+           logged and skipped. -->
+      <DriverPaths>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="1">
+          <Path>D:\vioscsi\w11\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="2">
+          <Path>E:\vioscsi\w11\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+          <Path>F:\vioscsi\w11\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="4">
+          <Path>G:\vioscsi\w11\amd64</Path>
+        </PathAndCredentials>
+      </DriverPaths>
       <DiskConfiguration>
         <Disk wcm:action="add">
           <CreatePartitions>
@@ -124,28 +147,38 @@
         <Username>Administrator</Username>
       </AutoLogon>
       <FirstLogonCommands>
+        <!-- Must run first: installs the remaining virtio drivers (NetKVM,
+             without which the NIC never comes up and WinRM is unreachable) and
+             qemu-guest-agent. The agent also matters to Terraform - the VM
+             module sets agent.timeout=15m, so a guest without it stalls every
+             later plan and apply for the full 15 minutes. The disc letter is
+             discovered rather than assumed, same reason as DriverPaths above. -->
         <SynchronousCommand wcm:action="add">
           <Order>1</Order>
-          <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
+          <CommandLine>cmd /c for %i in (D E F G) do @if exist %i:\virtio-win-guest-tools.exe %i:\virtio-win-guest-tools.exe /install /quiet /norestart</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>2</Order>
-          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
+          <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>3</Order>
-          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
+          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>4</Order>
-          <CommandLine>cmd /c netsh advfirewall firewall set rule group="Windows Remote Management" new enable=yes</CommandLine>
+          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>5</Order>
-          <CommandLine>cmd /c reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f</CommandLine>
+          <CommandLine>cmd /c netsh advfirewall firewall set rule group="Windows Remote Management" new enable=yes</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>6</Order>
+          <CommandLine>cmd /c reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>7</Order>
           <CommandLine>cmd /c netsh advfirewall firewall set rule group="remote desktop" new enable=yes</CommandLine>
         </SynchronousCommand>
       </FirstLogonCommands>
