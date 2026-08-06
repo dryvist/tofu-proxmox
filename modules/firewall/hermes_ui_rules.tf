@@ -18,14 +18,14 @@
 
 locals {
   hermes_ui_services_rules = [
-    { proto = "tcp", dport = tostring(local.svc_ports.hermes_ui_web), source = local.internal_src, comment = "hermes-ui primary app (TCP ${local.svc_ports.hermes_ui_web}) from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.hermes_ui_admin_web), source = local.internal_src, comment = "hermes-ui admin app (TCP ${local.svc_ports.hermes_ui_admin_web}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.hermes_ui_workspace), source = local.internal_src, comment = "hermes-ui primary app (TCP ${local.svc_ports.hermes_ui_workspace}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.hermes_ui_mission_control), source = local.internal_src, comment = "mission-control app (TCP ${local.svc_ports.hermes_ui_mission_control}) from internal" },
   ]
 }
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "hermes_ui_services" {
   name    = "hermes-ui-svc"
-  comment = "hermes-ui web apps (${local.svc_ports.hermes_ui_web}, ${local.svc_ports.hermes_ui_admin_web}) from internal networks — Traefik-fronted"
+  comment = "hermes-ui web apps (${local.svc_ports.hermes_ui_workspace}, ${local.svc_ports.hermes_ui_mission_control}) from internal networks — Traefik-fronted"
 
   dynamic "rule" {
     for_each = local.hermes_ui_services_rules

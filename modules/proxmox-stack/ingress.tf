@@ -68,14 +68,17 @@ locals {
     # -> hermes-agent container : hermes_api (`hermes gateway` api_server platform,
     # bearer-authenticated). The sanctioned non-exec job path; internal-only firewall.
     "hermes-api" = { backend = "hermes-agent", port = local.pipeline_constants.service_ports.hermes_api, sso = false } # bearer-authenticated job API
-    # hermes-ui companion guest runs two web apps behind two distinct host
-    # ports (both default to 3000 upstream) — fronted at distinct hostnames.
-    "hermes-ui"       = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_web }
-    "hermes-ui-admin" = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_admin_web }
+    # hermes-ui companion guest runs two DIFFERENT apps behind two distinct
+    # host ports (both default to 3000 upstream): hermes-workspace (the
+    # Hermes web workspace, primary UI) and mission-control (an unrelated
+    # product co-located in this container, gateway target is OpenClaw).
+    "hermes-ui"       = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_workspace }
+    "mission-control" = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_mission_control }
     # hermes-donna — second, independently-identified Hermes agent instance
-    # (own container). Only its Dashboard is Traefik-fronted here, same as
-    # hermes-agent's dashboard row above.
-    "hermes-donna"  = { backend = "hermes-donna", port = local.pipeline_constants.service_ports.hermes_donna_dashboard }
+    # (own container, same software). Only its Dashboard is Traefik-fronted
+    # here, same as hermes-agent's dashboard row above; hermes_dashboard is a
+    # SERVICE port, so the same key is correct for either agent's container.
+    "hermes-donna"  = { backend = "hermes-donna", port = local.pipeline_constants.service_ports.hermes_dashboard }
     smokeping       = { backend = "smokeping", port = local.pipeline_constants.service_ports.smokeping_web }
     "haproxy-stats" = { backend = "haproxy", port = local.pipeline_constants.service_ports.haproxy_stats }
     # Static file host. Browser-only, so it takes the default gate (sso omitted

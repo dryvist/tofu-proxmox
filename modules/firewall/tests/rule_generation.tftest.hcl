@@ -60,8 +60,8 @@ variables {
       hermes_api       = 8642
       hermes_dashboard = 8080
       # hermes-ui companion web apps (referenced by hermes_ui_services_rules)
-      hermes_ui_web       = 3000
-      hermes_ui_admin_web = 3001
+      hermes_ui_workspace       = 3000
+      hermes_ui_mission_control = 3001
       # AI orchestration + observability (referenced by ai_orchestration rules)
       n8n_web           = 5678
       dify_web          = 80
