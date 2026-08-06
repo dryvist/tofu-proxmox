@@ -25,16 +25,23 @@
       <UILanguage>en-US</UILanguage>
       <UserLocale>en-US</UserLocale>
     </component>
-    <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
-      <!--
-        The boot disk sits behind a virtio-scsi-pci controller, so windowsPE
-        sees no disk at all until vioscsi loads and setup halts at drive
-        selection. Attaching virtio-win.iso is necessary but not sufficient.
-        Setup carries this boot-critical driver into the installed image; the
-        rest (NetKVM especially) arrive via virtio-win-guest-tools at first logon.
-        Every drive letter is listed because windowsPE assigns them
-        unpredictably with several discs attached; absent paths are skipped.
-      -->
+    <!--
+      The boot disk sits behind a virtio-scsi-pci controller, so windowsPE sees
+      no disk at all until vioscsi loads, and setup halts at "Select location to
+      install Windows" with an empty disk list. Attaching virtio-win.iso is
+      necessary but not sufficient.
+
+      DriverPaths belongs to PnpCustomizationsWinPE, NOT to Microsoft-Windows-
+      Setup. It was under Setup here and the drivers silently never loaded -
+      Setup honoured every other element of that component (it skipped language,
+      EULA and edition selection) and simply ignored this one, so the failure
+      looked like a hang rather than a rejected answer file. Confirmed from the
+      console: the empty-disk screen, 715 MiB read and zero bytes written.
+
+      Every drive letter is listed because windowsPE assigns them unpredictably
+      with several discs attached.
+    -->
+    <component name="Microsoft-Windows-PnpCustomizationsWinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
       <DriverPaths>
         <PathAndCredentials wcm:action="add" wcm:keyValue="1">
           <Path>D:\${vioscsi_path}</Path>
@@ -49,6 +56,8 @@
           <Path>G:\${vioscsi_path}</Path>
         </PathAndCredentials>
       </DriverPaths>
+    </component>
+    <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
       <DiskConfiguration>
         <Disk wcm:action="add">
           <CreatePartitions>
