@@ -104,11 +104,17 @@ bao_login() {
 # visible to any local user via ps for the lifetime of the subshell.
 export_secret() {
   local var="$1" path="$2" field="$3"
-  local mount="${path%%/*}" rest="${path#*/}" value
-  value="$(
-    curl -sS -H "X-Vault-Token: $BAO_TOKEN" "$BAO_ADDR/v1/$mount/data/$rest" |
-      jq -r --arg f "$field" '.data.data[$f] // empty'
-  )"
+  local mount="${path%%/*}" rest="${path#*/}" response value
+  response="$(curl -sS -H "X-Vault-Token: $BAO_TOKEN" "$BAO_ADDR/v1/$mount/data/$rest")"
+
+  # Distinguish "the read was refused" from "the field is absent". Both leave
+  # jq with an empty string, and reporting a denied read as a missing field
+  # sends the reader hunting through the secret instead of the policy.
+  local errors
+  errors="$(jq -r '(.errors // []) | join("; ")' <<<"$response")"
+  [[ -z $errors ]] || fail "OpenBao refused $path: $errors"
+
+  value="$(jq -r --arg f "$field" '.data.data[$f] // empty' <<<"$response")"
   [[ -n $value ]] || fail "missing field '$field' at $path"
   export "PKR_VAR_${var}=${value}"
 }
