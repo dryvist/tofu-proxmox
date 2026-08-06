@@ -39,6 +39,23 @@
           <PlainText>true</PlainText>
         </AdministratorPassword>
       </UserAccounts>
+      <!--
+        Load-bearing, not a convenience. FirstLogonCommands run at the first
+        interactive logon and nowhere else, so without an autologon nobody ever
+        logs in, none of the commands below execute, and the clone comes up with
+        neither WinRM nor RDP - unreachable, which is precisely the failure this
+        file exists to prevent. LogonCount 1 spends the autologon on that single
+        boot and Windows clears it afterwards.
+      -->
+      <AutoLogon>
+        <Password>
+          <Value>${admin_password}</Value>
+          <PlainText>true</PlainText>
+        </Password>
+        <Enabled>true</Enabled>
+        <LogonCount>1</LogonCount>
+        <Username>Administrator</Username>
+      </AutoLogon>
       <FirstLogonCommands>
         <!--
           Re-establish remote management on the clone. The guest agent and
