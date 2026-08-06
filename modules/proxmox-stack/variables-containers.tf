@@ -165,4 +165,20 @@ variable "containers" {
     ])
     error_message = "Every container tagged 'ai-runner' must carry exactly one egress-profile tag from: ai-github, ai-terrakube, ai-full-net, ai-proxied. A missing or misspelled profile tag would leave the agent guest with NO firewall; two would attach conflicting rule sets."
   }
+
+  # hermes-donna is a second Hermes agent instance and deliberately carries NO
+  # dedicated firewall map of its own — it relies on the hermes-agent tag's
+  # existing container-id filter to pick up the hermes-agent security groups
+  # and rules. The same hazard as the ai-runner check above applies: a guest
+  # tagged hermes-donna without also carrying hermes-agent would silently
+  # match no firewall map at all and come up with no firewall options and no
+  # rules, invisible in a plan diff.
+  validation {
+    condition = alltrue([
+      for k, v in var.containers :
+      contains(coalesce(try(v.tags, null), []), "hermes-agent")
+      if contains(coalesce(try(v.tags, null), []), "hermes-donna")
+    ])
+    error_message = "Every container tagged 'hermes-donna' must also carry the 'hermes-agent' tag — hermes-donna has no firewall map of its own and relies on hermes_agent_container_ids to pick it up. A missing hermes-agent tag would leave the guest with NO firewall."
+  }
 }

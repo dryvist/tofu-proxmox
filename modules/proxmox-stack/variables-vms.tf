@@ -102,6 +102,13 @@ variable "vms" {
     agent_enabled = optional(bool, true)
     protection    = optional(bool, false)
     os_type       = optional(string, "l26")
+    # "seabios" or "ovmf". Windows 11+ requires "ovmf" (UEFI) alongside
+    # tpm_state/efi_disk to pass hardware install checks.
+    bios = optional(string, "seabios")
+
+    # Ansible connection method published in ansible_inventory (inventory_publish.tf).
+    # "ssh" (default) or "winrm" for Windows guests.
+    ansible_connection = optional(string, "ssh")
 
     # Windows features
     tpm_state = optional(object({

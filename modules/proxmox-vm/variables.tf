@@ -83,6 +83,9 @@ variable "vms" {
 
     # Operating system
     os_type = optional(string, "l26")
+    # "seabios" or "ovmf". Windows 11+ requires "ovmf" (UEFI) alongside
+    # tpm_state/efi_disk to pass hardware install checks.
+    bios = optional(string, "seabios")
 
     # Display configuration
     vga_type = optional(string, "std")

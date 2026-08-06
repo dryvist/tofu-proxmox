@@ -74,6 +74,13 @@ modules/proxmox-stack/locals*.tf — management_network, splunk_network_ips
 - `deployment.json` — resource definitions (containers, VMs, pools, sizing).
   Private, not committed; fetched from homelab RustFS at plan/apply. See
   [`deployment-json-source-of-truth`](agentsmd/rules/infra/deployment-json-source-of-truth.md).
+- **Which node a guest belongs on is a standard, not a free choice.** The nodes
+  differ by an order of magnitude in RAM, by generation in instruction set, and
+  by which holds the bulk dataset, so placement follows the binding constraint —
+  named in that guest's `description` field. The standard itself (node roles,
+  rules, the per-node overcommit ceiling) is topology and lives in the private
+  docs, not here. **`node_name` is `ForceNew`**: changing it in the obvious order
+  plans a destroy-and-recreate of a running guest — see `imports.tf`.
 - OpenBao native KV paths supply credentials through ephemeral resources; they
   are never copied into Terrakube variables or desired-state objects.
 - `management_network` and `splunk_network` are derived in

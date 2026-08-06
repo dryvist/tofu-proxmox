@@ -1084,3 +1084,58 @@ run "llm_redis_container_ids_are_disjoint_from_the_router_pool" {
     error_message = "the spend store must never be colocated with a router member — a store inside one member gives every member a private counter, which is the miscount a shared store exists to remove"
   }
 }
+
+# hermes-ui carries its OWN tag (not hermes-agent), so its egress can be
+# tightened later without touching the agent profile. A hermes-ui guest
+# picking up the hermes-agent map, or vice versa, would attach the wrong
+# rule set to one of them.
+run "hermes_ui_container_ids_are_disjoint_from_the_agent" {
+  command = plan
+
+  variables {
+    containers = {
+      "hermes-agent" = {
+        vm_id     = 304
+        node_name = "proxmox-1"
+        hostname  = "hermes-agent"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-agent"]
+      }
+      "hermes-ui" = {
+        vm_id     = 305
+        node_name = "proxmox-1"
+        hostname  = "hermes-ui"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-ui"]
+      }
+      "hermes-donna" = {
+        vm_id     = 306
+        node_name = "proxmox-1"
+        hostname  = "hermes-donna"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-agent", "hermes-donna"]
+      }
+    }
+  }
+
+  assert {
+    condition     = keys(local.hermes_ui_container_ids) == ["hermes-ui"]
+    error_message = "hermes_ui_container_ids must select exactly the hermes-ui-tagged guests"
+  }
+
+  assert {
+    condition = length(setintersection(
+      keys(local.hermes_ui_container_ids),
+      keys(local.hermes_agent_container_ids),
+    )) == 0
+    error_message = "hermes-ui and hermes-agent must never share a guest — each tag drives its own firewall profile"
+  }
+
+  assert {
+    condition     = keys(local.hermes_agent_container_ids) == ["hermes-agent", "hermes-donna"]
+    error_message = "hermes-donna carries the hermes-agent tag so it is picked up by the existing hermes-agent firewall map, same as any other hermes-agent guest"
+  }
+}

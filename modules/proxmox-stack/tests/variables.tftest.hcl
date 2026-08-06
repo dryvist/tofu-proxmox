@@ -604,3 +604,49 @@ run "agent_pool_with_squid_accepted" {
     error_message = "the squid-tagged guest must select the proxy profile, got ${length(local.squid_proxy_container_ids)}"
   }
 }
+
+# hermes-donna has no firewall map of its own — it relies on the hermes-agent
+# tag to be picked up by hermes_agent_container_ids. A hermes-donna guest
+# missing the hermes-agent tag would silently come up with no firewall.
+run "hermes_donna_without_hermes_agent_tag_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      donna = {
+        vm_id     = 500101
+        node_name = "proxmox-1"
+        hostname  = "donna"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-donna"]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.containers,
+  ]
+}
+
+run "hermes_donna_with_hermes_agent_tag_accepted" {
+  command = plan
+
+  variables {
+    containers = {
+      donna = {
+        vm_id     = 500101
+        node_name = "proxmox-1"
+        hostname  = "donna"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-agent", "hermes-donna"]
+      }
+    }
+  }
+
+  assert {
+    condition     = keys(local.hermes_agent_container_ids) == ["donna"]
+    error_message = "hermes-donna with the hermes-agent tag must be picked up by the existing hermes-agent firewall map"
+  }
+}
