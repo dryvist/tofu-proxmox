@@ -4,6 +4,10 @@ terraform {
       source  = "bpg/proxmox"
       version = "~> 0.111"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
   }
 }
 
@@ -105,8 +109,11 @@ resource "proxmox_virtual_environment_vm" "vms" {
     }
   }
 
+  # The provider allows exactly one cdrom block. Anything beyond the first
+  # entry in cdrom_file_ids is attached out-of-band by null_resource.extra_cdroms
+  # below, via raw `qm set` over SSH.
   dynamic "cdrom" {
-    for_each = length(each.value.cdrom_file_ids) > 0 ? each.value.cdrom_file_ids : (each.value.cdrom_file_id != null ? [each.value.cdrom_file_id] : [])
+    for_each = length(each.value.cdrom_file_ids) > 0 ? [each.value.cdrom_file_ids[0]] : (each.value.cdrom_file_id != null ? [each.value.cdrom_file_id] : [])
     content {
       file_id = cdrom.value
     }
@@ -229,4 +236,39 @@ resource "proxmox_virtual_environment_vm" "vms" {
     ]
   }
 
+}
+
+locals {
+  # cdrom_file_ids[0] is Terraform-managed above; anything past it is attached
+  # here since the provider's cdrom block is capped at one instance.
+  extra_cdroms = {
+    for k, v in var.vms : k => slice(v.cdrom_file_ids, 1, length(v.cdrom_file_ids))
+    if length(v.cdrom_file_ids) > 1
+  }
+}
+
+resource "null_resource" "extra_cdroms" {
+  for_each = local.extra_cdroms
+
+  triggers = {
+    vm_id  = var.vms[each.key].vm_id
+    cdroms = join(",", each.value)
+  }
+
+  connection {
+    type        = "ssh"
+    host        = "${var.vms[each.key].node_name}.${var.domain}"
+    user        = var.proxmox_ssh_username
+    private_key = var.proxmox_ssh_private_key
+  }
+
+  # ide2 is cloud-init, ide3 is the Terraform-managed cdrom above - start at ide0.
+  provisioner "remote-exec" {
+    inline = [
+      for idx, file_id in each.value :
+      "qm set ${var.vms[each.key].vm_id} --ide${idx} ${file_id},media=cdrom"
+    ]
+  }
+
+  depends_on = [proxmox_virtual_environment_vm.vms]
 }

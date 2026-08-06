@@ -135,7 +135,7 @@ variable "default_datastore" {
 variable "proxmox_ssh_username" {
   description = "The SSH username for connecting to the Proxmox node"
   type        = string
-  default     = "root@pam"
+  default     = "root"
   ephemeral   = true
 }
 
