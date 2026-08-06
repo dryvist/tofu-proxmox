@@ -67,6 +67,10 @@ source "proxmox-iso" "win10" {
   node                     = var.proxmox_node
   insecure_skip_tls_verify = var.PROXMOX_VE_INSECURE == "true"
 
+  # Default is 1m, which a Windows guest shutdown routinely exceeds - and the
+  # shutdown is a Proxmox task the plugin waits on before converting.
+  task_timeout = "20m"
+
   vm_id                = local.images.win10.vm_id
   vm_name              = "win10-template"
   template_name        = "win10-template"
@@ -78,6 +82,15 @@ source "proxmox-iso" "win10" {
     efi_storage_pool  = var.vm_storage_pool
     efi_type          = "4m"
     pre_enrolled_keys = true
+  }
+
+  # Windows 10 does not require a TPM, but the deployment object gives every
+  # win-vdi guest a tpm_state. Building the template without one would make the
+  # clone differ from its template on a ForceNew-adjacent attribute and show a
+  # diff on every plan.
+  tpm_config {
+    tpm_storage_pool = var.vm_storage_pool
+    tpm_version      = "v2.0"
   }
 
   cpu_type        = "host"
@@ -146,6 +159,10 @@ source "proxmox-iso" "win11" {
   token                    = local.pve_token
   node                     = var.proxmox_node
   insecure_skip_tls_verify = var.PROXMOX_VE_INSECURE == "true"
+
+  # Default is 1m, which a Windows guest shutdown routinely exceeds - and the
+  # shutdown is a Proxmox task the plugin waits on before converting.
+  task_timeout = "20m"
 
   vm_id                = local.images.win11.vm_id
   vm_name              = "win11-template"
@@ -232,6 +249,10 @@ source "proxmox-iso" "win25" {
   token                    = local.pve_token
   node                     = var.proxmox_node
   insecure_skip_tls_verify = var.PROXMOX_VE_INSECURE == "true"
+
+  # Default is 1m, which a Windows guest shutdown routinely exceeds - and the
+  # shutdown is a Proxmox task the plugin waits on before converting.
+  task_timeout = "20m"
 
   vm_id                = local.images.win25.vm_id
   vm_name              = "win25-template"
@@ -342,14 +363,21 @@ build {
     ]
   }
 
-  # Generalize last. /quiet suppresses the interactive dialog, /shutdown leaves
-  # the VM off so Packer can convert it to a template cleanly.
+  # Generalize last. /quit, NOT /shutdown: this builder has no shutdown_command
+  # and always powers the guest off itself, via
+  # stepConvertToTemplate -> ShutdownVm -> POST /status/shutdown. Proxmox
+  # answers that with an error on a VM that is already stopped, the plugin
+  # retries three times and then halts with "could not stop" - so letting
+  # sysprep power the guest off races the builder and loses the whole build at
+  # its last step. /quit leaves the guest generalized and running; the very next
+  # thing that happens to it is the builder's own clean shutdown.
   provisioner "powershell" {
     inline = [
-      "& C:\\Windows\\System32\\Sysprep\\sysprep.exe /generalize /oobe /shutdown /quiet /unattend:C:\\Windows\\Panther\\unattend.xml",
+      "& C:\\Windows\\System32\\Sysprep\\sysprep.exe /generalize /oobe /quit /quiet /unattend:C:\\Windows\\Panther\\unattend.xml",
+      "if ($LASTEXITCODE -ne 0) { throw \"sysprep exited $LASTEXITCODE\" }",
+      "$err = 'C:\\Windows\\System32\\Sysprep\\Panther\\setuperr.log'",
+      "if ((Test-Path $err) -and (Get-Item $err).Length -gt 0) { Get-Content $err; throw 'sysprep reported errors' }",
+      "Write-Host 'sysprep generalize complete - builder will power the guest off'",
     ]
-    # sysprep terminates the WinRM session as it shuts the guest down; that is
-    # the expected end of the build, not a failure.
-    valid_exit_codes = [0, 1, 2300218]
   }
 }
