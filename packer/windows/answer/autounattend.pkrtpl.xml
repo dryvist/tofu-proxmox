@@ -138,6 +138,23 @@
           <Order>2</Order>
           <Path>reg add HKLM\SYSTEM\Setup\OOBE /v BypassNRO /t REG_DWORD /d 1 /f</Path>
         </RunSynchronousCommand>
+        <!--
+          Windows 11 24H2 turns on automatic device encryption during OOBE
+          whenever a TPM is present, and this template always presents one. An
+          encrypted OS volume makes sysprep /generalize fail outright with
+          0x80310039 ("BitLocker is on for the OS volume"), which loses the
+          build at its very last step after a full install has already run.
+
+          Must be set in specialize: OOBE is where the encryption decision is
+          made, so anything later is too late. A template is a base image, not
+          a fleet policy - real disk encryption belongs on the deployed clone,
+          applied by configuration management, not baked into the golden image
+          where every clone would inherit the same recovery key.
+        -->
+        <RunSynchronousCommand wcm:action="add">
+          <Order>3</Order>
+          <Path>reg add HKLM\SYSTEM\CurrentControlSet\Control\BitLocker /v PreventDeviceEncryption /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
       </RunSynchronous>
     </component>
   </settings>

@@ -408,6 +408,28 @@ build {
     ]
   }
 
+  # sysprep /generalize refuses outright on an encrypted OS volume, failing with
+  # 0x80310039 after the full install has already run. autounattend.xml sets
+  # PreventDeviceEncryption so this should find nothing to do; it stays as the
+  # belt-and-braces path because the cost of being wrong is the whole build, and
+  # because a future Windows build could re-enable encryption by another route.
+  provisioner "powershell" {
+    inline = [
+      "$os = $env:SystemDrive",
+      "$v = Get-BitLockerVolume -MountPoint $os -ErrorAction SilentlyContinue",
+      "if ($v -and $v.ProtectionStatus -ne 'Off') {",
+      "  Write-Host \"BitLocker is $($v.ProtectionStatus) on $os - decrypting before sysprep\"",
+      "  Disable-BitLocker -MountPoint $os | Out-Null",
+      "  $deadline = (Get-Date).AddMinutes(30)",
+      "  while ((Get-BitLockerVolume -MountPoint $os).VolumeStatus -ne 'FullyDecrypted') {",
+      "    if ((Get-Date) -gt $deadline) { throw \"BitLocker did not finish decrypting $os within 30m\" }",
+      "    Start-Sleep -Seconds 15",
+      "  }",
+      "}",
+      "Write-Host \"BitLocker protection on $os is now $((Get-BitLockerVolume -MountPoint $os).ProtectionStatus)\"",
+    ]
+  }
+
   # Generalize last. /quit, NOT /shutdown: this builder has no shutdown_command
   # and always powers the guest off itself, via
   # stepConvertToTemplate -> ShutdownVm -> POST /status/shutdown. Proxmox
