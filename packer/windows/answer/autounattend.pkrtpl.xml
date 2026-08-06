@@ -194,7 +194,7 @@
         -->
         <SynchronousCommand wcm:action="add">
           <Order>2</Order>
-          <CommandLine>powershell.exe -NoProfile -Command "1..30 | %{ $p = Get-NetConnectionProfile -ErrorAction SilentlyContinue; if ($p) { $p | Set-NetConnectionProfile -NetworkCategory Private; break }; Start-Sleep -Seconds 2 }"</CommandLine>
+          <CommandLine>powershell.exe -NoProfile -Command "1..30 | ForEach-Object { $prof = Get-NetConnectionProfile -ErrorAction SilentlyContinue; if ($prof) { $prof | Set-NetConnectionProfile -NetworkCategory Private; break }; Start-Sleep -Seconds 2 }"</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>3</Order>
