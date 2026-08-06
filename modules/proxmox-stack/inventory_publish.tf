@@ -52,7 +52,7 @@ locals {
         ip                 = local.vm_address[k]
         mac                = try(var.vms[k].dhcp, false) ? local.vm_mac[k] : null
         node               = v.node_name
-        ansible_connection = "ssh"
+        ansible_connection = try(var.vms[k].ansible_connection, "ssh")
         tags               = v.tags
         pool_id            = v.pool_id
       }
@@ -174,9 +174,9 @@ resource "aws_s3_object" "ansible_inventory" {
         v.node != null && v.node != "" &&
         v.hostname != null && v.hostname != "" &&
         v.vmid != null &&
-        v.ansible_connection == "ssh"
+        contains(["ssh", "winrm"], v.ansible_connection)
       ])
-      error_message = "One or more VMs have an empty ip/node/hostname/vmid or a wrong ansible_connection in the inventory. Inspect module.vms output and deployment.json."
+      error_message = "One or more VMs have an empty ip/node/hostname/vmid or an unsupported ansible_connection in the inventory. Inspect module.vms output and deployment.json."
     }
     precondition {
       condition = alltrue([
