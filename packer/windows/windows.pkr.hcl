@@ -372,11 +372,25 @@ build {
   # its last step. /quit leaves the guest generalized and running; the very next
   # thing that happens to it is the builder's own clean shutdown.
   provisioner "powershell" {
+    # sysprep.exe is a GUI-subsystem binary, so `&` does not block on it: the
+    # provisioner would return while generalization was still running and the
+    # builder would cut power mid-flight, producing a template that converts
+    # cleanly and misbehaves at OOBE. Start-Process -Wait, then poll ImageState
+    # until Windows itself reports the reseal is finished.
     inline = [
-      "& C:\\Windows\\System32\\Sysprep\\sysprep.exe /generalize /oobe /quit /quiet /unattend:C:\\Windows\\Panther\\unattend.xml",
-      "if ($LASTEXITCODE -ne 0) { throw \"sysprep exited $LASTEXITCODE\" }",
-      "$err = 'C:\\Windows\\System32\\Sysprep\\Panther\\setuperr.log'",
-      "if ((Test-Path $err) -and (Get-Item $err).Length -gt 0) { Get-Content $err; throw 'sysprep reported errors' }",
+      "Start-Process -FilePath C:\\Windows\\System32\\Sysprep\\sysprep.exe -Wait -NoNewWindow -ArgumentList '/generalize','/oobe','/quit','/quiet','/unattend:C:\\Windows\\Panther\\unattend.xml'",
+      "$state = 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Setup\\State'",
+      "$deadline = (Get-Date).AddMinutes(20)",
+      "while ((Get-ItemProperty $state).ImageState -ne 'IMAGE_STATE_GENERALIZE_RESEAL_TO_OOBE') {",
+      "  if ((Get-Date) -gt $deadline) {",
+      "    foreach ($log in 'setupact.log','setuperr.log') {",
+      "      $p = \"C:\\Windows\\System32\\Sysprep\\Panther\\$log\"",
+      "      if (Test-Path $p) { Write-Host \"--- $log ---\"; Get-Content $p -Tail 80 }",
+      "    }",
+      "    throw \"sysprep did not reach RESEAL_TO_OOBE within 20m (ImageState=$((Get-ItemProperty $state).ImageState))\"",
+      "  }",
+      "  Start-Sleep -Seconds 10",
+      "}",
       "Write-Host 'sysprep generalize complete - builder will power the guest off'",
     ]
   }
