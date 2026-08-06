@@ -65,28 +65,41 @@
           idempotently afterwards - this exists so the guest is reachable
           enough for Ansible to connect at all.
         -->
+        <!--
+          First, and load-bearing for both WinRM and RDP. Windows classifies an
+          unidentified network as Public; the built-in WinRM and Remote Desktop
+          rules for that profile are scoped to LocalSubnet, so a clone would
+          listen on both ports and silently drop every connection from another
+          subnet - Ansible and any RDP client that is not on the guest's own
+          VLAN. winrm quickconfig also refuses outright on a Public network.
+          Retried because the NIC may not be up at the instant of first logon.
+        -->
         <SynchronousCommand wcm:action="add">
           <Order>1</Order>
-          <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
+          <CommandLine>powershell.exe -NoProfile -Command "1..30 | %{ $p = Get-NetConnectionProfile -ErrorAction SilentlyContinue; if ($p) { $p | Set-NetConnectionProfile -NetworkCategory Private; break }; Start-Sleep -Seconds 2 }"</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>2</Order>
-          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
+          <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>3</Order>
-          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
+          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>4</Order>
-          <CommandLine>cmd /c netsh advfirewall firewall set rule group="Windows Remote Management" new enable=yes</CommandLine>
+          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>5</Order>
-          <CommandLine>cmd /c reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f</CommandLine>
+          <CommandLine>cmd /c netsh advfirewall firewall set rule group="Windows Remote Management" new enable=yes</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>6</Order>
+          <CommandLine>cmd /c reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>7</Order>
           <CommandLine>cmd /c netsh advfirewall firewall set rule group="remote desktop" new enable=yes</CommandLine>
         </SynchronousCommand>
       </FirstLogonCommands>

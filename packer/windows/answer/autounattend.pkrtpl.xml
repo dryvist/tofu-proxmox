@@ -180,20 +180,36 @@
           <Order>1</Order>
           <CommandLine>cmd /c for %i in (D E F G) do @if exist %i:\virtio-win-guest-tools.exe %i:\virtio-win-guest-tools.exe /install /quiet /norestart</CommandLine>
         </SynchronousCommand>
+        <!--
+          Must precede winrm quickconfig, which refuses outright on a Public
+          network. Windows classifies an unidentified network as Public, and the
+          built-in WinRM rule for that profile is scoped to LocalSubnet, so the
+          listener comes up and every connection from another subnet is dropped
+          - Packer waits out its whole timeout against a guest that is up,
+          networked and answering the guest agent. The identically-named
+          "-NoScope" rule accepts any remote address but only applies to the
+          Domain and Private profiles, so making the profile Private is what
+          activates it. Retried because at first logon NetKVM may not have
+          finished bringing the NIC up, and there is no profile to set yet.
+        -->
         <SynchronousCommand wcm:action="add">
           <Order>2</Order>
-          <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
+          <CommandLine>powershell.exe -NoProfile -Command "1..30 | %{ $p = Get-NetConnectionProfile -ErrorAction SilentlyContinue; if ($p) { $p | Set-NetConnectionProfile -NetworkCategory Private; break }; Start-Sleep -Seconds 2 }"</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>3</Order>
-          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
+          <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>4</Order>
-          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
+          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>5</Order>
+          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>6</Order>
           <CommandLine>cmd /c netsh advfirewall firewall set rule group="Windows Remote Management" new enable=yes</CommandLine>
         </SynchronousCommand>
       </FirstLogonCommands>
