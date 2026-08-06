@@ -10,6 +10,13 @@ packer {
 locals {
   proxmox_url = "${var.PROXMOX_VE_ENDPOINT}/api2/json"
 
+  # OpenBao stores one field, `user@realm!tokenid=secret`, while the builder
+  # wants the identity and the secret separately. Split on the FIRST `=` only:
+  # the secret half is a UUID today, but nothing guarantees a token secret
+  # contains no `=`, and splitting on the last one would corrupt it silently.
+  pve_username = split("=", var.PROXMOX_VE_API_TOKEN)[0]
+  pve_token    = trimprefix(var.PROXMOX_VE_API_TOKEN, "${local.pve_username}=")
+
   # Per-OS facts. The WIM indices were read off the actual ISOs with `wiminfo`
   # rather than assumed - an index that names the wrong edition installs a
   # silently different OS, and Home editions cannot accept incoming RDP at all.
@@ -55,9 +62,9 @@ locals {
 # every value that can come from locals does.
 source "proxmox-iso" "win10" {
   proxmox_url              = local.proxmox_url
-  username                 = var.PKR_PVE_USERNAME
-  token                    = var.PROXMOX_TOKEN
-  node                     = var.PROXMOX_VE_NODE
+  username                 = local.pve_username
+  token                    = local.pve_token
+  node                     = var.proxmox_node
   insecure_skip_tls_verify = var.PROXMOX_VE_INSECURE == "true"
 
   vm_id                = local.images.win10.vm_id
@@ -92,17 +99,17 @@ source "proxmox-iso" "win10" {
   }
 
   boot_iso {
-    type      = "sata"
-    iso_file  = "${var.iso_storage_pool}:iso/${local.images.win10.iso}"
-    unmount   = true
+    type     = "sata"
+    iso_file = "${var.iso_storage_pool}:iso/${local.images.win10.iso}"
+    unmount  = true
   }
 
   # Packer builds this ISO from the rendered answer files and removes it after
   # the build. Nothing is staged on a hypervisor by hand.
   additional_iso_files {
-    type    = "sata"
-    index   = "1"
-    unmount = true
+    type     = "sata"
+    index    = "1"
+    unmount  = true
     cd_label = "UNATTEND"
     cd_content = {
       "autounattend.xml" = templatefile("${path.root}/answer/autounattend.pkrtpl.xml", {
@@ -135,9 +142,9 @@ source "proxmox-iso" "win10" {
 
 source "proxmox-iso" "win11" {
   proxmox_url              = local.proxmox_url
-  username                 = var.PKR_PVE_USERNAME
-  token                    = var.PROXMOX_TOKEN
-  node                     = var.PROXMOX_VE_NODE
+  username                 = local.pve_username
+  token                    = local.pve_token
+  node                     = var.proxmox_node
   insecure_skip_tls_verify = var.PROXMOX_VE_INSECURE == "true"
 
   vm_id                = local.images.win11.vm_id
@@ -221,9 +228,9 @@ source "proxmox-iso" "win11" {
 
 source "proxmox-iso" "win25" {
   proxmox_url              = local.proxmox_url
-  username                 = var.PKR_PVE_USERNAME
-  token                    = var.PROXMOX_TOKEN
-  node                     = var.PROXMOX_VE_NODE
+  username                 = local.pve_username
+  token                    = local.pve_token
+  node                     = var.proxmox_node
   insecure_skip_tls_verify = var.PROXMOX_VE_INSECURE == "true"
 
   vm_id                = local.images.win25.vm_id

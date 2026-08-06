@@ -1,9 +1,15 @@
 # ==============================================================================
 # SECRET VARIABLES - injected from OpenBao as PKR_VAR_* environment variables
 # ==============================================================================
-# Same convention as packer/variables.pkr.hcl: build.sh reads each field from
-# OpenBao and exports it as PKR_VAR_<name>, which Packer maps to variable <name>.
-# Nothing is read from a -var-file, so no secret ever lands on disk.
+# scripts/build-windows-templates.sh reads each field from OpenBao and exports it
+# as PKR_VAR_<name>, which Packer maps to variable <name>. Nothing is read from a
+# -var-file, so no secret ever lands on disk.
+#
+# The names below match the fields that actually exist at
+# secret/infrastructure/proxmox. Do not add PROXMOX_VE_USERNAME or
+# PROXMOX_VE_NODE: neither is stored there, whatever the docs may say. The
+# username is carried inside PROXMOX_VE_API_TOKEN, and the node to build on is a
+# build parameter rather than a credential (see proxmox_node below).
 # ==============================================================================
 
 variable "PROXMOX_VE_ENDPOINT" {
@@ -12,22 +18,10 @@ variable "PROXMOX_VE_ENDPOINT" {
   sensitive   = false
 }
 
-variable "PKR_PVE_USERNAME" {
+variable "PROXMOX_VE_API_TOKEN" {
   type        = string
-  description = "Proxmox username with token ID, in the form user@realm!tokenid"
-  sensitive   = false
-}
-
-variable "PROXMOX_TOKEN" {
-  type        = string
-  description = "Proxmox API token secret"
+  description = "Proxmox API token in the full `user@realm!tokenid=secret` form. Split on the first `=` into the builder's username and token, so the single stored field covers both."
   sensitive   = true
-}
-
-variable "PROXMOX_VE_NODE" {
-  type        = string
-  description = "Proxmox node to build the templates on. Templates are node-local unless the storage is shared, so this must be the node the VDI guests are cloned onto."
-  sensitive   = false
 }
 
 variable "PROXMOX_VE_INSECURE" {
@@ -46,6 +40,11 @@ variable "WINDOWS_ADMIN_PASSWORD" {
 # ==============================================================================
 # NON-SECRET BUILD PARAMETERS
 # ==============================================================================
+
+variable "proxmox_node" {
+  type        = string
+  description = "Proxmox node to build the templates on. Templates are node-local unless the storage is shared, so this must be the node the VDI guests are cloned onto."
+}
 
 variable "iso_storage_pool" {
   type        = string

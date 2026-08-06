@@ -85,13 +85,20 @@ modules/proxmox-stack/locals*.tf — management_network, splunk_network_ips
 
 ### OpenBao Proxmox secret fields
 
+Stored at `secret/infrastructure/proxmox`. Verified against the live secret —
+there is **no** `PROXMOX_VE_USERNAME` and **no** `PROXMOX_VE_NODE` field; earlier
+revisions of this table listed both, and consumers written against them fail at
+run time with a missing-field error.
+
 | Secret | Purpose |
 | --- | --- |
 | `PROXMOX_VE_ENDPOINT` | API URL (without `/api2/json`) |
-| `PROXMOX_VE_API_TOKEN` | API token (`user@realm!tokenid=secret`) |
-| `PROXMOX_VE_USERNAME` | Username for the token |
+| `PROXMOX_VE_API_TOKEN` | API token, full `user@realm!tokenid=secret` form — split on the first `=` when a tool wants identity and secret separately |
+| `PROXMOX_VE_HOSTNAME` | API host |
 | `PROXMOX_VE_INSECURE` | Skip TLS verification |
-| `PROXMOX_VE_NODE` | Proxmox node name |
+
+The node to act on is **not** a credential: it comes from `deployment.json`
+(`proxmox_node`) for OpenTofu, and from `PROXMOX_NODE` for the Packer build.
 
 ## Pipeline architecture (this repo's role)
 

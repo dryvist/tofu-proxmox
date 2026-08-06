@@ -16,19 +16,25 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKER_DIR="$REPO_ROOT/packer/windows"
 cd "$PACKER_DIR"
 
-OPENBAO_PACKER_PATH="${OPENBAO_PACKER_PATH:-secret/infrastructure/proxmox-packer}"
+# secret/infrastructure/proxmox is the path that exists and that the Terrakube
+# proxmox workspace already reads. The sibling packer/packer-build.sh points at
+# secret/infrastructure/proxmox-packer, which has never existed - do not copy it.
+OPENBAO_PACKER_PATH="${OPENBAO_PACKER_PATH:-secret/infrastructure/proxmox}"
 OPENBAO_WINDOWS_PATH="${OPENBAO_WINDOWS_PATH:-secret/platform/windows-vdi/win11-admin}"
 PACKER_IMAGE="${PACKER_IMAGE:-hashicorp/packer:latest}"
+
+# The node to build on is a build parameter, not a credential: it is not stored
+# in OpenBao, and templates are node-local unless the storage is shared.
+PROXMOX_NODE="${PROXMOX_NODE:-}"
 
 # Every variable the configuration declares, unprefixed. Drives both the OpenBao
 # reads and the set forwarded into the container, so the two cannot drift.
 PKR_VARS=(
   PROXMOX_VE_ENDPOINT
-  PKR_PVE_USERNAME
-  PROXMOX_TOKEN
-  PROXMOX_VE_NODE
+  PROXMOX_VE_API_TOKEN
   PROXMOX_VE_INSECURE
   WINDOWS_ADMIN_PASSWORD
+  proxmox_node
 )
 
 log() { printf '\033[0;32m[INFO]\033[0m %s\n' "$1"; }
@@ -108,10 +114,13 @@ export_secret() {
 }
 
 load_secrets() {
+  [[ -n $PROXMOX_NODE ]] || fail "set PROXMOX_NODE to the node the VDI guests are cloned onto"
+  export PKR_VAR_proxmox_node="$PROXMOX_NODE"
+
   bao_login
   log "reading Proxmox credentials from $OPENBAO_PACKER_PATH"
   local var
-  for var in PROXMOX_VE_ENDPOINT PKR_PVE_USERNAME PROXMOX_TOKEN PROXMOX_VE_NODE; do
+  for var in PROXMOX_VE_ENDPOINT PROXMOX_VE_API_TOKEN; do
     export_secret "$var" "$OPENBAO_PACKER_PATH" "$var"
   done
 
@@ -175,7 +184,8 @@ Environment:
   BAO_TOKEN             OpenBao token, or set the AppRole pair below instead
   OPENBAO_APPROLE_PACKER_ROLE_ID
   OPENBAO_APPROLE_PACKER_SECRET_ID
-  OPENBAO_PACKER_PATH   Proxmox API credentials  (default secret/infrastructure/proxmox-packer)
+  PROXMOX_NODE          Node to build on (required; not stored in OpenBao)
+  OPENBAO_PACKER_PATH   Proxmox API credentials  (default secret/infrastructure/proxmox)
   OPENBAO_WINDOWS_PATH  Windows Administrator    (default secret/platform/windows-vdi/win11-admin)
   PACKER_IMAGE          Image used when only docker is available (default hashicorp/packer:latest)
 
