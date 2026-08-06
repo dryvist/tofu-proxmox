@@ -12,7 +12,11 @@ PVE_ISO_DIR="/var/lib/vz/template/iso"
 : "${WIN11_ADMIN_PASSWORD:?set WIN11_ADMIN_PASSWORD from OpenBao before running}"
 
 ssh -i ~/.ssh/id_rsa_pve "root@${PVE_HOST}" "mkdir -p /tmp/win11-answer-build"
-sed "s/__ADMIN_PASSWORD__/${WIN11_ADMIN_PASSWORD}/g" "$TEMPLATE" \
+# perl (not sed): the replacement reads WIN11_ADMIN_PASSWORD via $ENV{} inside
+# the script text, so the password never appears in this process's argv (a
+# `sed "s/.../${WIN11_ADMIN_PASSWORD}/"` argument is visible to any local user
+# via `ps`).
+perl -pe 's/__ADMIN_PASSWORD__/$ENV{WIN11_ADMIN_PASSWORD}/g' "$TEMPLATE" \
   | ssh -i ~/.ssh/id_rsa_pve "root@${PVE_HOST}" "cat > /tmp/win11-answer-build/autounattend.xml"
 
 ssh -i ~/.ssh/id_rsa_pve "root@${PVE_HOST}" bash -s <<REMOTE
