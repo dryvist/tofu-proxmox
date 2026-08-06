@@ -83,6 +83,17 @@ locals {
       # bearer-authenticated). Traefik-fronted as https://hermes-api.<sub>;
       # the sanctioned non-exec path to submit work to the agent.
       hermes_api = 8642
+      # hermes-ui — a companion web UI guest running TWO apps that both
+      # default to internal port 3000 upstream; mapped to distinct host
+      # ports so Traefik can route each independently.
+      hermes_ui_web       = 3000
+      hermes_ui_admin_web = 3001
+      # hermes-donna — a second, independently-identified Hermes agent
+      # instance (own container). Same webhook/dashboard/api triplet as
+      # hermes-agent above, same software defaults.
+      hermes_donna_webhook   = 8644
+      hermes_donna_dashboard = 8080
+      hermes_donna_api       = 8642
       # AI orchestration stack web UIs (Traefik-fronted) — n8n, Dify, LangFlow,
       # LangGraph, and Langfuse (LLM trace/cost/eval). ingress.tf references these.
       n8n_web      = 5678
