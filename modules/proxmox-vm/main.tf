@@ -26,6 +26,10 @@ resource "proxmox_virtual_environment_vm" "vms" {
   pool_id    = each.value.pool_id
   protection = each.value.protection
 
+  # ovmf (UEFI) required for guests with tpm_state/efi_disk configured -
+  # Windows 11+ hardware checks fail under seabios even with TPM emulated.
+  bios = each.value.bios
+
   # Startup configuration
   on_boot = try(each.value.on_boot, true)
 
