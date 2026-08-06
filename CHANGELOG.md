@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.84.0](https://github.com/dryvist/tofu-proxmox/compare/v1.83.2...v1.84.0) (2026-08-06)
+
+
+### Features
+
+* **constants:** raise serving.llm_concurrency to 2 ([d795d44](https://github.com/dryvist/tofu-proxmox/commit/d795d44dc7d022a8adc12a4d5aabfc77122e319b))
+* **constants:** raise serving.llm_concurrency to 2 ([3b396e7](https://github.com/dryvist/tofu-proxmox/commit/3b396e79aacea3f98da88d7c1df356142395a53b))
+
 ## [1.83.2](https://github.com/dryvist/tofu-proxmox/compare/v1.83.1...v1.83.2) (2026-08-06)
 
 
