@@ -42,7 +42,11 @@ locals {
   # lands in private object storage, not git, so publishing it there is not
   # what this design is protecting against; committing it is.
   serving = {
-    llm_concurrency = 1
+    # 2 since 2026-08-06 (was 1): two in-flight requests per model enable the
+    # serving backend's continuous batching instead of serializing every
+    # caller. Sizing and memory reasoning: dryvist/nix-darwin
+    # lib/hosts/mac-studio.md "Serving concurrency".
+    llm_concurrency = 2
     host            = var.llm_large_serving_host
     ip              = nonsensitive(var.llm_large_serving_ip)
   }

@@ -446,8 +446,8 @@ run "pipeline_constants_serving" {
   # derives ai_llm_concurrency from this; nix-darwin's serveConcurrency is
   # checked against it by CI. See the comment on serving in constants.tf.
   assert {
-    condition     = local.pipeline_constants.serving.llm_concurrency == 1
-    error_message = "serving.llm_concurrency should be 1"
+    condition     = local.pipeline_constants.serving.llm_concurrency == 2
+    error_message = "serving.llm_concurrency should be 2"
   }
 
   # The serving host publishes as EMPTY when the deployment object does not
