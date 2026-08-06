@@ -23,16 +23,19 @@ Supplied by `../../scripts/build-windows-templates.sh`, which reads OpenBao at
 call time and exports `PKR_VAR_*`. Nothing is written to disk and no
 `-var-file` is used.
 
-The `packer` AppRole grants exactly the two reads a build needs. Its
-`role_id`/`secret_id` are minted by the OpenBao converge in
-`ansible-proxmox-apps` and land in a `0600` file on the Ansible controller.
+The `packer` AppRole grants exactly the two reads a build needs, and nothing
+else — a write to either path is refused. The OpenBao converge in
+`ansible-proxmox-apps` mints its `role_id`/`secret_id`; both are published to
+Doppler tier-0, so `doppler run` supplies them and no file holds them.
 
 ```bash
-export BAO_ADDR=...                            # or BAO_TOKEN, if you have one
-export OPENBAO_APPROLE_PACKER_ROLE_ID=...
-export OPENBAO_APPROLE_PACKER_SECRET_ID=...
-export PROXMOX_NODE=...                        # node the VDI guests clone onto
+export BAO_ADDR=...          # or BAO_TOKEN, if you have one
+export PROXMOX_NODE=...      # node the VDI guests clone onto
+# OPENBAO_APPROLE_PACKER_ROLE_ID and _SECRET_ID come from `doppler run`
 ```
+
+Prefer the OpenBao ingress name for `BAO_ADDR`. The converge writes a node
+address into its own output, which does not survive that node being down.
 
 `PROXMOX_NODE` is a build parameter, not a credential — templates are node-local
 unless the storage is shared, so it must name the node the clones live on.
