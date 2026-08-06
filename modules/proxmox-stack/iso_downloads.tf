@@ -29,16 +29,3 @@ resource "proxmox_download_file" "win25_iso" {
   file_name    = "WindowsServer2025.iso"
   url          = "https://go.microsoft.com/fwlink/?linkid=2345730&clcid=0x409&culture=en-us&country=us"
 }
-
-# Generated locally (scripts/windows-vdi/build-win11-answer-iso.sh), not
-# downloaded — url is a placeholder (RFC 2606 .invalid) since this provider
-# requires one; overwrite=false skips the live size-check against it.
-resource "proxmox_download_file" "win11_answer_iso" {
-  content_type        = "iso"
-  datastore_id        = var.datastore_iso
-  node_name           = var.proxmox_node
-  file_name           = "win11-vdi-answer.iso"
-  url                 = "https://unmanaged.invalid/win11-vdi-answer.iso"
-  overwrite           = false
-  overwrite_unmanaged = false
-}

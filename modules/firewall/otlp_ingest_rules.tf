@@ -24,11 +24,11 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "otlp_ing
   comment = "OTLP trace ingest from internal networks to the Cribl Stream in_otel listener"
 
   rule {
-    type   = "in"
-    action = "ACCEPT"
-    proto  = "tcp"
-    dport  = join(",", [for p in local.otlp_ingest_ports : tostring(p)])
-    source = local.internal_src
+    type    = "in"
+    action  = "ACCEPT"
+    proto   = "tcp"
+    dport   = join(",", [for p in local.otlp_ingest_ports : tostring(p)])
+    source  = local.internal_src
     comment = "OTLP traces (HTTP + gRPC) from internal"
   }
 }

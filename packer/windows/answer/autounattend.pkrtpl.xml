@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<unattend xmlns="urn:schemas-microsoft-com:unattend">
+<!--
+  Build-time answer file. Packer renders this into an ISO via cd_content and
+  attaches it, so nothing is staged on a hypervisor by hand.
+
+  Its only job is to get Windows installed and reachable over WinRM so the
+  provisioners can run. Everything it sets up for Packer's benefit (autologon,
+  the local Administrator password, WinRM) is destroyed by sysprep /generalize
+  at the end of the build - oobe-unattend.pkrtpl.xml is what re-establishes it
+  on each clone.
+
+  The xmlns:wcm declaration is load-bearing: wcm:action appears throughout, and
+  without the namespace Windows Setup rejects the whole file and silently drops
+  to an interactive prompt with no error anywhere but the VM console.
+-->
+<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
 
   <settings pass="windowsPE">
     <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
@@ -12,6 +26,29 @@
       <UserLocale>en-US</UserLocale>
     </component>
     <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <!--
+        The boot disk sits behind a virtio-scsi-pci controller, so windowsPE
+        sees no disk at all until vioscsi loads and setup halts at drive
+        selection. Attaching virtio-win.iso is necessary but not sufficient.
+        Setup carries this boot-critical driver into the installed image; the
+        rest (NetKVM especially) arrive via virtio-win-guest-tools at first logon.
+        Every drive letter is listed because windowsPE assigns them
+        unpredictably with several discs attached; absent paths are skipped.
+      -->
+      <DriverPaths>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="1">
+          <Path>D:\${vioscsi_path}</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="2">
+          <Path>E:\${vioscsi_path}</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+          <Path>F:\${vioscsi_path}</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="4">
+          <Path>G:\${vioscsi_path}</Path>
+        </PathAndCredentials>
+      </DriverPaths>
       <DiskConfiguration>
         <Disk wcm:action="add">
           <CreatePartitions>
@@ -59,7 +96,7 @@
           <InstallFrom>
             <MetaData wcm:action="add">
               <Key>/IMAGE/INDEX</Key>
-              <Value>6</Value>
+              <Value>${wim_index}</Value>
             </MetaData>
           </InstallFrom>
           <InstallTo>
@@ -80,7 +117,7 @@
 
   <settings pass="specialize">
     <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
-      <ComputerName>WIN11-VDI</ComputerName>
+      <ComputerName>${computer_name}</ComputerName>
     </component>
     <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
       <RunSynchronous>
@@ -110,13 +147,13 @@
       </OOBE>
       <UserAccounts>
         <AdministratorPassword>
-          <Value>__ADMIN_PASSWORD__</Value>
+          <Value>${admin_password}</Value>
           <PlainText>true</PlainText>
         </AdministratorPassword>
       </UserAccounts>
       <AutoLogon>
         <Password>
-          <Value>__ADMIN_PASSWORD__</Value>
+          <Value>${admin_password}</Value>
           <PlainText>true</PlainText>
         </Password>
         <Enabled>true</Enabled>
@@ -124,29 +161,31 @@
         <Username>Administrator</Username>
       </AutoLogon>
       <FirstLogonCommands>
+        <!--
+          Must run first: installs the remaining virtio drivers (NetKVM, without
+          which the NIC never comes up and Packer's WinRM connection never
+          succeeds) plus qemu-guest-agent, which Terraform's 15-minute agent
+          timeout depends on. The disc letter is discovered, not assumed.
+        -->
         <SynchronousCommand wcm:action="add">
           <Order>1</Order>
-          <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
+          <CommandLine>cmd /c for %i in (D E F G) do @if exist %i:\virtio-win-guest-tools.exe %i:\virtio-win-guest-tools.exe /install /quiet /norestart</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>2</Order>
-          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
+          <CommandLine>cmd /c winrm quickconfig -quiet</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>3</Order>
-          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
+          <CommandLine>cmd /c winrm set winrm/config/service/auth @{Basic="true"}</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>4</Order>
-          <CommandLine>cmd /c netsh advfirewall firewall set rule group="Windows Remote Management" new enable=yes</CommandLine>
+          <CommandLine>cmd /c winrm set winrm/config/service @{AllowUnencrypted="true"}</CommandLine>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>5</Order>
-          <CommandLine>cmd /c reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f</CommandLine>
-        </SynchronousCommand>
-        <SynchronousCommand wcm:action="add">
-          <Order>6</Order>
-          <CommandLine>cmd /c netsh advfirewall firewall set rule group="remote desktop" new enable=yes</CommandLine>
+          <CommandLine>cmd /c netsh advfirewall firewall set rule group="Windows Remote Management" new enable=yes</CommandLine>
         </SynchronousCommand>
       </FirstLogonCommands>
     </component>

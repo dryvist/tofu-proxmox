@@ -1,0 +1,13 @@
+# Packer cache and crash logs
+packer_cache/
+crash.log
+
+# Variable files - every value here comes from OpenBao at call time, so a
+# pkrvars file in this directory would only ever be a stray secret.
+*.pkrvars.hcl
+*.auto.pkrvars.hcl
+
+# Rendered answer files, should they ever be written out for debugging.
+# They contain the Administrator password in plain text.
+*autounattend.xml
+!*.pkrtpl.xml

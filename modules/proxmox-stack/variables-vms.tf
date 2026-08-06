@@ -78,8 +78,7 @@ variable "vms" {
     }), {})
 
     # Template cloning
-    cdrom_file_id  = optional(string)
-    cdrom_file_ids = optional(list(string), [])
+    cdrom_file_id = optional(string)
     clone_template = optional(object({
       template_id = number
     }))
