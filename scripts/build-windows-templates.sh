@@ -22,7 +22,13 @@ OPENBAO_WINDOWS_PATH="${OPENBAO_WINDOWS_PATH:-secret/platform/windows-vdi/win11-
 # Packer is in no devShell in this workspace - the tofu shell does not carry it
 # and the image-building shell the old docs referenced no longer exists. Pull it
 # from nixpkgs at call time rather than pretending a shell provides it.
-PACKER=(nix shell nixpkgs#packer --command packer)
+#
+# NIXPKGS_ALLOW_UNFREE is required because HashiCorp relicensed Packer to BSL,
+# which nixpkgs classifies as unfree and refuses to evaluate by default. This
+# acknowledges a licence, not a failing check - there is no OSS fork of Packer
+# to switch to the way OpenTofu replaced Terraform. The flag needs --impure
+# because NIXPKGS_ALLOW_UNFREE is read from the ambient environment.
+PACKER=(env NIXPKGS_ALLOW_UNFREE=1 nix shell --impure nixpkgs#packer --command packer)
 
 log() { printf '\033[0;32m[INFO]\033[0m %s\n' "$1"; }
 fail() {
