@@ -111,6 +111,21 @@ source "proxmox-iso" "win10" {
     vlan_tag = var.vlan_tag
   }
 
+  # Official Windows UEFI media stops at "Press any key to boot from CD or
+  # DVD..." and falls through to the next boot device when nobody does, leaving
+  # the guest idle forever while Packer waits out its WinRM timeout. Measured on
+  # a run without this: 3.6 MB read (the EFI bootloader alone), zero bytes
+  # written and ~0% CPU eight minutes in. The keys are spread out because the
+  # prompt reappears on each boot attempt, and a burst that lands before the
+  # first one is drawn answers nothing. Extra presses reaching windowsPE are
+  # harmless - the answer file drives setup from there.
+  boot_wait         = "2s"
+  boot_key_interval = "100ms"
+  boot_command = [
+    "<spacebar><wait2><spacebar><wait2><spacebar><wait2>",
+    "<spacebar><wait2><spacebar><wait2><spacebar>",
+  ]
+
   boot_iso {
     type     = "sata"
     iso_file = "${var.iso_storage_pool}:iso/${local.images.win10.iso}"
@@ -203,6 +218,21 @@ source "proxmox-iso" "win11" {
     vlan_tag = var.vlan_tag
   }
 
+  # Official Windows UEFI media stops at "Press any key to boot from CD or
+  # DVD..." and falls through to the next boot device when nobody does, leaving
+  # the guest idle forever while Packer waits out its WinRM timeout. Measured on
+  # a run without this: 3.6 MB read (the EFI bootloader alone), zero bytes
+  # written and ~0% CPU eight minutes in. The keys are spread out because the
+  # prompt reappears on each boot attempt, and a burst that lands before the
+  # first one is drawn answers nothing. Extra presses reaching windowsPE are
+  # harmless - the answer file drives setup from there.
+  boot_wait         = "2s"
+  boot_key_interval = "100ms"
+  boot_command = [
+    "<spacebar><wait2><spacebar><wait2><spacebar><wait2>",
+    "<spacebar><wait2><spacebar><wait2><spacebar>",
+  ]
+
   boot_iso {
     type     = "sata"
     iso_file = "${var.iso_storage_pool}:iso/${local.images.win11.iso}"
@@ -289,6 +319,21 @@ source "proxmox-iso" "win25" {
     model    = "virtio"
     vlan_tag = var.vlan_tag
   }
+
+  # Official Windows UEFI media stops at "Press any key to boot from CD or
+  # DVD..." and falls through to the next boot device when nobody does, leaving
+  # the guest idle forever while Packer waits out its WinRM timeout. Measured on
+  # a run without this: 3.6 MB read (the EFI bootloader alone), zero bytes
+  # written and ~0% CPU eight minutes in. The keys are spread out because the
+  # prompt reappears on each boot attempt, and a burst that lands before the
+  # first one is drawn answers nothing. Extra presses reaching windowsPE are
+  # harmless - the answer file drives setup from there.
+  boot_wait         = "2s"
+  boot_key_interval = "100ms"
+  boot_command = [
+    "<spacebar><wait2><spacebar><wait2><spacebar><wait2>",
+    "<spacebar><wait2><spacebar><wait2><spacebar>",
+  ]
 
   boot_iso {
     type     = "sata"
