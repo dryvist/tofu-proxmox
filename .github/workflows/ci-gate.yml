@@ -124,6 +124,18 @@ jobs:
       - name: OpenTofu Test (firewall module)
         run: tofu test -no-color
         working-directory: modules/firewall
+      - name: OpenTofu Init (Proxmox VM module)
+        run: tofu init -backend=false
+        working-directory: modules/proxmox-vm
+      - name: OpenTofu Test (Proxmox VM module)
+        run: tofu test -no-color
+        working-directory: modules/proxmox-vm
+      - name: OpenTofu Init (Splunk VM module)
+        run: tofu init -backend=false
+        working-directory: modules/splunk-vm
+      - name: OpenTofu Test (Splunk VM module)
+        run: tofu test -no-color
+        working-directory: modules/splunk-vm
 
   # Secrets can appear in ANY file, so this runs on every PR (no path filter,
   # never skipped). Official gitleaks-action; org GITLEAKS_LICENSE is seeded.
