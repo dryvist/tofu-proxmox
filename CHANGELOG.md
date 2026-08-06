@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.83.2](https://github.com/dryvist/tofu-proxmox/compare/v1.83.1...v1.83.2) (2026-08-06)
+
+
+### Bug Fixes
+
+* **infra:** explicit depends_on for iso downloads ([#880](https://github.com/dryvist/tofu-proxmox/issues/880)) ([b88e299](https://github.com/dryvist/tofu-proxmox/commit/b88e2994a995596f23a95dbe778a49b9c07fc6fd))
+
 ## [1.83.1](https://github.com/dryvist/tofu-proxmox/compare/v1.83.0...v1.83.1) (2026-08-05)
 
 
