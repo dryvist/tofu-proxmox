@@ -81,7 +81,21 @@ instead of being captured.
 
 ## Consuming a template
 
-Set `clone_template = { template_id = <vmid> }` on the VM in `deployment.json`.
+Set `clone_template` on the VM in `deployment.json`:
+
+```json
+"clone_template": { "template_id": 9210, "full": false }
+```
+
+`full` defaults to `true`, which copies the template's whole disk up front —
+9-12 GB per clone for a Windows image. On a small boot pool two of those can
+exhaust it. `full: false` makes a **linked clone**: copy-on-write off the
+template's snapshot, starting near zero and growing only with what the guest
+writes. That is the usual choice for VDI, where guests are disposable and the
+template is the artifact worth keeping.
+
+The trade: a template cannot be deleted while a linked clone of it exists, and
+the clone must live on the same storage as its template.
 
 `clone` is in `ignore_changes` in `modules/proxmox-vm`, so adding it to a VM that
 already exists is a no-op — the VM must be recreated to become a clone.
