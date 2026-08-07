@@ -46,10 +46,19 @@ what puts it in the run audit, under the workspace lock, and on the workspace's
 own OpenBao identity. Plans are unaffected.
 
 `fmt`, `validate`, `test`, `console`, and `plan` stay local — the fast loop.
-Anything reaching the LAN (`init`, `plan`, state ops) runs from the
-**`iac-platform` guest**: macOS Local Network privacy denies the ad-hoc-signed
+Anything reaching the LAN (`init`, `plan`, state ops) runs from the **`iac`
+guest** (login `debian`): macOS Local Network privacy denies the ad-hoc-signed
 `tofu` binary, and the symptom is a misleading `connect: no route to host`
 against a healthy Terrakube.
+
+> Two names that are not the same thing: `iac` is the **guest**, `iac-platform`
+> is a **Terrakube workspace**. No `iac-platform` host resolves.
+>
+> When exporting backend coordinates by hand, **set `TF_WORKSPACE=tofu-proxmox`
+> explicitly** — the value in `secret/platform/terrakube/main` is `tofu-github`,
+> and using it fails as a fake credential outage (OpenBao 403s plus a GitHub
+> 401) rather than as a wrong-workspace error. Confirm the workspace in the run
+> URL the plan prints.
 
 Both in full: [docs/EXECUTION_HOSTS.md](./docs/EXECUTION_HOSTS.md).
 
@@ -59,7 +68,7 @@ Both in full: [docs/EXECUTION_HOSTS.md](./docs/EXECUTION_HOSTS.md).
 > server-side and belongs to a Terrakube job: a deliberate, audited action
 > rather than a step in an autonomous loop. GitHub pushes do **not** automatically
 > trigger Terrakube jobs. To trigger an apply, you must directly call the Terrakube
-> API using the token in `~/.terraform.d/credentials.tfrc.json` on the `iac-platform`
+> API using the token in `~/.terraform.d/credentials.tfrc.json` on the `iac`
 > guest (e.g. `curl -X POST .../api/v1/organization/<org-id>/job`). Setup and
 > prerequisites for the remote plan are in [docs/EXECUTION_HOSTS.md](./docs/EXECUTION_HOSTS.md).
 
