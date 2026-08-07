@@ -383,16 +383,25 @@ build {
     "source.proxmox-iso.win25",
   ]
 
-  # Stage the post-sysprep answer file where Windows looks for it on the first
-  # boot of a clone. Copied from the attached answer disc rather than uploaded,
-  # so the password never crosses the WinRM channel a second time.
+  # Stage the post-sysprep answer file. Copied from the attached answer disc
+  # rather than uploaded, so the password never crosses the WinRM channel a
+  # second time.
+  #
+  # Deliberately NOT C:\Windows\Panther\unattend.xml, even though that is where
+  # Windows reads it on a clone's first boot. Sysprep caches whatever
+  # /unattend: names into exactly that path - "WinMain:Found unattend file at
+  # [...]; caching..." in setupact.log - so staging it there first makes the
+  # cache step a self-copy, and the generalize pass fails with 0x80070005
+  # (access denied) having logged that the file was found and validated.
+  # Stage it elsewhere and let sysprep install it into Panther itself.
   provisioner "powershell" {
     inline = [
       "$src = Get-ChildItem -Path (Get-Volume | Where-Object { $_.DriveLetter } | ForEach-Object { \"$($_.DriveLetter):\\oobe-unattend.xml\" }) -ErrorAction SilentlyContinue | Select-Object -First 1",
       "if (-not $src) { throw 'oobe-unattend.xml not found on any attached volume' }",
-      "New-Item -ItemType Directory -Force -Path 'C:\\Windows\\Panther' | Out-Null",
-      "Copy-Item -Path $src.FullName -Destination 'C:\\Windows\\Panther\\unattend.xml' -Force",
-      "Write-Host \"staged $($src.FullName) -> C:\\Windows\\Panther\\unattend.xml\"",
+      "New-Item -ItemType Directory -Force -Path 'C:\\Windows\\Temp' | Out-Null",
+      "Copy-Item -Path $src.FullName -Destination 'C:\\Windows\\Temp\\oobe-unattend.xml' -Force",
+      "if (Test-Path 'C:\\Windows\\Panther\\unattend.xml') { Remove-Item 'C:\\Windows\\Panther\\unattend.xml' -Force }",
+      "Write-Host \"staged $($src.FullName) -> C:\\Windows\\Temp\\oobe-unattend.xml\"",
     ]
   }
 
@@ -445,7 +454,7 @@ build {
     # cleanly and misbehaves at OOBE. Start-Process -Wait, then poll ImageState
     # until Windows itself reports the reseal is finished.
     inline = [
-      "Start-Process -FilePath C:\\Windows\\System32\\Sysprep\\sysprep.exe -Wait -NoNewWindow -ArgumentList '/generalize','/oobe','/quit','/quiet','/unattend:C:\\Windows\\Panther\\unattend.xml'",
+      "Start-Process -FilePath C:\\Windows\\System32\\Sysprep\\sysprep.exe -Wait -NoNewWindow -ArgumentList '/generalize','/oobe','/quit','/quiet','/unattend:C:\\Windows\\Temp\\oobe-unattend.xml'",
       "$state = 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Setup\\State'",
       "$deadline = (Get-Date).AddMinutes(20)",
       "while ((Get-ItemProperty $state).ImageState -ne 'IMAGE_STATE_GENERALIZE_RESEAL_TO_OOBE') {",
