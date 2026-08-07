@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.86.0](https://github.com/dryvist/tofu-proxmox/compare/v1.85.1...v1.86.0) (2026-08-07)
+
+
+### Features
+
+* **vm:** let a guest declare that only an operator starts it ([#902](https://github.com/dryvist/tofu-proxmox/issues/902)) ([d98b7ec](https://github.com/dryvist/tofu-proxmox/commit/d98b7ec11ad454fb543e85ff9714e3a47c862bd9))
+
 ## [1.85.1](https://github.com/dryvist/tofu-proxmox/compare/v1.85.0...v1.85.1) (2026-08-07)
 
 
