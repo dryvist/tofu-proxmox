@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.85.0](https://github.com/dryvist/tofu-proxmox/compare/v1.84.0...v1.85.0) (2026-08-07)
+
+
+### Features
+
+* **ai-log:** port allocation for seven AI Docker service log routes ([89ac886](https://github.com/dryvist/tofu-proxmox/commit/89ac886fe38f3d568433c809f126a20810b24f3c))
+
 ## [1.84.0](https://github.com/dryvist/tofu-proxmox/compare/v1.83.2...v1.84.0) (2026-08-06)
 
 
