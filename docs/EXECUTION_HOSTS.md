@@ -32,10 +32,19 @@ it against the real deployment object with `tofu console`; none were visible to
 generator against real data.
 
 Anything that must reach the LAN — `init` against the remote backend, `plan`,
-state operations — should run from the **`iac-platform` guest**, not a macOS
-workstation. macOS Local Network privacy denies the `tofu` binary: it is
-ad-hoc-signed with no Team ID, so its TCC identity is its own content hash and
-no grant survives a rebuild. The symptom is not a permission error, it is:
+state operations — should run from the **`iac` guest**, not a macOS
+workstation. Its login user is **`debian`**: `ansible@` is refused with
+`Permission denied (publickey)` and `root@` with *"Please login as the user
+debian"*, so neither failure means the host is misconfigured.
+
+> `iac-platform` is the name of a **Terrakube workspace**, not of this guest.
+> Earlier revisions of this page, `AGENTS.md`, and `README.md` all said to run
+> from "the `iac-platform` guest"; no such host resolves, in any domain.
+
+The reason to leave the workstation is macOS Local Network privacy, which
+denies the `tofu` binary: it is ad-hoc-signed with no Team ID, so its TCC
+identity is its own content hash and no grant survives a rebuild. The symptom
+is not a permission error, it is:
 
 ```text
 Error: Failed to request discovery document: ... connect: no route to host
@@ -52,6 +61,48 @@ Backend coordinates (`TF_CLOUD_HOSTNAME`, `TF_CLOUD_ORGANIZATION`,
 helper at `direnv allow`. The operator's shell must export `BAO_ADDR`,
 `OPENBAO_APPROLE_TERRAFORM_ROLE_ID`, and `OPENBAO_APPROLE_TERRAFORM_SECRET_ID`
 before loading the worktree.
+
+### Set `TF_WORKSPACE` yourself when you bypass the helper
+
+The guest has no `direnv` setup, so anyone planning from it exports the three
+variables by hand — and the obvious way to get them is to read
+`secret/platform/terrakube/main` directly. **Do not take `TF_WORKSPACE` from
+that secret.** The value stored there is `tofu-github`, a different workspace.
+Take only `TF_CLOUD_HOSTNAME` and `TF_CLOUD_ORGANIZATION` from it, and set the
+workspace explicitly:
+
+```bash
+export TF_WORKSPACE=tofu-proxmox
+```
+
+Get this wrong and the plan does not say "wrong workspace" — it fails as a
+convincing outage of the whole credential stack:
+
+```text
+Error: Unable to Read Resource from Vault ... Code: 403 ... permission denied
+  URL: GET .../v1/secret/data/infrastructure/proxmox
+Error: Unable to Read Resource from Vault ... Code: 403 ... permission denied
+  URL: GET .../v1/secret/data/platform/object-storage
+Error: owner cannot be found by token: GET https://api.github.com/user: 401
+Error: Invalid provider configuration
+  Provider "registry.opentofu.org/integrations/github" requires explicit
+  configuration.
+```
+
+Every one of those is correct behaviour. The 403s are least privilege working:
+the `tofu-github` workspace identity has no Proxmox or object-storage policy.
+The `github` provider is required by *that workspace's state*, not by anything
+here — this repository declares no `github` provider at all, and the
+`ai_github_*` names in `modules/firewall/` are Proxmox firewall resources, a
+dead end if you grep for the cause.
+
+**Verify, do not assume.** Every run prints its workspace in the URL it streams
+back. Read it before trusting any result:
+
+```text
+.../app/<org>/<workspace>/runs/run-N
+                ^^^^^^^^^ must be tofu-proxmox
+```
 
 Authentication uses the `~/.terraform.d/credentials.tfrc.json` token generated
 by a human running `tofu login` once per machine. AI agents inherit that

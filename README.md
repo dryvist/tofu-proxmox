@@ -74,7 +74,9 @@ Terrakube itself — which is what puts every apply in the run audit, under the
 workspace lock, and on the workspace's own OpenBao workload identity instead of
 an operator's ambient shell.
 
-Run the CLI half from the `iac-platform` guest rather than a macOS workstation:
+Run the CLI half from the `iac` guest (login `debian`) rather than a macOS
+workstation — `iac-platform` is a Terrakube workspace name and resolves to no
+host:
 macOS Local Network privacy denies the ad-hoc-signed `tofu` binary, and the
 symptom is a misleading `connect: no route to host` against a Terrakube that is
 in fact healthy.
