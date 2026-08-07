@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.85.1](https://github.com/dryvist/tofu-proxmox/compare/v1.85.0...v1.85.1) (2026-08-07)
+
+
+### Bug Fixes
+
+* **iso:** drop the answer-ISO resource and import that block every plan ([#897](https://github.com/dryvist/tofu-proxmox/issues/897)) ([bfada62](https://github.com/dryvist/tofu-proxmox/commit/bfada62aea90a4afece842505e5af45a4c9e3ac0))
+
 ## [1.85.0](https://github.com/dryvist/tofu-proxmox/compare/v1.84.0...v1.85.0) (2026-08-07)
 
 
