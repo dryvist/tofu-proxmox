@@ -57,19 +57,23 @@ SID and can still be domain-joined. Packer generates the answer ISO from
 `answer/*.pkrtpl.xml`, attaches it alongside the virtio driver ISO, and removes
 it afterwards.
 
-Two answer files are needed because `sysprep /generalize` strips the WinRM, RDP
-and password configuration:
+One answer file, `autounattend.pkrtpl.xml`, applied during install. It sets up
+virtio-scsi in WinPE, the guest tools, the Administrator password, WinRM and
+RDP — and because the template is **not** sysprep-generalized, all of that is
+captured into the image and inherited by every clone verbatim.
 
-| File | Applies | Sets |
-| --- | --- | --- |
-| `autounattend.pkrtpl.xml` | during install | virtio-scsi in WinPE, guest tools, WinRM for the build |
-| `oobe-unattend.pkrtpl.xml` | first boot of each clone | Administrator password, WinRM, RDP |
+`sysprep /generalize` was removed deliberately. It buys a unique SID and machine
+name per clone, which matters for domain join, WSUS/SCCM and KMS activation —
+none of which exist here. What it cost was most of this build's failure surface:
+it refuses on a BitLocker-encrypted volume, fails `0x80070005` when its answer
+file is staged at the path it caches into, races the builder's own power-off,
+and does not block a PowerShell `&`, so a half-resealed image converts cleanly
+and misbehaves later. The trade is that clones share a SID and boot with the
+template's machine name; rename via configuration management if that ever
+matters.
 
-The second is staged to `C:\Windows\Panther\unattend.xml` before generalizing.
-It sets no computer name, so each clone names itself.
-
-Before generalizing, the build asserts the guest agent service and an up network
-adapter both exist. A template whose clones would be unreachable fails the build
+The build asserts the guest agent service and an up network adapter both exist
+before capturing. A template whose clones would be unreachable fails the build
 instead of being captured.
 
 ## Consuming a template

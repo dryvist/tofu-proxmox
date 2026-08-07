@@ -3,11 +3,13 @@
   Build-time answer file. Packer renders this into an ISO via cd_content and
   attaches it, so nothing is staged on a hypervisor by hand.
 
-  Its only job is to get Windows installed and reachable over WinRM so the
-  provisioners can run. Everything it sets up for Packer's benefit (autologon,
-  the local Administrator password, WinRM) is destroyed by sysprep /generalize
-  at the end of the build - oobe-unattend.pkrtpl.xml is what re-establishes it
-  on each clone.
+  This is the only answer file. The template is not sysprep-generalized, so a
+  clone never runs an OOBE pass and nothing would read a second one; everything
+  a clone needs - the Administrator password, WinRM and RDP - is configured here
+  and captured into the image as-is.
+
+  The autologon is consumed during the build (LogonCount 1), so a clone comes up
+  at the login screen rather than logging itself in.
 
   The xmlns:wcm declaration is load-bearing: wcm:action appears throughout, and
   without the namespace Windows Setup rejects the whole file and silently drops
@@ -228,6 +230,21 @@
         <SynchronousCommand wcm:action="add">
           <Order>6</Order>
           <CommandLine>cmd /c netsh advfirewall firewall set rule group="Windows Remote Management" new enable=yes</CommandLine>
+        </SynchronousCommand>
+        <!--
+          RDP is enabled here, in the image itself, rather than at a clone's
+          first boot. The template is deliberately NOT sysprep-generalized, so
+          there is no OOBE pass on a clone and nothing would ever run a
+          post-deployment answer file. A clone boots straight to the login
+          screen of an already-configured Windows, with RDP listening.
+        -->
+        <SynchronousCommand wcm:action="add">
+          <Order>7</Order>
+          <CommandLine>cmd /c reg add "HKLM\System\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>8</Order>
+          <CommandLine>cmd /c netsh advfirewall firewall set rule group="remote desktop" new enable=yes</CommandLine>
         </SynchronousCommand>
       </FirstLogonCommands>
     </component>
