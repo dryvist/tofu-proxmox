@@ -1,7 +1,8 @@
 # Windows VDI templates
 
-Builds generalized Windows templates that OpenTofu then clones. One template per
-OS: `win10`, `win11`, `win25`.
+Builds Windows templates that OpenTofu then clones. One template per OS:
+`win10`, `win11`, `win25`. The templates are **not** sysprep-generalized — see
+[What a build produces](#what-a-build-produces) for why.
 
 This directory is deliberately separate from `../` — `packer build .` builds
 every source it finds, so keeping these apart stops a Windows build from also
@@ -45,17 +46,19 @@ unless the storage is shared, so it must name the node the clones live on.
 ```bash
 ../../scripts/build-windows-templates.sh init          # once per host
 ../../scripts/build-windows-templates.sh validate
-../../scripts/build-windows-templates.sh build win11   # 30-60 min
+../../scripts/build-windows-templates.sh build win11   # 8-20 min
 ```
 
 `build` requires an image name. There is no "build everything" form.
 
+Build one at a time. Each build boots a VM with the same memory the finished
+guest gets, so two at once can exhaust a node.
+
 ## What a build produces
 
-A sysprep-generalized template in the 9xxx VMID band, so each clone gets its own
-SID and can still be domain-joined. Packer generates the answer ISO from
-`answer/*.pkrtpl.xml`, attaches it alongside the virtio driver ISO, and removes
-it afterwards.
+A template in the 9xxx VMID band. Packer generates the answer ISO from
+`answer/autounattend.pkrtpl.xml`, attaches it alongside the virtio driver ISO,
+and removes it afterwards.
 
 One answer file, `autounattend.pkrtpl.xml`, applied during install. It sets up
 virtio-scsi in WinPE, the guest tools, the Administrator password, WinRM and
@@ -82,3 +85,34 @@ Set `clone_template = { template_id = <vmid> }` on the VM in `deployment.json`.
 
 `clone` is in `ignore_changes` in `modules/proxmox-vm`, so adding it to a VM that
 already exists is a no-op — the VM must be recreated to become a clone.
+
+### Always set `cpu_type` and `os_type` too
+
+The `vms` object type defaults to `cpu_type = "x86-64-v2-AES"` and
+`os_type = "l26"`. Both are Linux defaults, and nothing warns when they land on
+a Windows guest. A template built with `cpu_type = "host"` then clones onto
+different emulated silicon than Windows installed on, and **the clone hangs
+immediately after `bootmgfw.efi`** — no logo, no spinner, just a black screen
+that looks like a broken disk or a bad boot order and is neither.
+
+Declare them on every Windows guest:
+
+```json
+"cpu_type": "host",
+"os_type": "win11"
+```
+
+Use `win10` for a Windows 10 image; Windows Server 2025 uses `win11`.
+
+To tell a hung clone from a slow one, sample the guest's disk counters twice a
+minute apart. Frozen counters mean it is not booting. Two failed boots also drop
+Windows into recovery, which does not clear itself once the CPU is corrected —
+the console needs two keypresses to leave it.
+
+### Starting a cloned guest
+
+The VDI guests are declared `on_boot: false` and `started: false`, so neither a
+node reboot nor an apply powers them on. Starting them is a human action.
+`started` is ignored after creation, so a guest an operator starts by hand stays
+running and no later apply shuts it down. Both fields are published in
+`ansible_inventory`, so a converge can skip a guest that is switched off.

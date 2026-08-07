@@ -4,6 +4,10 @@
 
 This guide creates a reusable Debian 13 (Trixie) template (VM ID 9001) optimized for Terraform deployment with cloud-init.
 
+> **Windows templates are built a different way.** They use Packer with an
+> unattended answer file rather than a cloud image, and the steps below do not
+> apply to them. See [`packer/windows/README.md`](../packer/windows/README.md).
+
 ## Quick Start
 
 ```bash
