@@ -30,8 +30,12 @@ resource "proxmox_virtual_environment_vm" "vms" {
   # Windows 11+ hardware checks fail under seabios even with TPM emulated.
   bios = each.value.bios
 
-  # Startup configuration
-  on_boot = try(each.value.on_boot, true)
+  # Startup configuration. `on_boot` covers a node reboot; `started` is the run
+  # state asserted at create. The `try()` this replaced silently swallowed the
+  # fact that the calling stack never declared on_boot at all, so every VM was
+  # pinned to the default no matter what the desired state asked for.
+  on_boot = each.value.on_boot
+  started = each.value.started
 
   # Startup order derives from the VMID itself: the 6-digit scheme's thousands
   # prefix already encodes dependency priority (e.g. 303000 postgres starts
@@ -210,6 +214,13 @@ resource "proxmox_virtual_environment_vm" "vms" {
     create_before_destroy = false
     ignore_changes = [
       initialization[0].user_account[0].password,
+      # Run state is the operator's, not terraform's — same rule the container
+      # module already applies. `started` is only honoured at create (lifecycle
+      # ignores never apply to creation), so a guest declared started = false is
+      # born stopped, and afterwards nobody's apply re-powers a guest somebody
+      # deliberately shut down, nor stops one they deliberately started. Boot
+      # behaviour is declared through on_boot, which is real config.
+      started,
       # Cloud-init runs only at first boot; Ansible owns post-boot networking.
       # A VLAN change updates the qemu NIC live but also changes cloud-init
       # ip_config — ignore it so bpg does not rebuild the cloud-init drive

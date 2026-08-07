@@ -1154,3 +1154,44 @@ run "ansible_inventory_ct_template_reflects_input" {
     error_message = "ct_template must carry the configured template through to the inventory, so bumping the base image in deployment.json reaches ansible-proxmox"
   }
 }
+
+# The stack's own object type is where `on_boot` went missing: `modules/
+# proxmox-vm` declared it, the resource wired it, but `var.vms` here did not
+# list it, so an object type constraint dropped it before it ever reached the
+# module. Every guest was pinned to the default. Nothing failed — the wiring
+# used `try()`, which turns a missing attribute into a silent fallback.
+#
+# The passthrough test in modules/proxmox-vm cannot catch this: it feeds that
+# module directly and never crosses this type boundary. So assert here that the
+# fields survive the stack's own type. Referencing an attribute the type does
+# not declare fails the run, which is exactly the regression.
+run "startup_fields_survive_the_stack_object_type" {
+  command = plan
+
+  variables {
+    vms = {
+      manual = {
+        vm_id     = 212
+        node_name = "proxmox-1"
+        name      = "manual-start-only"
+        vlan      = "apps"
+        on_boot   = false
+        started   = false
+      }
+    }
+  }
+
+  # Assert through the published output, NOT through `var.vms`. A test's own
+  # `variables` block bypasses the variable's type constraint, so an assertion
+  # reading `var.vms["manual"].on_boot` passes even with `on_boot` deleted from
+  # the type — verified by deleting it. That reads as coverage and is none.
+  assert {
+    condition     = output.ansible_inventory.vms["manual"].on_boot == false
+    error_message = "on_boot did not survive the stack's vms object type — deployment.json could ask a guest not to start with its node and be silently ignored."
+  }
+
+  assert {
+    condition     = output.ansible_inventory.vms["manual"].started == false
+    error_message = "started did not survive the stack's vms object type — deployment.json could ask for a manually-started guest and terraform would power it on anyway."
+  }
+}

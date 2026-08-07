@@ -92,6 +92,7 @@ variable "vms" {
 
     # Startup configuration
     on_boot = optional(bool, true)
+    started = optional(bool, true)
 
     # Windows features
     tpm_state = optional(object({
