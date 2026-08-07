@@ -53,8 +53,19 @@ locals {
         mac                = try(var.vms[k].dhcp, false) ? local.vm_mac[k] : null
         node               = v.node_name
         ansible_connection = try(var.vms[k].ansible_connection, "ssh")
-        tags               = v.tags
-        pool_id            = v.pool_id
+        # Whether the guest is expected to be running. A guest only an operator
+        # may power on publishes started = false, so a converge can skip it
+        # instead of failing against a host that is deliberately switched off.
+        # Reading these here is also what keeps them declared. They are plain
+        # attribute reads, not `try()`, so dropping either from var.vms breaks
+        # the PLAN instead of silently reverting every guest to the default.
+        # `tofu validate` still passes in that state - checked - so the guard
+        # that actually bites is the contract test, which asserts both through
+        # this output.
+        on_boot = var.vms[k].on_boot
+        started = var.vms[k].started
+        tags    = v.tags
+        pool_id = v.pool_id
       }
     }
     # Docker VMs - filtered subset of VMs with "docker" tag

@@ -98,6 +98,15 @@ variable "vms" {
     # Display
     vga_type = optional(string, "std")
 
+    # Startup behaviour. Both default true, matching the provider.
+    #   on_boot - start the guest when the NODE boots.
+    #   started - the run state terraform asserts at CREATE time.
+    # They are independent: on_boot alone still lets an apply power a guest on.
+    # A guest the operator alone may start needs both false (the provider's own
+    # documented pattern for a VM that is never started automatically).
+    on_boot = optional(bool, true)
+    started = optional(bool, true)
+
     # Features
     agent_enabled = optional(bool, true)
     protection    = optional(bool, false)
