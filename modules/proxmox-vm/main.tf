@@ -124,6 +124,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
     for_each = each.value.clone_template != null ? [each.value.clone_template] : []
     content {
       vm_id = clone.value.template_id
+      full  = clone.value.full
     }
   }
 

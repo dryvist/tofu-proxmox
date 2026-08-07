@@ -66,6 +66,9 @@ variable "vms" {
     cdrom_file_id = optional(string)
     clone_template = optional(object({
       template_id = number
+      # false = linked clone (copy-on-write). See the same field in
+      # modules/proxmox-stack/variables-vms.tf for the trade-offs.
+      full = optional(bool, true)
     }))
     user_account = object({
       username = string
