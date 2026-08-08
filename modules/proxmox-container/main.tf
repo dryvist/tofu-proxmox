@@ -14,11 +14,11 @@ resource "proxmox_virtual_environment_container" "containers" {
   node_name   = each.value.node_name
   description = each.value.description != null ? each.value.description : "TF CT ${each.value.hostname} - ${var.environment}"
 
-  # Tags with environment
-  tags = concat(
+  # Tags with environment, in the deduped+sorted form Proxmox stores
+  tags = sort(distinct(concat(
     each.value.tags,
     [var.environment]
-  )
+  )))
 
   # Pool assignment
   pool_id = each.value.pool_id
