@@ -52,15 +52,13 @@ the frozen tier is configured Splunk-side in `ansible-splunk`.
 | --- | --- | --- | --- | --- |
 | `fast-splunk` (hot + warm) | fast/NVMe node, `virtio2` | mirror pool, `pvesm_id = fast-splunk` | mirror | `backup = false` by design — B2 replaces it |
 | `bulk-splunk` (cold) | bulk-capable node, `virtio3` | dedicated non-RAID pool, `pvesm_id = bulk-splunk` | none (single disk) | `backup = false` by design — B2 replaces it |
-| B2-frozen (archive) | Backblaze B2 (off-site) | S3 bucket via `secret/platform/backblaze` | n/a (cloud-durable) | is the durable copy |
+| B2-frozen (archive) | Backblaze B2 (off-site), dedicated `splunk` bucket | S3 bucket via `secrets-external/platform/backblaze-splunk` | n/a (cloud-durable) | is the durable copy, but **offline** — no object layout makes frozen data searchable; recovery is a deliberate thaw |
 
-The archive credential path above was corrected after the original one turned
-out not to be readable. Capability checks against `secrets-external/backblaze-b2`
-returned deny for every role reachable from the converge environment, while
-`secret/platform/backblaze` reads cleanly and holds the endpoint, bucket, key id
-and application key the archive needs. The Splunk-side configuration uses the
-corrected path, and the upload and restore were both exercised against the live
-endpoint before this was written.
+The archive credential reads from `secrets-external/platform/backblaze-splunk`,
+which carries Splunk's own dedicated bucket. Splunk no longer shares the
+Postgres-backups credential — a shared bucket gives no separate lifecycle
+policy and no blast-radius boundary. The upload and restore were both exercised
+against the live endpoint before this was written.
 
 Neither Splunk index disk gets block-level backup. Index data is
 reconstructible, and block backups would roughly double the storage consumed
