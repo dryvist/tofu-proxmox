@@ -99,15 +99,15 @@ modules/proxmox-stack/locals*.tf — management_network, splunk_network_ips
 > exist. It silently overrides `deployment.json` due to Terraform variable
 > precedence. If it exists in your worktree, delete it: `rm terraform.tfvars`.
 
-### OpenBao Proxmox secret fields
+### Provider credentials
 
-| Secret | Purpose |
-| --- | --- |
-| `PROXMOX_VE_ENDPOINT` | API URL (without `/api2/json`) |
-| `PROXMOX_VE_API_TOKEN` | API token (`user@realm!tokenid=secret`) |
-| `PROXMOX_VE_USERNAME` | Username for the token |
-| `PROXMOX_VE_INSECURE` | Skip TLS verification |
-| `PROXMOX_VE_NODE` | Proxmox node name |
+Supplied to the provider through ephemeral resources. The field list, the store
+they come from, and how to obtain them are documented privately — do not restate
+any of it here. The table that used to sit in this section named fields that do
+not exist, and consumers written against it failed at run time.
+
+The node to act on is **not** a credential: it comes from `deployment.json`
+(`proxmox_node`).
 
 ## Pipeline architecture (this repo's role)
 

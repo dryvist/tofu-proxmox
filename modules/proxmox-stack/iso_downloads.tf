@@ -29,11 +29,3 @@ resource "proxmox_download_file" "win25_iso" {
   file_name    = "WindowsServer2025.iso"
   url          = "https://go.microsoft.com/fwlink/?linkid=2345730&clcid=0x409&culture=en-us&country=us"
 }
-
-# The win11-vdi answer-file ISO resource lived here and was removed: nothing in
-# the module referenced it, its object had never been generated, and its
-# companion import block in imports.tf failed the plan for the whole workspace.
-# A download_file whose url is a .invalid placeholder can only ever be adopted,
-# never created, so it must not be declared before its object exists. Re-add it
-# alongside that import, in the change that first places the file. See the note
-# in imports.tf for the node-mismatch caveat that will bite on re-adding.
