@@ -78,10 +78,17 @@ variable "vms" {
     }), {})
 
     # Template cloning
-    cdrom_file_id  = optional(string)
-    cdrom_file_ids = optional(list(string), [])
+    cdrom_file_id = optional(string)
     clone_template = optional(object({
       template_id = number
+      # full = false makes a linked clone: copy-on-write off the template's
+      # snapshot instead of copying its disk up front. A full clone of a
+      # Windows template costs 9-12 GB each and can exhaust a boot pool; a
+      # linked one starts at ~0 and grows only with what the guest writes.
+      # The trade is that the template cannot be deleted while a linked clone
+      # exists, and both must live on the same storage. Defaults to the
+      # provider's own default (true) so nothing changes unless asked.
+      full = optional(bool, true)
     }))
 
     # User account configuration

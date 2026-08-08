@@ -109,8 +109,13 @@ resource "proxmox_virtual_environment_vm" "vms" {
     }
   }
 
+  # The provider allows exactly one cdrom block, so this carries a single
+  # install disc for the ISO-installed appliances (pbs). Guests that need
+  # several discs at once - Windows wants installer, drivers and answer file -
+  # are built as Packer templates instead and cloned; see the packer-proxmox
+  # repository.
   dynamic "cdrom" {
-    for_each = length(each.value.cdrom_file_ids) > 0 ? each.value.cdrom_file_ids : (each.value.cdrom_file_id != null ? [each.value.cdrom_file_id] : [])
+    for_each = each.value.cdrom_file_id != null ? [each.value.cdrom_file_id] : []
     content {
       file_id = cdrom.value
     }
@@ -120,6 +125,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
     for_each = each.value.clone_template != null ? [each.value.clone_template] : []
     content {
       vm_id = clone.value.template_id
+      full  = clone.value.full
     }
   }
 

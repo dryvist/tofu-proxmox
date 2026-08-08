@@ -138,3 +138,37 @@ variable "node_storage" {
   }))
   default = {}
 }
+
+# ==============================================================================
+# Debian cloud-init base template (see base_templates.tf)
+# ==============================================================================
+
+variable "debian_template_id" {
+  type        = number
+  description = "VMID of the Debian cloud-init base template that guests clone from"
+  default     = 9001
+}
+
+variable "debian_template_name" {
+  type        = string
+  description = "Name of the Debian cloud-init base template"
+  default     = "debian-13-cloudimg"
+}
+
+variable "debian_cloudimg_file_name" {
+  type        = string
+  description = "File name the Debian cloud image is stored as. Changing this re-downloads the image."
+  default     = "debian-13-generic-amd64.qcow2"
+}
+
+variable "debian_cloudimg_url" {
+  type        = string
+  description = "Source URL for the Debian generic cloud image"
+  default     = "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2"
+}
+
+variable "template_bridge" {
+  type        = string
+  description = "Network bridge attached to base templates"
+  default     = "vmbr0"
+}
