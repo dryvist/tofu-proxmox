@@ -74,11 +74,9 @@ Terrakube itself — which is what puts every apply in the run audit, under the
 workspace lock, and on the workspace's own OpenBao workload identity instead of
 an operator's ambient shell.
 
-Run the CLI half from the `iac` guest (login `debian`) rather than a macOS
-workstation — `iac-platform` is a Terrakube workspace name and resolves to no
-host:
+Run the CLI half from a LAN execution host rather than a macOS workstation.
 macOS Local Network privacy denies the ad-hoc-signed `tofu` binary, and the
-symptom is a misleading `connect: no route to host` against a Terrakube that is
+symptom is a misleading `connect: no route to host` against a backend that is
 in fact healthy.
 
 Full runbook (access model, credential lifecycle, token scoping):
@@ -89,7 +87,6 @@ Full runbook (access model, credential lifecycle, token scoping):
 | Doc | Purpose |
 | --- | --- |
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Pipeline architecture and IP derivation |
-| [docs/EXECUTION_HOSTS.md](./docs/EXECUTION_HOSTS.md) | Which commands may apply, and which host to run them from |
 | [docs/INVENTORY_PUBLISHING.md](./docs/INVENTORY_PUBLISHING.md) | Native RustFS inventory contract |
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Operational recovery guidance |
 
