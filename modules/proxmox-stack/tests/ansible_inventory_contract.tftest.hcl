@@ -1195,3 +1195,53 @@ run "startup_fields_survive_the_stack_object_type" {
     error_message = "started did not survive the stack's vms object type — deployment.json could ask for a manually-started guest and terraform would power it on anyway."
   }
 }
+
+# The VDI split-tunnel routes are (destination, gateway) pairs assembled from two
+# separate places in this file, and BOTH halves are useless alone. Assert them
+# through the output for the same reason as the startup fields above: a test's
+# own `variables` block bypasses the object type, so reading `var.vms[...]`
+# would pass with the attribute deleted from the type.
+run "vdi_route_inputs_reach_the_inventory" {
+  command = plan
+
+  variables {
+    vdi_preserved_vlans = ["apps", "siem"]
+
+    vms = {
+      desktop = {
+        vm_id     = 213
+        node_name = "proxmox-1"
+        name      = "vdi-desktop"
+        vlan      = "apps"
+        tags      = ["vdi"]
+      }
+    }
+  }
+
+  # The gateway half. cidrhost(<apps cidr>, 1) — derived, never written down, so
+  # the assertion derives it the same way rather than pinning an octet.
+  assert {
+    condition     = output.ansible_inventory.vms["desktop"].gateway == cidrhost(var.network_cidrs["apps"], 1)
+    error_message = "A VM's gateway did not reach the inventory — a VDI guest cannot discover it once a VPN client owns the default route, so the persistent LAN routes cannot be built."
+  }
+
+  # The destination half, in the order the vlan keys were listed.
+  assert {
+    condition = output.ansible_inventory.vdi_preserved_cidrs == [
+      var.network_cidrs["apps"], var.network_cidrs["siem"],
+    ]
+    error_message = "vdi_preserved_vlans did not resolve into vdi_preserved_cidrs — the VDI role would receive no destinations and silently add no routes."
+  }
+}
+
+# Negative control. Without this, the run above still passes if the feature were
+# hard-wired on, which would push routes at every estate that never asked for
+# them. Empty is the default and must stay a real no-op.
+run "vdi_routes_stay_empty_when_no_vlans_are_listed" {
+  command = plan
+
+  assert {
+    condition     = length(output.ansible_inventory.vdi_preserved_cidrs) == 0
+    error_message = "vdi_preserved_cidrs is non-empty with vdi_preserved_vlans unset — the VDI routing standard must be opt-in."
+  }
+}
