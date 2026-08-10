@@ -1273,3 +1273,16 @@ run "a_dhcp_first_vdi_guest_still_publishes_its_gateway" {
     error_message = "A DHCP-first VDI guest published no gateway — its split-tunnel routes cannot be built, and DHCP-first is the estate default rather than the exception."
   }
 }
+
+# Proxmox validates a downloaded file's extension against its content type, and
+# rejects the cloud image's native .qcow2 under `iso` with a bare "wrong file
+# extension". That aborted a whole apply before the inventory published, twice.
+# The `import` content type would accept .qcow2 but no datastore enables it.
+run "the_cloud_image_filename_is_one_proxmox_accepts_for_iso_content" {
+  command = plan
+
+  assert {
+    condition     = can(regex("(?i)\\.(iso|img)$", var.debian_cloudimg_file_name))
+    error_message = "debian_cloudimg_file_name must end in .iso or .img — Proxmox rejects any other extension for `iso` content, and the failure aborts the apply before the inventory is published."
+  }
+}
