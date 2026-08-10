@@ -36,7 +36,7 @@ Two keys carry what a consumer needs to pin chosen networks back to the LAN:
 
 | Key | Scope | Meaning |
 | --- | --- | --- |
-| `vms.<name>.gateway` | per VM | The guest's own LAN gateway. Published because the guest cannot report it once a VPN client owns the default route. `null` for DHCP-first guests. |
+| `vms.<name>.gateway` | per VM | The guest's own LAN gateway, derived from its VLAN. Published because the guest cannot report it once a VPN client owns the default route. Independent of how the guest is addressed — DHCP-first guests get the same value, which is what their lease hands out. |
 | `vdi_preserved_cidrs` | top level | Subnets that stay reachable over the LAN, resolved from the `vdi_preserved_vlans` keys in the desired state against `network_cidrs`. Empty disables the behaviour. |
 
 `vdi_preserved_vlans` is a short opt-in list rather than every VLAN on purpose:
@@ -47,6 +47,6 @@ configuration management runs from, without which no converge can reach the
 guest while the VPN is connected.
 
 A publish precondition rejects a guest tagged `vdi` that has no gateway, so a
-DHCP-first VDI guest fails the plan rather than publishing destinations with
-nothing to point them at. `ansible-proxmox-apps` consumes both keys in its
+guest whose VLAN does not resolve fails the plan rather than publishing
+destinations with nothing to point them at. `ansible-proxmox-apps` consumes both keys in its
 `vdi_local_routes` role, applied to every guest carrying the `vdi` tag.

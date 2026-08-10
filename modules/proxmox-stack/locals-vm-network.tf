@@ -42,3 +42,19 @@ locals {
     )
   }
 }
+
+locals {
+  # The gateway of the VLAN a guest sits on, independent of how the guest gets
+  # its address. Distinct from vm_gateway above, which is null for DHCP-first
+  # guests because cloud-init must not pin a static gateway on them.
+  #
+  # Published for guests whose own view of "the gateway" cannot be trusted: a
+  # VPN client inside a guest installs its own default route, so anything asking
+  # the OS which gateway to use gets the tunnel's. The VLAN's gateway is the .1
+  # of its CIDR whether the guest was addressed statically or by lease, and it
+  # is the same value DHCP hands out — the estate is DHCP-first by design, so
+  # deriving this only for static guests would exclude nearly all of them.
+  vm_lan_gateway = {
+    for k, v in var.vms : k => nonsensitive(cidrhost(var.network_cidrs[v.vlan], 1))
+  }
+}
