@@ -1245,3 +1245,31 @@ run "vdi_routes_stay_empty_when_no_vlans_are_listed" {
     error_message = "vdi_preserved_cidrs is non-empty with vdi_preserved_vlans unset — the VDI routing standard must be opt-in."
   }
 }
+
+# Regression: the published gateway was originally the cloud-init one, which is
+# null on a DHCP-first guest. The estate is DHCP-first by design, so that guard
+# rejected every real VDI guest while every test passed — none of them declared
+# dhcp. A VDI guest addressed by lease must still publish its VLAN's gateway.
+run "a_dhcp_first_vdi_guest_still_publishes_its_gateway" {
+  command = plan
+
+  variables {
+    vdi_preserved_vlans = ["apps"]
+
+    vms = {
+      leased = {
+        vm_id     = 995119
+        node_name = "proxmox-1"
+        name      = "vdi-leased"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["vdi"]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.vms["leased"].gateway == cidrhost(var.network_cidrs["apps"], 1)
+    error_message = "A DHCP-first VDI guest published no gateway — its split-tunnel routes cannot be built, and DHCP-first is the estate default rather than the exception."
+  }
+}

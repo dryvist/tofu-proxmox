@@ -68,11 +68,12 @@ locals {
         started = var.vms[k].started
         # The guest's own LAN gateway. Published because a guest running a VPN
         # client cannot discover it at converge time: the client owns the
-        # default route by then, so "the current gateway" is the tunnel's. Null
-        # for DHCP-first guests, which learn it from the lease. Already
-        # nonsensitive in locals-vm-network.tf — a guest's own gateway is not
-        # independently secret, and the guest's address is published right above.
-        gateway = local.vm_gateway[k]
+        # default route by then, so "the current gateway" is the tunnel's.
+        #
+        # vm_lan_gateway, NOT vm_gateway: the latter is the cloud-init value and
+        # is null for DHCP-first guests, which is nearly the whole estate. The
+        # VLAN's gateway is well defined either way and is what DHCP hands out.
+        gateway = local.vm_lan_gateway[k]
         tags    = v.tags
         pool_id = v.pool_id
       }

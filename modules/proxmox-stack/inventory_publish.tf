@@ -70,13 +70,19 @@ resource "aws_s3_object" "ansible_inventory" {
       # default route by the time the route matters. A null gateway here would
       # publish destinations with nothing to point them at, and the role would
       # skip silently, which is exactly the shape of failure this repo keeps
-      # getting bitten by. DHCP-first guests have a null gateway by design, so
-      # this also states that a VDI guest must be statically addressed.
+      # getting bitten by.
+      #
+      # This guard first shipped asserting that a VDI guest was STATICALLY
+      # addressed, because the published gateway was the cloud-init one, which is
+      # null on a lease. That was backwards: the estate is DHCP-first by design,
+      # so it rejected every real VDI guest. The gateway now derives from the
+      # guest's VLAN and holds either way; what remains worth asserting is that
+      # something is actually published.
       condition = length(local.ansible_inventory.vdi_preserved_cidrs) == 0 || alltrue([
         for k, v in local.ansible_inventory.vms :
-        v.gateway != null if contains(try(v.tags, []), "vdi")
+        v.gateway != null && v.gateway != "" if contains(try(v.tags, []), "vdi")
       ])
-      error_message = "A guest tagged \"vdi\" has a null gateway, but vdi_preserved_cidrs is non-empty — its LAN routes cannot be built. VDI guests must be statically addressed (no dhcp = true), because a VPN client inside the guest takes over the default route and the gateway is then undiscoverable from the guest."
+      error_message = "A guest tagged \"vdi\" has no gateway published, but vdi_preserved_cidrs is non-empty — its LAN routes cannot be built. Check that the guest's vlan resolves in network_cidrs; the gateway is the .1 of that subnet."
     }
     precondition {
       condition = alltrue([
