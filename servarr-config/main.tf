@@ -51,6 +51,6 @@ removed {
   }
 }
 
-# Secret-bearing qBittorrent wiring is owned by ansible-proxmox-apps'
+# Secret-bearing qBittorrent wiring is owned by ansible-servarr's
 # servarr_wiring role. The provider does not expose ephemeral/write-only fields
 # for this resource, so keeping it here would copy OpenBao values into state.
