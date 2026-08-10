@@ -248,8 +248,9 @@ module "homelab" {
     homeauto  = 80
     nonprod   = 90
   })
-  vm_ssh_public_key = local.deployment.vm_ssh_public_key
-  vms               = try(local.deployment.vms, {})
+  vdi_preserved_vlans = try(local.deployment.vdi_preserved_vlans, [])
+  vm_ssh_public_key   = local.deployment.vm_ssh_public_key
+  vms                 = try(local.deployment.vms, {})
 
   inventory_bucket = var.inventory_bucket
   inventory_key    = var.inventory_key

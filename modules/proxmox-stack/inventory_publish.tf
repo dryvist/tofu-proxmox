@@ -65,6 +65,20 @@ resource "aws_s3_object" "ansible_inventory" {
       error_message = "One or more VMs have an empty ip/node/hostname/vmid or an unsupported ansible_connection in the inventory. Inspect module.vms output and deployment.json."
     }
     precondition {
+      # A VDI guest's persistent routes are (destination, gateway) pairs, and the
+      # gateway half cannot be discovered inside the guest — a VPN client owns the
+      # default route by the time the route matters. A null gateway here would
+      # publish destinations with nothing to point them at, and the role would
+      # skip silently, which is exactly the shape of failure this repo keeps
+      # getting bitten by. DHCP-first guests have a null gateway by design, so
+      # this also states that a VDI guest must be statically addressed.
+      condition = length(local.ansible_inventory.vdi_preserved_cidrs) == 0 || alltrue([
+        for k, v in local.ansible_inventory.vms :
+        v.gateway != null if contains(try(v.tags, []), "vdi")
+      ])
+      error_message = "A guest tagged \"vdi\" has a null gateway, but vdi_preserved_cidrs is non-empty — its LAN routes cannot be built. VDI guests must be statically addressed (no dhcp = true), because a VPN client inside the guest takes over the default route and the gateway is then undiscoverable from the guest."
+    }
+    precondition {
       condition = alltrue([
         for k, v in local.ansible_inventory.docker_vms :
         v.ip != null && v.ip != "" &&

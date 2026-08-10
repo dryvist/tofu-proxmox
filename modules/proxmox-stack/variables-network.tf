@@ -52,3 +52,25 @@ variable "vlan_ids" {
     nonprod   = 90
   }
 }
+
+# VLAN keys whose subnets a VDI guest must keep reaching over its own LAN when a
+# VPN client inside the guest installs a default route.
+#
+# A full-tunnel client (FortiClient, and every other one) replaces the guest's
+# default route, so the guest's REPLY packets to anything off its own subnet go
+# into the tunnel and die. Inbound RDP still arrives; the session drops anyway.
+# A more-specific persistent route per preserved subnet outranks the tunnel's
+# /0 (or its /1 pair) and keeps those networks on the LAN.
+#
+# Deliberately a short opt-in list rather than every key in network_cidrs:
+# routing the whole estate past the tunnel would break the VDI's purpose the
+# moment a corporate network behind the VPN overlaps an estate VLAN. List only
+# what must survive — the operator's own subnet and the Ansible controller's,
+# without which no converge can reach the guest while the VPN is up.
+#
+# Empty default = no routes published = the consuming role no-ops.
+variable "vdi_preserved_vlans" {
+  description = "VLAN keys (into network_cidrs) whose subnets VDI guests keep reaching over the LAN instead of a guest-side VPN tunnel. Published to the inventory as vdi_preserved_cidrs. Empty disables the behaviour."
+  type        = list(string)
+  default     = []
+}
