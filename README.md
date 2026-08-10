@@ -74,10 +74,10 @@ Terrakube itself — which is what puts every apply in the run audit, under the
 workspace lock, and on the workspace's own OpenBao workload identity instead of
 an operator's ambient shell.
 
-Run the CLI half from a LAN execution host rather than a macOS workstation.
-macOS Local Network privacy denies the ad-hoc-signed `tofu` binary, and the
-symptom is a misleading `connect: no route to host` against a backend that is
-in fact healthy.
+On macOS, `tofu` is ad-hoc-signed, so it is denied when the backend sits on a
+subnet the machine is directly attached to. The symptom is a misleading
+`connect: no route to host` against a backend that is in fact healthy. Reaching
+the backend over a routed path avoids it entirely.
 
 Full runbook (access model, credential lifecycle, token scoping):
 [docs.jacobpevans.com/infrastructure/applying-via-terrakube](https://docs.jacobpevans.com/infrastructure/applying-via-terrakube).
