@@ -89,6 +89,14 @@ variable "vms" {
       # exists, and both must live on the same storage. Defaults to the
       # provider's own default (true) so nothing changes unless asked.
       full = optional(bool, true)
+      # The node holding the TEMPLATE, when it is not the node the guest is
+      # being built on. Templates are node-local unless their storage is
+      # shared, so without this the provider looks for the template on the
+      # target node and Proxmox answers with a bare HTTP 500, "unable to find
+      # configuration file for VM <id> on node '<target>'" — which reads as a
+      # broken template rather than a missing source node. Omit when the
+      # template already lives on the target.
+      node_name = optional(string)
     }))
 
     # User account configuration

@@ -126,6 +126,9 @@ resource "proxmox_virtual_environment_vm" "vms" {
     content {
       vm_id = clone.value.template_id
       full  = clone.value.full
+      # Null means "same node as the guest", which is the provider's own
+      # default and how every same-node clone here already behaves.
+      node_name = clone.value.node_name
     }
   }
 
@@ -244,6 +247,30 @@ resource "proxmox_virtual_environment_vm" "vms" {
       # creation, so ignore it: imports and template changes never rebuild a VM.
       clone,
     ]
+
+    # A linked clone is copy-on-write off the template's own disk, so the two
+    # must share storage — which a template on another node does not. Proxmox
+    # rejects the combination far downstream, as a bare HTTP 500 during apply,
+    # after the guest has already been half-built. Catch it at plan instead.
+    precondition {
+      condition = (
+        each.value.clone_template == null ||
+        each.value.clone_template.node_name == null ||
+        each.value.clone_template.node_name == each.value.node_name ||
+        each.value.clone_template.full
+      )
+      error_message = format(
+        "VM %s clones from a template on node %s onto node %s with full = false. A linked clone cannot cross nodes; set full = true or put the template on the target node.",
+        each.key,
+        # coalesce, not try: the attribute is declared optional, so when it is
+        # unset it EXISTS and is null. try only catches an error, and reading a
+        # declared-but-null attribute is not an error — it hands format a null,
+        # which format refuses. The outer try covers clone_template itself
+        # being absent, which is a genuine error.
+        try(coalesce(each.value.clone_template.node_name, "<none>"), "<none>"),
+        each.value.node_name,
+      )
+    }
   }
 
 }
