@@ -1274,15 +1274,17 @@ run "a_dhcp_first_vdi_guest_still_publishes_its_gateway" {
   }
 }
 
-# Proxmox validates a downloaded file's extension against its content type, and
-# rejects the cloud image's native .qcow2 under `iso` with a bare "wrong file
-# extension". That aborted a whole apply before the inventory published, twice.
-# The `import` content type would accept .qcow2 but no datastore enables it.
-run "the_cloud_image_filename_is_one_proxmox_accepts_for_iso_content" {
+# Proxmox validates a downloaded file's extension against the content type it is
+# filed under, and separately refuses an iso-type volume as a disk import source.
+# Getting these out of step aborted two applies before the inventory published:
+# .qcow2 under `iso` failed at download, .img under `iso` failed one step later
+# at disk creation. `import` is the content type that accepts a disk image, and
+# UPLOAD_IMPORT_EXT_RE_1 is what it accepts.
+run "the_cloud_image_filename_matches_the_import_content_type" {
   command = plan
 
   assert {
-    condition     = can(regex("(?i)\\.(iso|img)$", var.debian_cloudimg_file_name))
-    error_message = "debian_cloudimg_file_name must end in .iso or .img — Proxmox rejects any other extension for `iso` content, and the failure aborts the apply before the inventory is published."
+    condition     = can(regex("(?i)\\.(qcow2|raw|vmdk|ova)$", var.debian_cloudimg_file_name))
+    error_message = "debian_cloudimg_file_name must end in .qcow2, .raw, .vmdk or .ova — those are the extensions Proxmox accepts for `import` content, and a mismatch aborts the apply before the inventory is published."
   }
 }

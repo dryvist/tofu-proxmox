@@ -10,10 +10,19 @@
 # recipe that used to live in docs/TEMPLATE_CREATION.md.
 
 resource "proxmox_download_file" "debian_cloudimg" {
-  # Cloud images live under the `iso` content type; that is the datastore
-  # content this node already has enabled, and it is where import_from reads
-  # from. The file is a qcow2, not an installer ISO.
-  content_type = "iso"
+  # `import`, not `iso`. Proxmox types a volume by the content directory it
+  # sits in, and refuses an iso-type volume as a disk import source: "has wrong
+  # type 'iso' - needs to be 'images' or 'import'". It also validates the file
+  # extension per content type — `iso` accepts only .iso/.img while `import`
+  # accepts .qcow2/.raw/.vmdk/.ova, so the two settings have to move together.
+  #
+  # Storing it as .img under `iso` gets the download past validation and then
+  # fails one step later at disk creation, which is how this first presented.
+  # Both failures aborted the apply before the Ansible inventory published.
+  #
+  # This requires `import` in the datastore's content list. Not yet expressed in
+  # node_storage, which models ZFS pools rather than dir-storage content types.
+  content_type = "import"
   datastore_id = var.datastore_iso
   node_name    = var.proxmox_node
   file_name    = var.debian_cloudimg_file_name
@@ -58,7 +67,7 @@ resource "proxmox_virtual_environment_vm" "debian_base_template" {
     # boot disk rather than installing onto an empty one. The identifier is
     # built rather than taken from the resource's `id`, which is not in the
     # `datastore:content/file` form this field requires.
-    import_from = "${var.datastore_iso}:iso/${proxmox_download_file.debian_cloudimg.file_name}"
+    import_from = "${var.datastore_iso}:import/${proxmox_download_file.debian_cloudimg.file_name}"
     interface   = "scsi0"
     discard     = "on"
     iothread    = true
