@@ -262,7 +262,12 @@ resource "proxmox_virtual_environment_vm" "vms" {
       error_message = format(
         "VM %s clones from a template on node %s onto node %s with full = false. A linked clone cannot cross nodes; set full = true or put the template on the target node.",
         each.key,
-        try(each.value.clone_template.node_name, "<none>"),
+        # coalesce, not try: the attribute is declared optional, so when it is
+        # unset it EXISTS and is null. try only catches an error, and reading a
+        # declared-but-null attribute is not an error — it hands format a null,
+        # which format refuses. The outer try covers clone_template itself
+        # being absent, which is a genuine error.
+        try(coalesce(each.value.clone_template.node_name, "<none>"), "<none>"),
         each.value.node_name,
       )
     }
