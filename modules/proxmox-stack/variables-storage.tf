@@ -157,17 +157,13 @@ variable "debian_template_name" {
 
 variable "debian_cloudimg_file_name" {
   type        = string
-  description = "File name the Debian cloud image is stored as. Must end in .iso or .img — Proxmox validates the extension for `iso` content and rejects .qcow2. Changing this re-downloads the image."
-  # .img, NOT the source's .qcow2 extension. Proxmox validates the stored
-  # filename against the content type: `iso` accepts only .iso and .img
-  # (PVE::Storage::ISO_EXT_RE_0), and .qcow2 belongs to the `import` content
-  # type, which no datastore here enables. Storing it as .qcow2 fails the API
-  # with a bare "Parameter verification failed. (filename: wrong file
-  # extension)" and aborts the whole apply before the inventory publishes.
-  #
-  # The extension is a label, not a conversion: the file is still qcow2 and
-  # both qemu-img and import_from detect the real format from its content.
-  default = "debian-13-generic-amd64.img"
+  description = "File name the Debian cloud image is stored as. Must carry an extension the `import` content type accepts (.qcow2/.raw/.vmdk/.ova). Changing this re-downloads the image."
+  # Proxmox validates the stored filename against the content type it is filed
+  # under (PVE::Storage::UPLOAD_IMPORT_EXT_RE_1 for `import`), and rejects a
+  # mismatch with a bare "Parameter verification failed. (filename: wrong file
+  # extension)" that aborts the whole apply before the inventory publishes.
+  # Keep this extension and base_templates.tf's content_type in step.
+  default = "debian-13-generic-amd64.qcow2"
 }
 
 variable "debian_cloudimg_url" {
