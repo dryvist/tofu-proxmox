@@ -14,4 +14,29 @@ locals {
     for k, v in var.containers : k => v.vm_id
     if contains(coalesce(try(v.tags, null), []), "firecrawl")
   }
+
+  # The ingress route, defined here rather than inline in
+  # locals-ingress-backends.tf: that file sits ~50 bytes under the shared
+  # _file-size 12 KB error gate, so an inline block would fail CI. It carries a
+  # bare `local.firecrawl_routes,` reference in the concat instead.
+  #
+  # Derived from the tag-keyed pool, not from a container name. The hostname
+  # carries the node digit under the multi-instance naming law, so a name
+  # literal would silently drop this route the moment the guest moved nodes —
+  # locals-ingress-backends.tf filters out routes whose backend key is absent,
+  # with no error. One instance today; the pool shape costs nothing and means a
+  # second replica needs no code change.
+  #
+  # sso = false: the callers are agent runtimes, which cannot complete a
+  # browser login.
+  firecrawl_routes = length(local.firecrawl_backends) > 0 ? [
+    {
+      name              = "firecrawl"
+      backends          = local.firecrawl_backends
+      port              = local.pipeline_constants.extract_ports.firecrawl_api
+      health_check      = true
+      health_check_path = "/health"
+      sso               = false
+    },
+  ] : []
 }
