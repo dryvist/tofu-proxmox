@@ -160,6 +160,7 @@ locals {
         sso               = true # browser admin UI — gated
       }
     ] : [],
+    local.firecrawl_routes,
     # Hindsight agent memory: one hindsight.<domain> route load-balancing the
     # stateless API replicas. No sticky — every replica serves every bank from
     # the same Postgres. /health is the upstream readiness endpoint.
