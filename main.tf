@@ -205,6 +205,7 @@ module "homelab" {
   llm_large_serving_host = try(local.deployment.llm_large_serving_host, "")
   llm_large_serving_ip   = try(local.deployment.llm_large_serving_ip, "")
   network_cidrs          = local.deployment.network_cidrs
+  network_domains        = try(local.deployment.network_domains, {})
   node_storage           = try(local.deployment.node_storage, {})
   nodes                  = local.deployment.nodes
   # Degraded-window acknowledgement for the OpenBao voter-spread guard —

@@ -6,6 +6,18 @@ variable "domain" {
   default     = ""
 }
 
+# Per-VLAN override of `domain`. Every VLAN's UniFi network carries its own DNS
+# domain (tofu-unifi's per-network domain_name), and that is what the gateway
+# actually answers a DHCP-first guest's FQDN under — `domain` alone is only
+# correct for the VLANs whose network domain happens to equal the estate apex.
+# Absent here for a VLAN means "use `domain`", so adding a VLAN never requires
+# touching this map.
+variable "network_domains" {
+  description = "Map of VLAN name => DNS domain, for VLANs whose UniFi network domain differs from `domain`. Absent = use `domain`."
+  type        = map(string)
+  default     = {}
+}
+
 variable "environment" {
   description = "Environment name for resource tagging and organization"
   type        = string
