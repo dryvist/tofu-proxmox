@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.86.1](https://github.com/dryvist/tofu-proxmox/compare/v1.86.0...v1.86.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* **dns:** publish DHCP-first guests under their VLAN's real DNS domain ([ff758d2](https://github.com/dryvist/tofu-proxmox/commit/ff758d2c456fe309e8e2ceba5c5392489d086cde))
+* **dns:** publish DHCP-first guests under their VLAN's real DNS domain ([dd3f7a2](https://github.com/dryvist/tofu-proxmox/commit/dd3f7a2bf2da66af19eb43b9a6aaf7a7b2ed0c09))
+
 ## [1.86.0](https://github.com/dryvist/tofu-proxmox/compare/v1.85.1...v1.86.0) (2026-08-07)
 
 
