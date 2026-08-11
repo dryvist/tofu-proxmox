@@ -163,6 +163,22 @@ locals {
     # Hindsight agent memory: one hindsight.<domain> route load-balancing the
     # stateless API replicas. No sticky — every replica serves every bank from
     # the same Postgres. /health is the upstream readiness endpoint.
+    # Firecrawl page extraction: one firecrawl.<domain> route over the
+    # tag-derived pool. Derived by tag rather than by container name because
+    # the hostname carries the node digit under the multi-instance naming law,
+    # so a name literal would silently drop this route if the guest moved
+    # nodes. sso = false — the callers are agent runtimes, which cannot
+    # complete a browser login.
+    length(local.firecrawl_backends) > 0 ? [
+      {
+        name              = "firecrawl"
+        backends          = local.firecrawl_backends
+        port              = local.pipeline_constants.extract_ports.firecrawl_api
+        health_check      = true
+        health_check_path = "/health"
+        sso               = false
+      },
+    ] : [],
     length(local.hindsight_backends) > 0 ? [
       {
         name              = "hindsight"

@@ -171,6 +171,12 @@ locals {
       hindsight_api = 8888
       hindsight_cp  = 9999
     }
+    # Page-extraction service (Firecrawl, ai VLAN) the Hermes agents call for
+    # web_extract. Only the API is exposed; the bundled queue-admin UI is not
+    # published, which is what keeps its auth key out of the estate entirely.
+    extract_ports = {
+      firecrawl_api = 3002
+    }
     # AI / LLM log-ingest ports — one dedicated Cribl TCP-JSON receiver per source
     # family (defined in constants-ai-log.tf to keep this file under the shared
     # _file-size 12 KB gate; locals merge across files in the module).

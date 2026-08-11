@@ -640,7 +640,7 @@ run "hermes_donna_with_hermes_agent_tag_accepted" {
         hostname  = "donna"
         vlan      = "ai"
         dhcp      = true
-        tags      = ["terraform", "container", "hermes-agent", "hermes-donna"]
+        tags      = ["terraform", "container", "hermes-agent", "hermes-donna", "chromium", "hindsight-client", "firecrawl-client"]
       }
     }
   }
@@ -648,5 +648,116 @@ run "hermes_donna_with_hermes_agent_tag_accepted" {
   assert {
     condition     = keys(local.hermes_agent_container_ids) == ["donna"]
     error_message = "hermes-donna with the hermes-agent tag must be picked up by the existing hermes-agent firewall map"
+  }
+}
+
+# App-dependency tags on the agent guests. Unlike the firewall-map tags these
+# do not gate a security group — they are the inventory record of what the
+# guest's converge installs or calls. An agent guest without 'chromium' comes
+# up with a browser tool surface that cannot render, which is invisible in a
+# plan diff and surfaces far downstream as an agent describing pages it never
+# read.
+run "hermes_agent_without_dependency_tags_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      agent = {
+        vm_id     = 517000
+        node_name = "proxmox-1"
+        hostname  = "agent"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-agent"]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.containers,
+  ]
+}
+
+# A PARTIAL set must fail too. Checking only "is chromium present" would let a
+# guest through that names the browser and silently omits the two services the
+# agent depends on off-container.
+run "hermes_agent_with_partial_dependency_tags_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      agent = {
+        vm_id     = 517000
+        node_name = "proxmox-1"
+        hostname  = "agent"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-agent", "chromium"]
+      }
+    }
+  }
+
+  expect_failures = [
+    var.containers,
+  ]
+}
+
+run "hermes_agent_with_dependency_tags_accepted" {
+  command = plan
+
+  variables {
+    containers = {
+      agent = {
+        vm_id     = 517000
+        node_name = "proxmox-1"
+        hostname  = "agent"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-agent", "chromium", "hindsight-client", "firecrawl-client"]
+      }
+    }
+  }
+
+  assert {
+    condition     = keys(local.hermes_agent_container_ids) == ["agent"]
+    error_message = "a fully-tagged agent guest must still be picked up by the hermes-agent firewall map"
+  }
+}
+
+# The -client suffixes are load-bearing. An agent guest carrying the bare
+# service tags would land in those services' own firewall maps and be treated
+# as a server instance — the opposite of what the tag is recording.
+run "agent_dependency_tags_do_not_join_service_maps" {
+  command = plan
+
+  variables {
+    containers = {
+      agent = {
+        vm_id     = 517000
+        node_name = "proxmox-1"
+        hostname  = "agent"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-agent", "chromium", "hindsight-client", "firecrawl-client"]
+      }
+      "firecrawl-30" = {
+        vm_id     = 519000
+        node_name = "proxmox-1"
+        hostname  = "firecrawl-30"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "ai", "firecrawl", "docker"]
+      }
+    }
+  }
+
+  assert {
+    condition     = keys(local.firecrawl_container_ids) == ["firecrawl-30"]
+    error_message = "only the firecrawl-tagged SERVER guest may appear in firecrawl_container_ids; a firecrawl-client agent guest must not"
+  }
+
+  assert {
+    condition     = keys(local.hindsight_container_ids) == []
+    error_message = "a hindsight-client agent guest must not appear in the hindsight SERVER map"
   }
 }

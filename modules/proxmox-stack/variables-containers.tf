@@ -181,4 +181,26 @@ variable "containers" {
     ])
     error_message = "Every container tagged 'hermes-donna' must also carry the 'hermes-agent' tag — hermes-donna has no firewall map of its own and relies on hermes_agent_container_ids to pick it up. A missing hermes-agent tag would leave the guest with NO firewall."
   }
+
+  # App-dependency tags on the agent guests. Unlike the two checks above these
+  # do not gate a firewall map — they record what the guest's converge installs
+  # or calls, including services that live outside the container. That makes
+  # them the inventory answer to "which guests have Chromium on them" and
+  # "which guests break if the extraction service is down", questions the tag
+  # list is the only place to ask.
+  #
+  # Enforced rather than advisory for the same reason as the firewall tags: an
+  # agent guest missing 'chromium' is not a plan diff anyone would notice, and
+  # the symptom — an agent that answers about pages it never actually read —
+  # surfaces far downstream from the cause.
+  validation {
+    condition = alltrue([
+      for k, v in var.containers : length(setsubtract(
+        toset(["chromium", "hindsight-client", "firecrawl-client"]),
+        toset(coalesce(try(v.tags, null), [])),
+      )) == 0
+      if contains(coalesce(try(v.tags, null), []), "hermes-agent")
+    ])
+    error_message = "Every container tagged 'hermes-agent' must also carry 'chromium', 'hindsight-client' and 'firecrawl-client'. These name the app dependencies the agent converge installs or calls — the browser on the guest, and the memory and extraction services off it. Note the -client suffixes are load-bearing: a bare 'hindsight' or 'firecrawl' tag would put the agent guest into that SERVICE's firewall map and treat it as a server instance."
+  }
 }
