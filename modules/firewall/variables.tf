@@ -232,6 +232,7 @@ variable "pipeline_constants" {
     notification_ports = map(number)
     vector_db_ports    = map(number)
     memory_ports       = map(number)
+    extract_ports      = map(number)
     honeypot_ports     = map(number)
     ai_log_ports       = map(number)
     media_ports        = map(number)

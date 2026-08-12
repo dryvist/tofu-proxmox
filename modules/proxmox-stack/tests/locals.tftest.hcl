@@ -1100,7 +1100,7 @@ run "hermes_ui_container_ids_are_disjoint_from_the_agent" {
         hostname  = "hermes-agent"
         vlan      = "ai"
         dhcp      = true
-        tags      = ["terraform", "container", "hermes-agent"]
+        tags      = ["terraform", "container", "hermes-agent", "chromium", "hindsight-client", "firecrawl-client"]
       }
       "hermes-ui" = {
         vm_id     = 305
@@ -1116,7 +1116,7 @@ run "hermes_ui_container_ids_are_disjoint_from_the_agent" {
         hostname  = "hermes-donna"
         vlan      = "ai"
         dhcp      = true
-        tags      = ["terraform", "container", "hermes-agent", "hermes-donna"]
+        tags      = ["terraform", "container", "hermes-agent", "hermes-donna", "chromium", "hindsight-client", "firecrawl-client"]
       }
     }
   }

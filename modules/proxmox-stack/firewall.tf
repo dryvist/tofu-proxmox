@@ -83,6 +83,7 @@ module "firewall" {
   # hermes-ui LXC: tagged "hermes-ui" (companion web UI guest, own tag so its
   # egress can be tightened later without touching the hermes-agent profile)
   hermes_ui_container_ids = local.hermes_ui_container_ids
+  firecrawl_container_ids = local.firecrawl_container_ids
 
   # AI orchestration LXCs: tagged "ai-orchestration" (n8n, Dify, LangFlow, LangGraph, agent-exec)
   ai_orchestration_container_ids = local.ai_orchestration_container_ids

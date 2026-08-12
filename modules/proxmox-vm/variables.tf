@@ -63,10 +63,18 @@ variable "vms" {
     }), {})
 
     # Cloud-init / OS configuration
-    cdrom_file_id  = optional(string)
-    cdrom_file_ids = optional(list(string), [])
+    cdrom_file_id = optional(string)
     clone_template = optional(object({
       template_id = number
+      # false = linked clone (copy-on-write). See the same field in
+      # modules/proxmox-stack/variables-vms.tf for the trade-offs.
+      full = optional(bool, true)
+      # Node holding the template, when it differs from the target node. See
+      # the same field in modules/proxmox-stack/variables-vms.tf. This type
+      # must stay in step with that one: the value is passed through as a
+      # whole object, so a field declared there and not here is silently
+      # dropped rather than rejected.
+      node_name = optional(string)
     }))
     user_account = object({
       username = string

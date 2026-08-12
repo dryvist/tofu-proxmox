@@ -1195,3 +1195,96 @@ run "startup_fields_survive_the_stack_object_type" {
     error_message = "started did not survive the stack's vms object type — deployment.json could ask for a manually-started guest and terraform would power it on anyway."
   }
 }
+
+# The VDI split-tunnel routes are (destination, gateway) pairs assembled from two
+# separate places in this file, and BOTH halves are useless alone. Assert them
+# through the output for the same reason as the startup fields above: a test's
+# own `variables` block bypasses the object type, so reading `var.vms[...]`
+# would pass with the attribute deleted from the type.
+run "vdi_route_inputs_reach_the_inventory" {
+  command = plan
+
+  variables {
+    vdi_preserved_vlans = ["apps", "siem"]
+
+    vms = {
+      desktop = {
+        vm_id     = 213
+        node_name = "proxmox-1"
+        name      = "vdi-desktop"
+        vlan      = "apps"
+        tags      = ["vdi"]
+      }
+    }
+  }
+
+  # The gateway half. cidrhost(<apps cidr>, 1) — derived, never written down, so
+  # the assertion derives it the same way rather than pinning an octet.
+  assert {
+    condition     = output.ansible_inventory.vms["desktop"].gateway == cidrhost(var.network_cidrs["apps"], 1)
+    error_message = "A VM's gateway did not reach the inventory — a VDI guest cannot discover it once a VPN client owns the default route, so the persistent LAN routes cannot be built."
+  }
+
+  # The destination half, in the order the vlan keys were listed.
+  assert {
+    condition = output.ansible_inventory.vdi_preserved_cidrs == [
+      var.network_cidrs["apps"], var.network_cidrs["siem"],
+    ]
+    error_message = "vdi_preserved_vlans did not resolve into vdi_preserved_cidrs — the VDI role would receive no destinations and silently add no routes."
+  }
+}
+
+# Negative control. Without this, the run above still passes if the feature were
+# hard-wired on, which would push routes at every estate that never asked for
+# them. Empty is the default and must stay a real no-op.
+run "vdi_routes_stay_empty_when_no_vlans_are_listed" {
+  command = plan
+
+  assert {
+    condition     = length(output.ansible_inventory.vdi_preserved_cidrs) == 0
+    error_message = "vdi_preserved_cidrs is non-empty with vdi_preserved_vlans unset — the VDI routing standard must be opt-in."
+  }
+}
+
+# Regression: the published gateway was originally the cloud-init one, which is
+# null on a DHCP-first guest. The estate is DHCP-first by design, so that guard
+# rejected every real VDI guest while every test passed — none of them declared
+# dhcp. A VDI guest addressed by lease must still publish its VLAN's gateway.
+run "a_dhcp_first_vdi_guest_still_publishes_its_gateway" {
+  command = plan
+
+  variables {
+    vdi_preserved_vlans = ["apps"]
+
+    vms = {
+      leased = {
+        vm_id     = 995119
+        node_name = "proxmox-1"
+        name      = "vdi-leased"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["vdi"]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.vms["leased"].gateway == cidrhost(var.network_cidrs["apps"], 1)
+    error_message = "A DHCP-first VDI guest published no gateway — its split-tunnel routes cannot be built, and DHCP-first is the estate default rather than the exception."
+  }
+}
+
+# Proxmox validates a downloaded file's extension against the content type it is
+# filed under, and separately refuses an iso-type volume as a disk import source.
+# Getting these out of step aborted two applies before the inventory published:
+# .qcow2 under `iso` failed at download, .img under `iso` failed one step later
+# at disk creation. `import` is the content type that accepts a disk image, and
+# UPLOAD_IMPORT_EXT_RE_1 is what it accepts.
+run "the_cloud_image_filename_matches_the_import_content_type" {
+  command = plan
+
+  assert {
+    condition     = can(regex("(?i)\\.(qcow2|raw|vmdk|ova)$", var.debian_cloudimg_file_name))
+    error_message = "debian_cloudimg_file_name must end in .qcow2, .raw, .vmdk or .ova — those are the extensions Proxmox accepts for `import` content, and a mismatch aborts the apply before the inventory is published."
+  }
+}

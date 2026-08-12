@@ -107,6 +107,9 @@ variables {
       hindsight_api = 8888
       hindsight_cp  = 9999
     }
+    extract_ports = {
+      firecrawl_api = 3002
+    }
     ai_log_ports = {
       claude_code    = 10311
       codex_cli      = 10312

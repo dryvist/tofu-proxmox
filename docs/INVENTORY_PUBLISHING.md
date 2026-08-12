@@ -23,3 +23,30 @@ an older contract. A full Terrakube workspace run is the only publish boundary.
 During migration, the former AWS inventory object is intentionally forgotten
 without destruction. Retire that orphan only after every consumer proves the
 RustFS path through its end-to-end validation.
+
+## VDI split-tunnel keys
+
+A guest running a VPN client installs its own default route, so the guest's
+replies to anything outside its own subnet leave through the tunnel instead of
+the LAN. Inbound connections still arrive, which makes the result look like a
+broken guest rather than a routing change: established sessions drop and
+configuration management can no longer reach it.
+
+Two keys carry what a consumer needs to pin chosen networks back to the LAN:
+
+| Key | Scope | Meaning |
+| --- | --- | --- |
+| `vms.<name>.gateway` | per VM | The guest's own LAN gateway, derived from its VLAN. Published because the guest cannot report it once a VPN client owns the default route. Independent of how the guest is addressed — DHCP-first guests get the same value, which is what their lease hands out. |
+| `vdi_preserved_cidrs` | top level | Subnets that stay reachable over the LAN, resolved from the `vdi_preserved_vlans` keys in the desired state against `network_cidrs`. Empty disables the behaviour. |
+
+`vdi_preserved_vlans` is a short opt-in list rather than every VLAN on purpose:
+routing an entire estate past the tunnel breaks whatever the VPN exists to
+reach as soon as a network behind it overlaps one of those subnets. List only
+what must survive — at minimum the operator's own network and the one
+configuration management runs from, without which no converge can reach the
+guest while the VPN is connected.
+
+A publish precondition rejects a guest tagged `vdi` that has no gateway, so a
+guest whose VLAN does not resolve fails the plan rather than publishing
+destinations with nothing to point them at. `ansible-proxmox-apps` consumes both keys in its
+`vdi_local_routes` role, applied to every guest carrying the `vdi` tag.

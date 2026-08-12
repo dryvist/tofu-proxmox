@@ -65,6 +65,26 @@ resource "aws_s3_object" "ansible_inventory" {
       error_message = "One or more VMs have an empty ip/node/hostname/vmid or an unsupported ansible_connection in the inventory. Inspect module.vms output and deployment.json."
     }
     precondition {
+      # A VDI guest's persistent routes are (destination, gateway) pairs, and the
+      # gateway half cannot be discovered inside the guest — a VPN client owns the
+      # default route by the time the route matters. A null gateway here would
+      # publish destinations with nothing to point them at, and the role would
+      # skip silently, which is exactly the shape of failure this repo keeps
+      # getting bitten by.
+      #
+      # This guard first shipped asserting that a VDI guest was STATICALLY
+      # addressed, because the published gateway was the cloud-init one, which is
+      # null on a lease. That was backwards: the estate is DHCP-first by design,
+      # so it rejected every real VDI guest. The gateway now derives from the
+      # guest's VLAN and holds either way; what remains worth asserting is that
+      # something is actually published.
+      condition = length(local.ansible_inventory.vdi_preserved_cidrs) == 0 || alltrue([
+        for k, v in local.ansible_inventory.vms :
+        v.gateway != null && v.gateway != "" if contains(try(v.tags, []), "vdi")
+      ])
+      error_message = "A guest tagged \"vdi\" has no gateway published, but vdi_preserved_cidrs is non-empty — its LAN routes cannot be built. Check that the guest's vlan resolves in network_cidrs; the gateway is the .1 of that subnet."
+    }
+    precondition {
       condition = alltrue([
         for k, v in local.ansible_inventory.docker_vms :
         v.ip != null && v.ip != "" &&
@@ -101,11 +121,11 @@ resource "aws_s3_object" "ansible_inventory" {
       condition = alltrue([
         for k in [
           "service_ports", "syslog_ports", "syslog_port_map", "netflow_ports",
-          "notification_ports", "vector_db_ports", "memory_ports", "media_ports",
-          "ai_log_ports", "ai_log_routing", "serving",
+          "notification_ports", "vector_db_ports", "memory_ports", "extract_ports",
+          "media_ports", "ai_log_ports", "ai_log_routing", "serving",
         ] : can(local.ansible_inventory.constants[k])
       ])
-      error_message = "pipeline_constants is missing one or more required keys (service_ports, syslog_ports, syslog_port_map, netflow_ports, notification_ports, vector_db_ports, memory_ports, media_ports, ai_log_ports, ai_log_routing, serving). Inspect constants.tf."
+      error_message = "pipeline_constants is missing one or more required keys (service_ports, syslog_ports, syslog_port_map, netflow_ports, notification_ports, vector_db_ports, memory_ports, extract_ports, media_ports, ai_log_ports, ai_log_routing, serving). Inspect constants.tf."
     }
     precondition {
       condition = alltrue([

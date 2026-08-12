@@ -8,7 +8,7 @@ locals {
   # deterministic; skip-missing-peers falls out naturally (an undeclared or
   # gated-off instance simply isn't in var.containers). Adding the next pooled
   # app = add its tag here + one route entry below — nothing else.
-  pooled_backend_tags = ["hindsight", "zammad", "agentgateway"]
+  pooled_backend_tags = ["hindsight", "zammad", "agentgateway", "firecrawl"]
   tag_backend_pools = {
     for tag in local.pooled_backend_tags : tag => [
       for k in sort([
@@ -54,6 +54,13 @@ locals {
   # Postgres cluster), no sticky. Clients — agentgateway's MCP target, Hermes
   # remote memory, Claude Code — all dial the one pooled hostname.
   hindsight_backends = local.tag_backend_pools["hindsight"]
+
+  # Firecrawl page-extraction pool. One instance today, but derived by TAG
+  # rather than by container name on purpose: the hostname carries the node
+  # digit under the multi-instance naming law, so a name literal here would
+  # silently drop the ingress route the moment the guest moves nodes
+  # (locals-ingress-backends.tf filters routes whose backend key is absent).
+  firecrawl_backends = local.tag_backend_pools["firecrawl"]
 
   # Zammad HA pool (sticky sessions at the route).
   zammad_backends = local.tag_backend_pools["zammad"]

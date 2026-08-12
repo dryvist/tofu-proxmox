@@ -66,6 +66,14 @@ locals {
         # this output.
         on_boot = var.vms[k].on_boot
         started = var.vms[k].started
+        # The guest's own LAN gateway. Published because a guest running a VPN
+        # client cannot discover it at converge time: the client owns the
+        # default route by then, so "the current gateway" is the tunnel's.
+        #
+        # vm_lan_gateway, NOT vm_gateway: the latter is the cloud-init value and
+        # is null for DHCP-first guests, which is nearly the whole estate. The
+        # VLAN's gateway is well defined either way and is what DHCP hands out.
+        gateway = local.vm_lan_gateway[k]
         tags    = v.tags
         pool_id = v.pool_id
       }
@@ -124,6 +132,18 @@ locals {
     # Per-node ZFS storage to provision (pools/datasets/quotas) - ansible-proxmox creates
     # and registers these; Terraform only references the datastore by id on disks.
     node_storage = var.node_storage
+    # Subnets a VDI guest keeps reaching over its own LAN rather than through a
+    # VPN client running inside it. Resolved from var.vdi_preserved_vlans against
+    # network_cidrs so no subnet is ever written down twice; see that variable for
+    # why this is a short opt-in list and not every VLAN. Empty = feature off.
+    #
+    # nonsensitive() is the same call locals-vm-network.tf already makes for every
+    # guest address derived from this map: the inventory publishes those addresses,
+    # so the subnets they sit in are not independently secret. It is scoped to the
+    # listed keys, so the rest of network_cidrs stays out of the artifact.
+    vdi_preserved_cidrs = [
+      for vlan in var.vdi_preserved_vlans : nonsensitive(var.network_cidrs[vlan])
+    ]
     # Domain for FQDN resolution (e.g., example.com)
     domain = var.domain
     # Base LXC appliance template every container is created from. Published so

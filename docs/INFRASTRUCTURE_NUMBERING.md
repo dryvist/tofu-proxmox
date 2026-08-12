@@ -123,6 +123,26 @@ New guests adopt the positional scheme immediately; do not assign new flat 3-dig
 
 ---
 
+## The 9xxx template band
+
+Templates sit in 9000-9999 and stay outside the positional scheme. A template is
+not a guest: it never runs, never holds an address, and never belongs to a trust
+tier, so encoding one into its ID would say nothing true.
+
+| Range | Holds |
+| --- | --- |
+| 9000-9099 | Linux cloud-image templates |
+| 9200-9209 | Appliance templates built from an installed guest |
+| 9210-9219 | Windows templates, one per OS, built by Packer |
+
+A template is cloned by `clone_template.template_id` in `deployment.json`. The
+clone takes a normal positional VMID; only the source keeps its 9xxx ID.
+
+Templates are node-local unless their storage is shared, so a clone must be
+placed on the node holding its template.
+
+---
+
 ## Resource pools
 
 Guests are grouped into Proxmox resource pools by function (`pool_id` in `deployment.json`),
