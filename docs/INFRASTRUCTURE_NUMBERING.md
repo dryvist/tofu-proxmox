@@ -18,6 +18,23 @@ maintenance windows allow — they are **not** the target.
 **FUTURE LAW**: For all new multi-instance containers or VMs, the hostname suffix MUST be two digits where the **first digit is the Proxmox node ID**.
 For example, instead of `zammad-1` and `zammad-2`, use `zammad-20` (Node 2, instance 0) and `zammad-30` (Node 3, instance 0).
 
+## Node DNS naming standard
+
+Node **DNS** names are hardware-keyed, not incremental: `pve-` + `r` (rack server, matching the
+vendor's R-series letter) or `w` (workstation), then the model number. BMC names use the same
+model key (`idrac-r540`, `idrac-r710`).
+
+| Old DNS name | New DNS name |
+| --- | --- |
+| pve1 | pve-w1700 |
+| pve2 | pve-r410 (retired) |
+| pve3 | pve-r710 |
+| pve4 | pve-w5900 |
+| pve540 | pve-r540 |
+
+DNS names only. The Proxmox cluster node identifier (`node_name`, corosync) is separate and
+unchanged.
+
 ## The VMID positional scheme (current)
 
 ```text
