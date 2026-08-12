@@ -37,7 +37,11 @@ locals {
   vm_address = {
     for k, v in var.vms : k => (
       try(v.dhcp, false)
-      ? (var.domain != "" ? "${v.name}.${var.domain}" : v.name)
+      ? (
+        local.guest_domain[v.vlan] != ""
+        ? "${v.name}.${local.guest_domain[v.vlan]}"
+        : v.name
+      )
       : split("/", local.vm_ipv4[k])[0]
     )
   }

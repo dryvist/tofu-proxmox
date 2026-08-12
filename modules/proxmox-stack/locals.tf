@@ -1,5 +1,17 @@
 # Local values for common computed expressions
 locals {
+  # Per-VLAN DNS domain a DHCP-first guest's FQDN is published under. Falls
+  # back to the estate apex `domain` for any VLAN not listed in
+  # `network_domains` — see that variable for why a VLAN needs an entry at all.
+  #
+  # keys(var.network_cidrs) inherits that map's `sensitive` marking even though
+  # a VLAN name isn't itself secret — the same non-secret-derived-from-sensitive
+  # case documented below for splunk_derived_ip and friends. Wrapped once here,
+  # at the single point of definition, rather than at every call site.
+  guest_domain = nonsensitive({
+    for vlan in keys(var.network_cidrs) : vlan => try(var.network_domains[vlan], var.domain)
+  })
+
   # DRY per-VLAN Network Configuration - Single Source of Truth.
   # Every guest IP is derived from its VLAN's CIDR (network-form, from OpenBao)
   # and its VM ID: cidrhost(network_cidrs[vlan], vm_id). The gateway is the .1
@@ -81,7 +93,11 @@ locals {
   container_address = {
     for k, v in var.containers : k => (
       try(v.dhcp, false)
-      ? (var.domain != "" ? "${v.hostname}.${var.domain}" : v.hostname)
+      ? (
+        local.guest_domain[v.vlan] != ""
+        ? "${v.hostname}.${local.guest_domain[v.vlan]}"
+        : v.hostname
+      )
       : split("/", local.container_ipv4[k])[0]
     )
   }

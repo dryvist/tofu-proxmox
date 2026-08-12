@@ -79,6 +79,19 @@ The explicit `openbao-01` / `openbao-02` entries in the `containers` map and the
 `openbao_cluster` generator's suffixes (10/20/21/30/31) are **both live** — they
 are one cluster, not two competing schemes.
 
+### Voter addressing: static and derived, never leased
+
+Every voter's `ip_config` is `cidrhost()` over the cluster's own VLAN CIDR and
+the peer suffix (`main.tf`'s `openbao_generated_containers`), not `dhcp` plus a
+reserved octet. OpenBao is critical-tier — every guest in the estate resolves
+its credentials here, so a voter that changed address on a lease renewal would
+force a re-converge of everything pointing at it. The address is declared in
+exactly one place and nothing mirrors it into a controller reservation or a
+separately published DNS record, so there is no second copy to disagree with.
+This briefly moved to `dhcp` + a reserved octet; that made a critical service's
+address depend on a lease *and* declared the address a second and third time,
+in the reservation and the zone — reverted.
+
 ### The real risk: voter concentration, not voter count
 
 Seven voters means **quorum is 4**. Losing `proxmox-2` removes **3** voters at
