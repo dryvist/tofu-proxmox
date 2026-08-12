@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.86.2](https://github.com/dryvist/tofu-proxmox/compare/v1.86.1...v1.86.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* **inventory:** mark guest_domain nonsensitive to unblock ansible_inventory ([53442a1](https://github.com/dryvist/tofu-proxmox/commit/53442a15370abb7b8211675353dc943c36a18d72))
+* **inventory:** mark guest_domain nonsensitive to unblock ansible_inventory ([07c2737](https://github.com/dryvist/tofu-proxmox/commit/07c27376c149536a71110d03219154e9d0c59652))
+
 ## [1.86.1](https://github.com/dryvist/tofu-proxmox/compare/v1.86.0...v1.86.1) (2026-08-11)
 
 
