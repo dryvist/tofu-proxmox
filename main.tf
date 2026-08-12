@@ -143,22 +143,8 @@ locals {
         vlan      = local.openbao_cluster.vlan
         hostname  = format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix)
         node_name = peer.node_name
-        # Static, and deliberately so: OpenBao is critical-tier. Every guest in
-        # the estate resolves its credentials here, so a voter that changed
-        # address on a lease renewal would force a re-converge of everything
-        # pointing at it. Critical and network guests (resolvers, ingress,
-        # secrets) are the one exception to the pool-lease default — see the
-        # `dhcp` field in modules/proxmox-stack/variables-containers.tf.
-        #
-        # The address is DERIVED, not hand-typed: cidrhost() over the cluster's
-        # own VLAN CIDR and the peer suffix. It appears in exactly one place —
-        # here — and nothing mirrors it into a reservation or a separately
-        # published record, so there is no second copy to disagree with.
-        #
-        # (This briefly moved to dhcp + a reserved octet. That was the wrong
-        # direction twice over: it made a critical service's address depend on a
-        # lease, and it did so by declaring the address a second and third time,
-        # in the controller's reservation and the DNS zone.)
+        # Static and derived (cidrhost over the cluster's own VLAN + peer
+        # suffix), not dhcp + a reserved octet — see docs/DR_HA.md W6 for why.
         ip_config = {
           ipv4_address = format(
             "%s/%s",
