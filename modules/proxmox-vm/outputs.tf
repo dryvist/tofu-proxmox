@@ -17,6 +17,15 @@ output "vm_details" {
     description = v.description
     tags        = v.tags
     pool_id     = v.pool_id
+    # The VM's live first-NIC MAC. Deliberately NOT v.mac_addresses: that list is
+    # reported by the guest agent and enumerates every interface the OS has, so on
+    # a docker host it churns with each container veth. network_device[0] is the
+    # configured NIC and is stable.
+    #
+    # Lower-cased for the same reason as the container output: the API answers in
+    # upper case, local.vm_mac builds lower case, and the artifact should not flip
+    # case on already-published guests.
+    mac_address = try(lower(v.network_device[0].mac_address), null)
   } }
 }
 

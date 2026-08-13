@@ -28,13 +28,21 @@ locals {
         vmid     = v.id
         hostname = var.containers[k].hostname
         ip       = local.container_address[k] # static: per-VLAN cidrhost IP (CIDR stripped); DHCP guests: FQDN (DNS-first)
-        # Deterministic MAC for DHCP-first guests (null for static guests). It
-        # keeps the guest's lease — and therefore its address and its lease-table
-        # DNS name — stable across a rebuild. It is NOT a reservation key: this
+        # The guest's live MAC, published for EVERY container.
+        #
+        # DHCP-first guests carry the deterministic MAC from local.container_mac,
+        # which keeps the lease — and therefore the address and the lease-table DNS
+        # name — stable across a rebuild. It is NOT a reservation key: this
         # inventory no longer publishes a reserved address, because a leased
         # guest's address exists only in the lease. Consumers address these guests
         # by the FQDN in `ip`, which is the single name for them.
-        mac  = try(var.containers[k].dhcp, false) ? local.container_mac[k] : null
+        #
+        # Static guests used to publish null here, which left them unnameable
+        # downstream: a static guest never sends DHCP option 12, so the network
+        # controller learns no hostname and lists it by MAC. A client alias keyed
+        # on the MAC is the only fix, and it needs this field populated. The value
+        # is READ from the provider, never assigned, so no live guest is touched.
+        mac  = v.mac_address
         node = v.node_name
         # Connection settings for proxmox_pct_remote (community.proxmox)
         ansible_connection = "community.proxmox.proxmox_pct_remote"
@@ -46,13 +54,14 @@ locals {
     # Regular VMs - using SSH connection
     # DRY: static VMs advertise their vm_id-derived IP; DHCP-first VMs advertise
     # their FQDN (local.vm_address) with a lease-stabilizing deterministic MAC,
-    # exactly like the containers block above.
+    # exactly like the containers block above — and, also like that block, every
+    # VM publishes its MAC so a static one can still be named downstream.
     vms = {
       for k, v in module.vms.vm_details : k => {
         vmid               = v.id
         hostname           = v.name
         ip                 = local.vm_address[k]
-        mac                = try(var.vms[k].dhcp, false) ? local.vm_mac[k] : null
+        mac                = v.mac_address
         node               = v.node_name
         ansible_connection = try(var.vms[k].ansible_connection, "ssh")
         # Whether the guest is expected to be running. A guest only an operator
@@ -84,7 +93,7 @@ locals {
         vmid               = v.id
         hostname           = v.name
         ip                 = local.vm_address[k]
-        mac                = try(var.vms[k].dhcp, false) ? local.vm_mac[k] : null
+        mac                = v.mac_address
         node               = v.node_name
         ansible_connection = "ssh"
         tags               = v.tags

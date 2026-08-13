@@ -11,6 +11,15 @@ output "container_details" {
     description = v.description
     tags        = v.tags
     pool_id     = v.pool_id
+    # The guest's live first-NIC MAC, whether we assigned it or the provider did.
+    # `mac_address` is optional+computed, so this reads back the auto-generated
+    # address on static guests instead of reassigning one - nothing on a running
+    # container changes because this is published.
+    #
+    # Lower-cased because the API returns upper-case while local.container_mac
+    # builds lower-case: without this, publishing the computed value would flip
+    # the case of every DHCP guest's MAC and churn the artifact for no reason.
+    mac_address = try(lower(v.network_interface[0].mac_address), null)
   } }
 }
 
