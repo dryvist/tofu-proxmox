@@ -6,6 +6,22 @@
 This repo is the **single source of truth** for infrastructure: VMs,
 containers, IPs, ports, and firewall rules.
 
+> **Standing policy — Nautobot is the system of record for infrastructure
+> inventory.** Nautobot owns every fact it can model: device identity,
+> hardware (serials, asset tags, models), interfaces and MAC addresses, IP
+> addresses and their DNS names, rack and power topology, and location. No
+> dynamic — or possibly-dynamic — configuration may live outside it. Every
+> other system references Nautobot rather than keeping its own copy: OpenTofu
+> reads from it at plan time, Ansible reads from it, and docs point at it
+> instead of restating its contents.
+>
+> **Migration status — direction, not accomplished fact.** Nothing reads from
+> Nautobot yet. This repo still derives every IP from `deployment.json` and
+> publishes `ansible_inventory.json`; `tofu-unifi` still reads its own
+> `deployment/*.json`; Ansible still resolves hosts from the published
+> inventory artifact. That gap is the defect being closed, not a design to
+> preserve.
+>
 > **Authority flip in design (not started).** A separately-gated effort will
 > move network intent (IPs, VLANs, DNS names, firewall intent) to Nautobot as
 > the source of truth, leaving this repo authoritative for **guest lifecycle
