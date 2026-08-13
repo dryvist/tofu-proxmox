@@ -109,7 +109,16 @@ The node to act on is **not** a credential: it comes from `deployment.json`
 ## Pipeline architecture (this repo's role)
 
 This repo is the **single source of truth** for infrastructure: VMs,
-containers, IPs, ports, and firewall rules. The full architecture — the
+containers, IPs, ports, and firewall rules.
+
+> **Standing policy**: Nautobot is the system of record for infrastructure
+> inventory — device identity, hardware, interfaces and MAC addresses, IP
+> addresses and their DNS names, rack/power topology, and location. Every
+> other system reads from it and keeps no second copy. **Direction, not
+> current behaviour**: nothing reads from Nautobot yet, so the flow described
+> below is still what runs. Never add a *new* copy of a fact Nautobot models.
+
+The full architecture — the
 planned Nautobot authority flip, downstream repo relationships, and the
 inventory publish/sync flow — moved to
 [docs/PIPELINE_ARCHITECTURE.md](docs/PIPELINE_ARCHITECTURE.md) to keep this

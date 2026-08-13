@@ -23,6 +23,15 @@ pools, storage declarations, topology, domain, and the public SSH key. OpenBao
 stores all credentials and private keys. The root configuration reads both
 natively and passes typed values to `modules/proxmox-stack`.
 
+Nautobot is the system of record for infrastructure inventory — device
+identity, hardware, interfaces and MAC addresses, IP addresses and their DNS
+names, rack and power topology, and location. Inputs here must never become a
+second copy of a fact Nautobot models; the target is for this configuration to
+read those facts from Nautobot directly. That read does not exist yet:
+`deployment.json` remains the live input described above, and closing that gap
+is the work, not the design. See
+[`PIPELINE_ARCHITECTURE.md`](./PIPELINE_ARCHITECTURE.md).
+
 OpenBao cluster peers are expanded deterministically from the shared cluster
 shape in the deployment object. The root contract fails closed when load-
 bearing collections or topology values are absent.
