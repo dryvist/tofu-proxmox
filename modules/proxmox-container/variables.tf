@@ -26,10 +26,14 @@ variable "containers" {
     # Mount points
     # `size` is optional: omit it for host-directory bind-mounts (volume is a
     # host path like "/example-pool/media"), set it to allocate a new managed volume.
+    # `backup` defaults to true, inverting the provider's default of false —
+    # a data mount excluded from backups produces an archive holding only the
+    # rootfs, and the backup job still reports success.
     mount_points = optional(list(object({
       volume = string
       size   = optional(string)
       path   = string
+      backup = optional(bool, true)
     })), [])
 
     # Device passthrough (e.g. /dev/net/tun for WireGuard inside an LXC).

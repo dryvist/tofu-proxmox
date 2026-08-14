@@ -59,10 +59,25 @@ variable "containers" {
     # Mount points (additional volumes mounted into the container)
     # Omit `size` for host-directory bind-mounts (volume = host path such as
     # "/example-pool/media"); set it to allocate a new managed volume.
+    # `backup` defaults to TRUE here, inverting the provider's own default of
+    # false. A volume mount point is where a container's data lives, so the
+    # safe default is the one that includes it; false silently produces a
+    # backup containing only the rootfs, and a vzdump job over such a guest
+    # reports success having captured none of its data.
+    #
+    # Set it to false only for a mount whose contents are reproducible or are
+    # backed up by their own writer, and say which in a comment there.
+    #
+    # NOTE: `mount_point` is in this module's ignore_changes (see
+    # modules/proxmox-container/main.tf), so mounts are effectively set-once.
+    # This default therefore governs newly created containers; an existing
+    # container needs the flag set out of band, and the change lands in the
+    # container's pending config until it next stops.
     mount_points = optional(list(object({
       volume = string
       size   = optional(string)
       path   = string
+      backup = optional(bool, true)
     })), [])
 
     # Host device nodes mapped into the container. Used by download-vpn for

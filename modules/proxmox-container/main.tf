@@ -131,6 +131,10 @@ resource "proxmox_virtual_environment_container" "containers" {
       volume = mount_point.value.volume
       size   = mount_point.value.size
       path   = mount_point.value.path
+      # The provider defaults this to false, which excludes the mount from
+      # vzdump entirely. See variables-containers.tf for why the module
+      # default inverts it.
+      backup = mount_point.value.backup
     }
   }
 
