@@ -43,6 +43,7 @@ locals {
     "postgres-apps",
     "qdrant",
     "radarr",
+    "s3",
     "seerr",
     "sonarr",
     "sortarr",
