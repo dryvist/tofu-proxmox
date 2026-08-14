@@ -29,6 +29,10 @@ locals {
   # Guests whose live node and state node have diverged. Empty is the steady
   # state; a name here is a claim that the guest is live and mis-tracked.
   adopt_containers = [
+    "ai-runner-pool-01",
+    "openbao-41",
+    "openbao-42",
+    "squid",
     "nautobot",
     "download-vpn",
     "hindsight-2",
@@ -42,6 +46,7 @@ locals {
     "postgres-ai-2",
     "postgres-apps",
     "qdrant",
+    "s3",
     "radarr",
     "seerr",
     "sonarr",
@@ -117,6 +122,20 @@ import {
 import {
   to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["traefik-30"]
   id = "${local.containers["traefik-30"].node_name}/${local.containers["traefik-30"].vm_id}"
+}
+
+# Adoption of a VM whose state entry points at a node it no longer runs on.
+#
+# Same divergence as the container list above, but VMs need their own block:
+# the adopt list drives the container resource, and a VM is a different
+# resource type, so a VM named there would silently never be adopted.
+#
+# Written out rather than derived from a list because there is one. Promote it
+# to a `for_each` over a `local.adopt_vms` list the moment a second appears —
+# a one-element loop is harder to read than the statement it replaces.
+import {
+  to = module.homelab.module.vms.proxmox_virtual_environment_vm.vms["docker-host"]
+  id = "${local.deployment.vms["docker-host"].node_name}/${local.deployment.vms["docker-host"].vm_id}"
 }
 
 # Adoption of the Windows VM install ISOs. They were downloaded to the node's
