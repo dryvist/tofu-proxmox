@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.88.0](https://github.com/dryvist/tofu-proxmox/compare/v1.87.0...v1.88.0) (2026-08-14)
+
+
+### Features
+
+* **nodes:** publish a node's inventory-system device name ([#937](https://github.com/dryvist/tofu-proxmox/issues/937)) ([b86e7e7](https://github.com/dryvist/tofu-proxmox/commit/b86e7e76e9c7124bb577f22487e9345ad0e9f897))
+
 ## [1.87.0](https://github.com/dryvist/tofu-proxmox/compare/v1.86.2...v1.87.0) (2026-08-14)
 
 
