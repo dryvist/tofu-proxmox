@@ -92,6 +92,16 @@ variable "nodes" {
     # services built on the same pattern); does not affect anything else a
     # commissioned node already runs.
     services_enabled = optional(bool, true)
+    # Name this node carries in the inventory system of record, when it differs
+    # from the key. Consumers match that system on name alone, so a node whose
+    # record was created ahead of a rename needs the record's name published
+    # here — otherwise the consumer creates a second record and strands the
+    # first. Unset means the two already agree.
+    #
+    # Declaring it is what makes it survive: this type strips any attribute it
+    # does not name, so an undeclared key would vanish between the deployment
+    # object and ansible_inventory with no error.
+    nautobot_device_name = optional(string)
   }))
   default = {}
 }
