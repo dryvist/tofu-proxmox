@@ -24,7 +24,7 @@ Node **DNS** names are hardware-keyed, not incremental: `pve-` + `r` (rack serve
 vendor's R-series letter) or `w` (workstation), then the model number. BMC names use the same
 model key (`idrac-r540`, `idrac-r710`).
 
-| Old DNS name | New DNS name |
+| Old name | New name |
 | --- | --- |
 | pve1 | pve-w1700 |
 | pve2 | pve-r410 (retired) |
@@ -32,8 +32,8 @@ model key (`idrac-r540`, `idrac-r710`).
 | pve4 | pve-w5900 |
 | pve540 | pve-r540 |
 
-DNS names only. The Proxmox cluster node identifier (`node_name`, corosync) is separate and
-unchanged.
+The cluster node identifier (`node_name`) changes with the name, not only DNS. `node_name` is
+`ForceNew` on both guest resource types, so guest adoption follows the ordering in `imports.tf`.
 
 ## The VMID positional scheme (current)
 
