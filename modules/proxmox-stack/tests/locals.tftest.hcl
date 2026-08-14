@@ -784,10 +784,21 @@ run "inventory_publishes_one_address_authority_per_guest" {
     error_message = "the inventory must not publish a reserved address for any guest"
   }
 
-  # Static guest carries no DHCP MAC — nothing to stabilize, its address is declared.
+  # EVERY guest publishes a MAC, static ones included. A static guest sends no
+  # DHCP option 12, so the network controller can only name it from a client
+  # alias, and an alias needs this field. Publishing null here is what left them
+  # listed as bare MACs in the console.
   assert {
-    condition     = output.ansible_inventory.containers["apt-cacher-ng"].mac == null
-    error_message = "static guest inventory mac must be null"
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : c.mac != null])
+    error_message = "every container must publish a mac, including static guests"
+  }
+
+  # The published MAC is lower-case. The API answers in upper case while the
+  # deterministic MAC is built lower-case; without normalization, adopting the
+  # computed value would flip case on every already-published guest.
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : c.mac == lower(c.mac)])
+    error_message = "published container mac must be lower-case"
   }
 
   # Asserted by derivation, not a literal, so no real address appears here.
