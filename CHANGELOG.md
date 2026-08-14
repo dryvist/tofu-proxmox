@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.87.0](https://github.com/dryvist/tofu-proxmox/compare/v1.86.2...v1.87.0) (2026-08-14)
+
+
+### Features
+
+* **inventory:** publish every guest's MAC, not only DHCP-first ones ([#931](https://github.com/dryvist/tofu-proxmox/issues/931)) ([f6f2ff3](https://github.com/dryvist/tofu-proxmox/commit/f6f2ff3ff62c888295015df22ad18147af56f465))
+
 ## [1.86.2](https://github.com/dryvist/tofu-proxmox/compare/v1.86.1...v1.86.2) (2026-08-12)
 
 
