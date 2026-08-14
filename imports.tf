@@ -46,6 +46,7 @@ locals {
     "postgres-ai-2",
     "postgres-apps",
     "qdrant",
+    "s3",
     "radarr",
     "seerr",
     "sonarr",
