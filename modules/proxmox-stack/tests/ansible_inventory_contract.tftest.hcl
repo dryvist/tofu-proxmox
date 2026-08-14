@@ -1018,6 +1018,33 @@ run "ansible_inventory_nodes_commissioned_propagated" {
   }
 }
 
+# The node object type strips any attribute it does not declare, and it does so
+# silently — an undeclared key reaches neither the output nor an error. The
+# consumer of this field matches its records by name alone, so losing it makes
+# that consumer create a duplicate record rather than match the existing one.
+# Assert it survives the type, and that omitting it stays null rather than
+# inventing a value.
+run "ansible_inventory_nodes_device_name_propagated" {
+  command = plan
+
+  variables {
+    nodes = {
+      proxmox-1 = { role = "node-1", nautobot_device_name = "renamed-1" }
+      proxmox-3 = { role = "node-3" }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.nodes["proxmox-1"].nautobot_device_name == "renamed-1"
+    error_message = "nautobot_device_name must survive the node object type and reach ansible_inventory"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.nodes["proxmox-3"].nautobot_device_name == null
+    error_message = "an unset nautobot_device_name must publish as null, so a consumer can fall back to the key"
+  }
+}
+
 run "ansible_inventory_node_storage_propagated" {
   command = plan
 
