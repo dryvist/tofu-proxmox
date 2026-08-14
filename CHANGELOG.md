@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.89.0](https://github.com/dryvist/tofu-proxmox/compare/v1.88.0...v1.89.0) (2026-08-14)
+
+
+### Features
+
+* **iso:** serve install media from a configurable object prefix ([#941](https://github.com/dryvist/tofu-proxmox/issues/941)) ([9784431](https://github.com/dryvist/tofu-proxmox/commit/9784431749ec02ebfb49d0ff50e666dd16f19f3e))
+
+
+### Bug Fixes
+
+* **containers:** include volume mount points in backups by default ([#942](https://github.com/dryvist/tofu-proxmox/issues/942)) ([4dd5535](https://github.com/dryvist/tofu-proxmox/commit/4dd55354a60697e2e42547ec277e6870209b460d))
+
 ## [1.88.0](https://github.com/dryvist/tofu-proxmox/compare/v1.87.0...v1.88.0) (2026-08-14)
 
 
