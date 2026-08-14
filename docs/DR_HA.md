@@ -56,28 +56,37 @@ A non-destructive failover drill
 (`ansible-proxmox` `scripts/ha-failover-drill.sh`) proves auto-restart +
 relocation against a disposable test guest only.
 
-## W6 — OpenBao Raft: seven voters, unevenly placed
+## W6 — OpenBao Raft: nine members, still unevenly placed
 
-**Verified live** against `sys/storage/raft/configuration` and
-`sys/storage/raft/autopilot/state`: the cluster is **seven voters, all
-`voter=true`, all `healthy=true`, all on the same Raft term and index**, with
-one elected leader. Every one of them carries a real config and live Raft data —
-the `openbao_cluster` generator's guests are converged members, not shells.
+**Verified live**: nine members, every one `initialized` and unsealed, all
+reporting the same cluster id, with one elected leader. Each carries a real
+config and live Raft data — the `openbao_cluster` generator's guests are
+converged members, not shells.
 
-| Voter | VMID | Node |
-| --- | --- | --- |
-| `openbao-01` | 110040 | `proxmox-1` |
-| `openbao-10` | 110010 | `proxmox-1` |
-| `openbao-02` | 110140 | `proxmox-2` |
-| `openbao-20` | 110020 | `proxmox-2` |
-| `openbao-21` | 110021 | `proxmox-2` |
-| `openbao-30` | 110030 | `proxmox-3` |
-| `openbao-31` | 110031 | `proxmox-3` |
+| Member | VMID | Node | Voter |
+| --- | --- | --- | --- |
+| `openbao-01` | 110040 | `proxmox-1` | yes |
+| `openbao-10` | 110010 | `proxmox-1` | yes |
+| `openbao-02` | 110140 | `proxmox-2` | yes |
+| `openbao-20` | 110020 | `proxmox-2` | yes |
+| `openbao-21` | 110021 | `proxmox-2` | yes |
+| `openbao-30` | 110030 | `proxmox-3` | yes |
+| `openbao-31` | 110031 | `proxmox-3` | yes |
+| `openbao-41` | 110041 | `proxmox-4` | unverified |
+| `openbao-42` | 110042 | `proxmox-4` | unverified |
 
-Per node: **`proxmox-1` 2 · `proxmox-2` 3 · `proxmox-3` 2 · `proxmox-4` 0.**
+Per node: **`proxmox-1` 2 · `proxmox-2` 3 · `proxmox-3` 2 · `proxmox-4` 2.**
 The explicit `openbao-01` / `openbao-02` entries in the `containers` map and the
-`openbao_cluster` generator's suffixes (10/20/21/30/31) are **both live** — they
-are one cluster, not two competing schemes.
+`openbao_cluster` generator's suffixes are **both live** — they are one cluster,
+not two competing schemes.
+
+The seven `yes` rows come from a direct read of
+`sys/storage/raft/configuration` and `sys/storage/raft/autopilot/state`, which
+showed all seven `voter=true`, `healthy=true`, on one term and index. The
+`proxmox-4` pair are **declared** voters and are live and unsealed, but their
+voter flag has not been read back. Reading it needs a capability no routine
+role carries, so treat the pair as voters when sizing a quorum and as
+non-voters when counting on them — whichever is worse for the decision.
 
 ### Voter addressing: static and derived, never leased
 
@@ -94,18 +103,25 @@ in the reservation and the zone — reverted.
 
 ### The real risk: voter concentration, not voter count
 
-Seven voters means **quorum is 4**. Losing `proxmox-2` removes **3** voters at
-once, leaving exactly 4 — quorum holds, with **zero remaining headroom**. Any
-further voter loss after that seals the cluster.
+Count the `proxmox-4` pair as voters and nine members means **quorum is 5**.
+Losing `proxmox-2` removes **3** at once, leaving 6 — quorum holds with **one
+loss of headroom**. Losing any other single node removes 2, leaving 7.
 
-**Autopilot's `failure_tolerance` hides this.** It reports `3`, because it
-counts *server* losses and is blind to which hypervisor each voter sits on.
-Three independent guest failures are survivable; **one hypervisor failure plus
-one guest is not.** Never read `failure_tolerance` as a node-loss budget.
-
-Rebalancing to an even spread (and using `proxmox-4`, which carries none) is the
-open work. It is a placement change in `deployment.json` plus a converge — never
+That is better than the seven-member layout it replaced, where losing
+`proxmox-2` left exactly quorum and any further loss sealed the cluster. The
+concentration itself has not been fixed: `proxmox-2` still carries three, so it
+is still the node whose loss costs the most. An even spread is the remaining
+work, and it is a placement change in `deployment.json` plus a converge — never
 a hand-run membership edit.
+
+**Autopilot's `failure_tolerance` hides this.** It counts *server* losses and is
+blind to which hypervisor each member sits on. Independent guest failures are
+survivable up to that number; **one hypervisor failure plus one guest may not
+be.** Never read `failure_tolerance` as a node-loss budget.
+
+**Before taking a node out deliberately**, count what is left rather than
+trusting this table — placement moves. Do not overlap a planned node outage
+with any other work that stops a member.
 
 ### Removing an OpenBao guest — mandatory precondition
 
