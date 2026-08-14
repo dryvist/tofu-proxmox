@@ -5,6 +5,8 @@
   "environment": "homelab",
   "domain": "example.com",
   "vm_ssh_public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleOnly example@example.com",
+  "_iso_base_url_comment": "Base URL (no trailing slash) of the read-only object prefix holding OS install media, consumed by modules/proxmox-stack/iso_downloads.tf. Objects are versioned in the key name (Windows11-25H2.iso, virtio-win-0.1.285.iso) and each is sha256-pinned in the resource, so content that does not match is rejected at download time. OPTIONAL: omit it if you do not build templates -- the placeholder default then fails on an unresolvable host rather than fetching something unintended.",
+  "iso_base_url": "https://s3.example.com/isos",
   "_llm_large_serving_comment": "Heavy-tier LLM serving host. Both keys are OPTIONAL and exist because this host is a fixed-address reservation made by the network IaC, not a PVE guest -- it never appears in `containers`, so unlike every other host its address cannot be derived as cidrhost(network_cidrs[vlan], vm_id). They are published to the Ansible repositories as constants.serving.host / constants.serving.ip, replacing the copies those repositories used to carry themselves. Omit both if you do not run a heavy tier: consumers report the absence and stop, and that is the intended behaviour -- a substituted default would fail later and somewhere else, as a timeout against an address nobody chose.",
   "llm_large_serving_host": "llm-large-example",
   "llm_large_serving_ip": "192.0.2.10",

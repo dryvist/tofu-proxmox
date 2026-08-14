@@ -18,6 +18,11 @@
       "type": "string",
       "minLength": 1
     },
+    "iso_base_url": {
+      "type": "string",
+      "pattern": "^https?://[^ ]+[^/ ]$",
+      "description": "Base URL of the internal read-only object prefix holding OS install media. No trailing slash: the ISO resources append their own separator, so a trailing slash yields a double slash and a 404 mid-apply."
+    },
     "network_cidrs": {
       "type": "object",
       "minProperties": 1,

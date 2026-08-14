@@ -12,6 +12,24 @@ variable "datastore_iso" {
   default     = "local"
 }
 
+# A whole base URL rather than a host composed from var.domain: the scheme,
+# name and port of the object store are all environment-specific, so the value
+# is supplied from the private desired-state object the same way datastore_iso
+# is. The committed default is a non-functional placeholder.
+variable "iso_base_url" {
+  description = "Base URL of the read-only object prefix holding install media (no trailing slash). Supplied from the private desired state; the committed default is a non-functional placeholder."
+  type        = string
+  default     = "https://s3.example.com/isos"
+  validation {
+    condition     = can(regex("^https?://", var.iso_base_url))
+    error_message = "iso_base_url must start with http:// or https:// -- the provider's download-url API rejects anything else."
+  }
+  validation {
+    condition     = !endswith(var.iso_base_url, "/")
+    error_message = "iso_base_url must not end with a slash; the ISO resources append their own path separator."
+  }
+}
+
 variable "datastore_id" {
   description = "Datastore ID for Splunk VM disk storage"
   type        = string
