@@ -183,6 +183,11 @@ module "homelab" {
   domain                  = local.deployment.domain
   environment             = try(local.deployment.environment, "homelab")
   host_services           = try(local.deployment.host_services, {})
+  # Install-media object prefix. Optional because most applies never touch a
+  # template build; when the key is absent the module's placeholder default
+  # fails at download time (unresolvable host) rather than fetching the wrong
+  # file, and every object is sha256-pinned regardless.
+  iso_base_url = try(local.deployment.iso_base_url, "https://s3.example.com/isos")
   # Heavy-tier LLM serving host: a tofu-unifi reservation rather than a PVE
   # guest, so it has no vm_id to derive an address from and must be described
   # explicitly. Optional (try/"") because most applies have nothing to do with
