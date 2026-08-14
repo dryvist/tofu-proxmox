@@ -18,11 +18,11 @@ maintenance windows allow — they are **not** the target.
 **FUTURE LAW**: For all new multi-instance containers or VMs, the hostname suffix MUST be two digits where the **first digit is the Proxmox node ID**.
 For example, instead of `zammad-1` and `zammad-2`, use `zammad-20` (Node 2, instance 0) and `zammad-30` (Node 3, instance 0).
 
-## Node DNS naming standard
+## Node naming standard
 
-Node **DNS** names are hardware-keyed, not incremental: `pve-` + `r` (rack server, matching the
-vendor's R-series letter) or `w` (workstation), then the model number. BMC names use the same
-model key (`idrac-r540`, `idrac-r710`).
+Node names are hardware-keyed, not incremental: `pve-` + `r` (rack server, matching the vendor's
+R-series letter) or `w` (workstation), then the model number. BMC names use the same model key
+(`idrac-r540`, `idrac-r710`).
 
 | Old name | New name |
 | --- | --- |
@@ -32,8 +32,8 @@ model key (`idrac-r540`, `idrac-r710`).
 | pve4 | pve-w5900 |
 | pve540 | pve-r540 |
 
-The cluster node identifier (`node_name`) changes with the name, not only DNS. `node_name` is
-`ForceNew` on both guest resource types, so guest adoption follows the ordering in `imports.tf`.
+The cluster identifier `node_name` changes too, not just DNS — and it is `ForceNew` on both
+guest resource types, so adoption follows the ordering in `imports.tf`.
 
 ## The VMID positional scheme (current)
 
@@ -135,8 +135,6 @@ allocation to extend.
 | 190-199 | Load balancer / HAProxy / Splunk mgmt |
 | 200 | Splunk Enterprise VM |
 | 201-299 | Reserved for future VMs |
-
-New guests adopt the positional scheme immediately; do not assign new flat 3-digit IDs.
 
 ---
 
