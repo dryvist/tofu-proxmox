@@ -110,32 +110,11 @@ jobs:
         run: tofu validate -no-color
       - name: OpenTofu Test
         run: tofu test -no-color
-      - name: OpenTofu Init (Proxmox stack module)
-        run: tofu init -backend=false
-        working-directory: modules/proxmox-stack
-      - name: OpenTofu Test (Proxmox stack module)
-        run: tofu test -no-color
-        working-directory: modules/proxmox-stack
-      # tofu test does not recurse into modules/*/tests — gate module suites
-      # explicitly so they can never silently rot again (#580).
-      - name: OpenTofu Init (firewall module)
-        run: tofu init -backend=false
-        working-directory: modules/firewall
-      - name: OpenTofu Test (firewall module)
-        run: tofu test -no-color
-        working-directory: modules/firewall
-      - name: OpenTofu Init (Proxmox VM module)
-        run: tofu init -backend=false
-        working-directory: modules/proxmox-vm
-      - name: OpenTofu Test (Proxmox VM module)
-        run: tofu test -no-color
-        working-directory: modules/proxmox-vm
-      - name: OpenTofu Init (Splunk VM module)
-        run: tofu init -backend=false
-        working-directory: modules/splunk-vm
-      - name: OpenTofu Test (Splunk VM module)
-        run: tofu test -no-color
-        working-directory: modules/splunk-vm
+      # The root invocation above does not recurse into modules/*/tests, so it
+      # passes having run none of them (#580). The script derives the suite set
+      # from the tree and fails on a zero-assertion run.
+      - name: OpenTofu Test (every module suite)
+        run: ./scripts/tofu-test-modules.sh
 
   # Secrets can appear in ANY file, so this runs on every PR (no path filter,
   # never skipped). Official gitleaks-action; org GITLEAKS_LICENSE is seeded.

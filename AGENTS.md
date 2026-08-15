@@ -30,8 +30,15 @@ Static checks run locally without credentials:
 ```bash
 tofu init -backend=false
 tofu validate
-tofu test
+tofu test                      # ROOT ONLY — see below
+./scripts/tofu-test-modules.sh # every module suite
 ```
+
+> **`tofu test` at the root runs none of the module suites.** It does not
+> recurse into `modules/*/tests`, so on its own it reports
+> `Success! 0 passed, 0 failed` and exits 0 — a passing badge over an empty run.
+> The repo's assertions live in `modules/*/tests`; the script above derives the
+> suite set from the tree, prints the assertion count, and fails if it is zero.
 
 Plans, applies, imports, and state operations run only in the private Terrakube
 workspace. OpenBao workload identity is the sole machine-secret path. Applies
@@ -126,8 +133,8 @@ file under the shared 12 KB file-size gate.
 
 ## Development workflow
 
-Static checks (`tofu fmt -check`, `tofu validate`, `tofu test`) run
-automatically in pre-commit and CI — no manual invocation needed.
+Static checks (`tofu fmt -check`, `tofu validate`, `tofu test`, and the module
+suites) run automatically in pre-commit and CI — no manual invocation needed.
 
 Credentialed operations (`tofu plan` against the live state backend) run
 interactively when explicitly preparing to apply; the apply itself is a
