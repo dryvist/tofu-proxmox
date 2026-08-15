@@ -42,6 +42,7 @@ locals {
     homeassistant     = { backend = "homeassistant", port = local.pipeline_constants.service_ports.homeassistant_web, sso = false } # companion apps auth natively
     openproject       = { backend = "openproject", port = local.pipeline_constants.service_ports.openproject_web }
     prometheus        = { backend = "prometheus", port = local.pipeline_constants.service_ports.prometheus_web }
+    homarr            = { backend = "homarr", port = local.pipeline_constants.service_ports.homarr_web }
     # llm is fronted as a load-balanced router pool (llm_router_backends below).
     chat   = { backend = "open-webui", port = local.pipeline_constants.service_ports.open_webui_web }
     qdrant = { backend = "qdrant", port = local.pipeline_constants.vector_db_ports.qdrant_http, sso = false } # vector API for agents/MCP
