@@ -57,8 +57,9 @@ locals {
       # llm_cluster_api = the serving host's gated Cluster Mode endpoint (the
       # two-Mac distributed brain); mirrors the loopback cluster port the same
       # way ollama_api mirrors the standalone proxy.
-      llm_cluster_api = 11440
-      open_webui_web  = 8080
+      llm_cluster_api   = 11440
+      open_webui_web    = 8080
+      docling_serve_api = 5001
       # agentgateway — Rust-written AI-first data plane that unifies MCP
       # (Model Context Protocol), LLM, and A2A (agent-to-agent) traffic into a
       # single proxy. agentgateway_proxy = the MCP/LLM/A2A traffic port callers

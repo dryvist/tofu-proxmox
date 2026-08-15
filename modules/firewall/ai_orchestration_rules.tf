@@ -25,6 +25,7 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.dify_web), source = local.internal_src, comment = "Dify web UI (TCP ${local.svc_ports.dify_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.langgraph_api), source = local.internal_src, comment = "LangGraph server API (TCP ${local.svc_ports.langgraph_api}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.agent_chat_ui_web), source = local.internal_src, comment = "LangGraph Agent Chat UI (TCP ${local.svc_ports.agent_chat_ui_web}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.docling_serve_api), source = local.internal_src, comment = "docling-serve convert API (TCP ${local.svc_ports.docling_serve_api}) from internal" },
   ]
 
   # Langfuse — web UI + OTLP-receive on the same port (path-based). Inbound from
