@@ -49,12 +49,21 @@ jobs:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: filter
         with:
+          # The suite files are `*.tftest.hcl`, which `**.tf` does not match,
+          # and they live under `modules/*/tests/` rather than a root `tests/`.
+          # The gate definition and the runner script are listed too: without
+          # them a change to the gate itself does not run the gate, and CI
+          # reports success having skipped the job that was edited.
           filters: |
             terraform:
               - '**.tf'
               - '**.tfvars'
+              - '**.tftest.hcl'
               - '.terraform.lock.hcl'
+              - 'modules/**/tests/**'
               - 'tests/**'
+              - '.github/workflows/ci-gate.yml'
+              - 'scripts/tofu-test-modules.sh'
 
   # ==========================================================================
   # SHARED GATE — Markdown Lint + File Size via the org reusable gate.
