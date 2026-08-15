@@ -99,6 +99,12 @@ variable "vikunja_container_ids" {
   default     = {}
 }
 
+variable "homarr_container_ids" {
+  description = "Map of Homarr container names to their IDs (homarr tag). Dashboard — inbound homarr_web (7575) from internal; egress internal plus HTTPS/HTTP, because the app is installed by a borrowed community-scripts installer that resolves its release from GitHub at converge time."
+  type        = map(number)
+  default     = {}
+}
+
 variable "zammad_container_ids" {
   description = "Map of Zammad container names to their IDs (zammad tag). Native ITSM/ticketing app (Rails + colocated Elasticsearch + Redis) — inbound zammad_web (8080) from internal; egress outbound-internal only (Postgres/Redis/DNS/Mailpit internal; apt via the internal apt-cacher-ng proxy, no direct package-manager egress)."
   type        = map(number)

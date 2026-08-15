@@ -36,6 +36,7 @@ variables {
       redis_default          = 6379
       nautobot_web           = 8080
       vikunja_web            = 3456
+      homarr_web             = 7575
       authelia_portal        = 9091
       zammad_web             = 8080
       ntp                    = 123
@@ -69,6 +70,7 @@ variables {
       langfuse_web      = 3000
       langgraph_api     = 8124
       agent_chat_ui_web = 3000
+      docling_serve_api = 5001
       otel_traces_grpc  = 4317
       otel_traces_http  = 4318
       otel_metrics_grpc = 4327
@@ -851,6 +853,32 @@ run "vikunja_rule_tracks_constant_and_internal_scope" {
   assert {
     condition     = local.vikunja_services_rules[0].source == "192.168.10.0/24,192.168.20.0/24"
     error_message = "vikunja rule source must be the comma-joined internal networks, got '${local.vikunja_services_rules[0].source}'"
+  }
+}
+
+# --- homarr service rules (community-scripts install-layer pilot) ---
+
+run "homarr_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.10.0/24", "192.168.20.0/24"]
+  }
+
+  # Exactly one live rule: TCP homarr_web (7575) from the internal networks.
+  assert {
+    condition     = length(local.homarr_services_rules) == 1
+    error_message = "homarr_services_rules must be exactly 1 (TCP homarr_web), got ${length(local.homarr_services_rules)}"
+  }
+
+  assert {
+    condition     = local.homarr_services_rules[0].proto == "tcp" && local.homarr_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.homarr_web)
+    error_message = "homarr rule must be TCP tracking service_ports.homarr_web, got proto='${local.homarr_services_rules[0].proto}' dport='${local.homarr_services_rules[0].dport}'"
+  }
+
+  assert {
+    condition     = local.homarr_services_rules[0].source == "192.168.10.0/24,192.168.20.0/24"
+    error_message = "homarr rule source must be the comma-joined internal networks, got '${local.homarr_services_rules[0].source}'"
   }
 }
 
