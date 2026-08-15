@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.90.0](https://github.com/dryvist/tofu-proxmox/compare/v1.89.0...v1.90.0) (2026-08-15)
+
+
+### Features
+
+* **docling:** add a docling-serve guest for document extraction ([#951](https://github.com/dryvist/tofu-proxmox/issues/951)) ([7d737ec](https://github.com/dryvist/tofu-proxmox/commit/7d737ec795783d9120c1df9e94ab0e3df4e6f39d))
+* **homarr:** add firewall, port constant and ingress route for a homarr guest ([#952](https://github.com/dryvist/tofu-proxmox/issues/952)) ([09e748e](https://github.com/dryvist/tofu-proxmox/commit/09e748e130808f5ee3575cbd6f3e7ebe634520aa))
+
 ## [1.89.0](https://github.com/dryvist/tofu-proxmox/compare/v1.88.0...v1.89.0) (2026-08-14)
 
 
