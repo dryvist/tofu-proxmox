@@ -26,13 +26,14 @@ locals {
     # Docker-in-LXC AI services (journald log-driver -> rsyslog program route
     # -> this dedicated port), one index per service/vendor rather than a
     # shared catch-all — see ai_log_index_map below.
-    agentgateway_docker = 10341 # agentgateway + MCP sidecars stack -> index=agentgateway (new)
-    dify_docker         = 10342 # Dify LLMOps stack                 -> index=dify (new)
-    hindsight_docker    = 10343 # Hindsight memory service (HA pair) -> index=hindsight (new)
-    langflow_docker     = 10344 # LangFlow app + postgres           -> index=langflow (new)
-    langfuse_docker     = 10345 # Langfuse observability stack      -> index=langfuse (new)
-    langgraph_docker    = 10346 # LangGraph API + chat UI           -> index=langgraph (new)
-    qdrant_docker       = 10347 # Qdrant vector database            -> index=qdrant (new)
+    agentgateway_docker  = 10341 # agentgateway + MCP sidecars stack -> index=agentgateway (new)
+    dify_docker          = 10342 # Dify LLMOps stack                 -> index=dify (new)
+    hindsight_docker     = 10343 # Hindsight memory service (HA pair) -> index=hindsight (new)
+    langflow_docker      = 10344 # LangFlow app + postgres           -> index=langflow (new)
+    langfuse_docker      = 10345 # Langfuse observability stack      -> index=langfuse (new)
+    langgraph_docker     = 10346 # LangGraph API + chat UI           -> index=langgraph (new)
+    qdrant_docker        = 10347 # Qdrant vector database            -> index=qdrant (new)
+    docling_serve_docker = 10348 # docling-serve OCR/extraction      -> index=docling (new)
   }
 
   # Splunk landing zone per source, keyed to the SAME names as ai_log_ports so
@@ -55,13 +56,14 @@ locals {
     openbao_audit  = { index = "openbao_audit", sourcetype = "openbao:audit" }
     hermes_agent   = { index = "hermes", sourcetype = "hermes:agent" }
 
-    agentgateway_docker = { index = "agentgateway", sourcetype = "agentgateway:app" }
-    dify_docker         = { index = "dify", sourcetype = "dify:app" }
-    hindsight_docker    = { index = "hindsight", sourcetype = "hindsight:app" }
-    langflow_docker     = { index = "langflow", sourcetype = "langflow:app" }
-    langfuse_docker     = { index = "langfuse", sourcetype = "langfuse:app" }
-    langgraph_docker    = { index = "langgraph", sourcetype = "langgraph:app" }
-    qdrant_docker       = { index = "qdrant", sourcetype = "qdrant:app" }
+    agentgateway_docker  = { index = "agentgateway", sourcetype = "agentgateway:app" }
+    dify_docker          = { index = "dify", sourcetype = "dify:app" }
+    hindsight_docker     = { index = "hindsight", sourcetype = "hindsight:app" }
+    langflow_docker      = { index = "langflow", sourcetype = "langflow:app" }
+    langfuse_docker      = { index = "langfuse", sourcetype = "langfuse:app" }
+    langgraph_docker     = { index = "langgraph", sourcetype = "langgraph:app" }
+    qdrant_docker        = { index = "qdrant", sourcetype = "qdrant:app" }
+    docling_serve_docker = { index = "docling", sourcetype = "docling:app" }
   }
 
   ai_log_routing = {

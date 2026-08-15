@@ -69,6 +69,7 @@ variables {
       langfuse_web      = 3000
       langgraph_api     = 8124
       agent_chat_ui_web = 3000
+      docling_serve_api = 5001
       otel_traces_grpc  = 4317
       otel_traces_http  = 4318
       otel_metrics_grpc = 4327

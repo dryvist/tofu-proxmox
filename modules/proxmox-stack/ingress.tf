@@ -50,6 +50,10 @@ locals {
     dify     = { backend = "dify", port = local.pipeline_constants.service_ports.dify_web }
     langflow = { backend = "langflow", port = local.pipeline_constants.service_ports.langflow_web }
     langfuse = { backend = "langfuse", port = local.pipeline_constants.service_ports.langfuse_web }
+    # docling-serve — Open WebUI's content-extraction (OCR/layout) backend. The
+    # only caller is Open WebUI's server-side loader posting to /v1/convert/file,
+    # so sso = false: an SSO redirect would break a machine-to-machine POST.
+    "docling-serve" = { backend = "docling-serve", port = local.pipeline_constants.service_ports.docling_serve_api, sso = false }
     # agentgateway + mcp are fronted as load-balanced pools (agentgateway_backends
     # in locals-ingress-backends.tf), same as llm/openbao — not single rows here.
     # LangGraph (self-hosted): the `langgraph dev` server API + its Agent Chat UI,

@@ -709,6 +709,21 @@
       "mount_points": [{ "volume": "local-zfs", "size": "30G", "path": "/opt/langgraph" }],
       "features": { "nesting": true }
     },
+    "docling-serve": {
+      "vm_id": 505050,
+      "node_name": "proxmox-1",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "docling-serve",
+      "description": "docling-serve document extraction/OCR for Open WebUI - CPU-bound: layout + TableFormer + local OCR run as CPU inference per page, so cores are the binding constraint and it must sit on a node with cores to spare (Docker-in-LXC)",
+      "cpu_cores": 4,
+      "memory_dedicated": 8192,
+      "tags": ["terraform", "container", "ai", "ai-orchestration", "docling-serve", "docker"],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "root_disk": { "size": 24 },
+      "features": { "nesting": true }
+    },
     "agent-exec": {
       "vm_id": 515000,
       "node_name": "proxmox-1",
