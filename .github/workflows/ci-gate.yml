@@ -49,12 +49,21 @@ jobs:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: filter
         with:
+          # The suite files are `*.tftest.hcl`, which `**.tf` does not match,
+          # and they live under `modules/*/tests/` rather than a root `tests/`.
+          # The gate definition and the runner script are listed too: without
+          # them a change to the gate itself does not run the gate, and CI
+          # reports success having skipped the job that was edited.
           filters: |
             terraform:
               - '**.tf'
               - '**.tfvars'
+              - '**.tftest.hcl'
               - '.terraform.lock.hcl'
+              - 'modules/**/tests/**'
               - 'tests/**'
+              - '.github/workflows/ci-gate.yml'
+              - 'scripts/tofu-test-modules.sh'
 
   # ==========================================================================
   # SHARED GATE — Markdown Lint + File Size via the org reusable gate.
@@ -110,32 +119,11 @@ jobs:
         run: tofu validate -no-color
       - name: OpenTofu Test
         run: tofu test -no-color
-      - name: OpenTofu Init (Proxmox stack module)
-        run: tofu init -backend=false
-        working-directory: modules/proxmox-stack
-      - name: OpenTofu Test (Proxmox stack module)
-        run: tofu test -no-color
-        working-directory: modules/proxmox-stack
-      # tofu test does not recurse into modules/*/tests — gate module suites
-      # explicitly so they can never silently rot again (#580).
-      - name: OpenTofu Init (firewall module)
-        run: tofu init -backend=false
-        working-directory: modules/firewall
-      - name: OpenTofu Test (firewall module)
-        run: tofu test -no-color
-        working-directory: modules/firewall
-      - name: OpenTofu Init (Proxmox VM module)
-        run: tofu init -backend=false
-        working-directory: modules/proxmox-vm
-      - name: OpenTofu Test (Proxmox VM module)
-        run: tofu test -no-color
-        working-directory: modules/proxmox-vm
-      - name: OpenTofu Init (Splunk VM module)
-        run: tofu init -backend=false
-        working-directory: modules/splunk-vm
-      - name: OpenTofu Test (Splunk VM module)
-        run: tofu test -no-color
-        working-directory: modules/splunk-vm
+      # The root invocation above does not recurse into modules/*/tests, so it
+      # passes having run none of them (#580). The script derives the suite set
+      # from the tree and fails on a zero-assertion run.
+      - name: OpenTofu Test (every module suite)
+        run: ./scripts/tofu-test-modules.sh
 
   # Secrets can appear in ANY file, so this runs on every PR (no path filter,
   # never skipped). Official gitleaks-action; org GITLEAKS_LICENSE is seeded.
