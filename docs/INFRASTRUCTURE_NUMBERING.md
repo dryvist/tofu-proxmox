@@ -24,13 +24,8 @@ Node names are hardware-keyed, not incremental: `pve-` + `r` (rack server, match
 R-series letter) or `w` (workstation), then the model number. BMC names use the same model key
 (`idrac-r540`, `idrac-r710`).
 
-| Old name | New name |
-| --- | --- |
-| pve1 | pve-w1700 |
-| pve2 | pve-r410 (retired) |
-| pve3 | pve-r710 |
-| pve4 | pve-w5900 |
-| pve540 | pve-r540 |
+Per-node names, and the mapping from each node's previous incremental name, live in the
+private docs — a table of live host identifiers is topology, not documentation.
 
 The cluster identifier `node_name` changes too, not just DNS — and it is `ForceNew` on both
 guest resource types, so adoption follows the ordering in `imports.tf`.
