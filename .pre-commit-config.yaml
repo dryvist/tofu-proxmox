@@ -50,9 +50,14 @@ repos:
         language: system
         files: '\.(tf|hcl)$'
         pass_filenames: false
+      # `tofu test` does not recurse into modules/*/tests, so every module suite
+      # has to be entered on its own. The set is DERIVED from which modules have
+      # a tests/ directory rather than hand-listed: a hand-listed set silently
+      # omits the next module that gains tests, and an omitted suite is
+      # indistinguishable from a passing one.
       - id: tofu-test
-        name: tofu test (mock providers)
-        entry: direnv exec . bash -c 'tofu init -backend=false -no-color && tofu test -no-color && tofu -chdir=modules/proxmox-stack init -backend=false -no-color && tofu -chdir=modules/proxmox-stack test -no-color'
+        name: tofu test (mock providers, root + every module suite)
+        entry: direnv exec . bash -c 'set -euo pipefail; tofu init -backend=false -no-color; tofu test -no-color; for t in modules/*/tests; do m=${t%/tests}; echo "== $m"; tofu -chdir="$m" init -backend=false -no-color; tofu -chdir="$m" test -no-color; done'
         language: system
         files: '\.(tf|hcl)$'
         pass_filenames: false

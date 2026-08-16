@@ -14,7 +14,7 @@ The tier-0 guests that must survive a node failure:
 | Guest(s) | Redundancy mechanism | DR wave |
 | --- | --- | --- |
 | ingress (`traefik`, future `traefik-2`) | keepalived VRRP VIP floats across nodes | W1 + W5 |
-| OpenBao (seven Raft voters, see W6) | Raft quorum | W6 |
+| OpenBao (nine Raft voters, see W6) | Raft quorum | W6 |
 | DNS (`technitium-dns`, `technitium-dns-2`) | two independent instances | W5 |
 
 ## W4 — corosync vote integrity
@@ -40,8 +40,8 @@ When enabled it:
    hostname, so a renumber flows through with no edit.
 2. Adds `resource-affinity` **negative** rules so redundant peers never share a
    node — the Technitium DNS pair and the Traefik ingress pair. The OpenBao
-   voters are a seven-member Raft set, not a pair; their spread is a placement
-   problem (see W6), and a negative rule over all seven would be unschedulable
+   voters are a nine-member Raft set, not a pair; their spread is a placement
+   problem (see W6), and a negative rule over all nine would be unschedulable
    on four nodes.
 
 **Why anti-affinity is the payload, not relocation.** These guests sit on
@@ -72,21 +72,25 @@ converged members, not shells.
 | `openbao-21` | 110021 | `proxmox-2` | yes |
 | `openbao-30` | 110030 | `proxmox-3` | yes |
 | `openbao-31` | 110031 | `proxmox-3` | yes |
-| `openbao-41` | 110041 | `proxmox-4` | unverified |
-| `openbao-42` | 110042 | `proxmox-4` | unverified |
+| `openbao-41` | 110041 | `proxmox-4` | yes |
+| `openbao-42` | 110042 | `proxmox-4` | yes |
 
 Per node: **`proxmox-1` 2 · `proxmox-2` 3 · `proxmox-3` 2 · `proxmox-4` 2.**
 The explicit `openbao-01` / `openbao-02` entries in the `containers` map and the
 `openbao_cluster` generator's suffixes are **both live** — they are one cluster,
 not two competing schemes.
 
-The seven `yes` rows come from a direct read of
-`sys/storage/raft/configuration` and `sys/storage/raft/autopilot/state`, which
-showed all seven `voter=true`, `healthy=true`, on one term and index. The
-`proxmox-4` pair are **declared** voters and are live and unsealed, but their
-voter flag has not been read back. Reading it needs a capability no routine
-role carries, so treat the pair as voters when sizing a quorum and as
-non-voters when counting on them — whichever is worse for the decision.
+Every row comes from a direct read of `sys/storage/raft/configuration`, which
+showed all nine `voter=true` with one elected leader. The `proxmox-4` pair were
+previously recorded here as `unverified`, because reading the flag back needs a
+capability no routine role carries. That gap is now closed by measurement: the
+pair are **full voters**, not declared-but-unconfirmed, so the earlier advice to
+size them as voters and depend on them as non-voters no longer applies.
+
+Read voter membership from the Raft configuration, never from `sys/health`. A
+member that has fallen out of the cluster still answers health — that check is
+satisfied by the exact state it is meant to rule out, so it cannot detect the
+failure it is there to catch.
 
 ### Voter addressing: static and derived, never leased
 
@@ -103,9 +107,9 @@ in the reservation and the zone — reverted.
 
 ### The real risk: voter concentration, not voter count
 
-Count the `proxmox-4` pair as voters and nine members means **quorum is 5**.
-Losing `proxmox-2` removes **3** at once, leaving 6 — quorum holds with **one
-loss of headroom**. Losing any other single node removes 2, leaving 7.
+All nine members are voters, so **quorum is 5**. Losing `proxmox-2` removes
+**3** at once, leaving 6 — quorum holds with **one loss of headroom**. Losing
+any other single node removes 2, leaving 7.
 
 That is better than the seven-member layout it replaced, where losing
 `proxmox-2` left exactly quorum and any further loss sealed the cluster. The
