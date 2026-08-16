@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.90.1](https://github.com/dryvist/tofu-proxmox/compare/v1.90.0...v1.90.1) (2026-08-16)
+
+
+### Bug Fixes
+
+* **ci:** derive the module test suite set and run it in pre-commit too ([#958](https://github.com/dryvist/tofu-proxmox/issues/958)) ([d77be96](https://github.com/dryvist/tofu-proxmox/commit/d77be967e91ad0d314fff94482d90ad880d59b01))
+* **serving:** raise LLM serving concurrency ceiling to 4 ([#960](https://github.com/dryvist/tofu-proxmox/issues/960)) ([ffed119](https://github.com/dryvist/tofu-proxmox/commit/ffed119da55021a99d9c2405adb7ec071bf345af))
+
 ## [1.90.0](https://github.com/dryvist/tofu-proxmox/compare/v1.89.0...v1.90.0) (2026-08-15)
 
 
