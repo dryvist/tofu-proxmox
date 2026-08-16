@@ -43,15 +43,12 @@ locals {
   # what this design is protecting against; committing it is.
   serving = {
     # 4 since 2026-08-16 (was 2 since 2026-08-06, was 1 before that).
-    # Needed: the serving proxy's own request log showed a sustained 47.5%
-    # rejection rate at concurrency=2 (12,075 429s of 25,435 requests, 47.2%
-    # in the most recent 500), with accepted requests taking minutes.
-    # Safe: cacheMemoryMb=16384 on the resident already provisions for 4
+    # cacheMemoryMb=16384 on the resident already provisions for 4
     # full-65536-token concurrent streams (65536 tokens x 64 KiB/token x 4
     # = 16 GiB): N=2/3/4 share an identical worst-case peak, so raising the
-    # limit cost nothing extra — the concurrency limit alone was rejecting
-    # traffic the host could already afford. Sizing and memory reasoning:
-    # dryvist/nix-darwin lib/hosts/mac-studio.md "Serving concurrency".
+    # limit costs nothing extra over today's footprint. Sizing and memory
+    # reasoning: dryvist/nix-darwin lib/hosts/mac-studio.md "Serving
+    # concurrency".
     llm_concurrency = 4
     host            = var.llm_large_serving_host
     ip              = nonsensitive(var.llm_large_serving_ip)
