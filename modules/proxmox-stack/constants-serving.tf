@@ -43,10 +43,9 @@ locals {
   # what this design is protecting against; committing it is.
   serving = {
     # 4 since 2026-08-16 (was 2 since 2026-08-06, was 1 before that).
-    # Needed: split by traffic source, the serving proxy's own request log
-    # showed production traffic rejected at a sustained 66% at concurrency=2
-    # (11,829/17,794 requests, 66% again in the most recent window) vs 25%
-    # on local test traffic, with accepted requests taking over a minute.
+    # Needed: the serving proxy's own request log showed a sustained 47.5%
+    # rejection rate at concurrency=2 (12,075 429s of 25,435 requests, 47.2%
+    # in the most recent 500), with accepted requests taking minutes.
     # Safe: cacheMemoryMb=16384 on the resident already provisions for 4
     # full-65536-token concurrent streams (65536 tokens x 64 KiB/token x 4
     # = 16 GiB): N=2/3/4 share an identical worst-case peak, so raising the
