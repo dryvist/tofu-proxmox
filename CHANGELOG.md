@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.90.2](https://github.com/dryvist/tofu-proxmox/compare/v1.90.1...v1.90.2) (2026-08-16)
+
+
+### Bug Fixes
+
+* **serving:** correct concurrency-4 comment to a memory-budget justification ([#962](https://github.com/dryvist/tofu-proxmox/issues/962)) ([72f0632](https://github.com/dryvist/tofu-proxmox/commit/72f0632b8a1b5a52c2e4c4958b884f0237616367))
+* **serving:** revert llm_concurrency to 2 ([#965](https://github.com/dryvist/tofu-proxmox/issues/965)) ([3e20e8c](https://github.com/dryvist/tofu-proxmox/commit/3e20e8c24e335d8ac4f328a36de47eeda60daf4d))
+
 ## [1.90.1](https://github.com/dryvist/tofu-proxmox/compare/v1.90.0...v1.90.1) (2026-08-16)
 
 
