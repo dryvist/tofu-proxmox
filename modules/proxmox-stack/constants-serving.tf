@@ -42,14 +42,13 @@ locals {
   # lands in private object storage, not git, so publishing it there is not
   # what this design is protecting against; committing it is.
   serving = {
-    # 4 since 2026-08-16 (was 2 since 2026-08-06, was 1 before that). Raised
-    # under real router-tier saturation (2-slot tier queuing/429ing a
-    # steady 3-concurrent load). Memory-safe because cacheMemoryMb=16384 on
-    # the resident already provisions for 4 full-65536-token concurrent
-    # streams (65536 tokens x 64 KiB/token x 4 = 16 GiB): N=2/3/4 share an
-    # identical worst-case peak, so this costs nothing over today. Sizing
-    # and memory reasoning: dryvist/nix-darwin lib/hosts/mac-studio.md
-    # "Serving concurrency".
+    # 4 since 2026-08-16 (was 2 since 2026-08-06, was 1 before that).
+    # cacheMemoryMb=16384 on the resident already provisions for 4
+    # full-65536-token concurrent streams (65536 tokens x 64 KiB/token x 4
+    # = 16 GiB): N=2/3/4 share an identical worst-case peak, so raising the
+    # limit costs nothing extra over today's footprint. Sizing and memory
+    # reasoning: dryvist/nix-darwin lib/hosts/mac-studio.md "Serving
+    # concurrency".
     llm_concurrency = 4
     host            = var.llm_large_serving_host
     ip              = nonsensitive(var.llm_large_serving_ip)
