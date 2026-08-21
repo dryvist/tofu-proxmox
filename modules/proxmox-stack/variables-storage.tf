@@ -128,9 +128,29 @@ variable "host_services" {
 variable "node_storage" {
   description = "Per-node ZFS pools/datasets/quotas for ansible-proxmox to provision; Terraform consumes the datastore by id."
   type = map(object({
+    # ZFS kernel module parameters for this node, rendered by ansible-proxmox to
+    # /etc/modprobe.d/zfs.conf. These are LOAD-TIME settings: a runtime write to
+    # /sys/module/zfs/parameters/ reverts on reboot, so anything tuned live must
+    # be declared here or it is silently lost at the next boot.
+    module_params = optional(map(string), {})
     pools = map(object({
       type = optional(string, "zfspool")
-      raid = optional(string) # raidz1, raidz2, mirror (informational)
+      raid = optional(string) # raidz1, raidz2, mirror (informational; see topology)
+      # Physical shape of the pool. Device by-id lists are deliberately NOT here
+      # (they are hardware-specific and destructive to act on - see
+      # zfs_pools_devices in the ansible role), but the SHAPE is reproducible and
+      # belongs in code: it is what makes "build an identical array on new
+      # hardware" possible. ansible-proxmox ASSERTS the live pool matches this
+      # and fails the converge on drift. ashift is IMMUTABLE after pool creation,
+      # so a mismatch there means the pool was built wrong and must be rebuilt.
+      topology = optional(object({
+        type   = string               # raidz1 | raidz2 | raidz3 | mirror | draid
+        width  = number               # number of member devices in the vdev
+        ashift = optional(number, 12) # 12 = 4K sectors; correct for 512e drives
+      }))
+      # Pool-LEVEL properties (`zpool set`), distinct from per-dataset
+      # `properties` below (`zfs set`). e.g. autotrim, failmode.
+      pool_properties = optional(map(string), {})
       # protected pools must never be auto-destroyed; ansible-proxmox enforces
       # zfs hold / readonly / snapshot retention (storage-safety, design pending).
       protected = optional(bool, true)
