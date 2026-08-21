@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.91.0](https://github.com/dryvist/tofu-proxmox/compare/v1.90.2...v1.91.0) (2026-08-21)
+
+
+### Features
+
+* **storage:** declare ZFS module params, pool properties, and vdev topology ([#972](https://github.com/dryvist/tofu-proxmox/issues/972)) ([3c82944](https://github.com/dryvist/tofu-proxmox/commit/3c82944ec27b2305ced7c243acab926209157fb6))
+
 ## [1.90.2](https://github.com/dryvist/tofu-proxmox/compare/v1.90.1...v1.90.2) (2026-08-16)
 
 
