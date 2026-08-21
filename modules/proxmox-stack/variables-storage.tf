@@ -133,6 +133,22 @@ variable "node_storage" {
     # /sys/module/zfs/parameters/ reverts on reboot, so anything tuned live must
     # be declared here or it is silently lost at the next boot.
     module_params = optional(map(string), {})
+    # Node-level Samba service configuration. Only the SERVICE settings live
+    # here; each share is declared on the dataset it serves (see `smb` below),
+    # so a node with no shared dataset needs none of this.
+    smb = optional(object({
+      group_name = optional(string, "nas")
+      workgroup  = optional(string, "WORKGROUP")
+      # macOS Finder/Time Machine integration (vfs_fruit). Harmless for non-Mac.
+      macos_optimized = optional(bool, true)
+      managed_users = optional(list(object({
+        name                = string
+        unix_groups         = optional(list(string))
+        shell               = optional(string)
+        create_home         = optional(bool)
+        password_secret_env = string
+      })), [])
+    }))
     pools = map(object({
       type = optional(string, "zfspool")
       raid = optional(string) # raidz1, raidz2, mirror (informational; see topology)
@@ -171,10 +187,68 @@ variable "node_storage" {
         # com.sun:auto-snapshot, …) applied idempotently by ansible-proxmox.
         # Use ZFS canonical forms as strings (e.g. "1M", "zstd", "false").
         properties = optional(map(string), {})
+        # Serve this dataset over SMB. The share lives ON the dataset rather than
+        # in a separate node-level list, because the map key already identifies
+        # both the node and the dataset -- there is nothing left to select and no
+        # way for a share to reference a dataset that does not exist.
+        smb = optional(object({
+          share_name     = string
+          comment        = optional(string)
+          valid_users    = optional(string)
+          browsable      = optional(bool, true)
+          read_only      = optional(bool, false)
+          force_group    = optional(string)
+          create_mask    = optional(string, "0664")
+          directory_mask = optional(string, "0775")
+          # macOS Time Machine target (vfs_fruit). max_size is REQUIRED when
+          # enabled and enforced below: Time Machine grows until the volume is
+          # full, so an uncapped share eventually consumes the whole pool.
+          time_machine          = optional(bool, false)
+          time_machine_max_size = optional(string)
+        }))
       })), {})
     }))
   }))
   default = {}
+
+  # A Time Machine share grows until its volume is full. Without a cap one
+  # backup target quietly consumes the entire pool and takes every other
+  # dataset on it down with it, so the cap is required rather than advised.
+  # A variable validation (not a `check` block) -- a failed check only warns
+  # and the plan still exits 0, which would leave the guard looking present
+  # while doing nothing.
+  validation {
+    condition = alltrue([
+      for node, cfg in var.node_storage : alltrue([
+        for pool, p in cfg.pools : alltrue([
+          for ds, d in p.datasets :
+          d.smb == null || d.smb.time_machine != true ||
+          try(length(d.smb.time_machine_max_size), 0) > 0
+        ])
+      ])
+    ])
+    error_message = "A dataset with smb.time_machine = true must also set smb.time_machine_max_size; an uncapped Time Machine share grows until the pool is full."
+  }
+
+  # Share names are the SMB namespace of one node; two datasets claiming the
+  # same name on the same node silently shadow each other in smb.conf.
+  validation {
+    condition = alltrue([
+      for node, cfg in var.node_storage :
+      length([
+        for s in flatten([
+          for pool, p in cfg.pools : [
+            for ds, d in p.datasets : d.smb == null ? [] : [d.smb.share_name]
+          ]
+        ]) : s
+        ]) == length(distinct(flatten([
+          for pool, p in cfg.pools : [
+            for ds, d in p.datasets : d.smb == null ? [] : [d.smb.share_name]
+          ]
+      ])))
+    ])
+    error_message = "Each smb.share_name must be unique within a node; duplicate names shadow each other in smb.conf."
+  }
 }
 
 # ==============================================================================
