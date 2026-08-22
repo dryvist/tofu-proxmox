@@ -4,8 +4,8 @@
 # node_storage_smb.tftest.hcl. A negative test alone cannot tell a working guard
 # from one that rejects everything, and a positive test alone cannot tell a
 # working guard from one that is never evaluated. That distinction is the whole
-# reason this guard exists — the defect it catches was invisible precisely
-# because nothing ever evaluated the declaration.
+# reason this guard exists: the condition it catches is invisible precisely
+# because nothing else evaluates the declaration.
 #
 # All runs use mock providers (no real infrastructure needed).
 
@@ -62,8 +62,8 @@ variables {
   network_cidrs           = { for name, id in var.vlan_ids : name => "192.168.${id}.0/24" }
 
   # Two nodes with DIFFERENT registered pools. This is the shape that produced
-  # the real defect: `fast` exists in the cluster, but only on one node, so a
-  # guest elsewhere naming it looks plausible and resolves to something else.
+  # the shape that matters: a pool registered on only one node, so a guest
+  # elsewhere naming it looks plausible and resolves to something else.
   node_storage = {
     node-with-fast = {
       pools = {
@@ -191,8 +191,8 @@ run "mount_on_a_pool_registered_on_another_node_is_rejected" {
 
   variables {
     containers = {
-      # THE REAL DEFECT: `fast` is a real pool, on a different node. Proxmox
-      # accepts this and silently places the volume elsewhere.
+      # A registered pool, but on a different node. Proxmox accepts this and
+      # silently places the volume elsewhere.
       db = {
         node_name    = "node-without-fast"
         vm_id        = 519000

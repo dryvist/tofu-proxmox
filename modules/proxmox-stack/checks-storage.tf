@@ -1,19 +1,15 @@
 # A container's storage must exist on the node the container runs on.
 #
-# WHAT THIS CAUGHT. A guest declared its data mount on the `fast` pool while
-# running on a node where `fast` is a cluster-wide storage ID owned by a
-# DIFFERENT node — present in `pvesm status`, `disabled`, zero bytes. The apply
-# succeeded and the volume was created on that node's default datastore
-# instead. So the declaration said one thing, the guest ran on another, and
-# nothing reconciled the two: `mount_point` is in the container resource's
-# `lifecycle.ignore_changes` (mounts are effectively set-once), so no later plan
-# re-reads the mount and no drift is ever reported. The discovery cost was a
-# PostgreSQL primary that had been running on 7200 RPM spinning disks for weeks
-# while its config claimed solid-state.
+# A datastore id can be defined cluster-wide while being inactive on a given
+# node — it still appears in `pvesm status` there, disabled and zero-sized. A
+# container naming such an id does not fail: the volume is created on that
+# node's default datastore instead, so the declaration and the running guest
+# describe different storage.
 #
-# The failure is silent by construction, which is what earns a hard guard: the
-# usual signal for a wrong value — a plan that wants to change it — cannot fire
-# for an attribute the plan is told to ignore.
+# The failure is silent by construction, which is what earns a hard guard:
+# `mount_point` is in the container resource's `lifecycle.ignore_changes`
+# (mounts are effectively set-once), so the usual signal for a wrong value — a
+# plan that wants to change it — can never fire for this attribute.
 #
 # WHY THIS IS A STATIC CHECK, not a live query. The provider does expose a
 # per-node datastore data source (`proxmox_datastores`, already used by
