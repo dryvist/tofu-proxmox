@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.92.0](https://github.com/dryvist/tofu-proxmox/compare/v1.91.0...v1.92.0) (2026-08-22)
+
+
+### Features
+
+* **storage:** declare SMB shares on the datasets they serve ([#977](https://github.com/dryvist/tofu-proxmox/issues/977)) ([f14b13d](https://github.com/dryvist/tofu-proxmox/commit/f14b13dfb56098fd5c2a424ba6fda1bf0c92e9e7))
+
 ## [1.91.0](https://github.com/dryvist/tofu-proxmox/compare/v1.90.2...v1.91.0) (2026-08-21)
 
 
