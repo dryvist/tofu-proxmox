@@ -79,45 +79,6 @@ variable "template_id" {
   }
 }
 
-# Host-level services (ZFS datasets, Samba, etc.) — not managed by Terraform directly,
-# but documented here so ansible-proxmox can consume them via ansible_inventory output.
-variable "host_services" {
-  description = "Host-level services config (ZFS datasets, Samba shares) for ansible-proxmox consumption"
-  type = object({
-    nas = optional(object({
-      zfs_dataset    = string
-      zfs_quota      = string
-      mount_point    = string
-      smb_share_name = string
-      directories    = list(string)
-      group_name     = optional(string)
-      managed_users = optional(list(object({
-        name                = string
-        unix_groups         = optional(list(string))
-        shell               = optional(string)
-        create_home         = optional(bool)
-        password_secret_env = string
-      })))
-      shares = optional(list(object({
-        name           = string
-        path           = string
-        valid_users    = string
-        browsable      = optional(bool)
-        read_only      = optional(bool)
-        force_group    = optional(string)
-        create_mask    = optional(string)
-        directory_mask = optional(string)
-        comment        = optional(string)
-        # macOS Time Machine target (consumed by the nas_storage vfs_fruit role).
-        time_machine          = optional(bool)
-        time_machine_max_size = optional(string)
-      })))
-      description = optional(string)
-    }))
-  })
-  default = {}
-}
-
 # Per-node ZFS storage DECLARATION (not created by Terraform).
 # zpool/zfs creation is an OS-level operation the Proxmox API cannot perform, so
 # ansible-proxmox consumes this map (via the ansible_inventory output) to create
