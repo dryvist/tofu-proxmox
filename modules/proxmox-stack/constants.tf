@@ -187,7 +187,7 @@ locals {
     # (ports derived from ai_log_ports, so the maps cannot drift).
     ai_log_routing = local.ai_log_routing
     # IaC automation platform (Terrakube + Semaphore UI) on the iac-platform VM
-    # (docker compose, mgmt VLAN, pve3). Host ports published by the compose
+    # (docker compose, mgmt VLAN). Host ports published by the compose
     # stack; ingress.tf fronts each behind its own <name>.<domain> route. The
     # Terrakube executor is deliberately NOT listed: it must never be fronted —
     # only the API reaches it, on the compose-internal network.

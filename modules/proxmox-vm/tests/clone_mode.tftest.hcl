@@ -7,7 +7,7 @@
 #
 # The cost of that regression is disk, and it is not small. A full clone copies
 # the template's disk up front — 9-12 GB for a Windows template. Two of them
-# once left pve540's 110 GB boot pool with 150 MB to spare, which is how the
+# once left a node's 110 GB boot pool with 150 MB to spare, which is how the
 # 2026-08-07 pool-exhaustion outage nearly repeated itself.
 #
 # Assertions read the attribute ON THE RESOURCE. The provider defaults `full`

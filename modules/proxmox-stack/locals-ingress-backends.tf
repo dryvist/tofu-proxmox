@@ -213,13 +213,13 @@ locals {
       }
     ] : [],
     # IaC automation platform (Terrakube + Semaphore UI) on the iac-platform VM
-    # (DHCP/DNS-first, mgmt VLAN, pve3). Appended like the Splunk VM (VMs are not
+    # (DHCP/DNS-first, mgmt VLAN). Appended like the Splunk VM (VMs are not
     # in var.containers, so no ingress_services row), but conditionally — a
     # deployment.json without the VM never emits dangling routes. The backend is
     # local.vm_address: the VM's FQDN, never an IP (DNS-first doctrine). Four
     # Terrakube hostnames are required upstream (UI/API/registry/dex each get
-    # their own vhost); the executor is deliberately not fronted. pve3 powers
-    # off nightly — consumers must treat these routes as daytime-available.
+    # their own vhost); the executor is deliberately not fronted. Its node
+    # powers off nightly — consumers must treat these routes as daytime-available.
     contains(keys(var.vms), "iac-platform") ? [
       for svc in [
         # UI hosts stay gated (sso omitted -> true); the API/registry/dex hosts

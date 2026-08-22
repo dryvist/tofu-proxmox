@@ -24,7 +24,7 @@ locals {
   # derived by formula, so an unlisted node has no safe address to assign.
   node_service_templates = try(local.deployment.node_services, {})
   # Naming law: every generated name ends in a two-digit <node-id><counter>
-  # suffix (pve3 instance 0 -> "-30"), never a single digit -- names are
+  # suffix (node 3 instance 0 -> "-30"), never a single digit -- names are
   # deliberately non-transferable (rebuild-from-scratch doctrine), same as
   # the openbao_generated_containers suffix above. `suffix` is numeric in
   # per_node and zero-padded here (%02d), matching that pattern exactly.

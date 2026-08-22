@@ -21,8 +21,8 @@ For example, instead of `zammad-1` and `zammad-2`, use `zammad-20` (Node 2, inst
 ## Node naming standard
 
 Node names are hardware-keyed, not incremental: `pve-` + `r` (rack server, matching the vendor's
-R-series letter) or `w` (workstation), then the model number. BMC names use the same model key
-(`idrac-r540`, `idrac-r710`).
+R-series letter) or `w` (workstation), then the model number. BMC names use the same model key,
+prefixed `idrac-`.
 
 Per-node names, and the mapping from each node's previous incremental name, live in the
 private docs — a table of live host identifiers is topology, not documentation.
