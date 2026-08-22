@@ -31,7 +31,7 @@ locals {
   # moment a peer is rebuilt on a different node — exactly the failure mode
   # that dropped this route to zero healthy backends after an out-of-band peer
   # rebuild (the same class of drift that forced the temporary traefik/
-  # technitium-dns host_vars overrides after the pve1 hardware failure, Zammad
+  # technitium-dns host_vars overrides after a node hardware failure, Zammad
   # #17136): the FQDN keeps resolving through a DNS fix alone, with no
   # ansible-proxmox-apps re-converge required. Widening every pool to FQDN is a
   # bigger blast radius than this incident fix warrants — scoped to openbao only.
@@ -67,7 +67,7 @@ locals {
 
   # agentgateway MCP-fabric pool: the only path agents (Hermes) have to the
   # splunk/context7/qdrant/memory MCP targets, so it is the one pool whose loss
-  # blacks out the whole tool plane (2026-07-24 pve1 incident). Instances are
+  # blacks out the whole tool plane (2026-07-24 node incident). Instances are
   # stateless (identical config from the agentgateway_docker role; targets are
   # themselves pooled or external), so no sticky.
   agentgateway_backends = local.tag_backend_pools["agentgateway"]
