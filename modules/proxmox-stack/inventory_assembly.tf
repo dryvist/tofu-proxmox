@@ -134,7 +134,6 @@ locals {
     ingress_vip   = local.ingress_vip
     ingress_hosts = local.ingress_hosts
     # Host-level NAS service config - consumed by ansible-proxmox to provision ZFS dataset + Samba
-    host_services = var.host_services
     # Cluster node inventory (non-secret identity) - ansible-proxmox targets hosts and
     # skips nodes where commissioned = false.
     nodes = var.nodes

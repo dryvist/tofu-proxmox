@@ -182,7 +182,6 @@ module "homelab" {
   dns_plugins             = try(local.deployment.dns_plugins, {})
   domain                  = local.deployment.domain
   environment             = try(local.deployment.environment, "homelab")
-  host_services           = try(local.deployment.host_services, {})
   # Install-media object prefix. Optional because most applies never touch a
   # template build; when the key is absent the module's placeholder default
   # fails at download time (unresolvable host) rather than fetching the wrong
