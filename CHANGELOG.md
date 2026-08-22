@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/dryvist/tofu-proxmox/compare/v1.92.0...v2.0.0) (2026-08-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **storage:** ansible_inventory no longer exposes host_services.
+
+### Features
+
+* **storage:** retire host_services in favour of per-dataset SMB shares ([#982](https://github.com/dryvist/tofu-proxmox/issues/982)) ([572dbc2](https://github.com/dryvist/tofu-proxmox/commit/572dbc2d590a9513fc9619a47d4226b54af7819a))
+
 ## [1.92.0](https://github.com/dryvist/tofu-proxmox/compare/v1.91.0...v1.92.0) (2026-08-22)
 
 
