@@ -797,26 +797,6 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
   }
 }
 
-# --- host_services structure tests ---
-
-run "ansible_inventory_host_services_exists" {
-  command = plan
-
-  assert {
-    condition     = can(output.ansible_inventory.host_services)
-    error_message = "ansible_inventory must contain 'host_services' key at root level"
-  }
-}
-
-run "ansible_inventory_host_services_default_no_nas" {
-  command = plan
-
-  assert {
-    condition     = output.ansible_inventory.host_services.nas == null
-    error_message = "ansible_inventory.host_services.nas must be null when no host_services var is set"
-  }
-}
-
 # --- domain propagation tests ---
 
 run "ansible_inventory_domain_field_exists" {
@@ -893,87 +873,6 @@ run "ansible_inventory_domain_propagated" {
   assert {
     condition     = output.ansible_inventory.domain == "example.com"
     error_message = "ansible_inventory.domain must propagate var.domain, got '${output.ansible_inventory.domain}'"
-  }
-}
-
-run "ansible_inventory_host_services_nas_propagated" {
-  command = plan
-
-  variables {
-    host_services = {
-      nas = {
-        zfs_dataset    = "rpool/data/nas"
-        zfs_quota      = "1T"
-        mount_point    = "/mnt/nas"
-        smb_share_name = "nas"
-        directories    = ["huggingface/hub", "ollama/models", "media", "backups"]
-        group_name     = "nas"
-        managed_users = [
-          {
-            name                = "homeassistant"
-            unix_groups         = ["nas"]
-            shell               = "/usr/sbin/nologin"
-            create_home         = false
-            password_secret_env = "NAS_HOMEASSISTANT_SMB_PASSWORD"
-          }
-        ]
-        shares = [
-          {
-            name           = "nas"
-            path           = "/mnt/nas"
-            valid_users    = "@nas"
-            browsable      = true
-            read_only      = false
-            force_group    = "nas"
-            create_mask    = "0664"
-            directory_mask = "0775"
-            comment        = "Primary NAS root share"
-          },
-          {
-            name           = "ha-backups"
-            path           = "/mnt/nas/backups"
-            valid_users    = "homeassistant"
-            browsable      = true
-            read_only      = false
-            force_group    = "nas"
-            create_mask    = "0664"
-            directory_mask = "0775"
-            comment        = "Home Assistant backup storage"
-            time_machine   = true
-          }
-        ]
-      }
-    }
-  }
-
-  assert {
-    condition     = output.ansible_inventory.host_services.nas.zfs_dataset == "rpool/data/nas"
-    error_message = "host_services.nas.zfs_dataset must propagate to ansible_inventory output"
-  }
-
-  assert {
-    condition     = output.ansible_inventory.host_services.nas.mount_point == "/mnt/nas"
-    error_message = "host_services.nas.mount_point must propagate to ansible_inventory output"
-  }
-
-  assert {
-    condition     = output.ansible_inventory.host_services.nas.group_name == "nas"
-    error_message = "host_services.nas.group_name must propagate to ansible_inventory output"
-  }
-
-  assert {
-    condition     = output.ansible_inventory.host_services.nas.managed_users[0].password_secret_env == "NAS_HOMEASSISTANT_SMB_PASSWORD"
-    error_message = "host_services.nas.managed_users must propagate to ansible_inventory output"
-  }
-
-  assert {
-    condition     = output.ansible_inventory.host_services.nas.shares[1].name == "ha-backups"
-    error_message = "host_services.nas.shares must propagate to ansible_inventory output"
-  }
-
-  assert {
-    condition     = output.ansible_inventory.host_services.nas.shares[1].time_machine == true
-    error_message = "host_services.nas.shares time_machine must propagate to ansible_inventory output"
   }
 }
 
@@ -1315,3 +1214,19 @@ run "the_cloud_image_filename_matches_the_import_content_type" {
     error_message = "debian_cloudimg_file_name must end in .qcow2, .raw, .vmdk or .ova — those are the extensions Proxmox accepts for `import` content, and a mismatch aborts the apply before the inventory is published."
   }
 }
+
+# --- host_services removal ---
+
+# The former global host_services.nas had no node selector, so every node built
+# an identical NAS. Shares now live on the dataset they serve, in node_storage.
+# Asserted rather than merely deleted: a consumer still reading host_services
+# would otherwise fail at converge time, not here.
+run "ansible_inventory_has_no_host_services" {
+  command = plan
+
+  assert {
+    condition     = !can(output.ansible_inventory.host_services)
+    error_message = "ansible_inventory must no longer expose 'host_services'; shares are declared per dataset in node_storage"
+  }
+}
+
