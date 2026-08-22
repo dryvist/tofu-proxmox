@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.0](https://github.com/dryvist/tofu-proxmox/compare/v2.0.0...v3.0.0) (2026-08-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **storage:** node_storage.<node>.smb.managed_users entries take `secret_prefix` in place of `name` and `password_secret_env`.
+
+### Features
+
+* **stack:** reject container storage that its node does not offer ([#987](https://github.com/dryvist/tofu-proxmox/issues/987)) ([1636d7a](https://github.com/dryvist/tofu-proxmox/commit/1636d7a888da857179294d4c158123ff550b9f8d))
+* **storage:** name SMB accounts by role, never by login name ([#988](https://github.com/dryvist/tofu-proxmox/issues/988)) ([8813af8](https://github.com/dryvist/tofu-proxmox/commit/8813af80c7b7655431e5847e66ce7cee0c464314))
+
 ## [2.0.0](https://github.com/dryvist/tofu-proxmox/compare/v1.92.0...v2.0.0) (2026-08-22)
 
 
