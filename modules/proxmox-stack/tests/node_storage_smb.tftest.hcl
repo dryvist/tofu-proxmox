@@ -71,8 +71,8 @@ run "valid_smb_datasets_accepted" {
         smb = {
           group_name = "nas"
           managed_users = [{
-            name                = "someuser"
-            password_secret_env = "SOMEUSER_SMB_PASSWORD"
+            secret_prefix = "smb_user"
+            unix_groups   = ["nas"]
           }]
         }
         pools = {
@@ -80,8 +80,9 @@ run "valid_smb_datasets_accepted" {
             datasets = {
               jdrive = {
                 smb = {
-                  share_name = "jdrive"
-                  comment    = "General file share"
+                  share_name  = "jdrive"
+                  comment     = "General file share"
+                  valid_users = "@nas"
                 }
               }
               timemachine = {
@@ -214,6 +215,123 @@ run "datasets_without_smb_unaffected" {
             }
           }
         }
+      }
+    }
+  }
+}
+
+# --- valid_users must name groups, never accounts ---------------------------
+#
+# The negative case is the one that matters: Samba reads a bare word as a
+# USERNAME, so a guard that accepts it would put a login name into both the
+# desired state and the rendered smb.conf.
+
+run "valid_users_naming_an_account_rejected" {
+  command = plan
+
+  variables {
+    node_storage = {
+      test-node = {
+        pools = {
+          bulk = {
+            datasets = {
+              jdrive = {
+                smb = {
+                  share_name  = "jdrive"
+                  valid_users = "someuser"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  expect_failures = [var.node_storage]
+}
+
+run "valid_users_with_one_bad_entry_in_a_list_rejected" {
+  command = plan
+
+  variables {
+    node_storage = {
+      test-node = {
+        pools = {
+          bulk = {
+            datasets = {
+              jdrive = {
+                smb = {
+                  share_name  = "jdrive"
+                  valid_users = "@nas, someuser"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  expect_failures = [var.node_storage]
+}
+
+run "valid_users_group_forms_accepted" {
+  command = plan
+
+  variables {
+    node_storage = {
+      test-node = {
+        pools = {
+          bulk = {
+            datasets = {
+              at_form   = { smb = { share_name = "a", valid_users = "@nas" } }
+              plus_form = { smb = { share_name = "b", valid_users = "+nas" } }
+              multi     = { smb = { share_name = "c", valid_users = "@nas, +staff" } }
+              unset     = { smb = { share_name = "d" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# --- managed_users.secret_prefix must be unique within a node ---------------
+
+run "duplicate_secret_prefix_on_one_node_rejected" {
+  command = plan
+
+  variables {
+    node_storage = {
+      test-node = {
+        smb = {
+          managed_users = [
+            { secret_prefix = "smb_user" },
+            { secret_prefix = "smb_user" },
+          ]
+        }
+        pools = { bulk = { datasets = {} } }
+      }
+    }
+  }
+
+  expect_failures = [var.node_storage]
+}
+
+run "distinct_secret_prefixes_accepted" {
+  command = plan
+
+  variables {
+    node_storage = {
+      test-node = {
+        smb = {
+          managed_users = [
+            { secret_prefix = "smb_service_account", unix_groups = ["nas"] },
+            { secret_prefix = "smb_user", unix_groups = ["nas"] },
+          ]
+        }
+        pools = { bulk = { datasets = {} } }
       }
     }
   }

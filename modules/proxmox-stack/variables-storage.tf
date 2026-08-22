@@ -102,12 +102,21 @@ variable "node_storage" {
       workgroup  = optional(string, "WORKGROUP")
       # macOS Finder/Time Machine integration (vfs_fruit). Harmless for non-Mac.
       macos_optimized = optional(bool, true)
+      # A login name is a credential, not a label: it is half of what an
+      # attacker needs and it is not rotatable once published. So the ACCOUNT
+      # is named here by its ROLE, and both the username and the password are
+      # read from the node's NAS secret at converge time as
+      # <secret_prefix>_username and <secret_prefix>_password.
+      #
+      # This is why there is no `name` field. An earlier revision had one, and
+      # it put the login name into the desired-state object, into the password
+      # secret's own FIELD name, and into every converge log line -- three
+      # publications of a value that can never be un-published.
       managed_users = optional(list(object({
-        name                = string
-        unix_groups         = optional(list(string))
-        shell               = optional(string)
-        create_home         = optional(bool)
-        password_secret_env = string
+        secret_prefix = string # e.g. "smb_service_account", "smb_user"
+        unix_groups   = optional(list(string))
+        shell         = optional(string)
+        create_home   = optional(bool)
       })), [])
     }))
     pools = map(object({
@@ -153,8 +162,11 @@ variable "node_storage" {
         # both the node and the dataset -- there is nothing left to select and no
         # way for a share to reference a dataset that does not exist.
         smb = optional(object({
-          share_name     = string
-          comment        = optional(string)
+          share_name = string
+          comment    = optional(string)
+          # Samba group syntax only ("@nas", "+nas") -- enforced below. A share
+          # must authorize by GROUP, never by naming an account, because the
+          # login name is a secret and this object is the desired state.
           valid_users    = optional(string)
           browsable      = optional(bool, true)
           read_only      = optional(bool, false)
@@ -171,6 +183,40 @@ variable "node_storage" {
     }))
   }))
   default = {}
+
+  # A share may authorize only by GROUP. Samba reads a bare word in
+  # valid_users as a USERNAME, so allowing one here would put a login name into
+  # the desired-state object and into the rendered smb.conf -- the exact
+  # publication `managed_users.secret_prefix` exists to prevent. "@grp" is a
+  # unix/NIS group and "+grp" forces the unix group; both are safe.
+  validation {
+    condition = alltrue([
+      for node, cfg in var.node_storage : alltrue([
+        for pool, p in cfg.pools : alltrue([
+          for ds, d in p.datasets :
+          d.smb == null || d.smb.valid_users == null ||
+          alltrue([
+            for u in split(",", d.smb.valid_users) :
+            startswith(trimspace(u), "@") || startswith(trimspace(u), "+")
+          ])
+        ])
+      ])
+    ])
+    error_message = "smb.valid_users must list only groups (\"@nas\" or \"+nas\"); a bare name is read by Samba as a username, and a login name must not appear in the desired state."
+  }
+
+  # Two accounts sharing a secret_prefix would resolve to the same OpenBao
+  # fields and silently collapse into one account.
+  validation {
+    condition = alltrue([
+      for node, cfg in var.node_storage :
+      cfg.smb == null ? true :
+      length(cfg.smb.managed_users) == length(distinct([
+        for u in cfg.smb.managed_users : u.secret_prefix
+      ]))
+    ])
+    error_message = "Each managed_users.secret_prefix must be unique within a node; duplicates resolve to the same OpenBao username/password fields."
+  }
 
   # A Time Machine share grows until its volume is full. Without a cap one
   # backup target quietly consumes the entire pool and takes every other
