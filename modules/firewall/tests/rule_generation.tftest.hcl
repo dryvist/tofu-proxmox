@@ -632,7 +632,7 @@ run "outbound_http_is_tcp_80_only" {
     source = "./"
   }
   variables {
-    node_name         = "pve1"
+    node_name         = "proxmox-1"
     internal_networks = ["10.0.0.0/8"]
   }
 
