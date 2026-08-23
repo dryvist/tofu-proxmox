@@ -127,6 +127,12 @@ locals {
         ansible_connection = "ssh"
         tags               = v.tags
         pool_id            = v.pool_id
+        # docker_vms is a FILTERED VIEW of the same vms map, so it needs the
+        # same sizing reads -- a guest does not stop having a size because it
+        # is republished under a second key.
+        cpu_cores = var.vms[k].cpu_cores
+        memory_mb = var.vms[k].memory_dedicated
+        disk_gb   = var.vms[k].boot_disk.size
       } if contains(try(v.tags, []), "docker")
     }
     # Splunk VM - dedicated Docker host with SSH connection
@@ -137,6 +143,14 @@ locals {
         ip                 = module.splunk_vm.ip_address # CIDR already stripped in module output
         node               = var.proxmox_node
         ansible_connection = "ssh"
+        # Sized from its own variables -- this guest is built by a dedicated
+        # module, not from var.vms. disk_gb is the BOOT disk: the tiered data
+        # disks are published separately under splunk_storage, and Nautobot's
+        # `disk` is a single number, so summing them would disagree with what
+        # the guest calls its disk.
+        cpu_cores = var.splunk_cpu_cores
+        memory_mb = var.splunk_memory
+        disk_gb   = var.splunk_boot_disk_size
       }
     }
     # Splunk tiered storage - one {datastore_id, disk_interface, size_gb} per tier
