@@ -1259,13 +1259,28 @@ run "ansible_inventory_publishes_guest_sizing" {
         root_disk        = { size = 24 }
       }
     }
+    # A VM too. Same reason the containers fixture exists: `alltrue([])` is TRUE,
+    # so the VM assertions below were vacuous until something was here. This was
+    # caught by mutation twice -- fixed for containers, then reintroduced for
+    # vms, and only the mutation showed it.
+    vms = {
+      "sizing-probe-vm" = {
+        node_name        = "proxmox-1"
+        vm_id            = 198
+        name             = "sizing-probe-vm"
+        vlan             = "apps"
+        cpu_cores        = 8
+        memory_dedicated = 16384
+        boot_disk        = { size = 64 }
+      }
+    }
   }
 
   # The fixture must actually reach the output, or the checks below are vacuous
   # again for a different reason.
   assert {
-    condition     = length(output.ansible_inventory.containers) > 0
-    error_message = "no containers were published, so the sizing assertions below would pass against an empty map"
+    condition     = length(output.ansible_inventory.containers) > 0 && length(output.ansible_inventory.vms) > 0
+    error_message = "containers or vms published empty, so the sizing assertions below would pass vacuously against an empty map"
   }
 
   assert {
@@ -1287,5 +1302,18 @@ run "ansible_inventory_publishes_guest_sizing" {
   assert {
     condition     = alltrue([for k, c in output.ansible_inventory.containers : c.memory_mb >= 64 && c.memory_mb <= 65536])
     error_message = "memory_mb is outside the declared MB range, which means the unit was rescaled somewhere"
+  }
+
+  # VMs too, not just containers. Publishing sizing for containers only left the
+  # actual VMs -- the guests the Nautobot field name refers to -- reading null,
+  # which looked like success because most guests here ARE containers.
+  assert {
+    condition     = alltrue([for k, v in output.ansible_inventory.vms : can(v.cpu_cores) && can(v.memory_mb) && can(v.disk_gb)])
+    error_message = "every published VM must carry cpu_cores, memory_mb and disk_gb; containers alone is not the field Nautobot means by VM sizing"
+  }
+
+  assert {
+    condition     = alltrue([for k, v in output.ansible_inventory.vms : v.cpu_cores > 0 && v.memory_mb > 0 && v.disk_gb > 0])
+    error_message = "published VM sizing must be positive; a 0 records a guest as having no CPU, memory or disk"
   }
 }

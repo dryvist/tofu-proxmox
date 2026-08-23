@@ -92,6 +92,18 @@ locals {
         # this output.
         on_boot = var.vms[k].on_boot
         started = var.vms[k].started
+        # Same sizing contract as the containers block above, for the same
+        # reason: Nautobot models vcpus/memory/disk natively and a guest without
+        # them reads null. Publishing it for containers ONLY left the actual VMs
+        # — the guests the field name refers to — still blank.
+        #
+        # boot_disk.size rather than root_disk.size: a VM's system disk is
+        # boot_disk here, and additional_disks are deliberately excluded because
+        # Nautobot's `disk` is a single number, not a sum. Recording a total
+        # would silently disagree with what the guest calls its disk.
+        cpu_cores = var.vms[k].cpu_cores
+        memory_mb = var.vms[k].memory_dedicated
+        disk_gb   = var.vms[k].boot_disk.size
         # The guest's own LAN gateway. Published because a guest running a VPN
         # client cannot discover it at converge time: the client owns the
         # default route by then, so "the current gateway" is the tunnel's.
