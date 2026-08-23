@@ -212,9 +212,9 @@ the data disk; see the Cribl roles in the downstream apps repo.
 The Splunk VM carries a boot disk, a legacy data disk, and two tiered storage
 disks:
 
-- **Boot disk**: OS, Splunk application, configuration. Declared `virtio0`; the
-  live disk has drifted to `scsi0`/50G — see
-  [`SPLUNK_VM_DISK_DRIFT.md`](./SPLUNK_VM_DISK_DRIFT.md).
+- **Boot disk**: OS, Splunk application, configuration. Declared `virtio0`. The
+  live interface and size are managed outside this repo; `lifecycle.ignore_changes`
+  covers the whole `disk` attribute, so the declared block is not authoritative.
 - **Legacy data disk (`virtio1`, 200G)**: current Splunk index storage, mounted
   at `/opt/splunk`. Transitional — kept attached until a separate migration
   moves data onto the tiered disks below. The mount point matters: the volume

@@ -83,8 +83,7 @@ RAID is pool-wide, so a non-RAID cold tier cannot share a raidz pool. The
 its dataset `pvesm_id`) so the VM disk targets it directly instead of landing at
 the pool root. The legacy `virtio1` 200G data disk stays attached transitionally
 until a separate migration moves data onto the tiers — see
-[`INFRASTRUCTURE_NUMBERING.md`](./INFRASTRUCTURE_NUMBERING.md) and
-[`SPLUNK_VM_DISK_DRIFT.md`](./SPLUNK_VM_DISK_DRIFT.md).
+[`INFRASTRUCTURE_NUMBERING.md`](./INFRASTRUCTURE_NUMBERING.md).
 
 The architectural rule intended Splunk-side (in `ansible-splunk`, not here): a
 Splunk index may not be defined without pointing its `homePath`/`coldPath` at one
