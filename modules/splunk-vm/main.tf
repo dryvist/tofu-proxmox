@@ -132,9 +132,8 @@ resource "proxmox_virtual_environment_vm" "splunk_vm" {
   # Durability comes from the Backblaze B2 frozen archive (configured
   # Splunk-side in ansible-splunk), never from Proxmox vzdump.
   # NOTE: while `ignore_changes = [disk]` is active (see lifecycle below), adding
-  # these blocks produces NO plan diff — actually attaching them is a
-  # human-supervised step gated on the live disk-drift reconciliation. See
-  # docs/SPLUNK_VM_DISK_DRIFT.md.
+  # these blocks produces NO plan diff — attaching them is a human-supervised
+  # step, documented privately.
   dynamic "disk" {
     for_each = var.tiered_disks
     content {
@@ -243,12 +242,9 @@ resource "proxmox_virtual_environment_vm" "splunk_vm" {
       # the whole `disk` attribute ignored is therefore the only safe state today.
       # CONSEQUENCE: while `disk` stays ignored, the var.tiered_disks blocks above
       # produce NO plan diff and will NOT attach on apply.
-      # TODO (human-supervised, out of scope for this PR): to actually attach
-      # fast-splunk/bulk-splunk, first reconcile the live disk drift into state
-      # (import/declare the real scsi0 boot disk + virtio1), then remove this
-      # `disk` entry entirely under a reviewed apply so bpg matches existing disks
-      # by interface and creates only the genuinely-new virtio2/virtio3. See
-      # docs/SPLUNK_VM_DISK_DRIFT.md for the exact blocking steps.
+      # Attaching them requires reconciling the live disks into state and then
+      # removing this entry under a reviewed apply, so bpg matches existing disks
+      # by interface. That is a human-supervised procedure, documented privately.
       disk,
     ]
   }

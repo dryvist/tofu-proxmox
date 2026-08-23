@@ -1230,3 +1230,116 @@ run "ansible_inventory_has_no_host_services" {
   }
 }
 
+
+# --- guest sizing, for Nautobot's VirtualMachine fields ---
+
+# Nautobot models vcpus/memory/disk natively and every guest read null, because
+# nothing carried the declared sizing downstream: the desired state has it, the
+# inventory did not, so the seed bundle could not either.
+#
+# Asserted as a CONTRACT rather than trusted: these are plain attribute reads
+# (not try()), so an undeclared attribute breaks the plan instead of publishing
+# a null that looks like "this guest has no sizing".
+run "ansible_inventory_publishes_guest_sizing" {
+  command = plan
+
+  # This run needs its OWN containers: the file-level fixture declares none, and
+  # `alltrue([])` is TRUE — so every assertion below would pass vacuously against
+  # an empty map. Caught by mutation: rescaling memory x1024 left the suite green
+  # until this fixture existed.
+  variables {
+    containers = {
+      "sizing-probe" = {
+        node_name        = "proxmox-1"
+        vm_id            = 199
+        hostname         = "sizing-probe"
+        vlan             = "dns"
+        cpu_cores        = 4
+        memory_dedicated = 8192
+        root_disk        = { size = 24 }
+      }
+    }
+    # A VM too. Same reason the containers fixture exists: `alltrue([])` is TRUE,
+    # so the VM assertions below were vacuous until something was here. This was
+    # caught by mutation twice -- fixed for containers, then reintroduced for
+    # vms, and only the mutation showed it.
+    vms = {
+      "sizing-probe-vm" = {
+        node_name        = "proxmox-1"
+        vm_id            = 198
+        name             = "sizing-probe-vm"
+        vlan             = "apps"
+        cpu_cores        = 8
+        memory_dedicated = 16384
+        boot_disk        = { size = 64 }
+      }
+    }
+  }
+
+  # The fixture must actually reach the output, or the checks below are vacuous
+  # again for a different reason.
+  assert {
+    condition     = length(output.ansible_inventory.containers) > 0 && length(output.ansible_inventory.vms) > 0
+    error_message = "containers or vms published empty, so the sizing assertions below would pass vacuously against an empty map"
+  }
+
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : can(c.cpu_cores) && can(c.memory_mb) && can(c.disk_gb)])
+    error_message = "every published container must carry cpu_cores, memory_mb and disk_gb; a missing field leaves Nautobot's VirtualMachine sizing null"
+  }
+
+  # Zero or null would populate Nautobot with confident nonsense, which is worse
+  # than an empty field: an empty field is honestly unknown, a 0 reads as real.
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : c.cpu_cores > 0 && c.memory_mb > 0 && c.disk_gb > 0])
+    error_message = "published sizing must be positive; a 0 or null would record a guest as having no CPU, memory or disk"
+  }
+
+  # Units are the guest's own and match Nautobot's (memory MB, disk GB) so they
+  # map across without conversion. This pins the magnitude: a value rescaled to
+  # bytes or GB-as-MB still passes the > 0 check above while being wrong by
+  # three orders of magnitude.
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : c.memory_mb >= 64 && c.memory_mb <= 65536])
+    error_message = "memory_mb is outside the declared MB range, which means the unit was rescaled somewhere"
+  }
+
+  # VMs too, not just containers. Publishing sizing for containers only left the
+  # actual VMs -- the guests the Nautobot field name refers to -- reading null,
+  # which looked like success because most guests here ARE containers.
+  assert {
+    condition     = alltrue([for k, v in output.ansible_inventory.vms : can(v.cpu_cores) && can(v.memory_mb) && can(v.disk_gb)])
+    error_message = "every published VM must carry cpu_cores, memory_mb and disk_gb; containers alone is not the field Nautobot means by VM sizing"
+  }
+
+  assert {
+    condition     = alltrue([for k, v in output.ansible_inventory.vms : v.cpu_cores > 0 && v.memory_mb > 0 && v.disk_gb > 0])
+    error_message = "published VM sizing must be positive; a 0 records a guest as having no CPU, memory or disk"
+  }
+
+  # EVERY guest-publishing slice, not one at a time. Sizing was added to
+  # containers, then vms, then docker_vms and splunk_vm -- three rounds, because
+  # each fix addressed the instance instead of the class, and each time the
+  # count went UP and looked like success. This asserts across all four slices
+  # at once, so a new slice added later fails here rather than shipping blank.
+  assert {
+    condition = alltrue(flatten([
+      for slice in [
+        output.ansible_inventory.containers,
+        output.ansible_inventory.vms,
+        output.ansible_inventory.docker_vms,
+        output.ansible_inventory.splunk_vm,
+        ] : [
+        for k, g in slice : can(g.cpu_cores) && can(g.memory_mb) && can(g.disk_gb)
+      ]
+    ]))
+    error_message = "a guest slice publishes no sizing; every slice must, or those guests read null in Nautobot while the others look fine"
+  }
+
+  # splunk_vm is a single fixed key, so it is never empty and needs no
+  # non-emptiness guard -- unlike the maps above, where alltrue([]) is TRUE.
+  assert {
+    condition     = output.ansible_inventory.splunk_vm.splunk.cpu_cores > 0 && output.ansible_inventory.splunk_vm.splunk.disk_gb > 0
+    error_message = "the splunk guest must carry positive sizing; it is built by its own module and was missed when vms was fixed"
+  }
+}

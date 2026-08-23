@@ -49,6 +49,23 @@ locals {
         ansible_pct_vmid   = v.id
         tags               = v.tags
         pool_id            = v.pool_id
+        # Declared sizing, published so Nautobot can be the SSoT for it.
+        # VirtualMachine.vcpus/memory/disk were null for every guest because
+        # nothing carried these downstream — the desired state has them, the
+        # inventory did not, so the seed bundle could not either.
+        #
+        # Plain attribute reads, not try(): exactly like the `started` field in
+        # the vms block below, reading them here is what keeps them DECLARED.
+        # An undeclared attribute is silently stripped from the desired state,
+        # so a try() would turn a dropped field into a null that looks like
+        # "this guest has no sizing" rather than breaking the plan.
+        #
+        # Units are the guest's own: cores as a count, memory in MB, disk in GB.
+        # Nautobot's VirtualMachine uses MB for memory and GB for disk, so these
+        # map across without conversion — do not "helpfully" rescale them.
+        cpu_cores = var.containers[k].cpu_cores
+        memory_mb = var.containers[k].memory_dedicated
+        disk_gb   = var.containers[k].root_disk.size
       }
     }
     # Regular VMs - using SSH connection
@@ -75,6 +92,18 @@ locals {
         # this output.
         on_boot = var.vms[k].on_boot
         started = var.vms[k].started
+        # Same sizing contract as the containers block above, for the same
+        # reason: Nautobot models vcpus/memory/disk natively and a guest without
+        # them reads null. Publishing it for containers ONLY left the actual VMs
+        # — the guests the field name refers to — still blank.
+        #
+        # boot_disk.size rather than root_disk.size: a VM's system disk is
+        # boot_disk here, and additional_disks are deliberately excluded because
+        # Nautobot's `disk` is a single number, not a sum. Recording a total
+        # would silently disagree with what the guest calls its disk.
+        cpu_cores = var.vms[k].cpu_cores
+        memory_mb = var.vms[k].memory_dedicated
+        disk_gb   = var.vms[k].boot_disk.size
         # The guest's own LAN gateway. Published because a guest running a VPN
         # client cannot discover it at converge time: the client owns the
         # default route by then, so "the current gateway" is the tunnel's.
@@ -98,6 +127,12 @@ locals {
         ansible_connection = "ssh"
         tags               = v.tags
         pool_id            = v.pool_id
+        # docker_vms is a FILTERED VIEW of the same vms map, so it needs the
+        # same sizing reads -- a guest does not stop having a size because it
+        # is republished under a second key.
+        cpu_cores = var.vms[k].cpu_cores
+        memory_mb = var.vms[k].memory_dedicated
+        disk_gb   = var.vms[k].boot_disk.size
       } if contains(try(v.tags, []), "docker")
     }
     # Splunk VM - dedicated Docker host with SSH connection
@@ -108,6 +143,14 @@ locals {
         ip                 = module.splunk_vm.ip_address # CIDR already stripped in module output
         node               = var.proxmox_node
         ansible_connection = "ssh"
+        # Sized from its own variables -- this guest is built by a dedicated
+        # module, not from var.vms. disk_gb is the BOOT disk: the tiered data
+        # disks are published separately under splunk_storage, and Nautobot's
+        # `disk` is a single number, so summing them would disagree with what
+        # the guest calls its disk.
+        cpu_cores = var.splunk_cpu_cores
+        memory_mb = var.splunk_memory
+        disk_gb   = var.splunk_boot_disk_size
       }
     }
     # Splunk tiered storage - one {datastore_id, disk_interface, size_gb} per tier
