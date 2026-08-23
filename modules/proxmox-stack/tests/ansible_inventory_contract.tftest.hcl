@@ -1230,3 +1230,62 @@ run "ansible_inventory_has_no_host_services" {
   }
 }
 
+
+# --- guest sizing, for Nautobot's VirtualMachine fields ---
+
+# Nautobot models vcpus/memory/disk natively and every guest read null, because
+# nothing carried the declared sizing downstream: the desired state has it, the
+# inventory did not, so the seed bundle could not either.
+#
+# Asserted as a CONTRACT rather than trusted: these are plain attribute reads
+# (not try()), so an undeclared attribute breaks the plan instead of publishing
+# a null that looks like "this guest has no sizing".
+run "ansible_inventory_publishes_guest_sizing" {
+  command = plan
+
+  # This run needs its OWN containers: the file-level fixture declares none, and
+  # `alltrue([])` is TRUE — so every assertion below would pass vacuously against
+  # an empty map. Caught by mutation: rescaling memory x1024 left the suite green
+  # until this fixture existed.
+  variables {
+    containers = {
+      "sizing-probe" = {
+        node_name        = "proxmox-1"
+        vm_id            = 199
+        hostname         = "sizing-probe"
+        vlan             = "dns"
+        cpu_cores        = 4
+        memory_dedicated = 8192
+        root_disk        = { size = 24 }
+      }
+    }
+  }
+
+  # The fixture must actually reach the output, or the checks below are vacuous
+  # again for a different reason.
+  assert {
+    condition     = length(output.ansible_inventory.containers) > 0
+    error_message = "no containers were published, so the sizing assertions below would pass against an empty map"
+  }
+
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : can(c.cpu_cores) && can(c.memory_mb) && can(c.disk_gb)])
+    error_message = "every published container must carry cpu_cores, memory_mb and disk_gb; a missing field leaves Nautobot's VirtualMachine sizing null"
+  }
+
+  # Zero or null would populate Nautobot with confident nonsense, which is worse
+  # than an empty field: an empty field is honestly unknown, a 0 reads as real.
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : c.cpu_cores > 0 && c.memory_mb > 0 && c.disk_gb > 0])
+    error_message = "published sizing must be positive; a 0 or null would record a guest as having no CPU, memory or disk"
+  }
+
+  # Units are the guest's own and match Nautobot's (memory MB, disk GB) so they
+  # map across without conversion. This pins the magnitude: a value rescaled to
+  # bytes or GB-as-MB still passes the > 0 check above while being wrong by
+  # three orders of magnitude.
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : c.memory_mb >= 64 && c.memory_mb <= 65536])
+    error_message = "memory_mb is outside the declared MB range, which means the unit was rescaled somewhere"
+  }
+}
