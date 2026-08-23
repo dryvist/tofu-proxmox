@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.1.0](https://github.com/dryvist/tofu-proxmox/compare/v3.0.0...v3.1.0) (2026-08-23)
+
+
+### Features
+
+* **inventory:** publish declared guest sizing for Nautobot ([#994](https://github.com/dryvist/tofu-proxmox/issues/994)) ([6fb590f](https://github.com/dryvist/tofu-proxmox/commit/6fb590f8ee59eca752521d6249a7820c0f8b6dc0))
+
+
+### Bug Fixes
+
+* **inventory:** publish sizing for every guest slice, not one at a time ([#996](https://github.com/dryvist/tofu-proxmox/issues/996)) ([b3e3b2f](https://github.com/dryvist/tofu-proxmox/commit/b3e3b2f39eb5f77bfaa0bdf8ccfed41dbefeca62))
+* **inventory:** publish sizing for VMs, not only containers ([#995](https://github.com/dryvist/tofu-proxmox/issues/995)) ([5a6ed0d](https://github.com/dryvist/tofu-proxmox/commit/5a6ed0d49dc22c05db6a1abd64827a52b0a94174))
+
 ## [3.0.0](https://github.com/dryvist/tofu-proxmox/compare/v2.0.0...v3.0.0) (2026-08-22)
 
 
