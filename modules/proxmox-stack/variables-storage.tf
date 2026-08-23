@@ -153,6 +153,12 @@ variable "node_storage" {
         # the pool root, not inside an arbitrary child dataset. Leave unset (null)
         # for datasets that are only bind-mounted or NFS-exported.
         pvesm_id = optional(string)
+        # Thin-provision disks created on this dataset's `pvesm_id` storage.
+        # Without it Proxmox gives every new disk a refreservation equal to its
+        # full declared size the moment it is created, so a 450G disk consumes
+        # 450G of the dataset `quota` before a block is written and the quota
+        # holds exactly one such disk. Only meaningful alongside `pvesm_id`.
+        sparse = optional(bool, false)
         # Arbitrary ZFS properties (recordsize, compression, readonly,
         # com.sun:auto-snapshot, …) applied idempotently by ansible-proxmox.
         # Use ZFS canonical forms as strings (e.g. "1M", "zstd", "false").
