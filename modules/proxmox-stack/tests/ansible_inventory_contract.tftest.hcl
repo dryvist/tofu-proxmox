@@ -1316,4 +1316,30 @@ run "ansible_inventory_publishes_guest_sizing" {
     condition     = alltrue([for k, v in output.ansible_inventory.vms : v.cpu_cores > 0 && v.memory_mb > 0 && v.disk_gb > 0])
     error_message = "published VM sizing must be positive; a 0 records a guest as having no CPU, memory or disk"
   }
+
+  # EVERY guest-publishing slice, not one at a time. Sizing was added to
+  # containers, then vms, then docker_vms and splunk_vm -- three rounds, because
+  # each fix addressed the instance instead of the class, and each time the
+  # count went UP and looked like success. This asserts across all four slices
+  # at once, so a new slice added later fails here rather than shipping blank.
+  assert {
+    condition = alltrue(flatten([
+      for slice in [
+        output.ansible_inventory.containers,
+        output.ansible_inventory.vms,
+        output.ansible_inventory.docker_vms,
+        output.ansible_inventory.splunk_vm,
+        ] : [
+        for k, g in slice : can(g.cpu_cores) && can(g.memory_mb) && can(g.disk_gb)
+      ]
+    ]))
+    error_message = "a guest slice publishes no sizing; every slice must, or those guests read null in Nautobot while the others look fine"
+  }
+
+  # splunk_vm is a single fixed key, so it is never empty and needs no
+  # non-emptiness guard -- unlike the maps above, where alltrue([]) is TRUE.
+  assert {
+    condition     = output.ansible_inventory.splunk_vm.splunk.cpu_cores > 0 && output.ansible_inventory.splunk_vm.splunk.disk_gb > 0
+    error_message = "the splunk guest must carry positive sizing; it is built by its own module and was missed when vms was fixed"
+  }
 }
