@@ -11,14 +11,45 @@ tiered disks can actually attach on a real apply.
 | --- | --- | --- |
 | Boot | `virtio0`, 25G | `scsi0`, 50G |
 | Data | `virtio1`, 200G | `virtio1`, 200G (tracked in state) |
-| Leftover disk-1 | (none) | reaped directly on the host |
+| Hot/warm tier | `virtio2`, 1024G on `fast-splunk` | **`virtio2`, 450G on `fast`** |
+| Cold tier | `virtio3`, 2048G on `bulk-splunk` | **`virtio3`, 450G on `fast`** |
+
+**Re-captured live 2026-08-23** (step 1 of the reconciliation below, so it does
+not have to be re-derived):
+
+```
+scsi0:   local-zfs:vm-200-disk-0  size=50G
+virtio1: local-zfs:vm-200-disk-2  size=200G  backup=0 replicate=0
+virtio2: fast:vm-200-disk-1       size=450G  backup=0 replicate=0
+virtio3: fast:vm-200-disk-0       size=450G  backup=0 replicate=0
+```
+
+> **Correction to an earlier reading of this page.** It previously implied the
+> tiered disks were declared-but-never-created. They **exist**, at 450G each, on
+> `fast` — i.e. both tiers share ONE SATA SSD, which is the condition the tiering
+> work exists to fix. `fast-splunk` and `bulk-splunk` are not registered storage
+> IDs on the node, so the declared values describe neither the live layout nor a
+> reachable target. Step 2 below must reconcile against the block above, not
+> against the assumption that `virtio2`/`virtio3` are new.
+>
+> A prepared target now exists: `nvme-splunk` (500G quota, node-scoped,
+> registered and `active`). 450G fits inside it.
 
 `tofu` state tracks only the `virtio1` data disk. Because `bpg/proxmox` keys
 disk blocks and reconciliation on the live VM has no record of the `scsi0` boot
 disk, any un-ignored disk plan tries to unplug the live boot disk (Proxmox HTTP
 400) and would reinterpret the 200G data disk. `ignore_changes = [disk]` is set
 in `modules/splunk-vm/main.tf` for exactly this reason and must not be removed
-casually — the VM has `prevent_destroy = true` and no working backup today.
+casually — the VM has `prevent_destroy = true`.
+
+**Backup posture, verified 2026-08-23 — this page previously said "no working
+backup today", which is no longer true for the boot and data disks.** Both are
+replicated off-node by syncoid and were demonstrated restorable: the boot-disk
+snapshot was cloned from its replica and read back as a GPT volume with an ext4
+root. The **index tiers remain unreplicated BY DESIGN** (index data is
+reconstructible; resilience there is the indexer cluster), so a move of
+`virtio2`/`virtio3` still has no rollback copy and stays a supervised
+operation.
 
 ## Why this cannot be reconciled mechanically here
 
