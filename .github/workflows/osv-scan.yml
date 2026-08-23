@@ -26,6 +26,6 @@ jobs:
   scan:
     # SHA pin → dryvist/.github main as of 2026-06-12.
     # Bump intentionally when the upstream workflow changes.
-    uses: dryvist/.github/.github/workflows/_osv-scan.yml@dcc5257e5a6a24cbb137ddbd12494d9d2bf615b1
+    uses: dryvist/.github/.github/workflows/_osv-scan.yml@077047f3532844c283be74221abb485e25f4a3d6
     with:
       runner_label: ubuntu-latest
