@@ -65,6 +65,11 @@ variable "node_storage" {
       protected = optional(bool, true)
       register  = optional(bool, true) # register as PVE storage via pvesm
       content   = optional(list(string), ["images", "rootdir"])
+      # Thin-provision disks created on this pool's PVE storage. Without it
+      # Proxmox gives every new disk a refreservation equal to its full declared
+      # size at creation, so the pool's free space is consumed before a block is
+      # written. Same field, same meaning, as `sparse` on a dataset below.
+      sparse = optional(bool, false)
       datasets = optional(map(object({
         quota      = optional(string)
         mountpoint = optional(string)
