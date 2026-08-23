@@ -49,6 +49,23 @@ locals {
         ansible_pct_vmid   = v.id
         tags               = v.tags
         pool_id            = v.pool_id
+        # Declared sizing, published so Nautobot can be the SSoT for it.
+        # VirtualMachine.vcpus/memory/disk were null for every guest because
+        # nothing carried these downstream — the desired state has them, the
+        # inventory did not, so the seed bundle could not either.
+        #
+        # Plain attribute reads, not try(): exactly like the `started` field in
+        # the vms block below, reading them here is what keeps them DECLARED.
+        # An undeclared attribute is silently stripped from the desired state,
+        # so a try() would turn a dropped field into a null that looks like
+        # "this guest has no sizing" rather than breaking the plan.
+        #
+        # Units are the guest's own: cores as a count, memory in MB, disk in GB.
+        # Nautobot's VirtualMachine uses MB for memory and GB for disk, so these
+        # map across without conversion — do not "helpfully" rescale them.
+        cpu_cores = var.containers[k].cpu_cores
+        memory_mb = var.containers[k].memory_dedicated
+        disk_gb   = var.containers[k].root_disk.size
       }
     }
     # Regular VMs - using SSH connection
