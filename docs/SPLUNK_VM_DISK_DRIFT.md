@@ -17,7 +17,7 @@ tiered disks can actually attach on a real apply.
 **Re-captured live 2026-08-23** (step 1 of the reconciliation below, so it does
 not have to be re-derived):
 
-```
+```text
 scsi0:   local-zfs:vm-200-disk-0  size=50G
 virtio1: local-zfs:vm-200-disk-2  size=200G  backup=0 replicate=0
 virtio2: fast:vm-200-disk-1       size=450G  backup=0 replicate=0
