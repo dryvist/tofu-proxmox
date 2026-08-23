@@ -957,7 +957,8 @@ run "ansible_inventory_node_storage_sparse_propagated" {
       proxmox-2 = {
         pools = {
           example-pool = {
-            raid = "raidz1"
+            raid   = "raidz1"
+            sparse = true
             datasets = {
               thin  = { quota = "500G", pvesm_id = "thin-store", sparse = true }
               thick = { quota = "500G", pvesm_id = "thick-store" }
@@ -971,6 +972,13 @@ run "ansible_inventory_node_storage_sparse_propagated" {
   assert {
     condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].datasets["thin"].sparse == true
     error_message = "a declared sparse must survive the dataset object type and reach ansible_inventory"
+  }
+
+  # A pool registered directly as PVE storage takes the same flag. It was added
+  # one release after the dataset field and is the same silent-strip risk.
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].sparse == true
+    error_message = "a declared sparse must survive the POOL object type and reach ansible_inventory"
   }
 
   # False, not null: the consumer compares it against what Proxmox reports, and
@@ -1006,6 +1014,13 @@ run "ansible_inventory_node_storage_propagated" {
   assert {
     condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].datasets["backups"].properties["recordsize"] == "1M"
     error_message = "node_storage dataset properties must propagate to ansible_inventory for ansible-proxmox"
+  }
+
+  # False, not null — the consumer compares it against what Proxmox reports, and
+  # Proxmox omits the key entirely when sparse is off.
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].sparse == false
+    error_message = "an unset pool sparse must publish as false, matching what Proxmox reports for a thick storage"
   }
 
   assert {
