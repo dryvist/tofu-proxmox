@@ -944,6 +944,44 @@ run "ansible_inventory_nodes_device_name_propagated" {
   }
 }
 
+# The dataset object type strips any attribute it does not declare, silently:
+# an undeclared key reaches neither the output nor an error. `sparse` was lost
+# exactly this way — it passed the desired-state JSON schema, survived an apply,
+# and never reached Ansible, so the reconcile task on the other side skipped and
+# the declaration read back as correct while every disk was still created thick.
+run "ansible_inventory_node_storage_sparse_propagated" {
+  command = plan
+
+  variables {
+    node_storage = {
+      proxmox-2 = {
+        pools = {
+          example-pool = {
+            raid = "raidz1"
+            datasets = {
+              thin  = { quota = "500G", pvesm_id = "thin-store", sparse = true }
+              thick = { quota = "500G", pvesm_id = "thick-store" }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].datasets["thin"].sparse == true
+    error_message = "a declared sparse must survive the dataset object type and reach ansible_inventory"
+  }
+
+  # False, not null: the consumer compares it against what Proxmox reports, and
+  # Proxmox reports absent-means-off. A null here would make that comparison
+  # ambiguous rather than simply "not thin".
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].datasets["thick"].sparse == false
+    error_message = "an unset sparse must publish as false, matching what Proxmox reports for a thick storage"
+  }
+}
+
 run "ansible_inventory_node_storage_propagated" {
   command = plan
 
