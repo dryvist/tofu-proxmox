@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.0](https://github.com/dryvist/tofu-proxmox/compare/v3.1.0...v3.2.0) (2026-08-24)
+
+
+### Features
+
+* **inventory:** publish each container's effective datastore ([#1003](https://github.com/dryvist/tofu-proxmox/issues/1003)) ([bbca205](https://github.com/dryvist/tofu-proxmox/commit/bbca20582e291f99d951b14ae00b127af451b64f))
+
+
+### Bug Fixes
+
+* **storage:** publish a dataset's sparse flag instead of dropping it ([#1001](https://github.com/dryvist/tofu-proxmox/issues/1001)) ([6d30270](https://github.com/dryvist/tofu-proxmox/commit/6d30270c9bcb2c529ed8b674570e829b752cdaaf))
+* **storage:** publish a pool's sparse flag, not just a dataset's ([#1002](https://github.com/dryvist/tofu-proxmox/issues/1002)) ([0989cb8](https://github.com/dryvist/tofu-proxmox/commit/0989cb8fe3296e354f8167429b84128f29943872))
+
 ## [3.1.0](https://github.com/dryvist/tofu-proxmox/compare/v3.0.0...v3.1.0) (2026-08-23)
 
 
