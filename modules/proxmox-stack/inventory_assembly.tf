@@ -14,70 +14,29 @@ locals {
   # The inventory value, shared by output.ansible_inventory and the publish
   # resource below (a resource cannot reference an output, so this lives here).
   ansible_inventory = {
-    # Contract version of this published artifact. Consumers (and the
-    # homelab-contracts JSON schema that gates the publish) read this to confirm
-    # they understand the emitted shape. Bump only on a breaking key-set change.
+    # Contract version of this published artifact. Consumers read this to
+    # confirm they understand the emitted shape. Bump only on a breaking
+    # key-set change; an added key is additive.
+    #
+    # This comment used to say the homelab-contracts JSON schema "gates the
+    # publish". It does not, and believing so is dangerous. That repo's CI runs
+    # check-jsonschema against its own checked-in examples/ansible_inventory.json
+    # and never against the real artifact, and nothing here validates the
+    # publish at plan or apply time. Its $defs/container is
+    # additionalProperties:false while omitting cpu_cores/memory_mb/disk_gb,
+    # which this has emitted for some time -- that mismatch has never failed
+    # anything precisely because the schema never meets the artifact.
+    #
+    # The schema that DOES run against real output is consumer-side
+    # (ansible-proxmox-apps tests/inventory_load/tofu_inventory.schema.json) and
+    # is additionalProperties:true, which is why an added key is safe here.
     schema_version = "2.1.0"
     # Which desired state this came from — see the variables' own descriptions.
     desired_state = {
       etag = var.desired_state_etag
     }
     # LXC Containers - using proxmox_pct_remote connection
-    containers = {
-      for k, v in(length(var.containers) > 0 ? module.containers[0].container_details : {}) : k => {
-        vmid     = v.id
-        hostname = var.containers[k].hostname
-        ip       = local.container_address[k] # static: per-VLAN cidrhost IP (CIDR stripped); DHCP guests: FQDN (DNS-first)
-        # The guest's live MAC, published for EVERY container.
-        #
-        # DHCP-first guests carry the deterministic MAC from local.container_mac,
-        # which keeps the lease — and therefore the address and the lease-table DNS
-        # name — stable across a rebuild. It is NOT a reservation key: this
-        # inventory no longer publishes a reserved address, because a leased
-        # guest's address exists only in the lease. Consumers address these guests
-        # by the FQDN in `ip`, which is the single name for them.
-        #
-        # Static guests used to publish null here, which left them unnameable
-        # downstream: a static guest never sends DHCP option 12, so the network
-        # controller learns no hostname and lists it by MAC. A client alias keyed
-        # on the MAC is the only fix, and it needs this field populated. The value
-        # is READ from the provider, never assigned, so no live guest is touched.
-        mac  = v.mac_address
-        node = v.node_name
-        # Connection settings for proxmox_pct_remote (community.proxmox)
-        ansible_connection = "community.proxmox.proxmox_pct_remote"
-        ansible_pct_vmid   = v.id
-        tags               = v.tags
-        pool_id            = v.pool_id
-        # Declared sizing, published so Nautobot can be the SSoT for it.
-        # VirtualMachine.vcpus/memory/disk were null for every guest because
-        # nothing carried these downstream — the desired state has them, the
-        # inventory did not, so the seed bundle could not either.
-        #
-        # Plain attribute reads, not try(): exactly like the `started` field in
-        # the vms block below, reading them here is what keeps them DECLARED.
-        # An undeclared attribute is silently stripped from the desired state,
-        # so a try() would turn a dropped field into a null that looks like
-        # "this guest has no sizing" rather than breaking the plan.
-        #
-        # Units are the guest's own: cores as a count, memory in MB, disk in GB.
-        # Nautobot's VirtualMachine uses MB for memory and GB for disk, so these
-        # map across without conversion — do not "helpfully" rescale them.
-        cpu_cores = var.containers[k].cpu_cores
-        memory_mb = var.containers[k].memory_dedicated
-        disk_gb   = var.containers[k].root_disk.size
-        # WHERE the root disk lives, not just how big it is. A consumer that
-        # snapshots a guest's dataset needs its pool; without this it must
-        # hardcode one, which stops being true the moment the guest moves tier
-        # -- silently, because a move retains the source volume.
-        #
-        # coalesce, not a plain read: datastore_id is optional and null for
-        # every guest taking the node default, so a raw read would publish null
-        # for most guests. Resolves the EFFECTIVE datastore exactly as
-        # modules/proxmox-container/main.tf does when it creates the disk.
-        datastore = coalesce(var.containers[k].root_disk.datastore_id, var.datastore_default)
-      }
-    }
+    containers = local.inventory_containers
     # Regular VMs - using SSH connection
     # DRY: static VMs advertise their vm_id-derived IP; DHCP-first VMs advertise
     # their FQDN (local.vm_address) with a lease-stabilizing deterministic MAC,
@@ -114,6 +73,18 @@ locals {
         cpu_cores = var.vms[k].cpu_cores
         memory_mb = var.vms[k].memory_dedicated
         disk_gb   = var.vms[k].boot_disk.size
+        # WHERE the boot disk lives, same contract as the containers block and
+        # for the same reason: a consumer that snapshots this guest's dataset
+        # must resolve its pool rather than hardcode one. pve-w1700's sanoid
+        # policy named `rpool/data/vm-200-disk-0` literally, which is Splunk's
+        # own disk -- a tier move would leave it snapshotting a stale dataset
+        # while counts and timestamps stayed healthy.
+        #
+        # A PLAIN read, unlike the containers block: boot_disk.datastore_id is
+        # optional(string, "local-lvm"), so it carries a default and is never
+        # null. A coalesce here would be dead code implying a nullability the
+        # type does not have.
+        datastore = var.vms[k].boot_disk.datastore_id
         # The guest's own LAN gateway. Published because a guest running a VPN
         # client cannot discover it at converge time: the client owns the
         # default route by then, so "the current gateway" is the tunnel's.
@@ -138,11 +109,12 @@ locals {
         tags               = v.tags
         pool_id            = v.pool_id
         # docker_vms is a FILTERED VIEW of the same vms map, so it needs the
-        # same sizing reads -- a guest does not stop having a size because it
-        # is republished under a second key.
+        # same sizing and placement reads -- a guest does not stop having a size
+        # or a datastore because it is republished under a second key.
         cpu_cores = var.vms[k].cpu_cores
         memory_mb = var.vms[k].memory_dedicated
         disk_gb   = var.vms[k].boot_disk.size
+        datastore = var.vms[k].boot_disk.datastore_id
       } if contains(try(v.tags, []), "docker")
     }
     # Splunk VM - dedicated Docker host with SSH connection
