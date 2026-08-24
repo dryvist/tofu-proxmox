@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.0](https://github.com/dryvist/tofu-proxmox/compare/v3.3.0...v3.4.0) (2026-08-24)
+
+
+### Features
+
+* **inventory:** publish Splunk's own disks with Proxmox-assigned names ([1bdf2ce](https://github.com/dryvist/tofu-proxmox/commit/1bdf2ce1105f344296dd4be39a267d6495454c54))
+
 ## [3.3.0](https://github.com/dryvist/tofu-proxmox/compare/v3.2.0...v3.3.0) (2026-08-24)
 
 
