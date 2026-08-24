@@ -85,6 +85,12 @@ locals {
         # null. A coalesce here would be dead code implying a nullability the
         # type does not have.
         datastore = var.vms[k].boot_disk.datastore_id
+        # EVERY disk, with the volume name Proxmox assigned -- read back from
+        # the provider (see modules/proxmox-vm/outputs.tf). `datastore` above is
+        # the BOOT disk only, and a VM's data usually is not on its boot disk:
+        # docker VM 250 keeps 100G on a second disk. A consumer that snapshots
+        # this guest must iterate `disks`, not assume `datastore`.
+        disks = v.disks
         # The guest's own LAN gateway. Published because a guest running a VPN
         # client cannot discover it at converge time: the client owns the
         # default route by then, so "the current gateway" is the tunnel's.
@@ -115,6 +121,7 @@ locals {
         memory_mb = var.vms[k].memory_dedicated
         disk_gb   = var.vms[k].boot_disk.size
         datastore = var.vms[k].boot_disk.datastore_id
+        disks     = v.disks
       } if contains(try(v.tags, []), "docker")
     }
     # Splunk VM - dedicated Docker host with SSH connection
