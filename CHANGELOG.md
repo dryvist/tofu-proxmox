@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.0](https://github.com/dryvist/tofu-proxmox/compare/v3.2.0...v3.3.0) (2026-08-24)
+
+
+### Features
+
+* **inventory:** publish each VM's datastore, and correct the schema-gate claim ([#1007](https://github.com/dryvist/tofu-proxmox/issues/1007)) ([a89f0ab](https://github.com/dryvist/tofu-proxmox/commit/a89f0ab025cb306c78a09c8f091b1852906444e9))
+* **inventory:** publish every VM disk with the name Proxmox assigned ([#1009](https://github.com/dryvist/tofu-proxmox/issues/1009)) ([bc8726d](https://github.com/dryvist/tofu-proxmox/commit/bc8726d073f6a87e873475006177782ec12c2fb1))
+
 ## [3.2.0](https://github.com/dryvist/tofu-proxmox/compare/v3.1.0...v3.2.0) (2026-08-24)
 
 
