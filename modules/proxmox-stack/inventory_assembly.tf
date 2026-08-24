@@ -66,6 +66,16 @@ locals {
         cpu_cores = var.containers[k].cpu_cores
         memory_mb = var.containers[k].memory_dedicated
         disk_gb   = var.containers[k].root_disk.size
+        # WHERE the root disk lives, not just how big it is. A consumer that
+        # snapshots a guest's dataset needs its pool; without this it must
+        # hardcode one, which stops being true the moment the guest moves tier
+        # -- silently, because a move retains the source volume.
+        #
+        # coalesce, not a plain read: datastore_id is optional and null for
+        # every guest taking the node default, so a raw read would publish null
+        # for most guests. Resolves the EFFECTIVE datastore exactly as
+        # modules/proxmox-container/main.tf does when it creates the disk.
+        datastore = coalesce(var.containers[k].root_disk.datastore_id, var.datastore_default)
       }
     }
     # Regular VMs - using SSH connection

@@ -944,6 +944,52 @@ run "ansible_inventory_nodes_device_name_propagated" {
   }
 }
 
+# The dataset object type strips any attribute it does not declare, silently:
+# an undeclared key reaches neither the output nor an error. `sparse` was lost
+# exactly this way — it passed the desired-state JSON schema, survived an apply,
+# and never reached Ansible, so the reconcile task on the other side skipped and
+# the declaration read back as correct while every disk was still created thick.
+run "ansible_inventory_node_storage_sparse_propagated" {
+  command = plan
+
+  variables {
+    node_storage = {
+      proxmox-2 = {
+        pools = {
+          example-pool = {
+            raid   = "raidz1"
+            sparse = true
+            datasets = {
+              thin  = { quota = "500G", pvesm_id = "thin-store", sparse = true }
+              thick = { quota = "500G", pvesm_id = "thick-store" }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].datasets["thin"].sparse == true
+    error_message = "a declared sparse must survive the dataset object type and reach ansible_inventory"
+  }
+
+  # A pool registered directly as PVE storage takes the same flag. It was added
+  # one release after the dataset field and is the same silent-strip risk.
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].sparse == true
+    error_message = "a declared sparse must survive the POOL object type and reach ansible_inventory"
+  }
+
+  # False, not null: the consumer compares it against what Proxmox reports, and
+  # Proxmox reports absent-means-off. A null here would make that comparison
+  # ambiguous rather than simply "not thin".
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].datasets["thick"].sparse == false
+    error_message = "an unset sparse must publish as false, matching what Proxmox reports for a thick storage"
+  }
+}
+
 run "ansible_inventory_node_storage_propagated" {
   command = plan
 
@@ -968,6 +1014,13 @@ run "ansible_inventory_node_storage_propagated" {
   assert {
     condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].datasets["backups"].properties["recordsize"] == "1M"
     error_message = "node_storage dataset properties must propagate to ansible_inventory for ansible-proxmox"
+  }
+
+  # False, not null — the consumer compares it against what Proxmox reports, and
+  # Proxmox omits the key entirely when sparse is off.
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-2"].pools["example-pool"].sparse == false
+    error_message = "an unset pool sparse must publish as false, matching what Proxmox reports for a thick storage"
   }
 
   assert {
@@ -1341,5 +1394,75 @@ run "ansible_inventory_publishes_guest_sizing" {
   assert {
     condition     = output.ansible_inventory.splunk_vm.splunk.cpu_cores > 0 && output.ansible_inventory.splunk_vm.splunk.disk_gb > 0
     error_message = "the splunk guest must carry positive sizing; it is built by its own module and was missed when vms was fixed"
+  }
+}
+
+# WHERE a guest's root disk lives must reach the inventory, not just how big it
+# is. Cost of it being absent, paid on 2026-08-24: six guests moved from rpool
+# to ssd on one node, and the sanoid policy — which can only name datasets it
+# can compute — kept snapshotting the old rpool paths. Those paths still held
+# the retained pre-move copies, so snapshot counts and timestamps stayed
+# healthy while capturing nothing live, on two OpenBao raft voters.
+run "ansible_inventory_publishes_container_datastore" {
+  command = plan
+
+  # Its own fixture, and deliberately BOTH shapes: one guest that names a
+  # datastore explicitly and one that says nothing and must inherit the node
+  # default. `alltrue([])` is TRUE, so a single-shape fixture would let the
+  # inherit case rot undetected — which is the case that actually matters,
+  # because an unset datastore_id is null and null is the failure mode.
+  variables {
+    datastore_default = "local-zfs"
+    containers = {
+      "ds-explicit" = {
+        node_name        = "proxmox-1"
+        vm_id            = 197
+        hostname         = "ds-explicit"
+        vlan             = "dns"
+        cpu_cores        = 1
+        memory_dedicated = 512
+        root_disk        = { size = 8, datastore_id = "ssd" }
+      }
+      "ds-inherits" = {
+        node_name        = "proxmox-1"
+        vm_id            = 196
+        hostname         = "ds-inherits"
+        vlan             = "dns"
+        cpu_cores        = 1
+        memory_dedicated = 512
+        root_disk        = { size = 8 }
+      }
+    }
+  }
+
+  assert {
+    condition     = length(output.ansible_inventory.containers) == 2
+    error_message = "the datastore fixture did not reach the output, so every assertion below would pass vacuously"
+  }
+
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : can(c.datastore)])
+    error_message = "every published container must carry datastore; without it no downstream consumer can compute the guest's dataset path, and a snapshot policy silently keeps naming the old pool"
+  }
+
+  # The explicit value must survive unchanged.
+  assert {
+    condition     = output.ansible_inventory.containers["ds-explicit"].datastore == "ssd"
+    error_message = "an explicitly declared root_disk.datastore_id must be published verbatim"
+  }
+
+  # The whole point of the coalesce: a guest that declares nothing must publish
+  # the EFFECTIVE datastore it will actually be created on, never null. A plain
+  # attribute read passes the can() check above while publishing null here.
+  assert {
+    condition     = output.ansible_inventory.containers["ds-inherits"].datastore == "local-zfs"
+    error_message = "a container with no declared datastore_id must publish the node default, not null; null is exactly what makes a consumer fall back to a hardcoded pool"
+  }
+
+  # Belt and braces on the same failure: null is falsy-ish in odd ways, so pin
+  # non-emptiness independently of the two equality checks above.
+  assert {
+    condition     = alltrue([for k, c in output.ansible_inventory.containers : c.datastore != null && c.datastore != ""])
+    error_message = "published datastore must never be null or empty"
   }
 }
