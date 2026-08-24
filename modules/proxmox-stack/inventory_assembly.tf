@@ -66,6 +66,19 @@ locals {
         cpu_cores = var.containers[k].cpu_cores
         memory_mb = var.containers[k].memory_dedicated
         disk_gb   = var.containers[k].root_disk.size
+        # WHERE the root disk lives, not just how big it is. Published because
+        # a consumer that snapshots a guest's dataset has to know its pool, and
+        # nothing downstream could know it: on 2026-08-24 six guests moved from
+        # rpool to ssd and the sanoid policy kept snapshotting the old, now
+        # frozen, rpool paths. Snapshot counts and timestamps stayed healthy
+        # while capturing no live data -- on two OpenBao raft voters.
+        #
+        # coalesce, not a plain read: datastore_id is optional and is null for
+        # every guest that takes the node default, so the raw attribute would
+        # publish null for most guests and be useless to exactly the consumer
+        # that needs it. This resolves the EFFECTIVE datastore the same way
+        # modules/proxmox-container/main.tf does when it creates the disk.
+        datastore = coalesce(var.containers[k].root_disk.datastore_id, var.datastore_default)
       }
     }
     # Regular VMs - using SSH connection
