@@ -25,3 +25,25 @@ output "tiered_disks" {
   description = "Tiered Splunk data disks (fast-splunk/bulk-splunk) as declared, keyed by tier."
   value       = var.tiered_disks
 }
+
+output "disks" {
+  description = "Every Splunk VM disk with the volume name Proxmox assigned, read back from the provider."
+  # DECLARED values are not enough, and tiered_disks above is exactly that --
+  # it is literally var.tiered_disks. It carries no volume NAME, so a consumer
+  # that needs this guest's ZFS dataset (a snapshot policy) cannot build one.
+  #
+  # `path_in_datastore` is a COMPUTED attribute: Proxmox owns the value. Same
+  # contract as mac_address above -- read from the provider, never assigned.
+  #
+  # Deriving these names by counting disks is WRONG, and THIS guest is the
+  # proof: indices are allocated per (vmid, storage) as next-free, so
+  # `fast:vm-200-disk-0` is the RETAINED pre-move rollback while
+  # `fast:vm-200-disk-1` is the LIVE cold disk. A count-derivation names disk-0
+  # and points the snapshot policy at a frozen copy -- healthy counts, current
+  # timestamps, zero live data captured.
+  value = [for d in proxmox_virtual_environment_vm.splunk_vm.disk : {
+    datastore = d.datastore_id
+    path      = d.path_in_datastore
+    interface = d.interface
+  }]
+}

@@ -140,6 +140,13 @@ locals {
         cpu_cores = var.splunk_cpu_cores
         memory_mb = var.splunk_memory
         disk_gb   = var.splunk_boot_disk_size
+        # Every disk with the volume name Proxmox assigned. splunk_storage below
+        # is DECLARED shape only (it is literally var.tiered_disks) and carries
+        # no volume name, so nothing downstream could build this guest's dataset
+        # paths. That gap is why pve-w1700's sanoid policy names
+        # `rpool/data/vm-200-disk-0` and `-disk-2` LITERALLY -- the exact
+        # hardcoding that silently rotted on the other node's guests.
+        disks = module.splunk_vm.disks
       }
     }
     # Splunk tiered storage - one {datastore_id, disk_interface, size_gb} per tier
