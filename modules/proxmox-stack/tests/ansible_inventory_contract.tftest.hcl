@@ -1607,3 +1607,31 @@ run "ansible_inventory_publishes_every_vm_disk" {
     error_message = "docker_vms must publish the same disks list as the vms entry for the same guest"
   }
 }
+
+# Splunk's own disks. This guest is built by a dedicated module, so it is NOT in
+# var.vms and gets none of the vms-block coverage. `splunk_storage` is DECLARED
+# shape only (literally var.tiered_disks) and carries no volume NAME, so before
+# this nothing downstream could build Splunk's dataset paths -- which is exactly
+# why pve-w1700's sanoid policy names `rpool/data/vm-200-disk-0` literally.
+run "ansible_inventory_publishes_splunk_vm_disks" {
+  command = plan
+
+  # NOTE ON WHAT A PLAN-TIME TEST CAN AND CANNOT PROVE HERE.
+  # `path` comes from path_in_datastore, a COMPUTED attribute. For a resource
+  # being created, it is unknown at plan time, so asserting on its VALUE proves
+  # nothing -- and iterating the list errors outright with "Iteration over null
+  # value". So this run pins only what is knowable statically: that the key is
+  # declared and reaches the output at all. Publishing it for containers and
+  # var.vms guests while silently omitting Splunk is the regression worth
+  # catching, and that is a shape question, not a value one.
+  #
+  # The VALUE is verified where it is actually knowable: in the apply-time plan
+  # diff, which must show `+ path = "vm-200-disk-N"` with the REAL Proxmox-
+  # assigned index -- never a counted 0..n-1. On this guest that distinction is
+  # load-bearing: fast:vm-200-disk-0 is the retained pre-move rollback and
+  # disk-1 is the live cold disk.
+  assert {
+    condition     = can(output.ansible_inventory.splunk_vm.splunk.disks)
+    error_message = "splunk_vm must declare a disks list; splunk_storage is declared shape only (literally var.tiered_disks) and carries no volume name, so without this a snapshot policy has to hardcode Splunk's dataset paths -- which is exactly what pve-w1700's sanoid.conf does today"
+  }
+}
