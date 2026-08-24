@@ -1466,3 +1466,144 @@ run "ansible_inventory_publishes_container_datastore" {
     error_message = "published datastore must never be null or empty"
   }
 }
+
+# Same contract on the VM side, and it is NOT redundant with the container run
+# above: the two resolve the datastore differently. A container's
+# root_disk.datastore_id is optional with no default and needs a coalesce; a
+# VM's boot_disk.datastore_id is optional(string, "local-lvm") and is therefore
+# never null, so it is a plain read. Publishing it for containers only left the
+# actual VMs blank — including Splunk's, whose disks pve-w1700's sanoid policy
+# names literally.
+run "ansible_inventory_publishes_vm_datastore" {
+  command = plan
+
+  variables {
+    vms = {
+      "vm-ds-explicit" = {
+        vm_id     = 212
+        node_name = "proxmox-1"
+        name      = "vm-ds-explicit"
+        vlan      = "apps"
+        tags      = ["docker"]
+        boot_disk = { size = 32, datastore_id = "nvme" }
+      }
+      "vm-ds-default" = {
+        vm_id     = 213
+        node_name = "proxmox-1"
+        name      = "vm-ds-default"
+        vlan      = "apps"
+      }
+    }
+  }
+
+  assert {
+    condition     = length(output.ansible_inventory.vms) == 2
+    error_message = "the vm datastore fixture did not reach the output, so every assertion below would pass vacuously"
+  }
+
+  assert {
+    condition     = alltrue([for k, v in output.ansible_inventory.vms : can(v.datastore)])
+    error_message = "every published VM must carry datastore; without it a snapshot policy for a VM disk has to hardcode a pool"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.vms["vm-ds-explicit"].datastore == "nvme"
+    error_message = "an explicitly declared boot_disk.datastore_id must be published verbatim"
+  }
+
+  # The type's own default, not null. This is what makes the plain read correct
+  # here while the container side needs a coalesce.
+  assert {
+    condition     = output.ansible_inventory.vms["vm-ds-default"].datastore == "local-lvm"
+    error_message = "a VM with no declared boot_disk.datastore_id must publish the type default"
+  }
+
+  assert {
+    condition     = alltrue([for k, v in output.ansible_inventory.vms : v.datastore != null && v.datastore != ""])
+    error_message = "published VM datastore must never be null or empty"
+  }
+
+  # docker_vms republishes the same guests under a second key. It had drifted
+  # from the vms block before on the sizing fields, so pin the placement field
+  # here rather than trusting the two maps to stay in step.
+  assert {
+    condition     = alltrue([for k, v in output.ansible_inventory.docker_vms : v.datastore != null && v.datastore != ""])
+    error_message = "docker_vms is a filtered VIEW of vms and must carry datastore too"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.docker_vms["vm-ds-explicit"].datastore == "nvme"
+    error_message = "docker_vms must publish the same datastore as the vms entry for the same guest"
+  }
+}
+
+# Every disk a VM actually has, not just its boot disk. `datastore` alone
+# advertises coverage that misses the data: docker VM 250 keeps 100G on a
+# SECOND disk, so a snapshot policy reading only `datastore` would protect the
+# 50G boot volume and silently skip the 100G one.
+#
+# `path` is READ BACK from the provider (path_in_datastore), never derived by
+# counting declared disks. Indices are allocated per (vmid, storage) as
+# next-free, so counting is wrong wherever a volume was ever moved -- VM 200
+# has fast:vm-200-disk-0 as a RETAINED pre-move rollback and disk-1 as the live
+# cold disk. A count-derivation would name the frozen copy.
+run "ansible_inventory_publishes_every_vm_disk" {
+  command = plan
+
+  variables {
+    vms = {
+      "multi-disk" = {
+        vm_id     = 214
+        node_name = "proxmox-1"
+        name      = "multi-disk"
+        vlan      = "apps"
+        tags      = ["docker"]
+        boot_disk = { size = 50, datastore_id = "ssd", interface = "scsi0" }
+        additional_disks = [
+          { interface = "scsi1", size = 100, datastore_id = "ssd" },
+        ]
+      }
+    }
+  }
+
+  assert {
+    condition     = length(output.ansible_inventory.vms) == 1
+    error_message = "the multi-disk fixture did not reach the output, so every assertion below would pass vacuously"
+  }
+
+  assert {
+    condition     = can(output.ansible_inventory.vms["multi-disk"].disks)
+    error_message = "every published VM must carry a disks list; without it a consumer can only see the boot disk"
+  }
+
+  # The whole point: BOTH disks, not one. A boot-disk-only publish passes the
+  # can() check above while silently halving coverage.
+  assert {
+    condition     = length(output.ansible_inventory.vms["multi-disk"].disks) == 2
+    error_message = "a VM declaring a boot disk plus one additional disk must publish TWO disks; publishing one is the silent-half-coverage failure this run exists to catch"
+  }
+
+  # Every entry must be usable as a dataset path. A null/empty path is worse
+  # than a missing key: it renders as "<pool>/" and looks plausible.
+  assert {
+    condition = alltrue([
+      for d in output.ansible_inventory.vms["multi-disk"].disks :
+      d.datastore != null && d.datastore != "" && d.path != null && d.path != ""
+    ])
+    error_message = "each published disk needs a non-empty datastore AND path; either being empty yields a plausible-looking but wrong dataset path"
+  }
+
+  assert {
+    condition = alltrue([
+      for d in output.ansible_inventory.vms["multi-disk"].disks : d.datastore == "ssd"
+    ])
+    error_message = "each disk must publish its OWN datastore, not the VM's boot datastore"
+  }
+
+  # docker_vms is a filtered view of the same guests and had already drifted
+  # from vms once on the sizing fields.
+  assert {
+    condition     = length(output.ansible_inventory.docker_vms["multi-disk"].disks) == 2
+    error_message = "docker_vms must publish the same disks list as the vms entry for the same guest"
+  }
+}
