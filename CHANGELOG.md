@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.0](https://github.com/dryvist/tofu-proxmox/compare/v3.4.0...v3.5.0) (2026-08-27)
+
+
+### Features
+
+* **storage:** reject dataset quotas that exceed the pool's capacity ([#1018](https://github.com/dryvist/tofu-proxmox/issues/1018)) ([a7f6c18](https://github.com/dryvist/tofu-proxmox/commit/a7f6c18a5c58c06fe497a9d01369e8948a8bb4b5))
+
 ## [3.4.0](https://github.com/dryvist/tofu-proxmox/compare/v3.3.0...v3.4.0) (2026-08-24)
 
 
