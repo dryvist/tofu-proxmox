@@ -56,6 +56,17 @@ variable "node_storage" {
         type   = string               # raidz1 | raidz2 | raidz3 | mirror | draid
         width  = number               # number of member devices in the vdev
         ashift = optional(number, 12) # 12 = 4K sectors; correct for 512e drives
+        # Capacity of ONE member device, e.g. "5.46T". Width alone does not give
+        # capacity, and without capacity a declared quota cannot be checked
+        # against anything -- which is how a pool ends up carrying quotas that
+        # sum past what it can hold, or a quota sized for a pool it outgrew.
+        # Set it and the validation below becomes live for this pool; leave it
+        # unset and that pool is simply not checked.
+        #
+        # Use the size ZFS reports per member (`zpool list -v`), not the vendor's
+        # marketing capacity: a "6 TB" disk is 5.46 TiB, and using 6T here would
+        # over-state the pool by 10% and defeat the guard it feeds.
+        device_size = optional(string)
       }))
       # Pool-LEVEL properties (`zpool set`), distinct from per-dataset
       # `properties` below (`zfs set`). e.g. autotrim, failmode.
