@@ -249,6 +249,77 @@ run "mirror_within_one_device_accepted" {
   }
 }
 
+# --- A child dataset's quota is NOT added to its parent's ---
+#
+# The child's usage already counts against every quota above it, so summing
+# both double-counts the child. Sized so ONLY the correct sum fits, which is
+# what makes this case discriminate: 3 data devices x 1T x 31/32 = 2.91 TiB
+# usable, against a naive sum of 2.93 TiB (rejects) and a correct sum of
+# 1.95 TiB (accepts).
+
+run "child_quota_not_double_counted" {
+  command = plan
+
+  variables {
+    node_storage = {
+      test-node = {
+        pools = {
+          poolA = {
+            topology = { type = "raidz2", width = 5, device_size = "1T" }
+            datasets = {
+              alpha = { quota = "1500G" }
+              # Both of these are bounded by alpha and must contribute nothing.
+              # The grandchild sits under an UNQUOTA'D middle dataset, so a
+              # parent-only check would miss it where an ancestor check does not.
+              "alpha/child"    = { quota = "500G" }
+              "alpha/mid/leaf" = { quota = "500G" }
+              beta             = { quota = "500G" }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.overcommitted_storage_pools) == 0
+    error_message = "A child's quota must not be added to an ancestor's; alpha at 1500G already bounds everything beneath it, including a grandchild under an unquota'd middle dataset."
+  }
+}
+
+# --- ...but a SIBLING's quota still counts ---
+#
+# Same shape, except the second 1500G dataset is a peer rather than a child, so
+# the sum is genuinely 3.0 TiB against 2.90 TiB usable and must be rejected.
+# Without this pair, an ancestor filter that swallowed every quota would pass
+# the case above while checking nothing.
+
+run "sibling_quotas_still_summed" {
+  command = plan
+
+  variables {
+    node_storage = {
+      test-node = {
+        pools = {
+          poolA = {
+            topology = { type = "raidz2", width = 5, device_size = "1T" }
+            datasets = {
+              alpha         = { quota = "1500G" }
+              "alpha/child" = { quota = "500G" }
+              beta          = { quota = "1500G" }
+              gamma         = { quota = "500G" }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  expect_failures = [
+    terraform_data.node_storage_capacity_guard,
+  ]
+}
+
 # --- Datasets that declare no quota at all must not break the sum ---
 #
 # sum() rejects an empty list, so a pool whose datasets are all unquotaed is a

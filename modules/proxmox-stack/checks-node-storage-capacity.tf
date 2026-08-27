@@ -84,7 +84,24 @@ locals {
         node     = node
         pool     = pool_name
         topology = pool.topology
-        quotas   = [for ds_name, ds in pool.datasets : ds.quota if ds.quota != null]
+
+        # Only quotas with no quota'd ANCESTOR in the same pool. A child
+        # dataset's usage already counts against every quota above it, so
+        # summing both double-counts the child and would reject a declaration
+        # the pool can actually hold. `bulk/data` at 15T with `bulk/data/seed`
+        # capped at 1T underneath consumes 15T, not 16T.
+        #
+        # An unquota'd dataset between two quota'd ones changes nothing: the
+        # test is whether ANY ancestor caps this path, not the nearest one.
+        quotas = [
+          for ds_name, ds in pool.datasets : ds.quota
+          if ds.quota != null && !anytrue([
+            for ancestor_name, ancestor in pool.datasets :
+            ancestor.quota != null
+            && ancestor_name != ds_name
+            && startswith(ds_name, "${ancestor_name}/")
+          ])
+        ]
       }
       if pool.topology != null
       && try(pool.topology.device_size, null) != null
