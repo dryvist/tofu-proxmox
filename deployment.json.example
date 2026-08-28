@@ -306,20 +306,23 @@
       "clone_template": { "template_id": 9100 },
       "user_account": { "username": "debian", "password": "", "keys": [] }
     },
+    "_pbs_comment": "Proxmox Backup Server appliance: app-consistent, deduplicated full-guest backups of stateful guests - the layer raw ZFS snapshots cannot give a VM mid-write. Clone of template_id 9000; the pbs role in ansible-proxmox-apps installs the packages and creates the datastore on the additional disk. Placed on the node whose registered dual-parity bulk pool is commissioned for backups plus replica targets: the datastore's durability constraint picks the node, not preference. protection=true so no accidental destroy of the backup tier. Add a remote+sync job to a second PBS on the max-storage node once it is commissioned.",
     "pbs": {
       "vm_id": 240,
+      "dhcp": true,
       "vlan": "nonprod",
       "name": "pbs",
-      "description": "Proxmox Backup Server appliance (ISO install). Boot the PBS ISO, install to the boot disk, then create a datastore on the additional disk (backup ZFS pool). Add a remote+sync job to a second PBS on the max-storage node once it is commissioned.",
-      "node_name": "proxmox-2",
+      "description": "Proxmox Backup Server appliance: app-consistent, deduplicated full-guest backups of stateful guests (first target carries the least-reproducible index data). On this node by binding constraint: the 1 TB datastore disk belongs on the protected dual-parity bulk pool commissioned for backups plus replica targets. Clone of template 9000; configured by ansible-proxmox-apps pbs role. protection=true - no accidental destroy of the backup tier.",
+      "node_name": "proxmox-3",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
       "tags": ["terraform", "backup", "pbs"],
-      "boot_disk": { "datastore_id": "local-zfs", "size": 32 },
+      "boot_disk": { "datastore_id": "example-bulk-pool", "size": 32 },
       "additional_disks": [
-        { "interface": "scsi1", "datastore_id": "example-pool", "size": 1024 }
+        { "interface": "scsi1", "datastore_id": "example-bulk-pool", "size": 1024 }
       ],
-      "cdrom_file_id": "local:iso/proxmox-backup-server.iso",
+      "clone_template": { "template_id": 9000 },
+      "user_account": { "username": "debian", "password": "", "keys": [] },
       "protection": true
     },
     "_tpot_comment": "T-Pot deep-sensor (telekom-security/tpotce) — the all-in-one platform bundling 20+ honeypots (Cowrie SSH/Telnet, Dionaea SMB/malware, Conpot ICS/SCADA, Heralding, Log4pot, the Beelzebub+Galah LLM pots, medical/printer pots, tarpits, ...) plus an Elastic attack-map dashboard. Runs Docker-on-VM (like the Splunk VM), placed on the high-CPU/fast node (proxmox-1) because the Elastic stack + many containers are resource-hungry. DNS-first (dhcp:true): VMs now carry positional VMIDs too (locals.tf vm_ipv4 short-circuits cidrhost when dhcp/static). VMID 495100 = tier 4 (observability/security) · sub 9 (deception) · crit 5 · OS 1 (VM/qemu) · instance 0 · env 0. The `tpot` tag drives the firewall (wide-net input, restricted egress); `docker` puts it in docker_vms for the ansible-proxmox-apps `tpot` role, which runs the installer + wires ElastAlert -> the apprise gateway. Reachable at https://tpot.{domain} (T-Pot serves its own dashboard). Sits on the nonprod/untrusted decoy segment.",
