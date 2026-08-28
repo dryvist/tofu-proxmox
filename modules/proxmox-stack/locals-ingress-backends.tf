@@ -34,6 +34,9 @@ locals {
         # Authelia forwardAuth gate flag, consumed by the ansible traefik role.
         # Defaults true (gated) unless the table row opts out (sso = false).
         sso = try(svc.sso, true)
+        # Dashboard grouping — see locals-ingress-groups.tf. Inherited from the
+        # backend container's VLAN so no second tag list is maintained.
+        group = try(svc.group, try(var.containers[svc.backend].vlan, "other"))
       }
       if contains(keys(var.containers), svc.backend)
     ],
@@ -212,29 +215,11 @@ locals {
         sso          = false # OTLP trace-span producers (Claude Code, machines)
       }
     ] : [],
-    # IaC automation platform (Terrakube + Semaphore UI) on the iac-platform VM
-    # (DHCP/DNS-first, mgmt VLAN). Appended like the Splunk VM (VMs are not
-    # in var.containers, so no ingress_services row), but conditionally — a
-    # deployment.json without the VM never emits dangling routes. The backend is
-    # local.vm_address: the VM's FQDN, never an IP (DNS-first doctrine). Four
-    # Terrakube hostnames are required upstream (UI/API/registry/dex each get
-    # their own vhost); the executor is deliberately not fronted. Its node
-    # powers off nightly — consumers must treat these routes as daytime-available.
-    contains(keys(var.vms), "iac-platform") ? [
-      for svc in [
-        # UI hosts stay gated (sso omitted -> true); the API/registry/dex hosts
-        # serve machine clients (CLI, dex OIDC redirects) and opt out.
-        { name = "terrakube", port = local.pipeline_constants.iac_platform_ports.terrakube_ui },
-        { name = "terrakube-api", port = local.pipeline_constants.iac_platform_ports.terrakube_api, sso = false },
-        { name = "terrakube-registry", port = local.pipeline_constants.iac_platform_ports.terrakube_registry, sso = false },
-        { name = "terrakube-dex", port = local.pipeline_constants.iac_platform_ports.terrakube_dex, sso = false },
-        { name = "semaphore", port = local.pipeline_constants.iac_platform_ports.semaphore_web },
-        ] : {
-        name = svc.name
-        ip   = local.vm_address["iac-platform"]
-        port = svc.port
-        sso  = try(svc.sso, true)
-      }
-    ] : []
-  ) : merge({ hostname = route.name }, route)]
+    # IaC automation platform routes (Terrakube + Semaphore on the iac-platform
+    # VM) — assembled in locals-ingress-iac.tf to keep this file under the shared
+    # _file-size 12 KB gate.
+    local.iac_platform_routes
+    # hostname defaults to the route name; group for a backend-less route comes
+    # from the map in locals-ingress-groups.tf. Route-supplied keys win over both.
+  ) : merge({ hostname = route.name, group = try(local.ingress_route_groups[route.name], "other") }, route)]
 }

@@ -14,7 +14,7 @@ locals {
   #       route (default true when omitted). false for machine/API endpoints
   #       (clients cannot do a browser login) and for apps whose non-browser
   #       clients authenticate natively (e.g. Plex apps).
-  ingress_services = {
+  ingress_services = merge(local.hermes_agent_routes, {
     # Authelia portal itself — never gated (it IS the login page).
     authelia    = { backend = "authelia", port = local.pipeline_constants.service_ports.authelia_portal, sso = false }
     plex        = { backend = "plex", port = local.pipeline_constants.media_ports.plex_web, sso = false } # Plex clients auth via plex.tv
@@ -62,32 +62,28 @@ locals {
     # the API host also lets browser Studio point its ?baseUrl at it.
     langgraph        = { backend = "langgraph", port = local.pipeline_constants.service_ports.langgraph_api, sso = false } # API + Studio ?baseUrl clients
     "langgraph-chat" = { backend = "langgraph", port = local.pipeline_constants.service_ports.agent_chat_ui_web }
-    # Hermes Dashboard is the primary interactive UI. Its route owns the host
-    # root; the webhook below retains its established path on the same host.
-    "hermes-dashboard" = { hostname = "hermes", backend = "hermes-agent", port = local.pipeline_constants.service_ports.hermes_dashboard }
-    # Hermes agent inbound webhook front door: https://hermes.<domain>/webhooks/<name>
-    # -> hermes-agent container : hermes_webhook (HMAC-signed, event-driven trigger
-    # for the one non-A2A agent). Guest firewall opens the port from internal.
-    hermes = { hostname = "hermes", path_prefix = "/webhooks/", priority = 100, backend = "hermes-agent", port = local.pipeline_constants.service_ports.hermes_webhook, sso = false } # HMAC-signed webhooks
-    # Hermes agent inbound job-submission API: https://hermes-api.<domain>/v1/runs
-    # -> hermes-agent container : hermes_api (`hermes gateway` api_server platform,
-    # bearer-authenticated). The sanctioned non-exec job path; internal-only firewall.
-    "hermes-api" = { backend = "hermes-agent", port = local.pipeline_constants.service_ports.hermes_api, sso = false } # bearer-authenticated job API
+    # Every Hermes AGENT's routes (dashboard, webhook, job API, and the two
+    # co-located third-party UIs) are generated per agent from the hermes-agent
+    # tag in locals-hermes-routes.tf and merged in below — adding an agent to
+    # the desired state publishes its whole route set with no edit here.
+    #
     # hermes-ui companion guest runs two DIFFERENT apps behind two distinct
     # host ports (both default to 3000 upstream): hermes-workspace (the
     # Hermes web workspace, primary UI) and mission-control (an unrelated
     # product co-located in this container, gateway target is OpenClaw).
     "hermes-ui"       = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_workspace }
     "mission-control" = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_mission_control }
-    # hermes-donna — second, independently-identified Hermes agent instance
-    # (own container, same software). Only its Dashboard is Traefik-fronted
-    # here, same as hermes-agent's dashboard row above; hermes_dashboard is a
-    # SERVICE port, so the same key is correct for either agent's container.
-    "hermes-donna"  = { backend = "hermes-donna", port = local.pipeline_constants.service_ports.hermes_dashboard }
+    # Estate dashboards. All three are populated from local.ingress itself, so
+    # every fronted service appears on every board without a second list.
+    # Browser-only surfaces: each takes the default gate (sso omitted => true).
+    # Glance in particular ships NO authentication of its own, so the Authelia
+    # forwardAuth here is the only thing in front of it.
+    homepage        = { backend = "homepage", port = local.pipeline_constants.service_ports.homepage_web }
+    glance          = { backend = "glance", port = local.pipeline_constants.service_ports.glance_web }
     smokeping       = { backend = "smokeping", port = local.pipeline_constants.service_ports.smokeping_web }
     "haproxy-stats" = { backend = "haproxy", port = local.pipeline_constants.service_ports.haproxy_stats }
     # Static file host. Browser-only, so it takes the default gate (sso omitted
     # -> true) rather than opting out the way the machine/API rows above do.
     "docs-static" = { backend = "docs-static", port = local.pipeline_constants.service_ports.docs_static_web }
-  }
+  })
 }

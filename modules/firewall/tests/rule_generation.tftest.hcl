@@ -37,11 +37,14 @@ variables {
       nautobot_web           = 8080
       vikunja_web            = 3456
       homarr_web             = 7575
-      authelia_portal        = 9091
-      zammad_web             = 8080
-      ntp                    = 123
-      idrac_kvm_r410         = 5410
-      idrac_kvm_r710         = 5710
+      # Estate dashboards alongside Homarr (referenced by homepage/glance rules)
+      homepage_web    = 3000
+      glance_web      = 8080
+      authelia_portal = 9091
+      zammad_web      = 8080
+      ntp             = 123
+      idrac_kvm_r410  = 5410
+      idrac_kvm_r710  = 5710
       # monitoring ports (own alignment group — longest key in the map)
       smokeping_web      = 80
       speedtest_exporter = 9798
@@ -63,6 +66,10 @@ variables {
       # hermes-ui companion web apps (referenced by hermes_ui_services_rules)
       hermes_ui_workspace       = 3000
       hermes_ui_mission_control = 3001
+      # The two third-party Hermes UIs co-located on each agent guest
+      # (referenced by hermes_webhook_services_rules)
+      hermes_webui  = 8787
+      hermes_studio = 8648
       # AI orchestration + observability (referenced by ai_orchestration rules)
       n8n_web           = 5678
       dify_web          = 80
