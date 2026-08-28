@@ -6,8 +6,13 @@ variable "containers" {
     vm_id       = number
     hostname    = string
     description = optional(string)
-    tags        = optional(list(string), ["terraform", "container"])
-    pool_id     = optional(string)
+
+    # One-line board subtitle. Not `description`: that carries placement
+    # rationale and is far too long for a link.
+    summary = optional(string)
+
+    tags    = optional(list(string), ["terraform", "container"])
+    pool_id = optional(string)
 
     # Service VLAN name (required). Selects the guest's subnet + 802.1Q tag:
     # IP = cidrhost(network_cidrs[vlan], vm_id) (unless ip_config.ipv4_address pins a

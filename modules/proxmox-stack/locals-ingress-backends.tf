@@ -22,7 +22,7 @@ locals {
   # (dhcp = true) guest's FQDN — same hostname-not-IP shape as proxmox_ui_backends.
   # The Splunk VM is appended separately: it is a VM (not in var.containers), so
   # its IP comes from splunk_derived_ip (siem VLAN) rather than container_address.
-  ingress = [for route in concat(
+  ingress_pre = [for route in concat(
     [
       for name, svc in local.ingress_services : {
         name        = name
@@ -31,6 +31,8 @@ locals {
         priority    = try(svc.priority, null)
         ip          = local.container_address[svc.backend]
         port        = svc.port
+        # Serving guest. Published so desc and section derive from it.
+        owner = svc.backend
         # Authelia forwardAuth gate flag, consumed by the ansible traefik role.
         # Defaults true (gated) unless the table row opts out (sso = false).
         sso = try(svc.sso, true)
@@ -42,9 +44,10 @@ locals {
     ],
     [
       {
-        name = "splunk"
-        ip   = split("/", local.splunk_derived_ip)[0]
-        port = local.pipeline_constants.service_ports.splunk_web
+        name  = "splunk"
+        owner = "splunk"
+        ip    = split("/", local.splunk_derived_ip)[0]
+        port  = local.pipeline_constants.service_ports.splunk_web
         # Splunk Web serves HTTPS with a self-signed cert, unlike the HTTP
         # container backends. Traefik must speak https to it and skip verify.
         # Consumers default scheme=http / insecure_tls=false when absent.
@@ -59,6 +62,7 @@ locals {
         # mgmt.splunk.<domain>. splunkd's mgmt port is HTTPS self-signed, so
         # same https + skip-verify backend as the web route above.
         name         = "splunk-mgmt"
+        owner        = "splunk"
         ip           = split("/", local.splunk_derived_ip)[0]
         port         = local.pipeline_constants.service_ports.splunk_mgmt
         scheme       = "https"
@@ -72,6 +76,7 @@ locals {
         # 8088, so a sender dialing <name>:8088 black-holes. Same HTTPS
         # self-signed backend treatment as the other Splunk routes above.
         name         = "splunk-hec"
+        owner        = "splunk"
         ip           = split("/", local.splunk_derived_ip)[0]
         port         = local.pipeline_constants.service_ports.splunk_hec
         scheme       = "https"
@@ -224,10 +229,30 @@ locals {
     ) : merge({
       hostname = route.name
       group    = try(local.ingress_route_groups[route.name], "other")
-      # Dashboard presentation — see locals-ingress-audience.tf. `ui` defaults
-      # TRUE so a newly added route is visible rather than silently absent.
-      ui      = !contains(local.ingress_machine_routes, route.name)
-      section = try(local.ingress_route_sections[route.name], null)
-      desc    = try(local.ingress_route_descriptions[route.name], "")
+      owner    = null
+      # ui follows sso: machine clients cannot do a browser login either way.
+      # Exceptions in locals-ingress-audience.tf. desc comes from the guest.
+      ui = contains(local.ingress_human_unauthed_routes, route.name) ? true : try(route.sso, true)
+      # coalesce, not a try chain: an unset optional attribute is null, which
+      # try returns rather than falling through. coalesce rejects "" as an
+      # argument, so the outer try supplies the empty default.
+      desc = try(coalesce(
+        try(var.containers[route.owner].summary, null),
+        try(local.ingress_pool_descriptions[route.name], null),
+      ), "")
   }, route)]
+
+  # Routes per guest — from the assembled list, so pools/VMs count too.
+  ingress_owner_route_count = {
+    for owner, routes in {
+      for r in local.ingress_pre : r.owner => r... if r.owner != null
+    } : owner => length(routes)
+  }
+
+  # A guest serving 2+ routes is a section. Derived, so nothing declares it.
+  ingress = [
+    for r in local.ingress_pre : merge(r, {
+      section = try(local.ingress_owner_route_count[r.owner], 0) > 1 ? r.owner : null
+    })
+  ]
 }
