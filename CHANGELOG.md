@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.1](https://github.com/dryvist/tofu-proxmox/compare/v3.7.0...v3.7.1) (2026-08-28)
+
+
+### Bug Fixes
+
+* **ingress:** give every route a distinct, non-empty description ([#1033](https://github.com/dryvist/tofu-proxmox/issues/1033)) ([2e07bf3](https://github.com/dryvist/tofu-proxmox/commit/2e07bf332130675eefa2e34ca324e3fccb417d74))
+
 ## [3.7.0](https://github.com/dryvist/tofu-proxmox/compare/v3.6.0...v3.7.0) (2026-08-28)
 
 
