@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.0](https://github.com/dryvist/tofu-proxmox/compare/v3.6.0...v3.7.0) (2026-08-28)
+
+
+### Features
+
+* **ingress:** tag every route with audience, section and description ([#1027](https://github.com/dryvist/tofu-proxmox/issues/1027)) ([4c73d24](https://github.com/dryvist/tofu-proxmox/commit/4c73d249d48498455aeba0b001080adbcad227d2))
+
 ## [3.6.0](https://github.com/dryvist/tofu-proxmox/compare/v3.5.0...v3.6.0) (2026-08-28)
 
 
