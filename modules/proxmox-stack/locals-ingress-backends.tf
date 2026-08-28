@@ -24,7 +24,7 @@ locals {
   # its IP comes from splunk_derived_ip (siem VLAN) rather than container_address.
   ingress_pre = [for route in concat(
     [
-      for name, svc in local.ingress_services : {
+      for name, svc in local.ingress_services : merge({
         name        = name
         hostname    = try(svc.hostname, name)
         path_prefix = try(svc.path_prefix, null)
@@ -39,7 +39,10 @@ locals {
         # Dashboard grouping — see locals-ingress-groups.tf. Inherited from the
         # backend container's VLAN so no second tag list is maintained.
         group = try(svc.group, try(var.containers[svc.backend].vlan, "other"))
-      }
+        # A route may state its own desc — several routes on one guest cannot
+        # all read as that guest's summary. Merged in only when set, so an
+        # absent one still falls through to the summary default below.
+      }, try(svc.desc, null) != null ? { desc = svc.desc } : {})
       if contains(keys(var.containers), svc.backend)
     ],
     [
