@@ -191,6 +191,10 @@ locals {
     vdi_preserved_cidrs = [
       for vlan in var.vdi_preserved_vlans : nonsensitive(var.network_cidrs[vlan])
     ]
+    # Every Hermes agent's OpenAI-compatible endpoint, so ONE Open WebUI can be
+    # the single pane over every agent. Assembled in locals-hermes-routes.tf
+    # (12 KB file-size gate); see there for the contract and why it is derived.
+    hermes_agents = local.hermes_agents_inventory
     # Domain for FQDN resolution (e.g., example.com)
     domain = var.domain
     # Base LXC appliance template every container is created from. Published so

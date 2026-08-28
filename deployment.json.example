@@ -440,6 +440,49 @@
         { "volume": "local-zfs", "size": "10G", "path": "/var/lib/vikunja" }
       ]
     },
+    "_dashboards_comment": "Estate dashboards (`dashboard` tag, apps VLAN). All three render their service list from the SAME published ingress table (modules/proxmox-stack/locals-ingress-backends.tf), so a service is filed on every board by adding its Traefik route — never by editing three boards. Grouping comes from each backend container's `vlan`, so no second tag list is maintained. Every board is Authelia-gated at the ingress: Glance in particular ships no authentication of its own, so that gate is the only thing in front of it. Homarr is the community-scripts install-layer pilot; Homepage and Glance are file-configured, so their rendered config is idempotent, whereas Homarr's API create always inserts and its role must diff by name.",
+    "homarr": {
+      "vm_id": 605030,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "homarr",
+      "description": "Homarr dashboard — web UI on 7575 fronted by Traefik; SQLite on its own rootfs. Installed by a borrowed community-scripts installer, which is why its egress includes HTTPS/HTTP.",
+      "cpu_cores": 2,
+      "memory_dedicated": 1024,
+      "tags": ["terraform", "container", "homarr", "dashboard"],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-1",
+      "unprivileged": true,
+      "root_disk": { "size": 8 }
+    },
+    "homepage": {
+      "vm_id": 605040,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "homepage",
+      "description": "Homepage (gethomepage) service-launcher dashboard — web UI on 3000 fronted by Traefik; YAML config rendered by Ansible onto rootfs (no mount point, so vzdump captures it without the mount_point backup=1 trap); a byte-identical render is a no-op.",
+      "cpu_cores": 1,
+      "memory_dedicated": 512,
+      "tags": ["terraform", "container", "homepage", "dashboard"],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-1",
+      "unprivileged": true,
+      "root_disk": { "size": 8 }
+    },
+    "glance": {
+      "vm_id": 605050,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "glance",
+      "description": "Glance dashboard — single Go binary, web UI on 8080 fronted by Traefik; glance.yml on rootfs (no mount point, same reason as homarr); generated content kept in an included file so hand-written widgets survive a re-render.",
+      "cpu_cores": 1,
+      "memory_dedicated": 512,
+      "tags": ["terraform", "container", "glance", "dashboard"],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-1",
+      "unprivileged": true,
+      "root_disk": { "size": 8 }
+    },
     "authelia": {
       "vm_id": 100050,
       "vlan": "mgmt",

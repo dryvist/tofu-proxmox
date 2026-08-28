@@ -20,6 +20,10 @@
 #   - hermes_api       : inbound job-submission API (Traefik-fronted
 #                        hermes-api.<domain>), from internal only — bearer-authed
 #                        `api_server` platform (POST /v1/runs, /api/jobs).
+#   - hermes_webui /   : the two most popular third-party Hermes UIs. Both load
+#     hermes_studio      the agent locally (in-process / loopback bridge), so
+#                        they cannot be split into their own guest and run ON
+#                        this one. Traefik-fronted, internal only.
 #
 # Hardening follow-up (not this PR): route egress through an audited Squid
 # forward-proxy and replace outbound_internal with a microsegmented allowlist so
@@ -34,12 +38,14 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_webhook), source = local.internal_src, comment = "Hermes webhook receiver (TCP ${local.svc_ports.hermes_webhook}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_dashboard), source = local.internal_src, comment = "Hermes Dashboard (TCP ${local.svc_ports.hermes_dashboard}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_api), source = local.internal_src, comment = "Hermes job-submission API (TCP ${local.svc_ports.hermes_api}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.hermes_webui), source = local.internal_src, comment = "hermes-webui (TCP ${local.svc_ports.hermes_webui}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.hermes_studio), source = local.internal_src, comment = "hermes-studio (TCP ${local.svc_ports.hermes_studio}) from internal" },
   ]
 }
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "hermes_webhook_services" {
   name    = "hermes-webhook-svc"
-  comment = "Hermes agent services (dashboard ${local.svc_ports.hermes_dashboard}, webhook ${local.svc_ports.hermes_webhook}, job API ${local.svc_ports.hermes_api}) from internal networks — Traefik-fronted"
+  comment = "Hermes agent services (dashboard ${local.svc_ports.hermes_dashboard}, webhook ${local.svc_ports.hermes_webhook}, job API ${local.svc_ports.hermes_api}, webui ${local.svc_ports.hermes_webui}, studio ${local.svc_ports.hermes_studio}) from internal networks — Traefik-fronted"
 
   dynamic "rule" {
     for_each = local.hermes_webhook_services_rules

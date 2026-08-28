@@ -2,7 +2,8 @@
 # Referenced by ansible_inventory output for downstream consumption
 locals {
   pipeline_constants = {
-    service_ports = {
+    # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
+    service_ports = merge(local.dashboard_ports, {
       haproxy_stats     = 8404
       splunk_web        = 8000
       splunk_hec        = 8088
@@ -85,12 +86,6 @@ locals {
       # bearer-authenticated). Traefik-fronted as https://hermes-api.<sub>;
       # the sanctioned non-exec path to submit work to the agent.
       hermes_api = 8642
-      # hermes-ui — a companion web UI guest running two DIFFERENT apps
-      # (hermes-workspace + mission-control) that both default to port
-      # 3000 upstream; mapped to distinct host ports so Traefik can route
-      # each independently.
-      hermes_ui_workspace       = 3000
-      hermes_ui_mission_control = 3001
       # hermes-donna is a second, independently-identified Hermes agent
       # instance (own container) running the SAME software as hermes-agent,
       # so it resolves the same hermes_webhook/hermes_dashboard/hermes_api
@@ -136,7 +131,7 @@ locals {
       # modem SNMP and native active probes. Pushes to Cribl -> Splunk
       # netmon_metrics index. See docs/NETWORK_DIAGNOSIS.md.
       satellite_exporter = 9817
-    }
+    })
     syslog_port_map = local.syslog_port_map
     # Legacy flat map: high/backend ports keyed by family, plus the standard
     # default frontend (514, which unifi rides). Derived from syslog_port_map;

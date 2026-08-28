@@ -1149,4 +1149,76 @@ run "hermes_ui_container_ids_are_disjoint_from_the_agent" {
     condition     = keys(local.hermes_agent_container_ids) == ["hermes-agent", "hermes-donna"]
     error_message = "hermes-donna carries the hermes-agent tag so it is picked up by the existing hermes-agent firewall map, same as any other hermes-agent guest"
   }
+
+  # Every hermes-agent guest gets its full route set generated, so adding an
+  # agent never needs an ingress.tf edit. Five routes each: dashboard, webhook,
+  # job API, and the two co-located third-party UIs.
+  assert {
+    condition     = length(local.hermes_agent_routes) == 10
+    error_message = "each hermes-agent guest must generate five routes (dashboard, webhooks, api, webui, studio)"
+  }
+
+  # hermes-agent's dashboard keeps the hostname `hermes`, NOT its container key.
+  # Not cosmetic: the Hermes dashboard rebuilds its OIDC redirect_uri from the
+  # statically configured public_url rather than the request Host, so a renamed
+  # route sends the browser to a host that cannot complete the login.
+  assert {
+    condition     = local.hermes_agent_routes["hermes-agent"].hostname == "hermes"
+    error_message = "hermes-agent's dashboard route must stay on the established `hermes` hostname or OIDC login breaks"
+  }
+
+  assert {
+    condition     = local.hermes_agent_routes["hermes-agent-api"].hostname == "hermes-api"
+    error_message = "hermes-agent's job API must stay on the established `hermes-api` hostname"
+  }
+
+  # An agent with no override defaults to its container key — what makes a newly
+  # added agent self-wiring.
+  assert {
+    condition     = local.hermes_agent_routes["hermes-donna"].hostname == "hermes-donna"
+    error_message = "an agent with no hostname override must default to its container key"
+  }
+
+  # Browser surfaces stay gated; the machine endpoints opt out. A webhook or job
+  # API caught by forwardAuth cannot authenticate — it signs or bearers instead.
+  assert {
+    condition = alltrue([
+      try(local.hermes_agent_routes["hermes-agent"].sso, true),
+      try(local.hermes_agent_routes["hermes-agent-webui"].sso, true),
+      try(local.hermes_agent_routes["hermes-agent-studio"].sso, true),
+    ])
+    error_message = "hermes browser surfaces (dashboard, webui, studio) must stay SSO-gated"
+  }
+
+  assert {
+    condition = alltrue([
+      local.hermes_agent_routes["hermes-agent-webhooks"].sso == false,
+      local.hermes_agent_routes["hermes-agent-api"].sso == false,
+    ])
+    error_message = "hermes machine endpoints (webhook receiver, job API) must opt out of the SSO gate"
+  }
+
+  # Every generated hostname is a single label: the wildcard certificate covers
+  # one level below the ingress subdomain, so a dot would put the host outside it.
+  assert {
+    condition = alltrue([
+      for r in values(local.hermes_agent_routes) : length(split(".", r.hostname)) == 1
+    ])
+    error_message = "every generated hermes hostname must be a single label (wildcard cert covers one level only)"
+  }
+
+  # The published Open WebUI wiring covers every agent, and each URL carries the
+  # /v1 suffix. Without it Open WebUI's connection test still passes and then
+  # lists no models — the failure that looks like success.
+  assert {
+    condition     = keys(local.hermes_agents_inventory) == ["hermes-agent", "hermes-donna"]
+    error_message = "every hermes-agent guest must be published for Open WebUI, so one login covers them all"
+  }
+
+  assert {
+    condition = alltrue([
+      for a in values(local.hermes_agents_inventory) : endswith(a.api_url, "/v1")
+    ])
+    error_message = "each published hermes api_url must end in /v1 or Open WebUI lists no models"
+  }
 }

@@ -492,6 +492,42 @@ run "ansible_inventory_ingress_route_table" {
     error_message = "every ingress row must carry an explicit sso flag"
   }
 
+  # Every published ingress row also carries a non-empty group. The estate
+  # dashboards (Homarr, Homepage, Glance) are all rendered from this one list,
+  # so a missing group silently drops a service off every board at once — the
+  # same class of failure the sso assertion above guards.
+  assert {
+    condition = alltrue([
+      for r in output.ansible_inventory.ingress : can(r.group) && r.group != ""
+    ])
+    error_message = "every ingress row must carry a non-empty group"
+  }
+
+  # A container-backed route inherits its backend's VLAN rather than falling
+  # through to the "other" default. seerr is on the media_svc VLAN in the test
+  # fixture; if this ever reads "other", the VLAN inheritance has broken and
+  # every board would collapse into one undifferentiated group while still
+  # passing the presence assertion above.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "seerr" && r.group == "media_svc"
+    ]) == 1
+    error_message = "seerr's ingress group must be inherited from its backend container's VLAN (media_svc)"
+  }
+
+  # A route with NO backend container (the Splunk VM here; pool routes behave the
+  # same) takes its group from the map in locals-ingress-groups.tf. Without this
+  # the presence assertion above still passes on the "other" fallback, so every
+  # pool and VM route would silently collapse into one catch-all group.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "splunk" && r.group == "siem"
+    ]) == 1
+    error_message = "a backend-less route must take its group from ingress_route_groups (splunk => siem), not the \"other\" fallback"
+  }
+
   # Table rows without an explicit opt-out default to gated (sso = true):
   # seerr omits sso in ingress_services; plex opts out (native client auth).
   assert {
