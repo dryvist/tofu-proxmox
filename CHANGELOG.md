@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.6.0](https://github.com/dryvist/tofu-proxmox/compare/v3.5.0...v3.6.0) (2026-08-28)
+
+
+### Features
+
+* **ingress:** generate Hermes agent routes by tag; add Homepage and Glance ([#1023](https://github.com/dryvist/tofu-proxmox/issues/1023)) ([9424086](https://github.com/dryvist/tofu-proxmox/commit/9424086484613e65ab9c6a58629da6a739640936))
+* **vms:** declare the Proxmox Backup Server guest in the example desired state ([#1017](https://github.com/dryvist/tofu-proxmox/issues/1017)) ([2d0d0a8](https://github.com/dryvist/tofu-proxmox/commit/2d0d0a840e926da895f1b68e5d50335c087785f1))
+
 ## [3.5.0](https://github.com/dryvist/tofu-proxmox/compare/v3.4.0...v3.5.0) (2026-08-27)
 
 
