@@ -69,6 +69,18 @@ locals {
     }
   ]...)
 
+  # One-line descriptions for the generated routes, keyed the same way. Lives
+  # with the generator so adding an agent needs no edit in the audience file.
+  hermes_route_descriptions = merge([
+    for k, _ in local.hermes_agent_container_ids : {
+      (k)             = "${k} — agent dashboard"
+      "${k}-api"      = "${k} — job submission API"
+      "${k}-webhooks" = "${k} — webhook receiver"
+      "${k}-webui"    = "${k} — hermes-webui"
+      "${k}-studio"   = "${k} — hermes-studio"
+    }
+  ]...)
+
   # Every Hermes agent's OpenAI-compatible endpoint, published to the Ansible
   # inventory. This is what lets ONE Open WebUI be the single pane over every
   # agent: the consuming role creates one connection per entry, and each agent

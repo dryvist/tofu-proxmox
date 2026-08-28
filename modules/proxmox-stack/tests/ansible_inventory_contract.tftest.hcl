@@ -1671,3 +1671,93 @@ run "ansible_inventory_publishes_splunk_vm_disks" {
     error_message = "splunk_vm must declare a disks list; splunk_storage is declared shape only (literally var.tiered_disks) and carries no volume name, so without this a snapshot policy has to hardcode Splunk's dataset paths -- which is exactly what pve-w1700's sanoid.conf does today"
   }
 }
+
+# --- ingress: dashboard audience + presentation contract ---
+#
+# The boards split human UIs from machine endpoints and render a description
+# beside every link. All three fields are DERIVED (locals-ingress-audience.tf),
+# so a route added without them still publishes — with `ui` defaulting true and
+# an EMPTY description, which renders as a blank line on every board. These
+# assertions are what makes that drift loud instead of cosmetic.
+run "ansible_inventory_ingress_carries_audience_metadata" {
+  command = plan
+
+  variables {
+    # vikunja (a UI that opts OUT of sso), s3 (machine-only) and one hermes
+    # agent — the three cases these assertions distinguish between.
+    containers = {
+      "vikunja" = {
+        vm_id     = 310310
+        node_name = "proxmox-1"
+        hostname  = "vikunja"
+        vlan      = "apps"
+        dhcp      = true
+      }
+      "s3" = {
+        vm_id     = 311311
+        node_name = "proxmox-1"
+        hostname  = "s3"
+        vlan      = "siem"
+        dhcp      = true
+      }
+      # Same dependency-tag set the variables suite uses for a valid agent; a
+      # bare hermes-agent tag is rejected by the containers validation.
+      "hermes-agent" = {
+        vm_id     = 517000
+        node_name = "proxmox-1"
+        hostname  = "hermes-agent"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "hermes-agent", "chromium", "hindsight-client", "firecrawl-client"]
+      }
+    }
+    domain = "example.com"
+  }
+
+  assert {
+    condition = alltrue([
+      for r in output.ansible_inventory.ingress : can(r.ui) && can(r.desc) && can(r.section)
+    ])
+    error_message = "every ingress route must publish ui/desc/section; a board cannot split or annotate without them"
+  }
+
+  # The default is DELIBERATELY visible: a new route shows up in the human
+  # column rather than being silently absent from every board.
+  assert {
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).ui
+    error_message = "a route not listed as machine-only must default to ui = true"
+  }
+
+  # sso is NOT a proxy for audience: vikunja opts out of the Authelia gate and
+  # is still a human UI. If these two ever collapse into one flag, this fails.
+  assert {
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).sso == false
+    error_message = "vikunja must stay sso=false AND ui=true — the pair is what proves audience is independent of the gate"
+  }
+
+  assert {
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "s3"]).ui == false
+    error_message = "a route listed in ingress_machine_routes must publish ui = false"
+  }
+
+  # Every route carries a real description. An empty one renders as a blank
+  # line beside the link, which looks like a rendering bug rather than a
+  # missing map entry.
+  assert {
+    condition = alltrue([
+      for r in output.ansible_inventory.ingress : trimspace(r.desc) != ""
+    ])
+    error_message = "every ingress route needs a non-empty description in ingress_route_descriptions; an empty one renders as a blank line on every board"
+  }
+
+  # Hermes collapses into one block under AI rather than scattering five routes
+  # per agent through the list.
+  assert {
+    condition = alltrue([
+      for r in output.ansible_inventory.ingress :
+      r.section == "Hermes" if startswith(r.name, "hermes-")
+    ])
+    error_message = "every hermes route must carry section = Hermes so the agents read as one block"
+  }
+}
+
