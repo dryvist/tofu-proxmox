@@ -1674,11 +1674,9 @@ run "ansible_inventory_publishes_splunk_vm_disks" {
 
 # --- ingress: dashboard audience + presentation contract ---
 #
-# The boards split human UIs from machine endpoints and render a description
-# beside every link. All three fields are DERIVED (locals-ingress-audience.tf),
-# so a route added without them still publishes — with `ui` defaulting true and
-# an EMPTY description, which renders as a blank line on every board. These
-# assertions are what makes that drift loud instead of cosmetic.
+# ui, section and desc are all derived — from sso, from route count per guest,
+# and from the guest's summary. Nothing is tabulated per service, so these
+# assertions guard the derivation rather than a list.
 run "ansible_inventory_ingress_carries_audience_metadata" {
   command = plan
 
@@ -1687,6 +1685,7 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
     # agent — the three cases these assertions distinguish between.
     containers = {
       "vikunja" = {
+        summary   = "Task and Kanban tracking"
         vm_id     = 310310
         node_name = "proxmox-1"
         hostname  = "vikunja"
@@ -1703,6 +1702,7 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
       # Same dependency-tag set the variables suite uses for a valid agent; a
       # bare hermes-agent tag is rejected by the containers validation.
       "hermes-agent" = {
+        summary   = "Hermes agent"
         vm_id     = 517000
         node_name = "proxmox-1"
         hostname  = "hermes-agent"
@@ -1721,43 +1721,41 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
     error_message = "every ingress route must publish ui/desc/section; a board cannot split or annotate without them"
   }
 
-  # The default is DELIBERATELY visible: a new route shows up in the human
-  # column rather than being silently absent from every board.
+  # ui tracks sso, EXCEPT for the human UIs that skip the gate. vikunja is
+  # sso=false and ui=true: if the exception list is dropped it lands in the
+  # machine column.
   assert {
-    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).ui
-    error_message = "a route not listed as machine-only must default to ui = true"
-  }
-
-  # sso is NOT a proxy for audience: vikunja opts out of the Authelia gate and
-  # is still a human UI. If these two ever collapse into one flag, this fails.
-  assert {
-    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).sso == false
-    error_message = "vikunja must stay sso=false AND ui=true — the pair is what proves audience is independent of the gate"
+    condition = (
+      one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).ui == true &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).sso == false
+    )
+    error_message = "vikunja must be sso=false AND ui=true — it is the case that proves ui is not just sso"
   }
 
   assert {
     condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "s3"]).ui == false
-    error_message = "a route listed in ingress_machine_routes must publish ui = false"
+    error_message = "a machine route (sso=false) must publish ui=false without being listed anywhere"
   }
 
-  # Every route carries a real description. An empty one renders as a blank
-  # line beside the link, which looks like a rendering bug rather than a
-  # missing map entry.
+  # desc comes from the guest's summary in deployment.json, not a table here.
   assert {
-    condition = alltrue([
-      for r in output.ansible_inventory.ingress : trimspace(r.desc) != ""
-    ])
-    error_message = "every ingress route needs a non-empty description in ingress_route_descriptions; an empty one renders as a blank line on every board"
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).desc == "Task and Kanban tracking"
+    error_message = "desc must come from the owning guest's summary"
   }
 
-  # Hermes collapses into one block under AI rather than scattering five routes
-  # per agent through the list.
+  # section is DERIVED from route count per guest. hermes-agent serves five,
+  # so it is a section; vikunja serves one, so it is not.
   assert {
     condition = alltrue([
       for r in output.ansible_inventory.ingress :
-      r.section == "Hermes" if startswith(r.name, "hermes-")
+      r.section == "hermes-agent" if r.owner == "hermes-agent"
     ])
-    error_message = "every hermes route must carry section = Hermes so the agents read as one block"
+    error_message = "a guest serving several routes must derive a section from its own name"
+  }
+
+  assert {
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).section == null
+    error_message = "a guest serving one route must have no section"
   }
 }
 

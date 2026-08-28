@@ -20,15 +20,18 @@ locals {
       # UI hosts stay gated (sso omitted -> true); the API/registry/dex hosts
       # serve machine clients (CLI, dex OIDC redirects) and opt out.
       { name = "terrakube", port = local.pipeline_constants.iac_platform_ports.terrakube_ui },
-      { name = "terrakube-api", port = local.pipeline_constants.iac_platform_ports.terrakube_api, sso = false },
-      { name = "terrakube-registry", port = local.pipeline_constants.iac_platform_ports.terrakube_registry, sso = false },
-      { name = "terrakube-dex", port = local.pipeline_constants.iac_platform_ports.terrakube_dex, sso = false },
+      { name = "terrakube-api", port = local.pipeline_constants.iac_platform_ports.terrakube_api, sso = false, ui = false },
+      { name = "terrakube-registry", port = local.pipeline_constants.iac_platform_ports.terrakube_registry, sso = false, ui = false },
+      { name = "terrakube-dex", port = local.pipeline_constants.iac_platform_ports.terrakube_dex, sso = false, ui = false },
       { name = "semaphore", port = local.pipeline_constants.iac_platform_ports.semaphore_web },
       ] : {
       name = svc.name
       ip   = local.vm_address["iac-platform"]
       port = svc.port
       sso  = try(svc.sso, true)
+      # One VM serves all five, so they group as a section automatically.
+      owner = "iac-platform"
+      ui    = try(svc.ui, true)
     }
   ] : []
 }
