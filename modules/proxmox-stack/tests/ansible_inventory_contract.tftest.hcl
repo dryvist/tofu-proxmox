@@ -1693,6 +1693,7 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
         dhcp      = true
       }
       "s3" = {
+        summary   = "Object storage"
         vm_id     = 311311
         node_name = "proxmox-1"
         hostname  = "s3"
@@ -1756,6 +1757,25 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
   assert {
     condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "vikunja"]).section == null
     error_message = "a guest serving one route must have no section"
+  }
+
+  # A guest serving several routes must NOT give them all the same desc. The
+  # first cut of this derivation did exactly that: every hermes-agent route
+  # inherited the guest summary, so five distinct services read identically on
+  # the boards. Per-route roles fix it; this asserts they stay distinct.
+  assert {
+    condition = length(distinct([
+      for r in output.ansible_inventory.ingress : r.desc if r.owner == "hermes-agent"
+    ])) == length([for r in output.ansible_inventory.ingress : r if r.owner == "hermes-agent"])
+    error_message = "routes on one multi-route guest must each carry their own desc, not the guest's summary repeated"
+  }
+
+  # No route may publish an empty desc: a board link with no subtitle is the
+  # visible symptom of a route whose owner carries no summary and which is
+  # missing from the pool-description map.
+  assert {
+    condition     = alltrue([for r in output.ansible_inventory.ingress : length(r.desc) > 0])
+    error_message = "every ingress route must publish a non-empty desc"
   }
 }
 
