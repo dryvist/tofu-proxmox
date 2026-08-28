@@ -221,5 +221,13 @@ locals {
     local.iac_platform_routes
     # hostname defaults to the route name; group for a backend-less route comes
     # from the map in locals-ingress-groups.tf. Route-supplied keys win over both.
-  ) : merge({ hostname = route.name, group = try(local.ingress_route_groups[route.name], "other") }, route)]
+    ) : merge({
+      hostname = route.name
+      group    = try(local.ingress_route_groups[route.name], "other")
+      # Dashboard presentation — see locals-ingress-audience.tf. `ui` defaults
+      # TRUE so a newly added route is visible rather than silently absent.
+      ui      = !contains(local.ingress_machine_routes, route.name)
+      section = try(local.ingress_route_sections[route.name], null)
+      desc    = try(local.ingress_route_descriptions[route.name], "")
+  }, route)]
 }
