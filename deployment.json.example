@@ -483,6 +483,23 @@
       "unprivileged": true,
       "root_disk": { "size": 8 }
     },
+    "_grafana_comment": "AI/estate metrics visualization — Grafana OSS + VictoriaMetrics single-node as one Docker-in-LXC compose stack (ansible-proxmox-apps grafana_stack role). Observability tier 4 positional VMID (docs vmid-network-tiers). DNS-first (dhcp:true). VictoriaMetrics (:8428) receives Prometheus remote_write from the log/metric pipeline and stores long-retention series; Grafana (:3000) is Traefik-fronted and Authelia-gated. Dashboards and the datasource are provisioned by the role, so the UI state is disposable and rebuilds clean.",
+    "grafana": {
+      "vm_id": 410040,
+      "node_name": "proxmox-1",
+      "dhcp": true,
+      "vlan": "mgmt",
+      "hostname": "grafana",
+      "summary": "Metrics dashboards",
+      "description": "Grafana OSS + VictoriaMetrics single-node (Docker-in-LXC compose stack, grafana_stack role). VictoriaMetrics on 8428 receives remote_write and keeps long-retention series; Grafana on 3000 fronted by Traefik behind Authelia. Dashboards/datasource provisioned by the role.",
+      "cpu_cores": 2,
+      "memory_dedicated": 2048,
+      "tags": ["terraform", "container", "grafana", "docker"],
+      "pool_id": "infrastructure",
+      "root_disk": { "size": 16 },
+      "unprivileged": true,
+      "features": { "nesting": true, "keyctl": true }
+    },
     "authelia": {
       "vm_id": 100050,
       "vlan": "mgmt",

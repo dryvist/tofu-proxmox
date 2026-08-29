@@ -65,6 +65,7 @@ module "firewall" {
   homarr_container_ids   = local.homarr_container_ids
   homepage_container_ids = local.homepage_container_ids
   glance_container_ids   = local.glance_container_ids
+  grafana_container_ids  = local.grafana_container_ids
 
   # Ingress (Traefik HA) containers (ingress tag) — define-disabled guest firewall
   # that pre-allows keepalived VRRP + 80/443 so a later enforcement flip is safe.
