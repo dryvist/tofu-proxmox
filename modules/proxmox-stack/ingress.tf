@@ -78,8 +78,10 @@ locals {
     # Browser-only surfaces: each takes the default gate (sso omitted => true).
     # Glance in particular ships NO authentication of its own, so the Authelia
     # forwardAuth here is the only thing in front of it.
-    homepage        = { backend = "homepage", port = local.pipeline_constants.service_ports.homepage_web }
-    glance          = { backend = "glance", port = local.pipeline_constants.service_ports.glance_web }
+    homepage = { backend = "homepage", port = local.pipeline_constants.service_ports.homepage_web }
+    glance   = { backend = "glance", port = local.pipeline_constants.service_ports.glance_web }
+    # Grafana metrics UI (observability guest). Browser-only, default gate.
+    grafana         = { backend = "grafana", port = local.pipeline_constants.service_ports.grafana_web }
     smokeping       = { backend = "smokeping", port = local.pipeline_constants.service_ports.smokeping_web }
     "haproxy-stats" = { backend = "haproxy", port = local.pipeline_constants.service_ports.haproxy_stats }
     # Static file host. Browser-only, so it takes the default gate (sso omitted
