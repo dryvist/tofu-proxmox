@@ -107,7 +107,7 @@ module "containers" {
 
   containers = {
     for k, v in var.containers : k => merge(v, {
-      node_name        = v.node_name
+      node_name = v.node_name
       # Per-guest override, falling back to the estate's shared Debian template.
       # coalesce() would reject a null second argument, so use the try/default
       # form: v.ct_template is an optional attribute with no default.

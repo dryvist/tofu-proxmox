@@ -36,7 +36,7 @@ locals {
     for group in distinct([
       for v in values(local.ha_containers) : v.ha_affinity_group
       if try(v.ha_affinity_group, null) != null
-    ]) : group => sort([
+      ]) : group => sort([
       for v in values(local.ha_containers) : "ct:${v.vm_id}"
       if try(v.ha_affinity_group, null) == group
     ])

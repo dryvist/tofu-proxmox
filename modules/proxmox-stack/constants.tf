@@ -3,7 +3,7 @@
 locals {
   pipeline_constants = {
     # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
-    service_ports = merge(local.dashboard_ports, {
+    service_ports = merge(local.dashboard_ports, local.herdr_ports, {
       haproxy_stats     = 8404
       splunk_web        = 8000
       splunk_hec        = 8088
@@ -106,14 +106,6 @@ locals {
       # NOT the LangGraph default 8123, which collides with homeassistant_web above.
       langgraph_api     = 8124
       agent_chat_ui_web = 3000
-      # herdr — the agent multiplexer that owns the terminals the coding agents
-      # run in (nix-ai nixosModules.herdr). Only the UI guest is fronted:
-      #   herdr_relay_ws — herdr-remote's relay + web dashboard. WebSocket, so
-      #     it needs Traefik's default HTTP/1.1 Upgrade handling and nothing
-      #     more; upstream binds 127.0.0.1:8375.
-      # The herdr server guest itself is reached over SSH only, and the Slack
-      # bridge speaks outbound Socket Mode — neither gets a route.
-      herdr_relay_ws = 8375
       # OpenTelemetry ingest on Cribl Edge — native OTLP sources, one port per
       # signal type (gRPC/HTTP) so Cribl routes by type without inspecting payload.
       # AI orchestration apps (OpenLLMetry) emit here; Cribl forks to Langfuse +
