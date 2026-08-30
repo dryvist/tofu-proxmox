@@ -38,8 +38,11 @@ variables {
       vikunja_web            = 3456
       homarr_web             = 7575
       # Estate dashboards alongside Homarr (referenced by homepage/glance rules)
-      homepage_web    = 3000
-      glance_web      = 8080
+      homepage_web = 3000
+      glance_web   = 8080
+      # Grafana observability guest (referenced by grafana rules)
+      grafana_web     = 3000
+      victoriametrics = 8428
       authelia_portal = 9091
       zammad_web      = 8080
       ntp             = 123
@@ -934,5 +937,37 @@ run "squid_proxy_service_is_ai_vlan_scoped" {
   assert {
     condition     = proxmox_virtual_environment_cluster_firewall_security_group.squid_proxy_services.rule[0].dport == tostring(var.pipeline_constants.service_ports.squid_proxy)
     error_message = "squid-proxy-svc dport must equal tostring(service_ports.squid_proxy), got '${proxmox_virtual_environment_cluster_firewall_security_group.squid_proxy_services.rule[0].dport}'"
+  }
+}
+
+# --- grafana service rules (Grafana UI + VictoriaMetrics remote_write) ---
+
+run "grafana_rules_track_constants_and_internal_scope" {
+  command = plan
+
+  variables {
+    grafana_container_ids = { grafana = 410040 }
+  }
+
+  # Exactly two live rules: TCP grafana_web (3000) and TCP victoriametrics
+  # (8428), both from the internal networks only.
+  assert {
+    condition     = length(local.grafana_services_rules) == 2
+    error_message = "grafana_services_rules must be exactly 2 (grafana_web + victoriametrics), got ${length(local.grafana_services_rules)}"
+  }
+
+  assert {
+    condition     = local.grafana_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.grafana_web)
+    error_message = "grafana UI rule must track the grafana_web service-port constant"
+  }
+
+  assert {
+    condition     = local.grafana_services_rules[1].dport == tostring(var.pipeline_constants.service_ports.victoriametrics)
+    error_message = "victoriametrics rule must track the victoriametrics service-port constant"
+  }
+
+  assert {
+    condition     = alltrue([for r in local.grafana_services_rules : r.source == local.internal_src])
+    error_message = "every grafana service rule must be scoped to the internal networks"
   }
 }
