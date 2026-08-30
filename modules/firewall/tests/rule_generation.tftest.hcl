@@ -69,6 +69,8 @@ variables {
       # hermes-ui companion web apps (referenced by hermes_ui_services_rules)
       hermes_ui_workspace       = 3000
       hermes_ui_mission_control = 3001
+      # herdr-remote relay + dashboard (referenced by herdr_client_services_rules)
+      herdr_relay_ws = 8375
       # The two third-party Hermes UIs co-located on each agent guest
       # (referenced by hermes_webhook_services_rules)
       hermes_webui  = 8787
@@ -969,5 +971,32 @@ run "grafana_rules_track_constants_and_internal_scope" {
   assert {
     condition     = alltrue([for r in local.grafana_services_rules : r.source == local.internal_src])
     error_message = "every grafana service rule must be scoped to the internal networks"
+  }
+}
+
+run "herdr_client_rules_track_constants_and_internal_scope" {
+  command = plan
+
+  variables {
+    herdr_client_container_ids = { herdr-ui = 515102 }
+  }
+
+  # Exactly one live rule: the herdr-remote relay/dashboard, from internal
+  # networks only. The Slack bridge shares this container set but needs no
+  # inbound rule at all — Socket Mode is an outbound WebSocket — so a second
+  # entry appearing here means someone opened a port that nothing dials.
+  assert {
+    condition     = length(local.herdr_client_services_rules) == 1
+    error_message = "herdr_client_services_rules must be exactly 1 (the relay), got ${length(local.herdr_client_services_rules)}"
+  }
+
+  assert {
+    condition     = local.herdr_client_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.herdr_relay_ws)
+    error_message = "herdr relay rule must track the herdr_relay_ws service-port constant"
+  }
+
+  assert {
+    condition     = alltrue([for r in local.herdr_client_services_rules : r.source == local.internal_src])
+    error_message = "every herdr client service rule must be scoped to the internal networks"
   }
 }
