@@ -208,6 +208,13 @@ module "homelab" {
   proxmox_ssh_host                           = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_VE_HOSTNAME
   proxmox_ssh_private_key                    = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_PRIVATE_KEY
   proxmox_ssh_username                       = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_USERNAME
+
+  # NixOS LXC template for the herdr guests (modules/proxmox-stack/ct_templates.tf).
+  # Absent from the desired state = no NixOS guests, and the download is skipped.
+  nixos_ct_template_url       = try(local.deployment.nixos_ct_template_url, "")
+  nixos_ct_template_file_name = try(local.deployment.nixos_ct_template_file_name, "nixos-herdr-lxc.tar.xz")
+  nixos_ct_template_sha256    = try(local.deployment.nixos_ct_template_sha256, "")
+
   rack_servers                               = try(local.deployment.rack_servers, {})
   splunk_boot_disk_size                      = try(local.deployment.splunk_boot_disk_size, 25)
   splunk_bulk_disk_size                      = try(local.deployment.splunk_bulk_disk_size, 2048)

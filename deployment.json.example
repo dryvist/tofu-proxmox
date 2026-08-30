@@ -1,6 +1,5 @@
 {
   "_comment": "EXAMPLE FILE for the private, versioned RustFS deployment object read by Terrakube. It contains desired state only; credentials and private keys live at native OpenBao KV paths.",
-
   "proxmox_node": "proxmox-1",
   "environment": "homelab",
   "domain": "example.com",
@@ -26,40 +25,54 @@
     "homeauto": "192.0.2.0/24",
     "nonprod": "198.51.100.0/24"
   },
-
   "_nodes_comment": "Proxmox cluster nodes (non-secret identity). proxmox_node above is the primary/default placement. commissioned=false means declared but not yet installed. services_enabled=false gates per-node (\"DaemonSet-style\") service placement only -- an already-commissioned node mid a storage rebuild keeps commissioned=true but sets services_enabled=false until the rebuild finishes; everything else it already runs is unaffected.",
   "nodes": {
-    "proxmox-1": { "role": "node-1", "hardware": "amd-desktop" },
-    "proxmox-2": { "role": "node-2", "hardware": "dell-r410", "services_enabled": false },
-    "proxmox-3": { "role": "node-3", "hardware": "dell-r710" },
-    "proxmox-4": { "role": "node-4", "hardware": "dell-r710" }
+    "proxmox-1": {
+      "role": "node-1",
+      "hardware": "amd-desktop"
+    },
+    "proxmox-2": {
+      "role": "node-2",
+      "hardware": "dell-r410",
+      "services_enabled": false
+    },
+    "proxmox-3": {
+      "role": "node-3",
+      "hardware": "dell-r710"
+    },
+    "proxmox-4": {
+      "role": "node-4",
+      "hardware": "dell-r710"
+    }
   },
-
   "proxmox_iso_debian": "debian-13.2.0-amd64-netinst.iso",
   "proxmox_ct_template_debian": "debian-13-standard_13.1-2_amd64.tar.zst",
   "ansible_cloud_init_file": "cloud-init/ansible-server-example.yml",
-
   "splunk_vm_id": 110,
   "splunk_vm_name": "splunk-aio",
   "splunk_vm_pool_id": "logging",
   "template_id": 9100,
   "splunk_boot_disk_size": 25,
   "splunk_data_disk_size": 200,
-
-  "_splunk_placement_comment": "Placement for the all-in-one Splunk VM. splunk_node_name was previously hardwired to proxmox_node, so the indexer could not be placed anywhere but the primary node. Relocating it has THREE prerequisites and they are ordered: (1) splunk_cpu_type must leave \"host\" — a host-CPU guest cannot move between CPU vendors, because the feature set it booted with does not exist on the destination; x86-64-v2 is portable to every node here, x86-64-v3 where every candidate node has AVX2. The change needs a guest reboot to take effect, so verify the VM is healthy on the portable model BEFORE going further. (2) splunk_migrate must be true — otherwise a splunk_node_name change is a destroy-and-recreate, which destroys the index volumes. (3) Every storage id the VM's disks target must exist on the destination node; a node-scoped pool id is the real constraint on where this VM can go, independent of CPU and memory.",
+  "_splunk_placement_comment": "Placement for the all-in-one Splunk VM. splunk_node_name was previously hardwired to proxmox_node, so the indexer could not be placed anywhere but the primary node. Relocating it has THREE prerequisites and they are ordered: (1) splunk_cpu_type must leave \"host\" \u2014 a host-CPU guest cannot move between CPU vendors, because the feature set it booted with does not exist on the destination; x86-64-v2 is portable to every node here, x86-64-v3 where every candidate node has AVX2. The change needs a guest reboot to take effect, so verify the VM is healthy on the portable model BEFORE going further. (2) splunk_migrate must be true \u2014 otherwise a splunk_node_name change is a destroy-and-recreate, which destroys the index volumes. (3) Every storage id the VM's disks target must exist on the destination node; a node-scoped pool id is the real constraint on where this VM can go, independent of CPU and memory.",
   "splunk_node_name": "proxmox-1",
   "splunk_cpu_type": "host",
   "splunk_migrate": false,
-
   "pools": {
-    "logging": { "comment": "Logging and observability infrastructure" },
-    "infrastructure": { "comment": "Core infrastructure services" },
-    "ai": { "comment": "AI orchestration tier (n8n, Dify, LangFlow, LangGraph, agent-exec)" },
-    "security": { "comment": "Honeypots and deception sensors (OpenCanary tripwires, T-Pot, apprise notify gateway)" }
+    "logging": {
+      "comment": "Logging and observability infrastructure"
+    },
+    "infrastructure": {
+      "comment": "Core infrastructure services"
+    },
+    "ai": {
+      "comment": "AI orchestration tier (n8n, Dify, LangFlow, LangGraph, agent-exec)"
+    },
+    "security": {
+      "comment": "Honeypots and deception sensors (OpenCanary tripwires, T-Pot, apprise notify gateway)"
+    }
   },
-
   "datastores": {},
-
   "_node_storage_comment": "Per-node ZFS storage DECLARATION. Terraform does NOT create ZFS pools (zpool create is OS-level). ansible-proxmox reads this via the ansible_inventory output to create pools/datasets/quotas and (when register=true) `pvesm add zfspool`. Adapt pool names and RAID levels for your hardware.",
   "node_storage": {
     "proxmox-2": {
@@ -69,12 +82,42 @@
           "raid": "raidz1",
           "protected": true,
           "register": true,
-          "content": ["images", "rootdir"],
+          "content": [
+            "images",
+            "rootdir"
+          ],
           "datasets": {
-            "backups": { "quota": "1T", "properties": { "compression": "zstd" } },
-            "databases": { "quota": "1T", "nfs_export": "ro=@10.0.0.0/8", "properties": { "recordsize": "16K", "atime": "off", "compression": "zstd" } },
-            "data": { "quota": "5T", "properties": { "recordsize": "1M", "compression": "zstd", "com.sun:auto-snapshot": "false" } },
-            "appdata": { "quota": "100G", "properties": { "recordsize": "16K", "atime": "off", "compression": "zstd" } },
+            "backups": {
+              "quota": "1T",
+              "properties": {
+                "compression": "zstd"
+              }
+            },
+            "databases": {
+              "quota": "1T",
+              "nfs_export": "ro=@10.0.0.0/8",
+              "properties": {
+                "recordsize": "16K",
+                "atime": "off",
+                "compression": "zstd"
+              }
+            },
+            "data": {
+              "quota": "5T",
+              "properties": {
+                "recordsize": "1M",
+                "compression": "zstd",
+                "com.sun:auto-snapshot": "false"
+              }
+            },
+            "appdata": {
+              "quota": "100G",
+              "properties": {
+                "recordsize": "16K",
+                "atime": "off",
+                "compression": "zstd"
+              }
+            },
             "appdata/plex": {},
             "appdata/sonarr": {},
             "appdata/radarr": {},
@@ -88,23 +131,53 @@
           "raid": "mirror",
           "protected": true,
           "register": false,
-          "content": ["images", "rootdir"],
+          "content": [
+            "images",
+            "rootdir"
+          ],
           "_splunk_fast_comment": "fast-splunk hot/warm tier. The `pvesm_id` registers this child dataset as its own first-class Proxmox storage id `fast-splunk`, which the Splunk VM's virtio2 disk targets directly (a plain quota would land the disk at the pool root instead). In the real topology the fast tier lives on the fast/NVMe node.",
           "datasets": {
-            "splunk": { "quota": "1T", "pvesm_id": "fast-splunk", "properties": { "recordsize": "128K", "compression": "lz4" } },
-            "siem/splunk-hot": { "quota": "300G", "properties": { "recordsize": "128K", "compression": "lz4" } },
-            "siem/cribl-pq": { "quota": "50G", "properties": { "compression": "lz4", "com.sun:auto-snapshot": "false" } }
+            "splunk": {
+              "quota": "1T",
+              "pvesm_id": "fast-splunk",
+              "properties": {
+                "recordsize": "128K",
+                "compression": "lz4"
+              }
+            },
+            "siem/splunk-hot": {
+              "quota": "300G",
+              "properties": {
+                "recordsize": "128K",
+                "compression": "lz4"
+              }
+            },
+            "siem/cribl-pq": {
+              "quota": "50G",
+              "properties": {
+                "compression": "lz4",
+                "com.sun:auto-snapshot": "false"
+              }
+            }
           }
         },
-        "_bulk_splunk_comment": "bulk-splunk cold tier: a DEDICATED non-RAID pool (raid: \"\"), separate from the raidz1 example-pool because ZFS RAID is pool-wide — a non-RAID cold tier cannot share a raidz pool. protected:false + no snapshots + backup=false on its VM disk (see tofu) is intentional: durability comes from the Backblaze B2 frozen archive, never vzdump. HUMAN ACTION: the physical spare disk (/dev/disk/by-id/...) for this pool must be confirmed/supplied before ansible-proxmox can create it. register:true + the `data` dataset's pvesm_id publish the `bulk-splunk` storage id the Splunk VM's virtio3 disk targets.",
+        "_bulk_splunk_comment": "bulk-splunk cold tier: a DEDICATED non-RAID pool (raid: \"\"), separate from the raidz1 example-pool because ZFS RAID is pool-wide \u2014 a non-RAID cold tier cannot share a raidz pool. protected:false + no snapshots + backup=false on its VM disk (see tofu) is intentional: durability comes from the Backblaze B2 frozen archive, never vzdump. HUMAN ACTION: the physical spare disk (/dev/disk/by-id/...) for this pool must be confirmed/supplied before ansible-proxmox can create it. register:true + the `data` dataset's pvesm_id publish the `bulk-splunk` storage id the Splunk VM's virtio3 disk targets.",
         "bulk-splunk": {
           "type": "zfspool",
           "raid": "",
           "protected": false,
           "register": true,
-          "content": ["images"],
+          "content": [
+            "images"
+          ],
           "datasets": {
-            "data": { "quota": "2T", "pvesm_id": "bulk-splunk", "properties": { "com.sun:auto-snapshot": "false" } }
+            "data": {
+              "quota": "2T",
+              "pvesm_id": "bulk-splunk",
+              "properties": {
+                "com.sun:auto-snapshot": "false"
+              }
+            }
           }
         }
       }
@@ -115,28 +188,42 @@
           "type": "zfspool",
           "raid": "raidz2",
           "register": false,
-          "content": ["images", "rootdir"],
+          "content": [
+            "images",
+            "rootdir"
+          ],
           "datasets": {
-            "backups": { "quota": "1T" }
+            "backups": {
+              "quota": "1T"
+            }
           }
         }
       }
     }
   },
-
   "host_services": {},
-
-  "_openbao_cluster_comment": "OpenBao Raft HA peers generated by OpenTofu before Terraform receives inputs. Suffixes drive all peer identity: openbao-10 -> vm_id 110010 and mgmt host .10, openbao-20 -> vm_id 110020 and mgmt host .20, etc. Keep shared LXC config in container_defaults; placement should carry only node -> suffix identity. SPREAD, not count, is what survives a node loss: place voters so that losing any single node still leaves at least one voter above quorum (floor(N/2)+1) — the openbao_voter_concentration check enforces this, and note that adding ONE voter to a lopsided cluster buys nothing because quorum rises with it. Suffix 40 is reserved: it collides with the vm_id of an explicitly declared openbao container, so a fourth node starts at 41. The generator does not filter on commissioned: a node must be commissioned and carry a registered ZFS pool BEFORE its suffixes are added here, or the apply creates guests on a node that cannot host them.",
+  "_openbao_cluster_comment": "OpenBao Raft HA peers generated by OpenTofu before Terraform receives inputs. Suffixes drive all peer identity: openbao-10 -> vm_id 110010 and mgmt host .10, openbao-20 -> vm_id 110020 and mgmt host .20, etc. Keep shared LXC config in container_defaults; placement should carry only node -> suffix identity. SPREAD, not count, is what survives a node loss: place voters so that losing any single node still leaves at least one voter above quorum (floor(N/2)+1) \u2014 the openbao_voter_concentration check enforces this, and note that adding ONE voter to a lopsided cluster buys nothing because quorum rises with it. Suffix 40 is reserved: it collides with the vm_id of an explicitly declared openbao container, so a fourth node starts at 41. The generator does not filter on commissioned: a node must be commissioned and carry a registered ZFS pool BEFORE its suffixes are added here, or the apply creates guests on a node that cannot host them.",
   "openbao_cluster": {
     "enabled": true,
     "name_prefix": "openbao-",
     "vm_id_base": 110000,
     "vlan": "mgmt",
     "placement": {
-      "proxmox-1": [10],
-      "proxmox-2": [20, 21],
-      "proxmox-3": [30, 31],
-      "proxmox-4": [41, 42]
+      "proxmox-1": [
+        10
+      ],
+      "proxmox-2": [
+        20,
+        21
+      ],
+      "proxmox-3": [
+        30,
+        31
+      ],
+      "proxmox-4": [
+        41,
+        42
+      ]
     },
     "container_defaults": {
       "unprivileged": true,
@@ -144,16 +231,23 @@
       "cpu_cores": 2,
       "memory_dedicated": 2048,
       "memory_swap": 0,
-      "tags": ["terraform", "container", "openbao", "secrets", "infrastructure"],
+      "tags": [
+        "terraform",
+        "container",
+        "openbao",
+        "secrets",
+        "infrastructure"
+      ],
       "pool_id": "infrastructure"
     },
-    "root_disk": { "size": 10 },
+    "root_disk": {
+      "size": 10
+    },
     "root_disk_datastore_by_node": {
       "proxmox-2": "example-pool",
       "proxmox-3": "example-bulk-pool"
     }
   },
-
   "_node_services_comment": "Per-node (\"DaemonSet-style\") service templates -- one container per node listed in per_node, generated by main.tf's node_service_containers instead of a hand-copied block per node. A node is skipped if it is not commissioned, has services_enabled=false, or has no per_node entry here (vm_id/host_octet are reserved-octet allocations, never derived by formula -- an unlisted node has no safe address to assign). Traefik is the first consumer; a future per-node service (e.g. a technitium secondary) is a new top-level key here, no code change.",
   "node_services": {
     "agentgateway": {
@@ -161,20 +255,39 @@
       "vlan": "ai",
       "dhcp": true,
       "per_node": {
-        "proxmox-1": { "suffix": 10, "vm_id": 516000 },
-        "proxmox-3": { "suffix": 30, "vm_id": 516010 },
-        "proxmox-4": { "suffix": 40, "vm_id": 516020 }
+        "proxmox-1": {
+          "suffix": 10,
+          "vm_id": 516000
+        },
+        "proxmox-3": {
+          "suffix": 30,
+          "vm_id": 516010
+        },
+        "proxmox-4": {
+          "suffix": 40,
+          "vm_id": 516020
+        }
       },
-      "_per_node_comment": "MCP-fabric HA: one stateless instance per always-on node, pooled behind the mcp.<domain> / agentgateway.<domain> Traefik routes (agentgateway_backends). Full DHCP (DNS-first FQDN addressing) — static assignment, if ever wanted, is UniFi's job driven by the Nautobot SSOT, never a tofu-side octet. proxmox-2 intentionally absent (storage rebuild owns it — no reserved vm_id until handed back). proxmox-4's entry only expands once that node is commissioned && services_enabled. A down node is dropped by the route health check; a known-dead node is gated with services_enabled=false so applies stay green.",
+      "_per_node_comment": "MCP-fabric HA: one stateless instance per always-on node, pooled behind the mcp.<domain> / agentgateway.<domain> Traefik routes (agentgateway_backends). Full DHCP (DNS-first FQDN addressing) \u2014 static assignment, if ever wanted, is UniFi's job driven by the Nautobot SSOT, never a tofu-side octet. proxmox-2 intentionally absent (storage rebuild owns it \u2014 no reserved vm_id until handed back). proxmox-4's entry only expands once that node is commissioned && services_enabled. A down node is dropped by the route health check; a known-dead node is gated with services_enabled=false so applies stay green.",
       "container_defaults": {
-        "description": "agentgateway MCP/LLM/A2A data-plane proxy — unified AI traffic layer routing MCP, OpenAI-compat LLM calls, and A2A messages to internal fabric + external providers (Docker-in-LXC, per-node MCP-fabric HA instance)",
+        "description": "agentgateway MCP/LLM/A2A data-plane proxy \u2014 unified AI traffic layer routing MCP, OpenAI-compat LLM calls, and A2A messages to internal fabric + external providers (Docker-in-LXC, per-node MCP-fabric HA instance)",
         "cpu_cores": 2,
         "memory_dedicated": 1024,
-        "tags": ["terraform", "container", "ai", "agentgateway", "docker"],
+        "tags": [
+          "terraform",
+          "container",
+          "ai",
+          "agentgateway",
+          "docker"
+        ],
         "pool_id": "ai",
         "unprivileged": true,
-        "root_disk": { "size": 8 },
-        "features": { "nesting": true }
+        "root_disk": {
+          "size": 8
+        },
+        "features": {
+          "nesting": true
+        }
       }
     },
     "apt-cacher-ng": {
@@ -182,53 +295,91 @@
       "vlan": "apps",
       "dhcp": true,
       "per_node": {
-        "proxmox-1": { "suffix": 10, "vm_id": 613010 },
-        "proxmox-3": { "suffix": 30, "vm_id": 613030 }
+        "proxmox-1": {
+          "suffix": 10,
+          "vm_id": 613010
+        },
+        "proxmox-3": {
+          "suffix": 30,
+          "vm_id": 613030
+        }
       },
-      "_per_node_comment": "APT proxy HA: one cache per node that hosts package-installing guests, so a node restart cannot take apt down estate-wide. Each instance is an independent cache — there is no shared state to replicate, which is what makes this service a natural fit for the per-node pattern rather than a clustered one. Clients reach the pool by name and rely on apt trying the next address for the host on a connect failure, so no client carries an instance address. VMIDs decode as apps(6) - mgmt(1) - crit3 - LXC(0) - instance == node id - prd(0), matching how the openbao voters put the node id in the instance digit.",
+      "_per_node_comment": "APT proxy HA: one cache per node that hosts package-installing guests, so a node restart cannot take apt down estate-wide. Each instance is an independent cache \u2014 there is no shared state to replicate, which is what makes this service a natural fit for the per-node pattern rather than a clustered one. Clients reach the pool by name and rely on apt trying the next address for the host on a connect failure, so no client carries an instance address. VMIDs decode as apps(6) - mgmt(1) - crit3 - LXC(0) - instance == node id - prd(0), matching how the openbao voters put the node id in the instance digit.",
       "container_defaults": {
-        "description": "apt-cacher-ng — APT package caching proxy (per-node instance)",
+        "description": "apt-cacher-ng \u2014 APT package caching proxy (per-node instance)",
         "cpu_cores": 1,
         "memory_dedicated": 512,
-        "tags": ["terraform", "container", "infrastructure", "apt-cache"],
+        "tags": [
+          "terraform",
+          "container",
+          "infrastructure",
+          "apt-cache"
+        ],
         "pool_id": "infrastructure",
-        "root_disk": { "size": 16 }
+        "root_disk": {
+          "size": 16
+        }
       }
     },
     "traefik": {
       "name_prefix": "traefik-",
       "vlan": "mgmt",
       "per_node": {
-        "proxmox-1": { "suffix": 10, "vm_id": 101, "host_octet": 101 },
-        "proxmox-3": { "suffix": 30, "vm_id": 107, "host_octet": 107 }
+        "proxmox-1": {
+          "suffix": 10,
+          "vm_id": 101,
+          "host_octet": 101
+        },
+        "proxmox-3": {
+          "suffix": 30,
+          "vm_id": 107,
+          "host_octet": 107
+        }
       },
       "_per_node_comment": "proxmox-2 is intentionally absent here, not just gated by services_enabled=false: it is mid a storage rebuild (a separate, owning migration effort) and gets no reserved vm_id/host_octet -- not even a placeholder -- until that effort hands it back. Add its entry then, alongside flipping services_enabled back to true.",
       "container_defaults": {
         "description": "Traefik reverse proxy / TLS ingress (per-node ingress HA instance)",
         "cpu_cores": 1,
         "memory_dedicated": 512,
-        "tags": ["terraform", "container", "ingress", "traefik"],
+        "tags": [
+          "terraform",
+          "container",
+          "ingress",
+          "traefik"
+        ],
         "pool_id": "infrastructure",
-        "root_disk": { "size": 8 }
+        "root_disk": {
+          "size": 8
+        }
       }
     }
   },
-
   "vms": {
     "example-vm": {
       "vm_id": 250,
       "node_name": "proxmox-1",
       "vlan": "nonprod",
       "name": "example-vm",
-      "description": "Example VM entry — replace with your own",
+      "description": "Example VM entry \u2014 replace with your own",
       "cpu_cores": 2,
       "memory_dedicated": 2048,
-      "tags": ["terraform"],
-      "boot_disk": { "datastore_id": "local-zfs", "size": 32 },
-      "clone_template": { "template_id": 9000 },
-      "user_account": { "username": "debian", "password": "", "keys": [] }
+      "tags": [
+        "terraform"
+      ],
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 32
+      },
+      "clone_template": {
+        "template_id": 9000
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     },
-    "_splunk_cluster_comment": "Splunk-native HA cluster (Phase 3) — replaces the single all-in-one splunk VM (splunk_vm_id above; disable-never-delete, kept as a distributed search peer during migration). Five full Splunk Enterprise VMs, native install driven by the ansible-splunk splunk.splunk role (docs/SPLUNK_CLUSTER_DESIGN.md there). Topology: a 2-peer indexer cluster (RF=2/SF=2, the supported minimum), two INDEPENDENT search heads (not an SHC — an SHC requires 3 members, one more than affordable here), and one lightweight management VM carrying cluster manager + license master + monitoring console + a third unclustered search head. Placement: one indexer + one search head per node across proxmox-1 and proxmox-4 (mgmt on proxmox-4); the remaining nodes are hands-off or unused. DHCP/DNS-first (dhcp:true, no host octet): each guest is reached by {name}.{domain}; the deterministic-MAC DHCP reservation + Technitium A-record own the address. Positional VMID decode (see docs/INFRASTRUCTURE_NUMBERING.md): 4211I0 = tier 4 (observability/security, VLAN 40 'siem') · sub 2 (SIEM data plane, same plane as the cribl pipeline that feeds it) · crit 1 (core) · OS 1 (VM/qemu) · instance I · env 0. Ports (Splunk web 8000 / HEC 8088 / mgmt 8089 / S2S 9997 / replication 9887 / clustering 8080) are already opened cluster-internally by the splunk security group (modules/firewall/security_groups.tf) for any guest carrying the 'splunk' tag — no firewall change is needed. HARD DEPENDENCY: nodes.proxmox-4.commissioned is false above; commission and power on proxmox-4 before applying, or the three proxmox-4 guests cannot be created.",
+    "_splunk_cluster_comment": "Splunk-native HA cluster (Phase 3) \u2014 replaces the single all-in-one splunk VM (splunk_vm_id above; disable-never-delete, kept as a distributed search peer during migration). Five full Splunk Enterprise VMs, native install driven by the ansible-splunk splunk.splunk role (docs/SPLUNK_CLUSTER_DESIGN.md there). Topology: a 2-peer indexer cluster (RF=2/SF=2, the supported minimum), two INDEPENDENT search heads (not an SHC \u2014 an SHC requires 3 members, one more than affordable here), and one lightweight management VM carrying cluster manager + license master + monitoring console + a third unclustered search head. Placement: one indexer + one search head per node across proxmox-1 and proxmox-4 (mgmt on proxmox-4); the remaining nodes are hands-off or unused. DHCP/DNS-first (dhcp:true, no host octet): each guest is reached by {name}.{domain}; the deterministic-MAC DHCP reservation + Technitium A-record own the address. Positional VMID decode (see docs/INFRASTRUCTURE_NUMBERING.md): 4211I0 = tier 4 (observability/security, VLAN 40 'siem') \u00b7 sub 2 (SIEM data plane, same plane as the cribl pipeline that feeds it) \u00b7 crit 1 (core) \u00b7 OS 1 (VM/qemu) \u00b7 instance I \u00b7 env 0. Ports (Splunk web 8000 / HEC 8088 / mgmt 8089 / S2S 9997 / replication 9887 / clustering 8080) are already opened cluster-internally by the splunk security group (modules/firewall/security_groups.tf) for any guest carrying the 'splunk' tag \u2014 no firewall change is needed. HARD DEPENDENCY: nodes.proxmox-4.commissioned is false above; commission and power on proxmox-4 before applying, or the three proxmox-4 guests cannot be created.",
     "splunk-idx-10": {
       "vm_id": 421100,
       "dhcp": true,
@@ -238,12 +389,31 @@
       "node_name": "proxmox-1",
       "cpu_cores": 6,
       "memory_dedicated": 12288,
-      "tags": ["terraform", "splunk", "splunk-idx"],
+      "tags": [
+        "terraform",
+        "splunk",
+        "splunk-idx"
+      ],
       "pool_id": "logging",
-      "boot_disk": { "datastore_id": "local-zfs", "size": 64 },
-      "additional_disks": [{ "interface": "scsi1", "datastore_id": "local-zfs", "size": 200 }],
-      "clone_template": { "template_id": 9100 },
-      "user_account": { "username": "debian", "password": "", "keys": [] }
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 64
+      },
+      "additional_disks": [
+        {
+          "interface": "scsi1",
+          "datastore_id": "local-zfs",
+          "size": 200
+        }
+      ],
+      "clone_template": {
+        "template_id": 9100
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     },
     "splunk-idx-40": {
       "vm_id": 421110,
@@ -254,27 +424,59 @@
       "node_name": "proxmox-4",
       "cpu_cores": 6,
       "memory_dedicated": 12288,
-      "tags": ["terraform", "splunk", "splunk-idx"],
+      "tags": [
+        "terraform",
+        "splunk",
+        "splunk-idx"
+      ],
       "pool_id": "logging",
-      "boot_disk": { "datastore_id": "local-zfs", "size": 64 },
-      "additional_disks": [{ "interface": "scsi1", "datastore_id": "local-zfs", "size": 200 }],
-      "clone_template": { "template_id": 9100 },
-      "user_account": { "username": "debian", "password": "", "keys": [] }
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 64
+      },
+      "additional_disks": [
+        {
+          "interface": "scsi1",
+          "datastore_id": "local-zfs",
+          "size": 200
+        }
+      ],
+      "clone_template": {
+        "template_id": 9100
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     },
     "splunk-sh-10": {
       "vm_id": 421120,
       "dhcp": true,
       "vlan": "siem",
       "name": "splunk-sh-10",
-      "description": "Independent Splunk search head on proxmox-1 (not an SHC member). Attaches to the indexer cluster as a search head (configure_idxc_sh). No index storage — boot disk only.",
+      "description": "Independent Splunk search head on proxmox-1 (not an SHC member). Attaches to the indexer cluster as a search head (configure_idxc_sh). No index storage \u2014 boot disk only.",
       "node_name": "proxmox-1",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "splunk", "splunk-sh"],
+      "tags": [
+        "terraform",
+        "splunk",
+        "splunk-sh"
+      ],
       "pool_id": "logging",
-      "boot_disk": { "datastore_id": "local-zfs", "size": 64 },
-      "clone_template": { "template_id": 9100 },
-      "user_account": { "username": "debian", "password": "", "keys": [] }
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 64
+      },
+      "clone_template": {
+        "template_id": 9100
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     },
     "splunk-sh-40": {
       "vm_id": 421130,
@@ -285,11 +487,24 @@
       "node_name": "proxmox-4",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "splunk", "splunk-sh"],
+      "tags": [
+        "terraform",
+        "splunk",
+        "splunk-sh"
+      ],
       "pool_id": "logging",
-      "boot_disk": { "datastore_id": "local-zfs", "size": 64 },
-      "clone_template": { "template_id": 9100 },
-      "user_account": { "username": "debian", "password": "", "keys": [] }
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 64
+      },
+      "clone_template": {
+        "template_id": 9100
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     },
     "splunk-mgmt-40": {
       "vm_id": 421140,
@@ -300,11 +515,24 @@
       "node_name": "proxmox-4",
       "cpu_cores": 4,
       "memory_dedicated": 6144,
-      "tags": ["terraform", "splunk", "splunk-mgmt"],
+      "tags": [
+        "terraform",
+        "splunk",
+        "splunk-mgmt"
+      ],
       "pool_id": "logging",
-      "boot_disk": { "datastore_id": "local-zfs", "size": 64 },
-      "clone_template": { "template_id": 9100 },
-      "user_account": { "username": "debian", "password": "", "keys": [] }
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 64
+      },
+      "clone_template": {
+        "template_id": 9100
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     },
     "_pbs_comment": "Proxmox Backup Server appliance: app-consistent, deduplicated full-guest backups of stateful guests - the layer raw ZFS snapshots cannot give a VM mid-write. Clone of template_id 9000; the pbs role in ansible-proxmox-apps installs the packages and creates the datastore on the additional disk. Placed on the node whose registered dual-parity bulk pool is commissioned for backups plus replica targets: the datastore's durability constraint picks the node, not preference. protection=true so no accidental destroy of the backup tier. Add a remote+sync job to a second PBS on the max-storage node once it is commissioned.",
     "pbs": {
@@ -316,16 +544,33 @@
       "node_name": "proxmox-3",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
-      "tags": ["terraform", "backup", "pbs"],
-      "boot_disk": { "datastore_id": "example-bulk-pool", "size": 32 },
-      "additional_disks": [
-        { "interface": "scsi1", "datastore_id": "example-bulk-pool", "size": 1024 }
+      "tags": [
+        "terraform",
+        "backup",
+        "pbs"
       ],
-      "clone_template": { "template_id": 9000 },
-      "user_account": { "username": "debian", "password": "", "keys": [] },
+      "boot_disk": {
+        "datastore_id": "example-bulk-pool",
+        "size": 32
+      },
+      "additional_disks": [
+        {
+          "interface": "scsi1",
+          "datastore_id": "example-bulk-pool",
+          "size": 1024
+        }
+      ],
+      "clone_template": {
+        "template_id": 9000
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      },
       "protection": true
     },
-    "_tpot_comment": "T-Pot deep-sensor (telekom-security/tpotce) — the all-in-one platform bundling 20+ honeypots (Cowrie SSH/Telnet, Dionaea SMB/malware, Conpot ICS/SCADA, Heralding, Log4pot, the Beelzebub+Galah LLM pots, medical/printer pots, tarpits, ...) plus an Elastic attack-map dashboard. Runs Docker-on-VM (like the Splunk VM), placed on the high-CPU/fast node (proxmox-1) because the Elastic stack + many containers are resource-hungry. DNS-first (dhcp:true): VMs now carry positional VMIDs too (locals.tf vm_ipv4 short-circuits cidrhost when dhcp/static). VMID 495100 = tier 4 (observability/security) · sub 9 (deception) · crit 5 · OS 1 (VM/qemu) · instance 0 · env 0. The `tpot` tag drives the firewall (wide-net input, restricted egress); `docker` puts it in docker_vms for the ansible-proxmox-apps `tpot` role, which runs the installer + wires ElastAlert -> the apprise gateway. Reachable at https://tpot.{domain} (T-Pot serves its own dashboard). Sits on the nonprod/untrusted decoy segment.",
+    "_tpot_comment": "T-Pot deep-sensor (telekom-security/tpotce) \u2014 the all-in-one platform bundling 20+ honeypots (Cowrie SSH/Telnet, Dionaea SMB/malware, Conpot ICS/SCADA, Heralding, Log4pot, the Beelzebub+Galah LLM pots, medical/printer pots, tarpits, ...) plus an Elastic attack-map dashboard. Runs Docker-on-VM (like the Splunk VM), placed on the high-CPU/fast node (proxmox-1) because the Elastic stack + many containers are resource-hungry. DNS-first (dhcp:true): VMs now carry positional VMIDs too (locals.tf vm_ipv4 short-circuits cidrhost when dhcp/static). VMID 495100 = tier 4 (observability/security) \u00b7 sub 9 (deception) \u00b7 crit 5 \u00b7 OS 1 (VM/qemu) \u00b7 instance 0 \u00b7 env 0. The `tpot` tag drives the firewall (wide-net input, restricted egress); `docker` puts it in docker_vms for the ansible-proxmox-apps `tpot` role, which runs the installer + wires ElastAlert -> the apprise gateway. Reachable at https://tpot.{domain} (T-Pot serves its own dashboard). Sits on the nonprod/untrusted decoy segment.",
     "tpot": {
       "vm_id": 495100,
       "dhcp": true,
@@ -335,12 +580,26 @@
       "node_name": "proxmox-1",
       "cpu_cores": 8,
       "memory_dedicated": 16384,
-      "tags": ["terraform", "docker", "honeypot", "tpot"],
-      "boot_disk": { "datastore_id": "local-zfs", "size": 256 },
-      "clone_template": { "template_id": 9000 },
-      "user_account": { "username": "debian", "password": "", "keys": [] }
+      "tags": [
+        "terraform",
+        "docker",
+        "honeypot",
+        "tpot"
+      ],
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 256
+      },
+      "clone_template": {
+        "template_id": 9000
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     },
-    "_tpot_warm_comment": "Warm standby of the deep sensor on the normally-shut-down backup node (proxmox-3). DR copy only — spun up when proxmox-3 is powered for backups or during failover (the VM schema has no on_boot field; proxmox-3 is commissioned:false so nothing is applied there until you commission it). instance 1 -> VMID 495110.",
+    "_tpot_warm_comment": "Warm standby of the deep sensor on the normally-shut-down backup node (proxmox-3). DR copy only \u2014 spun up when proxmox-3 is powered for backups or during failover (the VM schema has no on_boot field; proxmox-3 is commissioned:false so nothing is applied there until you commission it). instance 1 -> VMID 495110.",
     "tpot-warm": {
       "vm_id": 495110,
       "dhcp": true,
@@ -350,43 +609,71 @@
       "node_name": "proxmox-3",
       "cpu_cores": 8,
       "memory_dedicated": 16384,
-      "tags": ["terraform", "docker", "honeypot", "tpot"],
-      "boot_disk": { "datastore_id": "local-zfs", "size": 256 },
-      "clone_template": { "template_id": 9000 },
-      "user_account": { "username": "debian", "password": "", "keys": [] }
+      "tags": [
+        "terraform",
+        "docker",
+        "honeypot",
+        "tpot"
+      ],
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 256
+      },
+      "clone_template": {
+        "template_id": 9000
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     }
   },
-
   "containers": {
-    "_placement_comment": "node_name is REQUIRED on every entry. It used to be optional, with tofu falling back to proxmox_node when it was absent — which meant a guest that simply never named a node was indistinguishable from one deliberately placed on the primary, and nothing anywhere reported the difference. That fallback is how the primary node came to hold the majority of the estate's containers, log pipeline included. There is no default to inherit now: name the node, and name it for a reason (spare memory, spare CPU, or keeping the two halves of a redundant pair apart).",
+    "_placement_comment": "node_name is REQUIRED on every entry. It used to be optional, with tofu falling back to proxmox_node when it was absent \u2014 which meant a guest that simply never named a node was indistinguishable from one deliberately placed on the primary, and nothing anywhere reported the difference. That fallback is how the primary node came to hold the majority of the estate's containers, log pipeline included. There is no default to inherit now: name the node, and name it for a reason (spare memory, spare CPU, or keeping the two halves of a redundant pair apart).",
     "example-container": {
       "vm_id": 100,
       "node_name": "proxmox-1",
       "vlan": "apps",
       "hostname": "example-container",
-      "description": "Example LXC container entry — replace with your own",
+      "description": "Example LXC container entry \u2014 replace with your own",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container"],
+      "tags": [
+        "terraform",
+        "container"
+      ],
       "pool_id": "infrastructure",
-      "root_disk": { "size": 8 }
+      "root_disk": {
+        "size": 8
+      }
     },
-    "_ipam_dcim_comment": "Shared Postgres (data VLAN) + native Nautobot IPAM/DCIM (apps VLAN). Both DHCP/DNS-first (a plain pool lease, no declared address); VMIDs follow the tier-positional scheme (3=data, 6=apps). Native installs — no `features.nesting` (not Docker-in-LXC). Postgres carries a persistent /var/lib/postgresql data mount (survives rebuilds); Nautobot a /opt/nautobot mount and colocated Redis. Postgres has NO Traefik ingress (in-cluster 5432 only); Nautobot's web UI (8080) is fronted by Traefik. Illustrative placeholders only — the live values live in the gitignored deployment.json.",
+    "_ipam_dcim_comment": "Shared Postgres (data VLAN) + native Nautobot IPAM/DCIM (apps VLAN). Both DHCP/DNS-first (a plain pool lease, no declared address); VMIDs follow the tier-positional scheme (3=data, 6=apps). Native installs \u2014 no `features.nesting` (not Docker-in-LXC). Postgres carries a persistent /var/lib/postgresql data mount (survives rebuilds); Nautobot a /opt/nautobot mount and colocated Redis. Postgres has NO Traefik ingress (in-cluster 5432 only); Nautobot's web UI (8080) is fronted by Traefik. Illustrative placeholders only \u2014 the live values live in the gitignored deployment.json.",
     "postgres": {
       "vm_id": 303000,
       "dhcp": true,
       "vlan": "data",
       "hostname": "postgres",
-      "description": "Shared native Postgres — inventory/apps datastore (Nautobot now; Vikunja/EspoCRM later). Persistent data mount + pgdump backups.",
+      "description": "Shared native Postgres \u2014 inventory/apps datastore (Nautobot now; Vikunja/EspoCRM later). Persistent data mount + pgdump backups.",
       "cpu_cores": 2,
       "memory_dedicated": 2048,
-      "tags": ["terraform", "container", "postgres"],
+      "tags": [
+        "terraform",
+        "container",
+        "postgres"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
       "unprivileged": true,
-      "root_disk": { "size": 16 },
+      "root_disk": {
+        "size": 16
+      },
       "mount_points": [
-        { "volume": "local-zfs", "size": "60G", "path": "/var/lib/postgresql" }
+        {
+          "volume": "local-zfs",
+          "size": "60G",
+          "path": "/var/lib/postgresql"
+        }
       ]
     },
     "postgres-apps": {
@@ -394,16 +681,26 @@
       "dhcp": true,
       "vlan": "apps",
       "hostname": "postgres-apps",
-      "description": "Apps-tier primary Postgres — native Postgres backing Nautobot/Vikunja/Zammad, on the applications VLAN alongside its dependents. Streaming-replication primary; persistent data mount + pgdump backups.",
+      "description": "Apps-tier primary Postgres \u2014 native Postgres backing Nautobot/Vikunja/Zammad, on the applications VLAN alongside its dependents. Streaming-replication primary; persistent data mount + pgdump backups.",
       "cpu_cores": 2,
       "memory_dedicated": 2048,
-      "tags": ["terraform", "container", "postgres"],
+      "tags": [
+        "terraform",
+        "container",
+        "postgres"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-2",
       "unprivileged": true,
-      "root_disk": { "size": 16 },
+      "root_disk": {
+        "size": 16
+      },
       "mount_points": [
-        { "volume": "local-zfs", "size": "60G", "path": "/var/lib/postgresql" }
+        {
+          "volume": "local-zfs",
+          "size": "60G",
+          "path": "/var/lib/postgresql"
+        }
       ]
     },
     "nautobot": {
@@ -414,13 +711,23 @@
       "description": "Native Nautobot IPAM/DCIM source of truth (venv + uwsgi + worker + scheduler; Redis colocated). Web UI on 8080, fronted by Traefik.",
       "cpu_cores": 4,
       "memory_dedicated": 4096,
-      "tags": ["terraform", "container", "nautobot"],
+      "tags": [
+        "terraform",
+        "container",
+        "nautobot"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
       "unprivileged": true,
-      "root_disk": { "size": 24 },
+      "root_disk": {
+        "size": 24
+      },
       "mount_points": [
-        { "volume": "local-zfs", "size": "40G", "path": "/opt/nautobot" }
+        {
+          "volume": "local-zfs",
+          "size": "40G",
+          "path": "/opt/nautobot"
+        }
       ]
     },
     "vikunja": {
@@ -428,62 +735,93 @@
       "dhcp": true,
       "vlan": "apps",
       "hostname": "vikunja",
-      "description": "Vikunja task management — native Go binary, web/API on 3456 fronted by Traefik; state in the shared Postgres; persistent /var/lib/vikunja for file attachments.",
+      "description": "Vikunja task management \u2014 native Go binary, web/API on 3456 fronted by Traefik; state in the shared Postgres; persistent /var/lib/vikunja for file attachments.",
       "cpu_cores": 2,
       "memory_dedicated": 1024,
-      "tags": ["terraform", "container", "vikunja"],
+      "tags": [
+        "terraform",
+        "container",
+        "vikunja"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
       "unprivileged": true,
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "mount_points": [
-        { "volume": "local-zfs", "size": "10G", "path": "/var/lib/vikunja" }
+        {
+          "volume": "local-zfs",
+          "size": "10G",
+          "path": "/var/lib/vikunja"
+        }
       ]
     },
-    "_dashboards_comment": "Estate dashboards (`dashboard` tag, apps VLAN). All three render their service list from the SAME published ingress table (modules/proxmox-stack/locals-ingress-backends.tf), so a service is filed on every board by adding its Traefik route — never by editing three boards. Grouping comes from each backend container's `vlan`, so no second tag list is maintained. Every board is Authelia-gated at the ingress: Glance in particular ships no authentication of its own, so that gate is the only thing in front of it. Homarr is the community-scripts install-layer pilot; Homepage and Glance are file-configured, so their rendered config is idempotent, whereas Homarr's API create always inserts and its role must diff by name.",
+    "_dashboards_comment": "Estate dashboards (`dashboard` tag, apps VLAN). All three render their service list from the SAME published ingress table (modules/proxmox-stack/locals-ingress-backends.tf), so a service is filed on every board by adding its Traefik route \u2014 never by editing three boards. Grouping comes from each backend container's `vlan`, so no second tag list is maintained. Every board is Authelia-gated at the ingress: Glance in particular ships no authentication of its own, so that gate is the only thing in front of it. Homarr is the community-scripts install-layer pilot; Homepage and Glance are file-configured, so their rendered config is idempotent, whereas Homarr's API create always inserts and its role must diff by name.",
     "homarr": {
       "vm_id": 605030,
       "dhcp": true,
       "vlan": "apps",
       "hostname": "homarr",
-      "description": "Homarr dashboard — web UI on 7575 fronted by Traefik; SQLite on its own rootfs. Installed by a borrowed community-scripts installer, which is why its egress includes HTTPS/HTTP.",
+      "description": "Homarr dashboard \u2014 web UI on 7575 fronted by Traefik; SQLite on its own rootfs. Installed by a borrowed community-scripts installer, which is why its egress includes HTTPS/HTTP.",
       "cpu_cores": 2,
       "memory_dedicated": 1024,
-      "tags": ["terraform", "container", "homarr", "dashboard"],
+      "tags": [
+        "terraform",
+        "container",
+        "homarr",
+        "dashboard"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
       "unprivileged": true,
-      "root_disk": { "size": 8 }
+      "root_disk": {
+        "size": 8
+      }
     },
     "homepage": {
       "vm_id": 605040,
       "dhcp": true,
       "vlan": "apps",
       "hostname": "homepage",
-      "description": "Homepage (gethomepage) service-launcher dashboard — web UI on 3000 fronted by Traefik; YAML config rendered by Ansible onto rootfs (no mount point, so vzdump captures it without the mount_point backup=1 trap); a byte-identical render is a no-op.",
+      "description": "Homepage (gethomepage) service-launcher dashboard \u2014 web UI on 3000 fronted by Traefik; YAML config rendered by Ansible onto rootfs (no mount point, so vzdump captures it without the mount_point backup=1 trap); a byte-identical render is a no-op.",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "homepage", "dashboard"],
+      "tags": [
+        "terraform",
+        "container",
+        "homepage",
+        "dashboard"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
       "unprivileged": true,
-      "root_disk": { "size": 8 }
+      "root_disk": {
+        "size": 8
+      }
     },
     "glance": {
       "vm_id": 605050,
       "dhcp": true,
       "vlan": "apps",
       "hostname": "glance",
-      "description": "Glance dashboard — single Go binary, web UI on 8080 fronted by Traefik; glance.yml on rootfs (no mount point, same reason as homarr); generated content kept in an included file so hand-written widgets survive a re-render.",
+      "description": "Glance dashboard \u2014 single Go binary, web UI on 8080 fronted by Traefik; glance.yml on rootfs (no mount point, same reason as homarr); generated content kept in an included file so hand-written widgets survive a re-render.",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "glance", "dashboard"],
+      "tags": [
+        "terraform",
+        "container",
+        "glance",
+        "dashboard"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
       "unprivileged": true,
-      "root_disk": { "size": 8 }
+      "root_disk": {
+        "size": 8
+      }
     },
-    "_grafana_comment": "AI/estate metrics visualization — Grafana OSS + VictoriaMetrics single-node as one Docker-in-LXC compose stack (ansible-proxmox-apps grafana_stack role). Observability tier 4 positional VMID (docs vmid-network-tiers). DNS-first (dhcp:true). VictoriaMetrics (:8428) receives Prometheus remote_write from the log/metric pipeline and stores long-retention series; Grafana (:3000) is Traefik-fronted and Authelia-gated. Dashboards and the datasource are provisioned by the role, so the UI state is disposable and rebuilds clean.",
+    "_grafana_comment": "AI/estate metrics visualization \u2014 Grafana OSS + VictoriaMetrics single-node as one Docker-in-LXC compose stack (ansible-proxmox-apps grafana_stack role). Observability tier 4 positional VMID (docs vmid-network-tiers). DNS-first (dhcp:true). VictoriaMetrics (:8428) receives Prometheus remote_write from the log/metric pipeline and stores long-retention series; Grafana (:3000) is Traefik-fronted and Authelia-gated. Dashboards and the datasource are provisioned by the role, so the UI state is disposable and rebuilds clean.",
     "grafana": {
       "vm_id": 410040,
       "node_name": "proxmox-1",
@@ -494,27 +832,49 @@
       "description": "Grafana OSS + VictoriaMetrics single-node (Docker-in-LXC compose stack, grafana_stack role). VictoriaMetrics on 8428 receives remote_write and keeps long-retention series; Grafana on 3000 fronted by Traefik behind Authelia. Dashboards/datasource provisioned by the role.",
       "cpu_cores": 2,
       "memory_dedicated": 2048,
-      "tags": ["terraform", "container", "grafana", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "grafana",
+        "docker"
+      ],
       "pool_id": "infrastructure",
-      "root_disk": { "size": 16 },
+      "root_disk": {
+        "size": 16
+      },
       "unprivileged": true,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
     },
     "authelia": {
       "vm_id": 100050,
       "vlan": "mgmt",
-      "ip_config": { "ipv4_address": "198.51.100.6/24" },
+      "ip_config": {
+        "ipv4_address": "198.51.100.6/24"
+      },
       "hostname": "authelia",
-      "description": "Authelia SSO portal / Traefik forwardAuth provider — criticality-1 core service (auth plane, beside ingress/DNS): native Go binary, portal + authz API on 9091 fronted by Traefik; passkey-first login; state in local SQLite on persistent /var/lib/authelia.",
+      "description": "Authelia SSO portal / Traefik forwardAuth provider \u2014 criticality-1 core service (auth plane, beside ingress/DNS): native Go binary, portal + authz API on 9091 fronted by Traefik; passkey-first login; state in local SQLite on persistent /var/lib/authelia.",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "authelia"],
+      "tags": [
+        "terraform",
+        "container",
+        "authelia"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
       "unprivileged": true,
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "mount_points": [
-        { "volume": "local-zfs", "size": "2G", "path": "/var/lib/authelia" }
+        {
+          "volume": "local-zfs",
+          "size": "2G",
+          "path": "/var/lib/authelia"
+        }
       ]
     },
     "zammad-20": {
@@ -522,16 +882,26 @@
       "dhcp": true,
       "vlan": "apps",
       "hostname": "zammad-20",
-      "description": "Zammad ITSM/ticketing + knowledge base — the incident-management system of record. Native DEB (Rails web/worker/websocket + colocated Elasticsearch for full-text incident search + colocated Redis); nginx/API on zammad_web (8080) fronted by Traefik; state in the shared Postgres; persistent /opt/zammad holds app state + attachments. The ES index is derived/rebuildable and stays on the ephemeral rootfs (rake zammad:searchindex:rebuild).",
+      "description": "Zammad ITSM/ticketing + knowledge base \u2014 the incident-management system of record. Native DEB (Rails web/worker/websocket + colocated Elasticsearch for full-text incident search + colocated Redis); nginx/API on zammad_web (8080) fronted by Traefik; state in the shared Postgres; persistent /opt/zammad holds app state + attachments. The ES index is derived/rebuildable and stays on the ephemeral rootfs (rake zammad:searchindex:rebuild).",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "zammad"],
+      "tags": [
+        "terraform",
+        "container",
+        "zammad"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-2",
       "unprivileged": true,
-      "root_disk": { "size": 24 },
+      "root_disk": {
+        "size": 24
+      },
       "mount_points": [
-        { "volume": "local-zfs", "size": "40G", "path": "/opt/zammad" }
+        {
+          "volume": "local-zfs",
+          "size": "40G",
+          "path": "/opt/zammad"
+        }
       ]
     },
     "zammad-30": {
@@ -542,13 +912,23 @@
       "description": "Zammad ITSM/ticketing + knowledge base (HA Instance 2).",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "zammad"],
+      "tags": [
+        "terraform",
+        "container",
+        "zammad"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-3",
       "unprivileged": true,
-      "root_disk": { "size": 24 },
+      "root_disk": {
+        "size": 24
+      },
       "mount_points": [
-        { "volume": "local-zfs", "size": "40G", "path": "/opt/zammad" }
+        {
+          "volume": "local-zfs",
+          "size": "40G",
+          "path": "/opt/zammad"
+        }
       ]
     },
     "docs-static": {
@@ -556,17 +936,23 @@
       "dhcp": true,
       "vlan": "apps",
       "hostname": "docs-static",
-      "description": "Static file web host — nginx serving a read-only document root on docs_static_web (80), fronted by Traefik and SSO-gated. Smallest useful shape: no datastore of its own and no persistent mount, because the document root is published onto the rootfs and a rebuild is simply a re-publish.",
+      "description": "Static file web host \u2014 nginx serving a read-only document root on docs_static_web (80), fronted by Traefik and SSO-gated. Smallest useful shape: no datastore of its own and no persistent mount, because the document root is published onto the rootfs and a rebuild is simply a re-publish.",
       "cpu_cores": 1,
       "memory_dedicated": 1024,
-      "tags": ["terraform", "container", "docs-static"],
+      "tags": [
+        "terraform",
+        "container",
+        "docs-static"
+      ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-3",
       "unprivileged": true,
-      "root_disk": { "size": 8 }
+      "root_disk": {
+        "size": 8
+      }
     },
     "_ingress_ha_comment": "Ingress is HA: identical Traefik LXCs on every eligible node carry the `ingress` tag; keepalived floats one VRRP virtual IP across them (ingress.tf derives ingress_vip/ingress_hosts from the `ingress` tag + network_cidrs). A VIP is synthesized only with at least two ingress nodes. The Traefik containers themselves are generated from `node_services.traefik` below (main.tf `node_service_containers`), one per commissioned + services_enabled node listed in `per_node` -- add a node by adding its vm_id/host_octet there, not by copying a container block.",
-    "_smokeping_comment": "Network-quality monitoring — Prometheus-native stack (Docker-in-LXC). The central `smokeping` collector runs smokeping_prober (:9374, ICMP/UDP latency-distribution histograms = system of record), blackbox_exporter (:9115, DNS/HTTP/TLS/TCP + SLO probes), atlas_exporter (:9400, RIPE Atlas outside-in), an irtt server (:2112/udp, real RFC-3393 jitter/MOS), and optionally the classic SmokePing RRD/CGI UI (:80). Throughput is DECOUPLED onto its own `speedtest` host so saturation never corrupts latency samples. Add a per-segment `netq-probe-*` vantage on each VLAN you care about (multi-vantage) — one example below. See docs/SMOKEPING.md for the full blueprint the ansible-proxmox-apps roles apply. These adopt the 6-digit positional VMID + DNS-first convention (docs.jacobpevans.com/infrastructure/vmid-network-tiers): observability = tier 4, so VMIDs are 41xxxx; `dhcp:true` means no vm_id-derived IP — DHCP leases the address and each guest is reached by {hostname}.{domain}. `vlan` stays at today's value during the incremental tier renumber.",
+    "_smokeping_comment": "Network-quality monitoring \u2014 Prometheus-native stack (Docker-in-LXC). The central `smokeping` collector runs smokeping_prober (:9374, ICMP/UDP latency-distribution histograms = system of record), blackbox_exporter (:9115, DNS/HTTP/TLS/TCP + SLO probes), atlas_exporter (:9400, RIPE Atlas outside-in), an irtt server (:2112/udp, real RFC-3393 jitter/MOS), and optionally the classic SmokePing RRD/CGI UI (:80). Throughput is DECOUPLED onto its own `speedtest` host so saturation never corrupts latency samples. Add a per-segment `netq-probe-*` vantage on each VLAN you care about (multi-vantage) \u2014 one example below. See docs/SMOKEPING.md for the full blueprint the ansible-proxmox-apps roles apply. These adopt the 6-digit positional VMID + DNS-first convention (docs.jacobpevans.com/infrastructure/vmid-network-tiers): observability = tier 4, so VMIDs are 41xxxx; `dhcp:true` means no vm_id-derived IP \u2014 DHCP leases the address and each guest is reached by {hostname}.{domain}. `vlan` stays at today's value during the incremental tier renumber.",
     "smokeping": {
       "vm_id": 410000,
       "node_name": "proxmox-1",
@@ -576,11 +962,21 @@
       "description": "Central network-quality stack: smokeping_prober + blackbox_exporter + atlas_exporter + irtt server (+ optional SmokePing UI). Scraped by Prometheus.",
       "cpu_cores": 2,
       "memory_dedicated": 1024,
-      "tags": ["terraform", "container", "monitoring", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "monitoring",
+        "docker"
+      ],
       "pool_id": "infrastructure",
-      "root_disk": { "size": 16 },
+      "root_disk": {
+        "size": 16
+      },
       "unprivileged": true,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
     },
     "speedtest": {
       "vm_id": 410010,
@@ -591,11 +987,21 @@
       "node_name": "proxmox-2",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "monitoring", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "monitoring",
+        "docker"
+      ],
       "pool_id": "infrastructure",
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "unprivileged": true,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
     },
     "netq-probe-media": {
       "vm_id": 410020,
@@ -603,14 +1009,24 @@
       "dhcp": true,
       "vlan": "media_svc",
       "hostname": "netq-probe-media",
-      "description": "Per-segment vantage prober (smokeping_prober + blackbox_exporter + irtt) measuring network quality FROM the media VLAN's perspective. Clone one per VLAN you care about — mgmt-only probing can't see each segment's real path. Add a WAN-edge vantage for true ISP-link quality.",
+      "description": "Per-segment vantage prober (smokeping_prober + blackbox_exporter + irtt) measuring network quality FROM the media VLAN's perspective. Clone one per VLAN you care about \u2014 mgmt-only probing can't see each segment's real path. Add a WAN-edge vantage for true ISP-link quality.",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "monitoring", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "monitoring",
+        "docker"
+      ],
       "pool_id": "infrastructure",
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "unprivileged": true,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
     },
     "_netmon_comment": "Per-uplink network-diagnosis probers (Docker-in-LXC on mgmt VLAN, tag netmon). Each runs one Telegraf agent: native ping/dns_query/http_response probes, inputs.snmp to a DOCSIS modem, and inputs.prometheus scraping a satellite gRPC exporter plus the speedtest-exporter; results push to Cribl Edge (HEC) then the Splunk netmon index. A prober measures its assigned uplink only once tofu-unifi applies a source-IP policy route per prober. See docs/NETWORK_DIAGNOSIS.md. vm_ids 197/198 are illustrative; pick free mgmt /24 hosts.",
     "netmon-cable": {
@@ -621,11 +1037,22 @@
       "description": "Per-WAN diagnostics for the cable (DOCSIS) uplink: Telegraf active probes + modem SNMP into the Splunk netmon index",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "monitoring", "netmon", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "monitoring",
+        "netmon",
+        "docker"
+      ],
       "pool_id": "infrastructure",
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "unprivileged": true,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
     },
     "netmon-sat": {
       "vm_id": 198,
@@ -635,11 +1062,22 @@
       "description": "Per-uplink diagnostics for the satellite uplink: Telegraf active probes + satellite gRPC exporter into the Splunk netmon index",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "monitoring", "netmon", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "monitoring",
+        "netmon",
+        "docker"
+      ],
       "pool_id": "infrastructure",
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "unprivileged": true,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
     },
     "_unifi_metrics_comment": "UniFi controller telemetry collector (Docker-in-LXC, observability tier 4). Runs unpoller (polls the UniFi controller API, exposes Prometheus) + a Telegraf inputs.prometheus scrape that ships Splunk-HEC to Cribl Edge then the Splunk unifi_metrics index. Captures device cpu/mem/temp/uptime, per-port bytes/errors/drops/PoE/STP, per-client signal/rate/satisfaction, and WAN quality. Controller creds via UNIFI_* env. See ansible-proxmox-apps roles/unifi_metrics. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. DNS-first (dhcp:true, pool lease); features carry only nesting because the API token cannot set keyctl/fuse on unprivileged containers (root@pam adds those via ansible-proxmox, same as the media guests).",
     "unifi-metrics": {
@@ -651,13 +1089,23 @@
       "description": "UniFi controller telemetry: unpoller + Telegraf into the Splunk unifi_metrics index",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "monitoring", "unifi_metrics", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "monitoring",
+        "unifi_metrics",
+        "docker"
+      ],
       "pool_id": "infrastructure",
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "unprivileged": true,
-      "features": { "nesting": true }
+      "features": {
+        "nesting": true
+      }
     },
-    "_llm_fabric_comment": "Local LLM fabric (AI tier 5, ai VLAN). llm-fast is a PRIVILEGED LXC with GPU passthrough (/dev/kfd + a /dev/dri render node) running the fast/small-model server (llama-swap, OpenAI-compatible on llm_fast_api). llm-router-* front the fabric with a LiteLLM proxy (llm_router_api) that routes to llm-fast plus the larger off-box model endpoints. open-webui is the chat UI (open_webui_web). VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); values here are illustrative. GPU passthrough requires a privileged container (unprivileged:false), so the API token cannot create it — root@pam does (ansible-proxmox / hands-on), the same constraint as the media guests' keyctl/fuse. Tag llm-fast opens llm_fast_api from internal; tag llm-router opens llm_router_api. Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
+    "_llm_fabric_comment": "Local LLM fabric (AI tier 5, ai VLAN). llm-fast is a PRIVILEGED LXC with GPU passthrough (/dev/kfd + a /dev/dri render node) running the fast/small-model server (llama-swap, OpenAI-compatible on llm_fast_api). llm-router-* front the fabric with a LiteLLM proxy (llm_router_api) that routes to llm-fast plus the larger off-box model endpoints. open-webui is the chat UI (open_webui_web). VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); values here are illustrative. GPU passthrough requires a privileged container (unprivileged:false), so the API token cannot create it \u2014 root@pam does (ansible-proxmox / hands-on), the same constraint as the media guests' keyctl/fuse. Tag llm-fast opens llm_fast_api from internal; tag llm-router opens llm_router_api. Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
     "llm-fast": {
       "vm_id": 503000,
       "node_name": "proxmox-1",
@@ -667,14 +1115,31 @@
       "description": "GPU fast/small-model server (llama-swap, OpenAI-compatible on llm_fast_api). Privileged LXC with AMD ROCm passthrough.",
       "cpu_cores": 4,
       "memory_dedicated": 16384,
-      "tags": ["terraform", "container", "ai", "llm-fast"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-fast"
+      ],
       "pool_id": "ai",
       "unprivileged": false,
-      "root_disk": { "size": 24 },
-      "mount_points": [{ "volume": "local-zfs", "size": "120G", "path": "/var/lib/llm" }],
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "120G",
+          "path": "/var/lib/llm"
+        }
+      ],
       "device_passthrough": [
-        { "path": "/dev/kfd" },
-        { "path": "/dev/dri/renderD128" }
+        {
+          "path": "/dev/kfd"
+        },
+        {
+          "path": "/dev/dri/renderD128"
+        }
       ]
     },
     "open-webui": {
@@ -686,11 +1151,21 @@
       "description": "Open WebUI chat frontend for the LLM fabric (open_webui_web; Docker-in-LXC)",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
-      "tags": ["terraform", "container", "ai", "open-webui", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "open-webui",
+        "docker"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 16 },
-      "features": { "nesting": true }
+      "root_disk": {
+        "size": 16
+      },
+      "features": {
+        "nesting": true
+      }
     },
     "llm-router-1": {
       "vm_id": 512000,
@@ -698,16 +1173,26 @@
       "dhcp": true,
       "vlan": "ai",
       "hostname": "llm-router-1",
-      "description": "LiteLLM proxy fronting the fabric (llm_router_api) — routes to llm-fast + off-box model endpoints (Docker-in-LXC)",
+      "description": "LiteLLM proxy fronting the fabric (llm_router_api) \u2014 routes to llm-fast + off-box model endpoints (Docker-in-LXC)",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
-      "tags": ["terraform", "container", "ai", "llm-router", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-router",
+        "docker"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 16 },
-      "features": { "nesting": true }
+      "root_disk": {
+        "size": 16
+      },
+      "features": {
+        "nesting": true
+      }
     },
-    "_ai_orchestration_comment": "AI orchestration tier (AI/ML tier 5). n8n/Dify/LangFlow are Docker-in-LXC visual builders; LangGraph is a Docker-in-LXC zero-cloud `langgraph dev` (in-memory) server + self-hosted Agent Chat UI; agent-exec is a plain Python LXC running CrewAI + LangChain code with OpenLLMetry. VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); the values here are illustrative. They sit on the 'ai' VLAN (tier 5) and 'siem' VLAN (tier 4) — the committed end-state of the vlan_ids map — addressed DNS-first (dhcp, pool lease). Each tool's model provider + vector store is configured per its own install standard; Dify keeps its bundled vector store rather than the shared qdrant. Docker guests carry only nesting (the API token cannot set keyctl/fuse on unprivileged LXC; ansible-proxmox adds those via root@pam, same as the media guests). Firewall: ai-orch-svc (UI ports) + native OTLP egress to Cribl Edge; Langfuse adds langfuse-svc (3000). Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
+    "_ai_orchestration_comment": "AI orchestration tier (AI/ML tier 5). n8n/Dify/LangFlow are Docker-in-LXC visual builders; LangGraph is a Docker-in-LXC zero-cloud `langgraph dev` (in-memory) server + self-hosted Agent Chat UI; agent-exec is a plain Python LXC running CrewAI + LangChain code with OpenLLMetry. VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); the values here are illustrative. They sit on the 'ai' VLAN (tier 5) and 'siem' VLAN (tier 4) \u2014 the committed end-state of the vlan_ids map \u2014 addressed DNS-first (dhcp, pool lease). Each tool's model provider + vector store is configured per its own install standard; Dify keeps its bundled vector store rather than the shared qdrant. Docker guests carry only nesting (the API token cannot set keyctl/fuse on unprivileged LXC; ansible-proxmox adds those via root@pam, same as the media guests). Firewall: ai-orch-svc (UI ports) + native OTLP egress to Cribl Edge; Langfuse adds langfuse-svc (3000). Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
     "n8n": {
       "vm_id": 505030,
       "node_name": "proxmox-1",
@@ -717,12 +1202,29 @@
       "description": "n8n workflow automation, Community Edition (Docker-in-LXC)",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
-      "tags": ["terraform", "container", "ai", "ai-orchestration", "n8n", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-orchestration",
+        "n8n",
+        "docker"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 16 },
-      "mount_points": [{ "volume": "local-zfs", "size": "30G", "path": "/opt/n8n" }],
-      "features": { "nesting": true }
+      "root_disk": {
+        "size": 16
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "30G",
+          "path": "/opt/n8n"
+        }
+      ],
+      "features": {
+        "nesting": true
+      }
     },
     "dify": {
       "vm_id": 505010,
@@ -733,12 +1235,29 @@
       "description": "Dify LLMOps platform - RAG, prompts, evals, agents (own vector store; Docker-in-LXC)",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "ai", "ai-orchestration", "dify", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-orchestration",
+        "dify",
+        "docker"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 },
-      "mount_points": [{ "volume": "local-zfs", "size": "60G", "path": "/opt/dify" }],
-      "features": { "nesting": true }
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "60G",
+          "path": "/opt/dify"
+        }
+      ],
+      "features": {
+        "nesting": true
+      }
     },
     "langflow": {
       "vm_id": 505020,
@@ -749,12 +1268,29 @@
       "description": "LangFlow visual LangChain prototyping -> Python export (Docker-in-LXC)",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
-      "tags": ["terraform", "container", "ai", "ai-orchestration", "langflow", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-orchestration",
+        "langflow",
+        "docker"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 16 },
-      "mount_points": [{ "volume": "local-zfs", "size": "20G", "path": "/opt/langflow" }],
-      "features": { "nesting": true }
+      "root_disk": {
+        "size": 16
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "20G",
+          "path": "/opt/langflow"
+        }
+      ],
+      "features": {
+        "nesting": true
+      }
     },
     "langgraph": {
       "vm_id": 505040,
@@ -765,12 +1301,29 @@
       "description": "LangGraph server (zero-cloud `langgraph dev`, in-memory) + self-hosted Agent Chat UI (Docker-in-LXC)",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "ai", "ai-orchestration", "langgraph", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-orchestration",
+        "langgraph",
+        "docker"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 },
-      "mount_points": [{ "volume": "local-zfs", "size": "30G", "path": "/opt/langgraph" }],
-      "features": { "nesting": true }
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "30G",
+          "path": "/opt/langgraph"
+        }
+      ],
+      "features": {
+        "nesting": true
+      }
     },
     "docling-serve": {
       "vm_id": 505050,
@@ -781,11 +1334,22 @@
       "description": "docling-serve document extraction/OCR for Open WebUI - CPU-bound: layout + TableFormer + local OCR run as CPU inference per page, so cores are the binding constraint and it must sit on a node with cores to spare (Docker-in-LXC)",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "ai", "ai-orchestration", "docling-serve", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-orchestration",
+        "docling-serve",
+        "docker"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 },
-      "features": { "nesting": true }
+      "root_disk": {
+        "size": 24
+      },
+      "features": {
+        "nesting": true
+      }
     },
     "agent-exec": {
       "vm_id": 515000,
@@ -796,26 +1360,41 @@
       "description": "Python runtime for CrewAI + LangChain agent code with OpenLLMetry (plain LXC)",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
-      "tags": ["terraform", "container", "ai", "ai-orchestration", "agent-exec"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-orchestration",
+        "agent-exec"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 }
+      "root_disk": {
+        "size": 24
+      }
     },
-
-    "_ai_runner_profiles_comment": "Additional headless AI-runner egress profiles (siblings of the `ai-github` runner). Each is a tag that selects one firewall profile in modules/firewall: `ai-terrakube` (ai_terrakube_rules.tf) = internal-only egress for a runner that drives OpenTofu against the private Terrakube backend — DNS/NTP/OpenBao + Terrakube API/registry + RustFS S3, and NO WAN at all. `ai-full-net` (ai_full_net_rules.tf) = a coding-agent guest needing general web access — internal DNS/NTP/OpenBao only + outbound HTTPS (443) to any, still no blanket internal reach. The `ai-runner` tag is the ansible-proxmox-ai inventory group. VMIDs below are illustrative (6-digit positional convention, docs vmid-network-tiers) — reconcile vm_id against your live deployment.json before applying.",
+    "_ai_runner_profiles_comment": "Additional headless AI-runner egress profiles (siblings of the `ai-github` runner). Each is a tag that selects one firewall profile in modules/firewall: `ai-terrakube` (ai_terrakube_rules.tf) = internal-only egress for a runner that drives OpenTofu against the private Terrakube backend \u2014 DNS/NTP/OpenBao + Terrakube API/registry + RustFS S3, and NO WAN at all. `ai-full-net` (ai_full_net_rules.tf) = a coding-agent guest needing general web access \u2014 internal DNS/NTP/OpenBao only + outbound HTTPS (443) to any, still no blanket internal reach. The `ai-runner` tag is the ansible-proxmox-ai inventory group. VMIDs below are illustrative (6-digit positional convention, docs vmid-network-tiers) \u2014 reconcile vm_id against your live deployment.json before applying.",
     "ai-runner-terrakube-01": {
       "vm_id": 515020,
       "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-terrakube-01",
-      "description": "Headless OpenTofu runner — drives `tofu` against the private Terrakube backend, confined by the ai-terrakube firewall profile (internal-only egress, no WAN). Converged by the ansible-proxmox-ai ai_runner role.",
+      "description": "Headless OpenTofu runner \u2014 drives `tofu` against the private Terrakube backend, confined by the ai-terrakube firewall profile (internal-only egress, no WAN). Converged by the ansible-proxmox-ai ai_runner role.",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "ai", "ai-runner", "ai-terrakube"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-runner",
+        "ai-terrakube"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 }
+      "root_disk": {
+        "size": 24
+      }
     },
     "ai-runner-fullnet-01": {
       "vm_id": 515030,
@@ -823,15 +1402,22 @@
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-fullnet-01",
-      "description": "Headless AI coding-agent runner needing general web access — confined by the ai-full-net firewall profile (internal DNS/NTP/OpenBao + outbound HTTPS to any). Converged by the ansible-proxmox-ai ai_runner role.",
+      "description": "Headless AI coding-agent runner needing general web access \u2014 confined by the ai-full-net firewall profile (internal DNS/NTP/OpenBao + outbound HTTPS to any). Converged by the ansible-proxmox-ai ai_runner role.",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "ai", "ai-runner", "ai-full-net"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-runner",
+        "ai-full-net"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 }
+      "root_disk": {
+        "size": 24
+      }
     },
-
     "langfuse": {
       "vm_id": 405000,
       "node_name": "proxmox-3",
@@ -841,44 +1427,74 @@
       "description": "Langfuse LLM observability - trace/cost/eval backend (Docker-in-LXC)",
       "cpu_cores": 4,
       "memory_dedicated": 12288,
-      "tags": ["terraform", "container", "observability", "langfuse", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "observability",
+        "langfuse",
+        "docker"
+      ],
       "pool_id": "infrastructure",
       "unprivileged": true,
-      "root_disk": { "size": 24 },
-      "mount_points": [{ "volume": "local-zfs", "size": "80G", "path": "/opt/langfuse" }],
-      "features": { "nesting": true }
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "80G",
+          "path": "/opt/langfuse"
+        }
+      ],
+      "features": {
+        "nesting": true
+      }
     },
-
-    "_ai_runner_comment": "Headless AI execution plane (AI/ML tier 5, ai VLAN). An ai-runner is a confined guest that runs a coding agent (Claude Code / Codex) in permission-skipping mode; the LXC boundary is the ONLY safety control, so the firewall profile is load-bearing. The `ai-github` tag selects the tightest egress profile (modules/firewall/ai_runner_rules.tf): outbound to internal DNS/NTP/OpenBao only + outbound HTTPS to any (github.com + Anthropic/OpenAI are CDN-fronted, no stable dest CIDR). The `ai-runner` tag is the inventory group the ansible-proxmox-ai `ai_runner` role converges. Native installs (Node + npm CLIs) — plain LXC, no Docker/nesting. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. This example omits node_name and uses the default node (same as the sibling AI guests) — the live guest pins its node in the private deployment.json (the runner host is an idle-capacity node). Reconcile vm_id against your live deployment.json before applying. Other profiles (ai-terrakube, ai-full-net) are follow-ups: each is a new tag + rules file.",
+    "_ai_runner_comment": "Headless AI execution plane (AI/ML tier 5, ai VLAN). An ai-runner is a confined guest that runs a coding agent (Claude Code / Codex) in permission-skipping mode; the LXC boundary is the ONLY safety control, so the firewall profile is load-bearing. The `ai-github` tag selects the tightest egress profile (modules/firewall/ai_runner_rules.tf): outbound to internal DNS/NTP/OpenBao only + outbound HTTPS to any (github.com + Anthropic/OpenAI are CDN-fronted, no stable dest CIDR). The `ai-runner` tag is the inventory group the ansible-proxmox-ai `ai_runner` role converges. Native installs (Node + npm CLIs) \u2014 plain LXC, no Docker/nesting. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. This example omits node_name and uses the default node (same as the sibling AI guests) \u2014 the live guest pins its node in the private deployment.json (the runner host is an idle-capacity node). Reconcile vm_id against your live deployment.json before applying. Other profiles (ai-terrakube, ai-full-net) are follow-ups: each is a new tag + rules file.",
     "ai-runner-01": {
       "vm_id": 515010,
       "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-01",
-      "description": "Headless AI job runner — Claude Code + Codex CLIs in permission-skipping mode, confined by the ai-github firewall egress profile. Polls the Vikunja AI Jobs queue; converged by the ansible-proxmox-ai ai_runner role.",
+      "description": "Headless AI job runner \u2014 Claude Code + Codex CLIs in permission-skipping mode, confined by the ai-github firewall egress profile. Polls the Vikunja AI Jobs queue; converged by the ansible-proxmox-ai ai_runner role.",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "ai", "ai-runner", "ai-github"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-runner",
+        "ai-github"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 }
+      "root_disk": {
+        "size": 24
+      }
     },
-
-    "_ai_agent_pool_comment": "AI agent POOL (`ai-proxied` profile, modules/firewall/ai_proxied_rules.tf). N identical long-lived guests that pull work from a queue, instead of one guest provisioned per run — provisioning is amortized and no IaC change is needed to run a task. The profile is strictly tighter than ai-full-net: internal DNS/NTP/OpenBao + the Squid forward proxy + the Cribl AI log-ingest frontends, and NO 443-to-any of its own. Every outbound web request therefore transits the squid guest below, which is where the DOMAIN allowlist is enforced (the Proxmox firewall filters IP/port only, never hostname/SNI). Per-CLI variants (claude / codex / agy) are Squid ACL groups keyed off the client address, NOT separate tags — at L3/L4 they would be identical rule sets. Grow the pool by copying an entry with the next vm_id; guests are interchangeable, so pool size is a capacity knob with no rule change. Every `ai-runner`-tagged guest must carry exactly one profile tag or the plan fails (variables-containers.tf validation) — a typo would otherwise leave an agent guest with no firewall at all. VMIDs are illustrative (6-digit positional convention, docs vmid-network-tiers); reconcile against your live deployment.json before applying.",
+    "_ai_agent_pool_comment": "AI agent POOL (`ai-proxied` profile, modules/firewall/ai_proxied_rules.tf). N identical long-lived guests that pull work from a queue, instead of one guest provisioned per run \u2014 provisioning is amortized and no IaC change is needed to run a task. The profile is strictly tighter than ai-full-net: internal DNS/NTP/OpenBao + the Squid forward proxy + the Cribl AI log-ingest frontends, and NO 443-to-any of its own. Every outbound web request therefore transits the squid guest below, which is where the DOMAIN allowlist is enforced (the Proxmox firewall filters IP/port only, never hostname/SNI). Per-CLI variants (claude / codex / agy) are Squid ACL groups keyed off the client address, NOT separate tags \u2014 at L3/L4 they would be identical rule sets. Grow the pool by copying an entry with the next vm_id; guests are interchangeable, so pool size is a capacity knob with no rule change. Every `ai-runner`-tagged guest must carry exactly one profile tag or the plan fails (variables-containers.tf validation) \u2014 a typo would otherwise leave an agent guest with no firewall at all. VMIDs are illustrative (6-digit positional convention, docs vmid-network-tiers); reconcile against your live deployment.json before applying.",
     "ai-runner-pool-01": {
       "vm_id": 515040,
       "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-pool-01",
-      "description": "Pooled AI agent — pulls jobs from the queue, confined by the ai-proxied firewall profile (no direct WAN; egress only via the Squid allowlist). Converged by the ansible-proxmox-ai ai_runner role.",
+      "description": "Pooled AI agent \u2014 pulls jobs from the queue, confined by the ai-proxied firewall profile (no direct WAN; egress only via the Squid allowlist). Converged by the ansible-proxmox-ai ai_runner role.",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "ai", "ai-runner", "ai-proxied"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-runner",
+        "ai-proxied"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 }
+      "root_disk": {
+        "size": 24
+      }
     },
     "ai-runner-pool-02": {
       "vm_id": 515041,
@@ -886,13 +1502,21 @@
       "dhcp": true,
       "vlan": "ai",
       "hostname": "ai-runner-pool-02",
-      "description": "Pooled AI agent — identical to ai-runner-pool-01; pool members are interchangeable, so scaling out is a copied entry with the next vm_id.",
+      "description": "Pooled AI agent \u2014 identical to ai-runner-pool-01; pool members are interchangeable, so scaling out is a copied entry with the next vm_id.",
       "cpu_cores": 4,
       "memory_dedicated": 8192,
-      "tags": ["terraform", "container", "ai", "ai-runner", "ai-proxied"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-runner",
+        "ai-proxied"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 24 }
+      "root_disk": {
+        "size": 24
+      }
     },
     "_squid_comment": "Egress forward proxy for the agent plane (`squid` tag, modules/firewall/squid_proxy_rules.tf). The one guest in the plane that holds general 80/443 to any; the in-guest domain allowlist (one ACL group per agent profile) is what makes that narrow. Inbound is scoped to the ai VLAN only, never all of internal, so nothing else on the estate can borrow it as an open relay. This closes the Squid hardening follow-up noted in ai_runner_rules.tf / ai_full_net_rules.tf / hermes_agent_rules.tf. It is deliberately NOT tagged ai-runner: it is infrastructure, not an agent.",
     "squid": {
@@ -901,16 +1525,22 @@
       "dhcp": true,
       "vlan": "ai",
       "hostname": "squid",
-      "description": "Squid forward proxy — audited egress chokepoint for the ai-proxied agent pool; enforces the per-profile outbound domain allowlist the Proxmox firewall cannot express.",
+      "description": "Squid forward proxy \u2014 audited egress chokepoint for the ai-proxied agent pool; enforces the per-profile outbound domain allowlist the Proxmox firewall cannot express.",
       "cpu_cores": 2,
       "memory_dedicated": 2048,
-      "tags": ["terraform", "container", "ai", "squid"],
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "squid"
+      ],
       "pool_id": "ai",
       "unprivileged": true,
-      "root_disk": { "size": 16 }
+      "root_disk": {
+        "size": 16
+      }
     },
-
-    "_honeypot_comment": "DECEPTION FABRIC (see docs/HONEYPOTS.md). Three pieces: (1) honeypot-notify — the dedicated alert gateway (caronc/apprise-api). Honeypots POST one webhook; Apprise fans it to Slack + phone push (ntfy/Pushover). The `honeypot`+`notify` tags give it the apprise port inbound + OPEN egress (to reach external notifiers); Slack webhook/phone tokens come from OpenBao at runtime, never committed. (2) honeypot-tw-* — one lightweight OpenCanary tripwire PER VLAN (clone the example below for every entry in your network_cidrs map: lan_main, dns, mgmt, bmc, compute, siem, pipeline, data, ai, apps, media_svc, homeauto, nonprod). Each fakes SSH/HTTP/SMB/DB/RDP/SNMP/... and alerts instantly on any touch; the `honeypot` tag opens the decoy ports + internal-only egress (a poked sensor can reach the gateway + syslog 519 but never the internet). (3) the T-Pot VM above. VMID convention (positional, DNS-first): a tripwire adopts the TIER of the VLAN it defends (tier = VLAN/10; specials 1/5/53 use the 7-digit prefix form) · sub 9 (deception) · crit 5 · OS 0 (LXC) · instance 0 · env 0 — e.g. nonprod(90)=995000, apps(60)=695000, compute(10)=195000, mgmt(5)=0595000. Placement honors the node roles: gateway + most tripwires on proxmox-2; put 1-2 tripwires (highest-value VLANs) + the T-Pot VM on the fast node proxmox-1; warm/backup copies on the normally-off proxmox-3. Every guest here takes a pool lease, so only the VMIDs need reconciling against your live deployment.json before applying.",
+    "_honeypot_comment": "DECEPTION FABRIC (see docs/HONEYPOTS.md). Three pieces: (1) honeypot-notify \u2014 the dedicated alert gateway (caronc/apprise-api). Honeypots POST one webhook; Apprise fans it to Slack + phone push (ntfy/Pushover). The `honeypot`+`notify` tags give it the apprise port inbound + OPEN egress (to reach external notifiers); Slack webhook/phone tokens come from OpenBao at runtime, never committed. (2) honeypot-tw-* \u2014 one lightweight OpenCanary tripwire PER VLAN (clone the example below for every entry in your network_cidrs map: lan_main, dns, mgmt, bmc, compute, siem, pipeline, data, ai, apps, media_svc, homeauto, nonprod). Each fakes SSH/HTTP/SMB/DB/RDP/SNMP/... and alerts instantly on any touch; the `honeypot` tag opens the decoy ports + internal-only egress (a poked sensor can reach the gateway + syslog 519 but never the internet). (3) the T-Pot VM above. VMID convention (positional, DNS-first): a tripwire adopts the TIER of the VLAN it defends (tier = VLAN/10; specials 1/5/53 use the 7-digit prefix form) \u00b7 sub 9 (deception) \u00b7 crit 5 \u00b7 OS 0 (LXC) \u00b7 instance 0 \u00b7 env 0 \u2014 e.g. nonprod(90)=995000, apps(60)=695000, compute(10)=195000, mgmt(5)=0595000. Placement honors the node roles: gateway + most tripwires on proxmox-2; put 1-2 tripwires (highest-value VLANs) + the T-Pot VM on the fast node proxmox-1; warm/backup copies on the normally-off proxmox-3. Every guest here takes a pool lease, so only the VMIDs need reconciling against your live deployment.json before applying.",
     "honeypot-notify": {
       "vm_id": 492000,
       "dhcp": true,
@@ -920,11 +1550,22 @@
       "node_name": "proxmox-2",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "honeypot", "notify", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "honeypot",
+        "notify",
+        "docker"
+      ],
       "pool_id": "security",
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "unprivileged": true,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
     },
     "_honeypot_notify_warm_comment": "Cold spare of the alert path on the backup node (proxmox-3, normally off). start_on_boot:false so it stays dormant until DR; instance 1 -> VMID 492010.",
     "honeypot-notify-warm": {
@@ -936,12 +1577,23 @@
       "node_name": "proxmox-3",
       "cpu_cores": 1,
       "memory_dedicated": 512,
-      "tags": ["terraform", "container", "honeypot", "notify", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "honeypot",
+        "notify",
+        "docker"
+      ],
       "pool_id": "security",
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "unprivileged": true,
       "start_on_boot": false,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
     },
     "_honeypot_tripwire_comment": "Representative per-VLAN OpenCanary tripwire. CLONE ONE PER VLAN, swapping the leading tier digit to that VLAN's tier and the `vlan` field to its name. This example defends the nonprod/untrusted segment (tier 9). Place 1-2 of your highest-value tripwires (e.g. compute, siem) on proxmox-1; the rest on proxmox-2.",
     "honeypot-tw-nonprod": {
@@ -949,15 +1601,112 @@
       "dhcp": true,
       "vlan": "nonprod",
       "hostname": "honeypot-tw-nonprod",
-      "description": "OpenCanary tripwire on the nonprod VLAN — fakes SSH/HTTP/SMB/DB/RDP/SNMP/... and alerts instantly via the apprise gateway + Splunk honeypot index",
+      "description": "OpenCanary tripwire on the nonprod VLAN \u2014 fakes SSH/HTTP/SMB/DB/RDP/SNMP/... and alerts instantly via the apprise gateway + Splunk honeypot index",
       "node_name": "proxmox-2",
       "cpu_cores": 1,
       "memory_dedicated": 256,
-      "tags": ["terraform", "container", "honeypot", "docker"],
+      "tags": [
+        "terraform",
+        "container",
+        "honeypot",
+        "docker"
+      ],
       "pool_id": "security",
-      "root_disk": { "size": 8 },
+      "root_disk": {
+        "size": 8
+      },
       "unprivileged": true,
-      "features": { "nesting": true, "keyctl": true }
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
+    },
+    "_herdr_comment": "herdr \u2014 the agent multiplexer the coding agents run inside. Three guests, because the UI and the messaging bridge should not be able to take down the runtime holding live agent panes. All three are NixOS (ct_template + os_type=unmanaged), converged by nixos-rebuild --target-host from the Ansible controller; nix never runs on the guest. Only `herdr` carries state or credentials, so only `herdr` is HA-enrolled and backed up. ha_affinity_group is left unset here: with a single HA member there is nothing to keep apart, and an anti-affinity rule over one resource constrains nothing. Set it on every member in the same change that adds a second herdr runtime.",
+    "herdr": {
+      "vm_id": 515100,
+      "node_name": "proxmox-1",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "herdr",
+      "summary": "Agent multiplexer runtime",
+      "description": "herdr server plus every AI coding CLI, from nix-ai nixosModules.herdr. Binding constraint is RAM and core count: this guest runs 3-10 concurrent agent panes, each a full CLI process with its own context. Placed on the largest-memory node for that reason. /var/lib/herdr is the only path worth backing up here -- agent credentials, git worktrees and session state; the rest of the guest rebuilds from the flake in minutes.",
+      "cpu_cores": 8,
+      "memory_dedicated": 16384,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "herdr"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "ct_template": "nixos-herdr-lxc.tar.xz",
+      "os_type": "unmanaged",
+      "ha": true,
+      "root_disk": {
+        "size": 32
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "100G",
+          "path": "/var/lib/herdr",
+          "backup": true
+        }
+      ]
+    },
+    "herdr-slack": {
+      "vm_id": 515101,
+      "node_name": "proxmox-2",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "herdr-slack",
+      "summary": "herdr Slack bridge",
+      "description": "herdr-hail, the two-way Slack bridge: blocked-agent alerts out, replies and button taps back into the pane. Reaches the herdr server by forwarding its control socket over SSH, which is why the service pins that socket at /run/herdr rather than a uid-derived path. Slack Socket Mode is an outbound WebSocket, so this guest needs no ingress route and no inbound rule at all. Placed away from `herdr` so a bridge crash cannot take the runtime with it; stateless, so no HA and no backup -- it rebuilds from the flake.",
+      "cpu_cores": 1,
+      "memory_dedicated": 1024,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "herdr",
+        "herdr-slack"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "ct_template": "nixos-herdr-lxc.tar.xz",
+      "os_type": "unmanaged",
+      "root_disk": {
+        "size": 16
+      }
+    },
+    "herdr-ui": {
+      "vm_id": 515102,
+      "node_name": "proxmox-3",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "herdr-ui",
+      "summary": "herdr web and phone dashboard",
+      "description": "herdr-remote's relay and web dashboard -- live agent timelines, one-tap approvals, terminal interaction from a browser or phone. Drives the herdr server over SSH via HERDR_REMOTES. Fronted by Traefik behind the Authelia gate (the `herdr` row in ingress.tf); the upstream's optional Cloudflare tunnel is deliberately unused -- exposure goes through the estate's own ingress, not a third party. Stateless, so no HA and no backup.",
+      "cpu_cores": 2,
+      "memory_dedicated": 2048,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "herdr",
+        "herdr-ui"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "ct_template": "nixos-herdr-lxc.tar.xz",
+      "os_type": "unmanaged",
+      "root_disk": {
+        "size": 16
+      }
     }
-  }
+  },
+  "nixos_ct_template_url": "https://github.com/dryvist/nix-ai/releases/download/vX.Y.Z/nixos-herdr-lxc.tar.xz",
+  "nixos_ct_template_file_name": "nixos-herdr-lxc.tar.xz",
+  "nixos_ct_template_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
 }

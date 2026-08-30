@@ -55,7 +55,7 @@
     },
     "containers": {
       "type": "object",
-      "description": "LXC desired-state, keyed by name. At least one is required — an empty map is the empty-{} destroy footgun this schema exists to catch. `_`-prefixed keys are inline `_*comment` docs (tofu strips them) and are exempt from the entry shape.",
+      "description": "LXC desired-state, keyed by name. At least one is required \u2014 an empty map is the empty-{} destroy footgun this schema exists to catch. `_`-prefixed keys are inline `_*comment` docs (tofu strips them) and are exempt from the entry shape.",
       "minProperties": 1,
       "patternProperties": {
         "^_": {}
@@ -120,12 +120,24 @@
         "minLength": 1
       },
       "uniqueItems": true
+    },
+    "nixos_ct_template_url": {
+      "type": "string",
+      "description": "URL of the NixOS LXC template tarball built by nix-ai (nix build github:dryvist/nix-ai#herdr-lxc-template, published as a release asset). Absent or empty disables the download and, with it, any NixOS guest."
+    },
+    "nixos_ct_template_file_name": {
+      "type": "string",
+      "description": "vztmpl file name the NixOS template is stored as. Must match the value a guest's ct_template references."
+    },
+    "nixos_ct_template_sha256": {
+      "type": "string",
+      "description": "sha256 of the NixOS LXC template, so content drift is rejected at download time. 64 lowercase hex characters."
     }
   },
   "definitions": {
     "node_service_template": {
       "type": "object",
-      "description": "One per-node service template. Only the shape the generator dereferences unconditionally is required; per_node keys MUST be keys of `nodes` — JSON Schema cannot express that cross-sibling constraint, so it is enforced by the postcondition on data.aws_s3_object.deployment in main.tf.",
+      "description": "One per-node service template. Only the shape the generator dereferences unconditionally is required; per_node keys MUST be keys of `nodes` \u2014 JSON Schema cannot express that cross-sibling constraint, so it is enforced by the postcondition on data.aws_s3_object.deployment in main.tf.",
       "required": [
         "vlan",
         "per_node"
@@ -210,6 +222,20 @@
           "type": "string",
           "minLength": 1,
           "description": "Proxmox node this container is placed on. Must be a key of `nodes`."
+        },
+        "ct_template": {
+          "type": "string",
+          "minLength": 1,
+          "description": "OS template override, as a bare vztmpl filename on datastore_iso. Absent = the estate's shared Debian template. A NixOS guest sets this together with os_type=\"unmanaged\". SET-ONCE: template_file_id is in the container module's lifecycle.ignore_changes, so changing it on a live guest is a no-op."
+        },
+        "ha": {
+          "type": "boolean",
+          "description": "Enrol this guest in Proxmox HA (modules/proxmox-stack/ha.tf). Default false. Enrolling also accepts the relocation-vs-state hazard documented in imports.tf: HA moves a guest, refresh 404s it on the node recorded in state, and the failed apply freezes the published ansible_inventory. Enrol a guest whose state cannot be rebuilt from code."
+        },
+        "ha_affinity_group": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Negative-affinity group name. Guests sharing a value are kept on separate nodes by a proxmox_harule. Only meaningful with ha=true, and only takes effect with two or more members."
         }
       }
     },

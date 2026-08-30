@@ -79,3 +79,36 @@ variable "template_id" {
   }
 }
 
+
+# NixOS LXC template (see ct_templates.tf). Empty by default: the tarball is a
+# nix-ai release asset, and a committed URL would be a guess. Supplied from the
+# private desired state alongside the other media coordinates.
+variable "nixos_ct_template_url" {
+  description = "URL of the NixOS LXC template tarball built by nix-ai. Empty disables the download and, with it, any NixOS guest."
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.nixos_ct_template_url == "" || can(regex("^https?://", var.nixos_ct_template_url))
+    error_message = "nixos_ct_template_url must start with http:// or https:// -- the provider's download-url API rejects anything else."
+  }
+}
+
+variable "nixos_ct_template_file_name" {
+  description = "vztmpl file name the NixOS template is stored as. Must be the value a guest's ct_template field references."
+  type        = string
+  default     = "nixos-herdr-lxc.tar.xz"
+  validation {
+    condition     = endswith(var.nixos_ct_template_file_name, ".tar.xz") || endswith(var.nixos_ct_template_file_name, ".tar.zst") || endswith(var.nixos_ct_template_file_name, ".tar.gz")
+    error_message = "nixos_ct_template_file_name must be a tarball -- Proxmox refuses a vztmpl with any other extension."
+  }
+}
+
+variable "nixos_ct_template_sha256" {
+  description = "sha256 of the NixOS LXC template. Pinned so content drift is rejected at download time rather than producing a guest that half-boots."
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.nixos_ct_template_sha256 == "" || can(regex("^[0-9a-f]{64}$", var.nixos_ct_template_sha256))
+    error_message = "nixos_ct_template_sha256 must be 64 lowercase hex characters."
+  }
+}

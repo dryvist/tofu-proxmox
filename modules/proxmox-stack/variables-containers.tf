@@ -120,6 +120,35 @@ variable "containers" {
     os_type       = optional(string, "debian")
     start_on_boot = optional(bool, true)
 
+    # OS template override, as a bare vztmpl filename on var.datastore_iso.
+    # Null (the default) means the estate's shared Debian template, which is
+    # what every guest used before NixOS guests existed — the template was
+    # composed once in main.tf and there was no per-guest selector at all.
+    #
+    # A NixOS guest sets this together with os_type = "unmanaged": Proxmox has
+    # no `nixos` ostype, and letting it apply Debian's ostype hooks to a NixOS
+    # rootfs rewrites /etc files the guest owns declaratively.
+    #
+    # NOTE: operating_system[0].template_file_id is in the container module's
+    # lifecycle.ignore_changes, so this is effectively SET-ONCE per guest.
+    # Changing it on a live container is a no-op; recreate the guest instead.
+    ct_template = optional(string)
+
+    # Proxmox HA. See modules/proxmox-stack/ha.tf.
+    #
+    # Default false, so nothing existing changes. Enrolling a guest also
+    # enrolls it in the relocation hazard documented in imports.tf: HA moves a
+    # guest between nodes, refresh then 404s it against the node recorded in
+    # state, and the resulting create fails on the cluster-unique VMID —
+    # freezing the published inventory every consumer repo reads. Worth it for
+    # a guest whose state cannot be rebuilt; not worth it for one that can.
+    ha = optional(bool, false)
+
+    # Negative-affinity group name. Guests sharing a value are kept on
+    # different nodes by a proxmox_virtual_environment_harule. Only meaningful
+    # alongside ha = true.
+    ha_affinity_group = optional(string)
+
     # LXC features (set nesting=true for Docker-in-LXC on unprivileged containers;
     # privileged containers run Docker without features — requires root@pam to set any flag)
     features = optional(object({

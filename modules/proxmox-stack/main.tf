@@ -108,7 +108,10 @@ module "containers" {
   containers = {
     for k, v in var.containers : k => merge(v, {
       node_name        = v.node_name
-      template_file_id = "${var.datastore_iso}:vztmpl/${var.proxmox_ct_template_debian}"
+      # Per-guest override, falling back to the estate's shared Debian template.
+      # coalesce() would reject a null second argument, so use the try/default
+      # form: v.ct_template is an optional attribute with no default.
+      template_file_id = "${var.datastore_iso}:vztmpl/${v.ct_template != null ? v.ct_template : var.proxmox_ct_template_debian}"
       # DRY: IP/gateway derived from the LXC's VLAN CIDR + vm_id (see locals.tf).
       # local.container_ipv4 already honors a per-container static ipv4_address override.
       ip_config = {
