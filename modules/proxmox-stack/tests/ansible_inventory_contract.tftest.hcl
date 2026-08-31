@@ -1779,3 +1779,78 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
   }
 }
 
+
+# --- HA relocation target + primary node (declared-attribute contract) -------
+#
+# Both of these replace values a consumer used to carry itself: the relocation
+# partner was a node pair configured in the consuming repo, and "which node is
+# primary" came from an environment variable naming nodes by positional
+# ordinal. Neither failed loudly when it drifted — the pair simply excluded
+# guests it could not express, and the ordinal resolved to a placeholder.
+#
+# These attributes are therefore only useful if they actually reach the
+# published inventory, and a type that does not NAME an attribute strips it
+# silently. That is exactly what these runs catch: without the reads in
+# inventory_containers.tf / inventory_assembly.tf they return null, not an
+# error, and the consumer is back to guessing.
+
+run "ansible_inventory_publishes_ha_replication_target" {
+  command = plan
+
+  variables {
+    nodes = {
+      proxmox-1 = { role = "node-1" }
+      proxmox-2 = { role = "node-2", cluster_roles = ["storage"] }
+    }
+    containers = {
+      "replicated-ct" = {
+        vm_id                 = 220
+        node_name             = "proxmox-1"
+        hostname              = "replicated-ct"
+        vlan                  = "media_svc"
+        ha_replication_target = "proxmox-2"
+      }
+      "standalone-ct" = {
+        vm_id     = 221
+        node_name = "proxmox-1"
+        hostname  = "standalone-ct"
+        vlan      = "media_svc"
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["replicated-ct"].ha_replication_target == "proxmox-2"
+    error_message = "containers must publish ha_replication_target — it is the only node an HA manager may relocate the guest to, and an unpublished value sends the consumer back to a hardcoded node pair"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["standalone-ct"].ha_replication_target == null
+    error_message = "a guest with no replica must publish ha_replication_target as null, so a consumer can tell 'not replicated' from 'replicated somewhere I cannot see' — never a default node"
+  }
+}
+
+run "ansible_inventory_publishes_primary_node" {
+  command = plan
+
+  variables {
+    proxmox_node = "proxmox-1"
+    nodes = {
+      proxmox-1 = { role = "node-1" }
+      proxmox-2 = { role = "node-2", cluster_roles = ["storage"] }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.proxmox_node == "proxmox-1"
+    error_message = "ansible_inventory must publish proxmox_node so consumers resolve the primary node from the desired state instead of an environment variable"
+  }
+
+  assert {
+    condition = one([
+      for node_key, node in output.ansible_inventory.nodes : node_key
+      if contains(node.cluster_roles, "storage")
+    ]) == "proxmox-2"
+    error_message = "nodes must publish cluster_roles so a consumer can resolve 'the node that serves bulk storage' by role rather than by name"
+  }
+}

@@ -30,6 +30,12 @@ locals {
       # is READ from the provider, never assigned, so no live guest is touched.
       mac  = v.mac_address
       node = v.node_name
+      # The node holding this guest's replica, published so the HA layer can
+      # derive its relocation target from the desired state instead of carrying
+      # a node name of its own. A PLAIN read, not try(): reading it here is what
+      # keeps the attribute DECLARED, and an undeclared attribute is silently
+      # stripped from the desired state rather than erroring.
+      ha_replication_target = var.containers[k].ha_replication_target
       # Connection settings for proxmox_pct_remote (community.proxmox)
       ansible_connection = "community.proxmox.proxmox_pct_remote"
       ansible_pct_vmid   = v.id

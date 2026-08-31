@@ -31,7 +31,7 @@
   "nodes": {
     "proxmox-1": { "role": "node-1", "hardware": "amd-desktop" },
     "proxmox-2": { "role": "node-2", "hardware": "dell-r410", "services_enabled": false },
-    "proxmox-3": { "role": "node-3", "hardware": "dell-r710" },
+    "proxmox-3": { "role": "node-3", "hardware": "dell-r710", "cluster_roles": ["storage"] },
     "proxmox-4": { "role": "node-4", "hardware": "dell-r710" }
   },
 
@@ -511,6 +511,7 @@
       "tags": ["terraform", "container", "authelia"],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
+      "ha_replication_target": "proxmox-3",
       "unprivileged": true,
       "root_disk": { "size": 8 },
       "mount_points": [
