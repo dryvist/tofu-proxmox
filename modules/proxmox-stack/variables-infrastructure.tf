@@ -102,6 +102,22 @@ variable "nodes" {
     # does not name, so an undeclared key would vanish between the deployment
     # object and ansible_inventory with no error.
     nautobot_device_name = optional(string)
+
+    # Cluster ROLES this node plays, as opposed to `role` above, which is a
+    # per-node label. Consumers that need "the node that does X" resolve it
+    # here instead of carrying a node name of their own.
+    #
+    # This replaces a set of environment variables that named each node by a
+    # positional ordinal. That indirection had two failure modes and hit both:
+    # a value that drifted resolved to a placeholder and the consuming task
+    # silently no-opped, and the ordinals outlived the naming scheme they were
+    # derived from. Placement belongs in the desired state, once.
+    #
+    # `primary` is NOT set here — it is already `proxmox_node` at the top level
+    # of the deployment object, and a second declaration of the same fact is a
+    # drift source. Known values: "storage" (serves the bulk datasets other
+    # nodes pull from).
+    cluster_roles = optional(list(string), [])
   }))
   default = {}
 }
