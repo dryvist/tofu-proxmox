@@ -101,6 +101,12 @@ locals {
         gateway = local.vm_lan_gateway[k]
         tags    = v.tags
         pool_id = v.pool_id
+        # The node holding this guest's replica, published so the HA layer can
+        # derive its relocation target from the desired state instead of carrying
+        # a node name of its own. A PLAIN read, not try(): reading it here is what
+        # keeps the attribute DECLARED, and an undeclared attribute is silently
+        # stripped from the desired state rather than erroring.
+        ha_replication_target = var.vms[k].ha_replication_target
       }
     }
     # Docker VMs - filtered subset of VMs with "docker" tag
@@ -122,6 +128,12 @@ locals {
         disk_gb   = var.vms[k].boot_disk.size
         datastore = var.vms[k].boot_disk.datastore_id
         disks     = v.disks
+        # The node holding this guest's replica, published so the HA layer can
+        # derive its relocation target from the desired state instead of carrying
+        # a node name of its own. A PLAIN read, not try(): reading it here is what
+        # keeps the attribute DECLARED, and an undeclared attribute is silently
+        # stripped from the desired state rather than erroring.
+        ha_replication_target = var.vms[k].ha_replication_target
       } if contains(try(v.tags, []), "docker")
     }
     # Splunk VM - dedicated Docker host with SSH connection
@@ -176,6 +188,14 @@ locals {
     # Cluster node inventory (non-secret identity) - ansible-proxmox targets hosts and
     # skips nodes where commissioned = false.
     nodes = var.nodes
+
+    # The cluster's primary node, by name. Published because consumers need
+    # "which node is primary" and previously answered it from an environment
+    # variable naming the node by a positional ordinal — an indirection that
+    # resolved to a placeholder when it drifted, silently. This is the same
+    # value the rest of this module already treats as authoritative, so there
+    # is one declaration of the fact, not two.
+    proxmox_node = var.proxmox_node
     # Per-node ZFS storage to provision (pools/datasets/quotas) - ansible-proxmox creates
     # and registers these; Terraform only references the datastore by id on disks.
     node_storage = var.node_storage
