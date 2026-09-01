@@ -136,6 +136,21 @@ variable "containers" {
     # proxmox_harule. Only meaningful with ha = true. See ha.tf.
     ha_affinity_group = optional(string)
 
+    # The node holding this guest's storage-replication (pvesr) copy, and so the
+    # ONLY node a cluster HA manager may relocate it to on node loss. Unset
+    # means the guest has no replica and must be restarted in place.
+    #
+    # Declared per guest rather than as a global node pair: a pair is a property
+    # of a guest's storage, not of the cluster, and the single global pair this
+    # replaces could not express a guest whose replica lived anywhere else — so
+    # such guests were simply left out of HA, which is how a singleton with no
+    # relocation target went unrecovered through a node failure.
+    #
+    # Consumers must treat a missing value as "not replicated", never as a
+    # default node: relocating a guest onto a node with no copy of its data
+    # fails the start and latches the service in an error state.
+    ha_replication_target = optional(string)
+
     # LXC features (set nesting=true for Docker-in-LXC on unprivileged containers;
     # privileged containers run Docker without features — requires root@pam to set any flag)
     features = optional(object({

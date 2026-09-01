@@ -27,6 +27,12 @@ variable "vms" {
     # disks are disposable, and an accidental migration of a large VM is not.
     migrate = optional(bool, false)
 
+    # The node holding this VM's storage-replication (pvesr) copy, and so the
+    # only node a cluster HA manager may relocate it to on node loss. Unset
+    # means no replica exists and the guest is restart-in-place only. Same
+    # contract as the containers variable — see the extended note there.
+    ha_replication_target = optional(string)
+
     # DHCP/DNS-first addressing (optional), mirroring containers. dhcp = true
     # means no vm_id-derived IP — the lease provides the address and the guest is
     # reached by {name}.{domain}; this is what lets a VM carry a 6-7-digit

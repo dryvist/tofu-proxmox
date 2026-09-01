@@ -27,23 +27,10 @@
   },
   "_nodes_comment": "Proxmox cluster nodes (non-secret identity). proxmox_node above is the primary/default placement. commissioned=false means declared but not yet installed. services_enabled=false gates per-node (\"DaemonSet-style\") service placement only -- an already-commissioned node mid a storage rebuild keeps commissioned=true but sets services_enabled=false until the rebuild finishes; everything else it already runs is unaffected.",
   "nodes": {
-    "proxmox-1": {
-      "role": "node-1",
-      "hardware": "amd-desktop"
-    },
-    "proxmox-2": {
-      "role": "node-2",
-      "hardware": "dell-r410",
-      "services_enabled": false
-    },
-    "proxmox-3": {
-      "role": "node-3",
-      "hardware": "dell-r710"
-    },
-    "proxmox-4": {
-      "role": "node-4",
-      "hardware": "dell-r710"
-    }
+    "proxmox-1": { "role": "node-1", "hardware": "amd-desktop" },
+    "proxmox-2": { "role": "node-2", "hardware": "dell-r410", "services_enabled": false },
+    "proxmox-3": { "role": "node-3", "hardware": "dell-r710", "cluster_roles": ["storage"] },
+    "proxmox-4": { "role": "node-4", "hardware": "dell-r710" }
   },
   "proxmox_iso_debian": "debian-13.2.0-amd64-netinst.iso",
   "proxmox_ct_template_debian": "debian-13-standard_13.1-2_amd64.tar.zst",
@@ -865,6 +852,7 @@
       ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
+      "ha_replication_target": "proxmox-3",
       "unprivileged": true,
       "root_disk": {
         "size": 8

@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.9.0](https://github.com/dryvist/tofu-proxmox/compare/v3.8.0...v3.9.0) (2026-08-31)
+
+
+### Features
+
+* **inventory:** declare HA replication partner and cluster roles ([ac19458](https://github.com/dryvist/tofu-proxmox/commit/ac19458a60dcf469c9003fd8d721da4239ec84c6))
+* **inventory:** declare per-guest replication targets and node cluster roles ([ed46515](https://github.com/dryvist/tofu-proxmox/commit/ed4651510a2b32ecffd789398837468ea9b7a466))
+
+## [3.8.0](https://github.com/dryvist/tofu-proxmox/compare/v3.7.1...v3.8.0) (2026-08-30)
+
+
+### Features
+
+* **observability:** declare the Grafana/VictoriaMetrics dashboard guest ([#1037](https://github.com/dryvist/tofu-proxmox/issues/1037)) ([ff9cfc9](https://github.com/dryvist/tofu-proxmox/commit/ff9cfc972958f885300cca3c20ba04f8f021b693))
+
 ## [3.7.1](https://github.com/dryvist/tofu-proxmox/compare/v3.7.0...v3.7.1) (2026-08-28)
 
 
