@@ -34,6 +34,7 @@ locals {
     langgraph_docker     = 10346 # LangGraph API + chat UI           -> index=langgraph (new)
     qdrant_docker        = 10347 # Qdrant vector database            -> index=qdrant (new)
     docling_serve_docker = 10348 # docling-serve OCR/extraction      -> index=docling (new)
+    semaphore_docker     = 10349 # Semaphore Ansible run UI          -> index=semaphore (new)
   }
 
   # Splunk landing zone per source, keyed to the SAME names as ai_log_ports so
@@ -64,6 +65,7 @@ locals {
     langgraph_docker     = { index = "langgraph", sourcetype = "langgraph:app" }
     qdrant_docker        = { index = "qdrant", sourcetype = "qdrant:app" }
     docling_serve_docker = { index = "docling", sourcetype = "docling:app" }
+    semaphore_docker     = { index = "semaphore", sourcetype = "semaphore:run" }
   }
 
   ai_log_routing = {
