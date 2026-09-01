@@ -6,13 +6,13 @@
 # these.
 
 variable "herdr_container_ids" {
-  description = "Map of herdr runtime LXC names to IDs (tag-driven: herdr, excluding the herdr-slack/herdr-ui client tags). Runs the agent panes, so it needs the broad outbound HTTPS the CLIs require."
+  description = "Map of herdr runtime LXC names to IDs (tag-driven: herdr, excluding the herdr-ui client tag). Runs the agent panes and the Slack bridge plugin, so it needs the broad outbound HTTPS the CLIs require plus Slack's outbound WebSocket."
   type        = map(number)
   default     = {}
 }
 
 variable "herdr_client_container_ids" {
-  description = "Map of herdr client LXC names to IDs (tag-driven: herdr-slack, herdr-ui). Reach the runtime over SSH; the Slack bridge additionally dials Slack outbound. Deliberately without the runtime's egress."
+  description = "Map of herdr client LXC names to IDs (tag-driven: herdr-ui). Reaches the runtime over SSH, deliberately without the runtime's egress."
   type        = map(number)
   default     = {}
 }

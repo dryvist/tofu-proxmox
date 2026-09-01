@@ -1621,7 +1621,7 @@
         "keyctl": true
       }
     },
-    "_herdr_comment": "herdr \u2014 the agent multiplexer the coding agents run inside. Three guests, because the UI and the messaging bridge should not be able to take down the runtime holding live agent panes. All three are NixOS (ct_template + os_type=unmanaged), converged by nixos-rebuild --target-host from the Ansible controller; nix never runs on the guest. Only `herdr` carries state or credentials, so only `herdr` is HA-enrolled and backed up. ha_affinity_group is left unset here: with a single HA member there is nothing to keep apart, and an anti-affinity rule over one resource constrains nothing. Set it on every member in the same change that adds a second herdr runtime.",
+    "_herdr_comment": "herdr \u2014 the agent multiplexer the coding agents run inside. Two guests, because the dashboard should not be able to take down the runtime holding live agent panes. The Slack bridge gets no guest of its own: it is a herdr plugin that reads the runtime's local control socket, so it runs as a companion unit there \u2014 giving it a guest is what made a socket forward look necessary. Both are NixOS (ct_template + os_type=unmanaged), converged by nixos-rebuild --target-host from the Ansible controller; nix never runs on the guest. Only `herdr` carries state or credentials, so only `herdr` is HA-enrolled and backed up. ha_affinity_group is left unset here: with a single HA member there is nothing to keep apart, and an anti-affinity rule over one resource constrains nothing. Set it on every member in the same change that adds a second herdr runtime.",
     "herdr": {
       "vm_id": 515100,
       "node_name": "proxmox-1",
@@ -1629,7 +1629,7 @@
       "vlan": "ai",
       "hostname": "herdr",
       "summary": "Agent multiplexer runtime",
-      "description": "herdr server plus every AI coding CLI, from nix-ai nixosModules.herdr. Binding constraint is RAM and core count: this guest runs 3-10 concurrent agent panes, each a full CLI process with its own context. Placed on the largest-memory node for that reason. /var/lib/herdr is the only path worth backing up here -- agent credentials, git worktrees and session state; the rest of the guest rebuilds from the flake in minutes.",
+      "description": "herdr server, every AI coding CLI, and the herdr-hail Slack bridge, from nix-ai nixosModules.herdr. Binding constraint is RAM and core count: this guest runs 3-10 concurrent agent panes, each a full CLI process with its own context. Placed on the largest-memory node for that reason. /var/lib/herdr is the only path worth backing up here -- agent credentials, git worktrees and session state; the rest of the guest rebuilds from the flake in minutes.",
       "cpu_cores": 8,
       "memory_dedicated": 16384,
       "tags": [
@@ -1654,31 +1654,6 @@
           "backup": true
         }
       ]
-    },
-    "herdr-slack": {
-      "vm_id": 515101,
-      "node_name": "proxmox-2",
-      "dhcp": true,
-      "vlan": "ai",
-      "hostname": "herdr-slack",
-      "summary": "herdr Slack bridge",
-      "description": "herdr-hail, the two-way Slack bridge: blocked-agent alerts out, replies and button taps back into the pane. Reaches the herdr server by forwarding its control socket over SSH, which is why the service pins that socket at /run/herdr rather than a uid-derived path. Slack Socket Mode is an outbound WebSocket, so this guest needs no ingress route and no inbound rule at all. Placed away from `herdr` so a bridge crash cannot take the runtime with it; stateless, so no HA and no backup -- it rebuilds from the flake.",
-      "cpu_cores": 1,
-      "memory_dedicated": 1024,
-      "tags": [
-        "terraform",
-        "container",
-        "ai",
-        "herdr",
-        "herdr-slack"
-      ],
-      "pool_id": "ai",
-      "unprivileged": true,
-      "ct_template": "nixos-herdr-lxc.tar.xz",
-      "os_type": "unmanaged",
-      "root_disk": {
-        "size": 16
-      }
     },
     "herdr-ui": {
       "vm_id": 515102,

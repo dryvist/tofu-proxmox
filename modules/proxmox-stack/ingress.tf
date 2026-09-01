@@ -78,8 +78,8 @@ locals {
     # why the upstream's optional Cloudflare tunnel is deliberately NOT used.
     #
     # The `herdr` server guest has no route: it is reached over SSH
-    # (`herdr --remote herdr`). The `herdr-slack` bridge has none either — Slack
-    # Socket Mode is an outbound WebSocket, so nothing needs to reach in.
+    # (`herdr --remote herdr`). Its Slack bridge needs none either — Slack
+    # Socket Mode is an outbound WebSocket, so nothing has to reach in.
     herdr = { backend = "herdr-ui", port = local.pipeline_constants.service_ports.herdr_relay_ws }
 
     "hermes-ui"       = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_workspace }

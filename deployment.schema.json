@@ -55,7 +55,7 @@
     },
     "containers": {
       "type": "object",
-      "description": "LXC desired-state, keyed by name. At least one is required \u2014 an empty map is the empty-{} destroy footgun this schema exists to catch. `_`-prefixed keys are inline `_*comment` docs (tofu strips them) and are exempt from the entry shape.",
+      "description": "LXC desired-state, keyed by name. At least one is required — an empty map is the empty-{} destroy footgun this schema exists to catch. `_`-prefixed keys are inline `_*comment` docs (tofu strips them) and are exempt from the entry shape.",
       "minProperties": 1,
       "patternProperties": {
         "^_": {}
@@ -137,7 +137,7 @@
   "definitions": {
     "node_service_template": {
       "type": "object",
-      "description": "One per-node service template. Only the shape the generator dereferences unconditionally is required; per_node keys MUST be keys of `nodes` \u2014 JSON Schema cannot express that cross-sibling constraint, so it is enforced by the postcondition on data.aws_s3_object.deployment in main.tf.",
+      "description": "One per-node service template. Only the shape the generator dereferences unconditionally is required; per_node keys MUST be keys of `nodes` — JSON Schema cannot express that cross-sibling constraint, so it is enforced by the postcondition on data.aws_s3_object.deployment in main.tf.",
       "required": [
         "vlan",
         "per_node"
