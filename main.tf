@@ -152,20 +152,24 @@ module "homelab" {
   openbao_accept_quorum_loss_on_node_failure = var.openbao_accept_quorum_loss_on_node_failure
   pools                                      = local.deployment.pools
   proxmox_ct_template_debian                 = try(local.deployment.proxmox_ct_template_debian, "debian-13-standard_13.1-2_amd64.tar.zst")
+  nixos_ct_template_file_name                = try(local.deployment.nixos_ct_template_file_name, "nixos-herdr-lxc.tar.xz")
+  nixos_ct_template_sha256                   = try(local.deployment.nixos_ct_template_sha256, "")
+  nixos_ct_template_url                      = try(local.deployment.nixos_ct_template_url, "")
   proxmox_iso_debian                         = try(local.deployment.proxmox_iso_debian, "debian-13.2.0-amd64-netinst.iso")
   proxmox_node                               = local.deployment.proxmox_node
   proxmox_ssh_host                           = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_VE_HOSTNAME
   proxmox_ssh_private_key                    = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_PRIVATE_KEY
   proxmox_ssh_username                       = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_USERNAME
-  rack_servers                               = try(local.deployment.rack_servers, {})
-  splunk_boot_disk_size                      = try(local.deployment.splunk_boot_disk_size, 25)
-  splunk_bulk_disk_size                      = try(local.deployment.splunk_bulk_disk_size, 2048)
-  splunk_cpu_cores                           = try(local.deployment.splunk_cpu_cores, 8)
-  splunk_data_disk_size                      = try(local.deployment.splunk_data_disk_size, 200)
-  splunk_fast_disk_size                      = try(local.deployment.splunk_fast_disk_size, 1024)
-  splunk_cpu_type                            = try(local.deployment.splunk_cpu_type, "host")
-  splunk_memory                              = try(local.deployment.splunk_memory, 12288)
-  splunk_migrate                             = try(local.deployment.splunk_migrate, false)
+
+  rack_servers          = try(local.deployment.rack_servers, {})
+  splunk_boot_disk_size = try(local.deployment.splunk_boot_disk_size, 25)
+  splunk_bulk_disk_size = try(local.deployment.splunk_bulk_disk_size, 2048)
+  splunk_cpu_cores      = try(local.deployment.splunk_cpu_cores, 8)
+  splunk_data_disk_size = try(local.deployment.splunk_data_disk_size, 200)
+  splunk_fast_disk_size = try(local.deployment.splunk_fast_disk_size, 1024)
+  splunk_cpu_type       = try(local.deployment.splunk_cpu_type, "host")
+  splunk_memory         = try(local.deployment.splunk_memory, 12288)
+  splunk_migrate        = try(local.deployment.splunk_migrate, false)
   # Fallback rationale: modules/proxmox-stack/variables-splunk.tf.
   splunk_node_name  = try(local.deployment.splunk_node_name, local.deployment.proxmox_node)
   splunk_vm_id      = try(local.deployment.splunk_vm_id, 99)

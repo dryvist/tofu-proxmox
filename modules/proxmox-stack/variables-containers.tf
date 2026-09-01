@@ -21,20 +21,19 @@ variable "containers" {
     # e.g. mgmt_native).
     vlan = string
 
-    # DNS-first addressing (see docs vmid-network-tiers). When true the guest takes
-    # its address by DHCP and is referenced by FQDN ({hostname}.{domain}) everywhere
-    # — no vm_id-derived IP is computed, so the guest may carry a 6-digit positional
-    # VMID that the /24 cidrhost math could not express. DNS owns the address; the
-    # guest stays reachable across re-IP/rebuild.
+    # DNS-first addressing (see docs vmid-network-tiers). When true the guest
+    # takes its address by DHCP and is referenced by FQDN everywhere — no
+    # vm_id-derived IP is computed, so it may carry a 6-digit positional VMID
+    # the /24 cidrhost math could not express. DNS owns the address, so the
+    # guest stays reachable across re-IP and rebuild.
     #
     # This is the DEFAULT for ordinary guests, and it is a plain pool lease: there
     # is no reserved octet to declare, because there is nothing to declare it
     # against. The gateway answers DNS for its own lease-table clients, so a
     # leased guest is reachable by name with its address written down nowhere.
-    # (A `reserved_host` field used to live here, pinning a UniFi reservation and
-    # a published A record to a hand-chosen octet. That put one address in three
-    # systems — this repo, the controller, and the DNS zone — which is precisely
-    # the shape that drifted repeatedly. Removed; do not reintroduce it.)
+    # (A `reserved_host` field once pinned a hand-chosen octet here, in the
+    # controller, and in the DNS zone at once — one address in three systems,
+    # which drifted repeatedly. Removed; do not reintroduce it.)
     #
     # Set dhcp = false ONLY for network and critical guests (resolvers, ingress,
     # secrets) — they pin ip_config.ipv4_address so that relocating one of them
@@ -64,20 +63,16 @@ variable "containers" {
     # Mount points (additional volumes mounted into the container)
     # Omit `size` for host-directory bind-mounts (volume = host path such as
     # "/example-pool/media"); set it to allocate a new managed volume.
-    # `backup` defaults to TRUE here, inverting the provider's own default of
-    # false. A volume mount point is where a container's data lives, so the
-    # safe default is the one that includes it; false silently produces a
-    # backup containing only the rootfs, and a vzdump job over such a guest
-    # reports success having captured none of its data.
-    #
-    # Set it to false only for a mount whose contents are reproducible or are
-    # backed up by their own writer, and say which in a comment there.
+    # `backup` defaults to TRUE here, inverting the provider's default. A volume
+    # mount point is where a container's data lives, so false silently produces
+    # a rootfs-only backup and a vzdump job that reports success having captured
+    # none of it. Set false only for contents that are reproducible or backed up
+    # by their own writer, and say which in a comment there.
     #
     # NOTE: `mount_point` is in this module's ignore_changes (see
     # modules/proxmox-container/main.tf), so mounts are effectively set-once.
-    # This default therefore governs newly created containers; an existing
-    # container needs the flag set out of band, and the change lands in the
-    # container's pending config until it next stops.
+    # This default governs newly created containers; an existing one needs the
+    # flag set out of band, landing in its pending config until it next stops.
     mount_points = optional(list(object({
       volume = string
       size   = optional(string)
@@ -119,6 +114,18 @@ variable "containers" {
     protection    = optional(bool, false)
     os_type       = optional(string, "debian")
     start_on_boot = optional(bool, true)
+
+    # Bare vztmpl filename on var.datastore_iso; null = the shared Debian
+    # template. Pair with os_type = "unmanaged" for NixOS. SET-ONCE:
+    # template_file_id is in the container module's ignore_changes, and
+    # ct_templates.tf carries the rest.
+    ct_template = optional(string)
+
+    # HA opt-in; enrolling also accepts the relocation hazard imports.tf
+    # documents. ha_affinity_group keeps members on separate nodes via a
+    # proxmox_harule and is meaningful only with ha = true. See ha.tf.
+    ha                = optional(bool, false)
+    ha_affinity_group = optional(string)
 
     # The node holding this guest's storage-replication (pvesr) copy, and so the
     # ONLY node a cluster HA manager may relocate it to on node loss. Unset
