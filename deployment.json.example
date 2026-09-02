@@ -1669,7 +1669,7 @@
       }
     }
   },
-  "nixos_ct_template_url": "https://github.com/dryvist/nix-ai/releases/download/vX.Y.Z/nixos-herdr-lxc.tar.xz",
+  "nixos_ct_template_url": "https://github.com/dryvist/nix-ai/releases/download/v4.77.0/nixos-herdr-lxc.tar.xz",
   "nixos_ct_template_file_name": "nixos-herdr-lxc.tar.xz",
-  "nixos_ct_template_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  "nixos_ct_template_sha256": "7bd5b195e42e1b46cd35b111abc1ed68e5e3ead4facec14775942916363d7a4c"
 }
