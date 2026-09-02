@@ -75,6 +75,11 @@ variable "containers" {
     protection    = optional(bool, false)
     start_on_boot = optional(bool, true)
 
+    # Boot ORDER override; lower starts first. Unset keeps the VMID-derived
+    # order in modules/proxmox-container/main.tf, so this is a no-op until a
+    # guest sets it. See docs/CONTAINER_SCHEMA.md.
+    startup_order = optional(number)
+
     # LXC features (nesting required for Docker-in-LXC)
     features = optional(object({
       nesting = optional(bool, true)
