@@ -21,23 +21,10 @@ variable "containers" {
     # e.g. mgmt_native).
     vlan = string
 
-    # DNS-first addressing (see docs vmid-network-tiers). When true the guest
-    # takes its address by DHCP and is referenced by FQDN everywhere — no
-    # vm_id-derived IP is computed, so it may carry a 6-digit positional VMID
-    # the /24 cidrhost math could not express. DNS owns the address, so the
-    # guest stays reachable across re-IP and rebuild.
-    #
-    # This is the DEFAULT for ordinary guests, and it is a plain pool lease: there
-    # is no reserved octet to declare, because there is nothing to declare it
-    # against. The gateway answers DNS for its own lease-table clients, so a
-    # leased guest is reachable by name with its address written down nowhere.
-    # (A `reserved_host` field once pinned a hand-chosen octet here, in the
-    # controller, and in the DNS zone at once — one address in three systems,
-    # which drifted repeatedly. Removed; do not reintroduce it.)
-    #
-    # Set dhcp = false ONLY for network and critical guests (resolvers, ingress,
-    # secrets) — they pin ip_config.ipv4_address so that relocating one of them
-    # never requires touching the guests that point at it.
+    # DNS-first addressing: the guest takes its address by DHCP and is referenced
+    # by FQDN everywhere. The default for ordinary guests. Set false ONLY for
+    # network and critical guests, which pin ip_config.ipv4_address.
+    # See docs/CONTAINER_SCHEMA.md.
     dhcp = optional(bool, false)
 
     # Node placement. REQUIRED, deliberately: this was `optional(string)` with
@@ -60,19 +47,10 @@ variable "containers" {
       size         = optional(number, 16)
     }), {})
 
-    # Mount points (additional volumes mounted into the container)
-    # Omit `size` for host-directory bind-mounts (volume = host path such as
-    # "/example-pool/media"); set it to allocate a new managed volume.
-    # `backup` defaults to TRUE here, inverting the provider's default. A volume
-    # mount point is where a container's data lives, so false silently produces
-    # a rootfs-only backup and a vzdump job that reports success having captured
-    # none of it. Set false only for contents that are reproducible or backed up
-    # by their own writer, and say which in a comment there.
-    #
-    # NOTE: `mount_point` is in this module's ignore_changes (see
-    # modules/proxmox-container/main.tf), so mounts are effectively set-once.
-    # This default governs newly created containers; an existing one needs the
-    # flag set out of band, landing in its pending config until it next stops.
+    # Mount points (additional volumes mounted into the container). Omit `size`
+    # for a host-directory bind-mount; set it to allocate a managed volume.
+    # `backup` defaults to TRUE here, inverting the provider's default.
+    # See docs/CONTAINER_SCHEMA.md.
     mount_points = optional(list(object({
       volume = string
       size   = optional(string)
@@ -115,6 +93,11 @@ variable "containers" {
     os_type       = optional(string, "debian")
     start_on_boot = optional(bool, true)
 
+    # Boot ORDER override; lower starts first. Unset keeps the VMID-derived
+    # order in modules/proxmox-container/main.tf, so this is a no-op until a
+    # guest sets it. See docs/CONTAINER_SCHEMA.md.
+    startup_order = optional(number)
+
     # Bare vztmpl filename on var.datastore_iso; null = the shared Debian
     # template. Pair with os_type = "unmanaged" for NixOS. SET-ONCE:
     # template_file_id is in the container module's ignore_changes, and
@@ -127,19 +110,10 @@ variable "containers" {
     ha                = optional(bool, false)
     ha_affinity_group = optional(string)
 
-    # The node holding this guest's storage-replication (pvesr) copy, and so the
-    # ONLY node a cluster HA manager may relocate it to on node loss. Unset
-    # means the guest has no replica and must be restarted in place.
-    #
-    # Declared per guest rather than as a global node pair: a pair is a property
-    # of a guest's storage, not of the cluster, and the single global pair this
-    # replaces could not express a guest whose replica lived anywhere else — so
-    # such guests were simply left out of HA, which is how a singleton with no
-    # relocation target went unrecovered through a node failure.
-    #
-    # Consumers must treat a missing value as "not replicated", never as a
-    # default node: relocating a guest onto a node with no copy of its data
-    # fails the start and latches the service in an error state.
+    # The node holding this guest's pvesr replica, and so the ONLY node HA may
+    # relocate it to on node loss. Unset = no replica; consumers must read that
+    # as "not replicated", never as a default node.
+    # See docs/CONTAINER_SCHEMA.md.
     ha_replication_target = optional(string)
 
     # LXC features (set nesting=true for Docker-in-LXC on unprivileged containers;
@@ -244,5 +218,15 @@ variable "containers" {
       if contains(coalesce(try(v.tags, null), []), "hermes-agent")
     ])
     error_message = "Every container tagged 'hermes-agent' must also carry 'chromium', 'hindsight-client' and 'firecrawl-client'. These name the app dependencies the agent converge installs or calls — the browser on the guest, and the memory and extraction services off it. Note the -client suffixes are load-bearing: a bare 'hindsight' or 'firecrawl' tag would put the agent guest into that SERVICE's firewall map and treat it as a server instance."
+  }
+
+  # Proxmox stores startup order as a positive integer; 0 and fractions are
+  # silently coerced, which would reorder a guest without saying so.
+  validation {
+    condition = alltrue([
+      for name, c in var.containers :
+      c.startup_order == null || (c.startup_order >= 1 && floor(c.startup_order) == c.startup_order)
+    ])
+    error_message = "containers.<name>.startup_order must be a positive whole number (lower starts first), or unset to keep the VMID-derived order."
   }
 }
