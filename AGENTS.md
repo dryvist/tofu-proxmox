@@ -1,3 +1,6 @@
+---
+skill-groups: [core, homelab]
+---
 # Terraform Proxmox — AI Agent Documentation
 
 Infrastructure-as-code for the Proxmox VE homelab using Terraform/OpenTofu.
