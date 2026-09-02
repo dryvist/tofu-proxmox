@@ -8,8 +8,7 @@
 # Split into its own file (referenced from constants.tf as local.ai_log_ports)
 # so constants.tf stays under the shared _file-size 12 KB error threshold;
 # locals merge across files in the module. The Splunk index each lands in is
-# noted inline; new indexes (codex, openbao_audit) are created in ansible-splunk
-# in a later phase — see the WS3-max tracking issue.
+# noted inline; the indexes themselves are created in ansible-splunk.
 locals {
   ai_log_ports = {
     claude_code    = 10311 # MacBook claude-code IO logs      -> index=claude
@@ -20,7 +19,7 @@ locals {
     macstudio_llm  = 10321 # Mac Studio llama-swap + vllm-mlx -> index=llm
     macstudio_gate = 10322 # Mac Studio caddy LLM-gate access -> index=llm
     homelab_llm    = 10323 # homelab llama_cpp + llm_router   -> index=llm
-    openbao_audit  = 10331 # OpenBao file audit device        -> index=openbao_audit (new)
+    openbao_audit  = 10331 # OpenBao file audit device        -> index=openbao_audit
     hermes_agent   = 10332 # Hermes agent gateway + watchdog syslog -> index=hermes (new)
 
     # Docker-in-LXC AI services (journald log-driver -> rsyslog program route
