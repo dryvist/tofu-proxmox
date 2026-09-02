@@ -1,5 +1,5 @@
 ---
-skill-groups: [core, homelab]
+skill-groups: [core, git, homelab]
 ---
 # Terraform Proxmox — AI Agent Documentation
 
