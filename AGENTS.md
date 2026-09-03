@@ -19,6 +19,7 @@ yourself suggesting deprecated features, stop and research first.
 | Tool | Role |
 | --- | --- |
 | OpenTofu + Terrakube | Infrastructure provisioning, state, workspace locking, and run audit |
+| Semaphore | Automated Ansible management plane and run execution |
 | Ansible | Configuration management (downstream repos), tested via Molecule |
 | Python 3.12+ | Required by Ansible tooling |
 | GitHub Actions | CI/CD (`.github/workflows/`) |
