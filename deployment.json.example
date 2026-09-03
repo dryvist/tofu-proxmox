@@ -808,6 +808,33 @@
         "size": 8
       }
     },
+    "_status_comment": "Estate synthetics guest (`status` tag, apps VLAN, Docker-in-LXC). Hosts Gatus (catalog front-door + OIDC client probes every 60s) and Uptime Kuma (keystone status page). Both UIs are Traefik-fronted and Authelia-gated. Nesting/keyctl required for Docker.",
+    "status": {
+      "vm_id": 605060,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "status",
+      "description": "Gatus + Uptime Kuma (Docker-in-LXC) — catalog synthetics on gatus_web and keystone status on uptime_kuma_web; both Traefik-fronted behind Authelia.",
+      "cpu_cores": 2,
+      "memory_dedicated": 2048,
+      "tags": [
+        "terraform",
+        "container",
+        "status",
+        "dashboard",
+        "docker"
+      ],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-1",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 16
+      },
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      }
+    },
     "_grafana_comment": "AI/estate metrics visualization \u2014 Grafana OSS + VictoriaMetrics single-node as one Docker-in-LXC compose stack (ansible-proxmox-apps grafana_stack role). Observability tier 4 positional VMID (docs vmid-network-tiers). DNS-first (dhcp:true). VictoriaMetrics (:8428) receives Prometheus remote_write from the log/metric pipeline and stores long-retention series; Grafana (:3000) is Traefik-fronted and Authelia-gated. Dashboards and the datasource are provisioned by the role, so the UI state is disposable and rebuilds clean.",
     "grafana": {
       "vm_id": 410040,

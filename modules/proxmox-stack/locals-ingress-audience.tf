@@ -31,6 +31,8 @@ locals {
     otel           = "OTLP trace ingest"
     proxmox        = "Hypervisor cluster UI"
     zammad         = "Incident and ticket tracking"
+    gatus          = "Gatus catalog synthetics (front-door + OIDC client checks)"
+    "uptime-kuma"  = "Uptime Kuma keystone status page"
 
     # Splunk VM.
     splunk        = "Log search and analytics"
