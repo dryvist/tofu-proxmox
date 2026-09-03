@@ -156,7 +156,13 @@ doppler.json
 
 # Terraform / OpenTofu state & tfvars are secret-bearing
 **/.terraform/*
+# `*.tfplan` misses the conventional output name. `-out=tfplan` has no
+# extension, so the most common plan file in practice was NOT ignored, nor were
+# `tfplan.out` / `plan.out`. A local plan holds resolved variable values in
+# cleartext, and even a remote-plan pointer carries the backend hostname.
 *.tfplan
+tfplan*
+plan.out
 !*.tfvars.example
 
 # AI assistant machine-local state (committed .claude/settings.json, rules, CLAUDE.md stay)
