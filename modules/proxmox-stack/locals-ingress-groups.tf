@@ -28,6 +28,8 @@ locals {
     # Platform / management.
     proxmox              = "mgmt"
     openbao              = "mgmt"
+    gatus                = "mgmt"
+    "uptime-kuma"        = "mgmt"
     terrakube            = "mgmt"
     "terrakube-api"      = "mgmt"
     "terrakube-registry" = "mgmt"

@@ -91,6 +91,10 @@ locals {
     # forwardAuth here is the only thing in front of it.
     homepage = { backend = "homepage", port = local.pipeline_constants.service_ports.homepage_web }
     glance   = { backend = "glance", port = local.pipeline_constants.service_ports.glance_web }
+    # Catalog synthetics (Gatus) + keystone status page (Uptime Kuma) on the
+    # shared `status` guest. Browser-only, default Authelia gate.
+    gatus         = { backend = "status", port = local.pipeline_constants.service_ports.gatus_web }
+    "uptime-kuma" = { backend = "status", port = local.pipeline_constants.service_ports.uptime_kuma_web }
     # Grafana metrics UI (observability guest). Browser-only, default gate.
     grafana         = { backend = "grafana", port = local.pipeline_constants.service_ports.grafana_web }
     smokeping       = { backend = "smokeping", port = local.pipeline_constants.service_ports.smokeping_web }

@@ -18,6 +18,12 @@ variable "glance_container_ids" {
   default     = {}
 }
 
+variable "status_container_ids" {
+  description = "Map of status-guest container names to their IDs (status tag). Hosts Gatus (gatus_web) and Uptime Kuma (uptime_kuma_web) as a Docker-in-LXC compose stack — inbound both ports from internal; egress internal plus HTTPS/HTTP so Gatus can probe public Authelia-gated URLs and pull images."
+  type        = map(number)
+  default     = {}
+}
+
 variable "grafana_container_ids" {
   description = "Map of Grafana observability container names to their IDs (grafana tag). Grafana UI — inbound grafana_web (3000) from internal, Traefik-fronted behind Authelia — plus VictoriaMetrics — inbound victoriametrics (8428) remote_write/datasource from internal; egress internal plus HTTPS/HTTP for container-image pulls at converge."
   type        = map(number)
