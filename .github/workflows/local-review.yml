@@ -1,0 +1,26 @@
+# Local review: an advisory second opinion on every pull request.
+#
+# The reusable workflow sends the diff plus .github/ai-review/checklist.md to a
+# model served through the self-hosted OpenAI-compatible router and upserts one
+# sticky comment. It is advisory only — a router or model failure posts
+# "review unavailable" and the job still succeeds, so this is never a gate.
+#
+# Permissions are job-scoped and the secret is passed explicitly (zizmor:
+# excessive-permissions, secrets-inherit). No concurrency block on purpose: a
+# caller sharing the reusable workflow's exact concurrency group causes an
+# opaque 0-job startup_failure.
+
+name: Local Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  local-review:
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: dryvist/ai-workflows/.github/workflows/local-review.yml@main
+    secrets:
+      LLM_ROUTER_API_KEY: ${{ secrets.LLM_ROUTER_API_KEY }}
