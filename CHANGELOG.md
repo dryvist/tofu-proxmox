@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.10.0](https://github.com/dryvist/tofu-proxmox/compare/v3.9.0...v3.10.0) (2026-09-03)
+
+
+### Features
+
+* **ai-log:** add semaphore Docker log-ingest port and Splunk index route ([#1047](https://github.com/dryvist/tofu-proxmox/issues/1047)) ([2bcef42](https://github.com/dryvist/tofu-proxmox/commit/2bcef42d1dc7bfaf25145a2e66b8bf17ae6b7efa))
+* **containers:** allow an explicit startup order, overriding the VMID derivation ([#1053](https://github.com/dryvist/tofu-proxmox/issues/1053)) ([1baf837](https://github.com/dryvist/tofu-proxmox/commit/1baf837b9742f0395119b7d2b113deb539592e9c))
+* **herdr:** declare the herdr guests, their HA, and a NixOS LXC template ([#1038](https://github.com/dryvist/tofu-proxmox/issues/1038)) ([d4d0610](https://github.com/dryvist/tofu-proxmox/commit/d4d0610e7218690aa33d9218aee50e3a7153eba6))
+* **herdr:** point the example at the published LXC template asset ([#1049](https://github.com/dryvist/tofu-proxmox/issues/1049)) ([b52dd38](https://github.com/dryvist/tofu-proxmox/commit/b52dd38089091ac8d1aa7500d980ba8a38d97f67))
+
 ## [3.9.0](https://github.com/dryvist/tofu-proxmox/compare/v3.8.0...v3.9.0) (2026-08-31)
 
 
