@@ -99,6 +99,9 @@ module "firewall" {
   # Langfuse LLM-observability LXC: tagged "langfuse"
   langfuse_container_ids = local.langfuse_container_ids
 
+  # ClickHouse OLAP store LXC: tagged "clickhouse"
+  clickhouse_container_ids = local.clickhouse_container_ids
+
   # LLM fabric LXCs: llm-router (LiteLLM proxy) + llm-fast (GPU llama-swap server)
   llm_router_container_ids = local.llm_router_container_ids
   llm_fast_container_ids   = local.llm_fast_container_ids

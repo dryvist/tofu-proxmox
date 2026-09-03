@@ -21,6 +21,12 @@ locals {
     if contains(coalesce(try(v.tags, null), []), "langfuse")
   }
 
+  # ClickHouse OLAP store LXC (clickhouse tag): observability backing store.
+  clickhouse_container_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(coalesce(try(v.tags, null), []), "clickhouse")
+  }
+
   # AI runner LXCs (ai-github tag): headless coding-agent guests in the
   # `ai-github` egress profile. See modules/firewall/ai_runner_rules.tf — tight
   # egress (internal DNS/NTP/OpenBao + outbound HTTPS only), no blanket internal.

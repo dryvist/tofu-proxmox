@@ -153,6 +153,12 @@ variable "langfuse_container_ids" {
   default     = {}
 }
 
+variable "clickhouse_container_ids" {
+  description = "Map of ClickHouse OLAP-store LXC names to IDs (tag-driven: clickhouse). Inbound HTTP (8123) + native protocol (9000) from internal + outbound internal/HTTPS. Not fronted by ingress."
+  type        = map(number)
+  default     = {}
+}
+
 variable "agentgateway_container_ids" {
   description = "Map of agentgateway MCP/LLM/A2A proxy LXC names to IDs (tag-driven: agentgateway). AI-first data plane — inbound proxy (8080) + admin UI (15000) + metrics (15020) from internal; outbound internal (local LLM fabric) + HTTPS (external MCP servers, upstream LLM APIs)."
   type        = map(number)
