@@ -78,14 +78,14 @@ schedules, and job templates) is managed completely via infrastructure-as-code
 in the `iac-platform` repo (`iac-platform-semaphore` workspace).
 
 - **Execution identity**: Semaphore jobs authenticate via short-lived SSH
-  certificates, minted by exchanging an OpenBao AppRole identity
-  (`OPENBAO_APPROLE_ANSIBLE_ROLE_ID` and `SECRET_ID`) for a signed certificate
-  at run time.
+  certificates, minted by exchanging an OpenBao AppRole identity (role_id and
+  secret_id) for an ephemeral signed certificate at run time. No long-lived SSH
+  keys or tokens are stored.
 - **Triggering runs**: Routine validation and drift reports run on Semaphore
   schedules. Applies are triggered via the Semaphore UI
-  (`https://semaphore.<domain>`) or its API. Manual, local CLI execution
-  (`doppler run -- ./scripts/run-ansible.sh`) is still possible but is
-  reserved for break-glass or development.
+  (`https://semaphore.<domain>`) or its API. Manual CLI execution in downstream
+  Ansible repos via their native `scripts/run-ansible.sh` remains available for
+  local development or break-glass scenarios.
 
 ## Inventory publish + sync (automatic)
 
