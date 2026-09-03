@@ -66,6 +66,26 @@ local gitignored cache. See `docs/INVENTORY_PUBLISHING.md`.
 | `ansible-proxmox` | `ansible_inventory` (host_services, node_storage, nodes) | Host config (kernel, ZFS, monitoring, NAS/Samba) |
 | `ansible-proxmox-apps` | `ansible_inventory` (containers, docker_vms, constants, ingress) | Cribl, HAProxy, DNS, honeypots (`opencanary`, `apprise`, `tpot` roles — see `docs/HONEYPOTS.md`), etc. |
 | `ansible-splunk` | `ansible_inventory` (splunk_vm + the Splunk-native HA cluster peers in `vms`) | Splunk Enterprise (Docker AIO, retiring) and the HA cluster; incl. the `honeypot` index |
+| `ansible-proxmox-ai` | `ansible_inventory` (containers, nodes) | Local ML/LLM serving, observability, and AI agents |
+
+## Ansible execution (Semaphore)
+
+Ansible playbooks for all downstream repos are executed centrally by Semaphore,
+which acts as the automated Ansible management plane. Semaphore runs as a
+Docker container on the `iac-platform` VM.
+The Semaphore environment itself (projects, repositories, inventories,
+schedules, and job templates) is managed completely via infrastructure-as-code
+in the `iac-platform` repo (`iac-platform-semaphore` workspace).
+
+- **Execution identity**: Semaphore jobs authenticate via short-lived SSH
+  certificates, minted by exchanging an OpenBao AppRole identity (role_id and
+  secret_id) for an ephemeral signed certificate at run time. No long-lived SSH
+  keys or tokens are stored.
+- **Triggering runs**: Routine validation and drift reports run on Semaphore
+  schedules. Applies are triggered via the Semaphore UI
+  (`https://semaphore.<domain>`) or its API. Manual CLI execution in downstream
+  Ansible repos via their native `scripts/run-ansible.sh` remains available for
+  local development or break-glass scenarios.
 
 ## Inventory publish + sync (automatic)
 

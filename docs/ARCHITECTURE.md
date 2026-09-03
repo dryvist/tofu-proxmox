@@ -2,6 +2,9 @@
 
 ## Control plane
 
+The automation control plane is split between OpenTofu and Ansible:
+
+**Infrastructure (OpenTofu):**
 Terrakube runs OpenTofu inside the homelab. It owns state, workspace locking,
 job ordering, and audit history. Its per-job identity is exchanged directly
 with OpenBao for a short-lived workspace token. Executors install providers
@@ -15,6 +18,14 @@ Terrakube workspace lock
   -> ephemeral provider credentials
   -> OpenTofu plan/apply
 ```
+
+**Configuration (Ansible):**
+Semaphore runs as the Ansible management plane. It owns scheduled validation,
+scheduled drift reporting, and playbook execution for downstream consumers.
+Semaphore's own configuration is fully managed by Terrakube (`iac-platform-semaphore`
+workspace). Like Terrakube, Semaphore jobs exchange an OpenBao AppRole identity
+for short-lived SSH certificates to converge hosts, eliminating static SSH key
+distribution.
 
 ## Inputs
 
