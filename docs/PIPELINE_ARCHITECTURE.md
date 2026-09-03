@@ -70,11 +70,22 @@ local gitignored cache. See `docs/INVENTORY_PUBLISHING.md`.
 
 ## Ansible execution (Semaphore)
 
-Ansible playbooks for all downstream repos are executed centrally by Semaphore, which acts as the automated Ansible management plane. Semaphore runs as a Docker container on the `iac-platform` VM.
-The Semaphore environment itself (projects, repositories, inventories, schedules, and job templates) is managed completely via infrastructure-as-code in the `iac-platform` repo (`iac-platform-semaphore` workspace).
+Ansible playbooks for all downstream repos are executed centrally by Semaphore,
+which acts as the automated Ansible management plane. Semaphore runs as a
+Docker container on the `iac-platform` VM.
+The Semaphore environment itself (projects, repositories, inventories,
+schedules, and job templates) is managed completely via infrastructure-as-code
+in the `iac-platform` repo (`iac-platform-semaphore` workspace).
 
-- **Execution identity**: Semaphore jobs authenticate via short-lived SSH certificates, minted by exchanging an OpenBao AppRole identity (`OPENBAO_APPROLE_ANSIBLE_ROLE_ID` and `SECRET_ID`) for a signed certificate at run time.
-- **Triggering runs**: Routine validation and drift reports run on Semaphore schedules. Applies are triggered via the Semaphore UI (`https://semaphore.<domain>`) or its API. Manual, local CLI execution (`doppler run -- ./scripts/run-ansible.sh`) is still possible but is reserved for break-glass or development.
+- **Execution identity**: Semaphore jobs authenticate via short-lived SSH
+  certificates, minted by exchanging an OpenBao AppRole identity
+  (`OPENBAO_APPROLE_ANSIBLE_ROLE_ID` and `SECRET_ID`) for a signed certificate
+  at run time.
+- **Triggering runs**: Routine validation and drift reports run on Semaphore
+  schedules. Applies are triggered via the Semaphore UI
+  (`https://semaphore.<domain>`) or its API. Manual, local CLI execution
+  (`doppler run -- ./scripts/run-ansible.sh`) is still possible but is
+  reserved for break-glass or development.
 
 ## Inventory publish + sync (automatic)
 
