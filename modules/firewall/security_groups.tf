@@ -388,6 +388,23 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "langfuse
   }
 }
 
+resource "proxmox_virtual_environment_cluster_firewall_security_group" "clickhouse_services" {
+  name    = "clickhouse-svc"
+  comment = "ClickHouse HTTP (8123) + native protocol (9000) from internal networks"
+
+  dynamic "rule" {
+    for_each = local.clickhouse_services_rules
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = rule.value.proto
+      dport   = rule.value.dport
+      source  = rule.value.source
+      comment = rule.value.comment
+    }
+  }
+}
+
 # llm_router_services + llm_fast_services groups are in llm_fabric_rules.tf (size gate).
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "otel_ingest" {
