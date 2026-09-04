@@ -105,6 +105,19 @@ locals {
         sso          = false # tofu provider / API clients share this route
       }
     ] : [],
+    # Proxmox Backup Server VM appliance (clean https://pbs.<domain> on port 443)
+    contains(keys(var.vms), "pbs") ? [
+      {
+        name         = "pbs"
+        owner        = "pbs"
+        ip           = local.vm_address["pbs"]
+        port         = local.pipeline_constants.service_ports.pbs_web
+        scheme       = "https"
+        insecure_tls = true
+        sso          = false
+        ui           = true
+      }
+    ] : [],
     local.ingress_lb_routes,
     # IaC automation platform routes (Terrakube + Semaphore on the iac-platform
     # VM) — assembled in locals-ingress-iac.tf to keep this file under the shared

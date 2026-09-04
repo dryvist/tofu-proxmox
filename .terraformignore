@@ -8,3 +8,7 @@ aws-infra/.terragrunt-cache/
 servarr-config/.terragrunt-cache/
 vault-secrets/
 *.log
+.codegraph
+.omo/
+.worktrees/
+worktrees/
