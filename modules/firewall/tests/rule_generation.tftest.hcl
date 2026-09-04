@@ -40,6 +40,9 @@ variables {
       # Estate dashboards alongside Homarr (referenced by homepage/glance rules)
       homepage_web = 3000
       glance_web   = 8080
+      # Status guest (referenced by status_rules)
+      gatus_web       = 8080
+      uptime_kuma_web = 3001
       # Grafana observability guest (referenced by grafana rules)
       grafana_web     = 3000
       victoriametrics = 8428

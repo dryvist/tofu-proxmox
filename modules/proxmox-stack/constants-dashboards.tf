@@ -17,6 +17,12 @@ locals {
     homepage_web = 3000
     glance_web   = 8080
 
+    # Status guest (Docker-in-LXC): Gatus catalog synthetics + Uptime Kuma
+    # keystone status page. Distinct host ports so Traefik can route each;
+    # both backends share the `status` container hostname.
+    gatus_web       = 8080
+    uptime_kuma_web = 3001
+
     # The two most popular third-party Hermes UIs. Both load the agent LOCALLY —
     # hermes-webui in-process from HERMES_HOME, hermes-studio over a unix socket
     # / loopback bridge — so neither can be split into a guest of its own the way

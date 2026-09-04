@@ -22,8 +22,10 @@ grafana_rules.tf`). The UI is reached through the ingress `grafana` route.
 
 1. Coding agents export OpenTelemetry (metrics + logs) to the estate's
    existing OTLP ingest (`modules/firewall/otlp_ingest_rules.tf`).
-2. The stream pipeline routes metrics onward as Prometheus `remote_write`
-   into VictoriaMetrics, and usage events into the log platform.
+2. Cribl Stream receives Prometheus `remote_write` on `in_prometheus_rw` and
+   fans the same keep-list samples to Splunk (`prometheus_to_netmon` → HEC)
+   and to VictoriaMetrics (`victoriametrics_rw` → `/api/v1/write` on the
+   grafana guest). Usage events still go to the log platform.
 3. A per-workstation ETL summarizes agent session logs (cache TTL split,
    context-size trends) and pushes derived series the same way.
 4. Grafana dashboards are provisioned by the role — the UI carries no

@@ -48,6 +48,19 @@ collapsing while the first still passes.
 All three are declared with the shared `dashboard` tag alongside their own, so
 the set is addressable as a whole.
 
+## Health surfaces (where to look)
+
+| Question | UI |
+| --- | --- |
+| Does the **user-facing URL** work (incl. Traefik 504 / Authelia `invalid_client`)? | **Gatus** (`gatus.$PVE_SUBDOMAIN`) — catalog probes every 60s with follow-redirects; OIDC `client_id` authorize probes |
+| Are **keystones** up? | **Uptime Kuma** (`uptime-kuma.$PVE_SUBDOMAIN`) + **Healthchecks** + Gatus `keystone` group |
+| Is the **guest process** answering? | Homepage / Glance status dots + Homarr `pingUrl` (catalog `probe_url`) |
+| Network / WAN quality? | Grafana blackbox dashboards + Prometheus |
+| Native app APIs (Sonarr / Plex / …)? | Homarr integrations |
+
+Gatus and Uptime Kuma run on the shared **`status`** guest (Docker-in-LXC). A
+service reaches Gatus by having a Traefik route (same catalog as the boards).
+
 Two things worth knowing before touching their Ansible roles:
 
 - **Homarr's API `create` always inserts.** Its role must list what exists and
