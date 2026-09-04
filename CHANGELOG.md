@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.11.0](https://github.com/dryvist/tofu-proxmox/compare/v3.10.0...v3.11.0) (2026-09-04)
+
+
+### Features
+
+* **ci:** add advisory local-review caller and repo checklist ([6712608](https://github.com/dryvist/tofu-proxmox/commit/6712608ae7f06a127ba6b192f8ce1dbfe2095dea))
+* **status:** provision status guest for Gatus and Uptime Kuma ([3ef23ad](https://github.com/dryvist/tofu-proxmox/commit/3ef23adea455ab665f1a3792670dcca18b549621))
+* **status:** status guest for Gatus and Uptime Kuma ([c93eb63](https://github.com/dryvist/tofu-proxmox/commit/c93eb635a7a63e7022a25449a58e9303ad8516fd))
+
+
+### Bug Fixes
+
+* ignore the conventional tofu plan filenames ([ad0c2fd](https://github.com/dryvist/tofu-proxmox/commit/ad0c2fd316bf4ca00f0b50fd1b31c635c2fe1cfa))
+
 ## [3.10.0](https://github.com/dryvist/tofu-proxmox/compare/v3.9.0...v3.10.0) (2026-09-03)
 
 
