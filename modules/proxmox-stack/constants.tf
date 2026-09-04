@@ -203,35 +203,10 @@ locals {
       terrakube_dex      = 28083
       semaphore_web      = 28084
     }
-    # Honeypot / deception sensors. apprise_api = the honeypot-notify gateway's
-    # REST port (caronc/apprise-api): honeypots POST one webhook and Apprise fans
-    # it out to Slack + phone push (Path A). The remaining entries are the
-    # low-interaction decoy services the per-VLAN OpenCanary tripwires emulate —
-    # the firewall honeypot_services group ACCEPTs+logs these from internal so an
-    # intruder touching ANY of them trips an alert. SSH (22) is already covered by
-    # internal_access. The honeypot syslog frontend (519) lives in syslog_port_map
-    # above. Consumed by modules/firewall and the opencanary/apprise/tpot roles in
-    # ansible-proxmox-apps. See docs/HONEYPOTS.md.
-    honeypot_ports = {
-      apprise_api = 8000
-      ftp         = 21
-      telnet      = 23
-      http        = 80
-      https       = 443
-      smb         = 445
-      tftp        = 69   # udp
-      snmp        = 161  # udp
-      ntp         = 123  # udp — OpenCanary NTP module (honeypot CTs only; no host chrony clash)
-      sip         = 5060 # udp
-      mssql       = 1433
-      mysql       = 3306
-      postgres    = 5432
-      rdp         = 3389
-      vnc         = 5900
-      redis       = 6379
-      git         = 9418
-      http_proxy  = 8080
-    }
+    # Honeypot / deception sensor ports (defined in constants-honeypot.tf to
+    # keep this file under the shared _file-size 12 KB gate; locals merge
+    # across files in the module). See docs/HONEYPOTS.md.
+    honeypot_ports = local.honeypot_ports
     # Media stack web UIs. qBittorrent + Prowlarr run inside the download-vpn
     # LXC bound to wg0; their UIs are reachable on the LAN. Sonarr/Radarr/Plex/
     # Seerr/Sortarr are LAN-only guests (per-guest inbound rules in
