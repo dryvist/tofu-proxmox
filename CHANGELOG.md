@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.12.0](https://github.com/dryvist/tofu-proxmox/compare/v3.11.0...v3.12.0) (2026-09-05)
+
+
+### Features
+
+* **clickhouse:** scaffold ports, tag-derived firewall rules, and log routing ([#1064](https://github.com/dryvist/tofu-proxmox/issues/1064)) ([64ee057](https://github.com/dryvist/tofu-proxmox/commit/64ee05733af7ef79bdf2c5fc4b796ca3c2811c71))
+* **ingress:** add clean HTTPS routes for pbs, healthchecks, immich, zot, autobrr, idrac-kvm ([#1065](https://github.com/dryvist/tofu-proxmox/issues/1065)) ([110495c](https://github.com/dryvist/tofu-proxmox/commit/110495caa19c2e905383f9718076d30a8aaa5725))
+
 ## [3.11.0](https://github.com/dryvist/tofu-proxmox/compare/v3.10.0...v3.11.0) (2026-09-04)
 
 
