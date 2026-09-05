@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.13.0](https://github.com/dryvist/tofu-proxmox/compare/v3.12.0...v3.13.0) (2026-09-05)
+
+
+### Features
+
+* **phoenix:** declare the Arize Phoenix guest's ports, route and firewall ([#1069](https://github.com/dryvist/tofu-proxmox/issues/1069)) ([4cd9d2e](https://github.com/dryvist/tofu-proxmox/commit/4cd9d2e14b40d5efa69ffeb0949fe7bf7db6e02a))
+
 ## [3.12.0](https://github.com/dryvist/tofu-proxmox/compare/v3.11.0...v3.12.0) (2026-09-05)
 
 
