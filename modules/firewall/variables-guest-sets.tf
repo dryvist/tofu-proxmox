@@ -156,6 +156,12 @@ variable "langfuse_container_ids" {
   default     = {}
 }
 
+variable "phoenix_container_ids" {
+  description = "Map of Arize Phoenix LLM-observability LXC names to IDs (tag-driven). Inbound web/OTLP-HTTP ingest (6006), OTLP-gRPC ingest (4317), and metrics (9090) from internal + outbound internal/HTTPS."
+  type        = map(number)
+  default     = {}
+}
+
 variable "clickhouse_container_ids" {
   description = "Map of ClickHouse OLAP-store LXC names to IDs (tag-driven: clickhouse). Inbound HTTP (8123) + native protocol (9000) from internal + outbound internal/HTTPS. Not fronted by ingress."
   type        = map(number)

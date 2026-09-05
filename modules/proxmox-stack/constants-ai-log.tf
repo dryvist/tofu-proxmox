@@ -35,6 +35,7 @@ locals {
     docling_serve_docker = 10348 # docling-serve OCR/extraction      -> index=docling (new)
     semaphore_docker     = 10349 # Semaphore Ansible run UI          -> index=semaphore (new)
     clickhouse_docker    = 10350 # ClickHouse OLAP store             -> index=clickhouse (new)
+    phoenix_docker       = 10351 # Arize Phoenix LLM observability   -> index=phoenix (new)
   }
 
   # Splunk landing zone per source, keyed to the SAME names as ai_log_ports so
@@ -67,6 +68,7 @@ locals {
     docling_serve_docker = { index = "docling", sourcetype = "docling:app" }
     semaphore_docker     = { index = "semaphore", sourcetype = "semaphore:run" }
     clickhouse_docker    = { index = "clickhouse", sourcetype = "clickhouse:app" }
+    phoenix_docker       = { index = "phoenix", sourcetype = "phoenix:app" }
   }
 
   ai_log_routing = {

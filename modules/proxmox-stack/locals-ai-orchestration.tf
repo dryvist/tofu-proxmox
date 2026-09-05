@@ -21,6 +21,13 @@ locals {
     if contains(coalesce(try(v.tags, null), []), "langfuse")
   }
 
+  # Arize Phoenix LLM-observability LXC (phoenix tag): the Langfuse sibling —
+  # UI + OTLP/HTTP ingest (6006), OTLP/gRPC ingest (4317), metrics (9090).
+  phoenix_container_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(coalesce(try(v.tags, null), []), "phoenix")
+  }
+
   # ClickHouse OLAP store LXC (clickhouse tag): observability backing store.
   clickhouse_container_ids = {
     for k, v in var.containers : k => v.vm_id
