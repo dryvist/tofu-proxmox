@@ -99,6 +99,9 @@ module "firewall" {
   # Langfuse LLM-observability LXC: tagged "langfuse"
   langfuse_container_ids = local.langfuse_container_ids
 
+  # Arize Phoenix LLM-observability LXC: tagged "phoenix"
+  phoenix_container_ids = local.phoenix_container_ids
+
   # ClickHouse OLAP store LXC: tagged "clickhouse"
   clickhouse_container_ids = local.clickhouse_container_ids
 
