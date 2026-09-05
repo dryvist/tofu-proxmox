@@ -388,6 +388,23 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "langfuse
   }
 }
 
+resource "proxmox_virtual_environment_cluster_firewall_security_group" "phoenix_services" {
+  name    = "phoenix-svc"
+  comment = "Phoenix web UI + OTLP ingest (6006/4317) + metrics (9090) from internal networks"
+
+  dynamic "rule" {
+    for_each = local.phoenix_services_rules
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = rule.value.proto
+      dport   = rule.value.dport
+      source  = rule.value.source
+      comment = rule.value.comment
+    }
+  }
+}
+
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "clickhouse_services" {
   name    = "clickhouse-svc"
   comment = "ClickHouse HTTP (8123) + native protocol (9000) from internal networks"

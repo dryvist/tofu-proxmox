@@ -1,6 +1,6 @@
 # AI orchestration tier firewall resources. The orchestration UIs (n8n, Dify,
 # LangFlow, LangGraph) and the agent-exec runtime live on the ai VLAN; Langfuse
-# lives on the siem VLAN. All are DHCP-first guests behind DROP in/out policies, so each gets
+# and Phoenix live on the siem VLAN. All are DHCP-first guests behind DROP in/out policies, so each gets
 # `dhcp = true` (same reason as s3_rules.tf). The Cribl Edge OTLP
 # ingest rule (from the ai VLAN) is attached to the pipeline containers in
 # container_rules.tf; this file owns the app-side guests.
@@ -32,6 +32,15 @@ locals {
   # internal covers both the admin UI and Cribl's trace push from the pipeline VLAN.
   langfuse_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.langfuse_web), source = local.internal_src, comment = "Langfuse web + OTLP ingest (TCP ${local.svc_ports.langfuse_web}) from internal" },
+  ]
+
+  # Arize Phoenix — the Langfuse sibling. Web UI + OTLP/HTTP ingest share one
+  # port; OTLP/gRPC ingest and the Prometheus metrics endpoint are separate
+  # ports, all inbound from internal.
+  phoenix_services_rules = [
+    { proto = "tcp", dport = tostring(local.svc_ports.phoenix_web), source = local.internal_src, comment = "Phoenix web + OTLP/HTTP ingest (TCP ${local.svc_ports.phoenix_web}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.phoenix_grpc), source = local.internal_src, comment = "Phoenix OTLP/gRPC ingest (TCP ${local.svc_ports.phoenix_grpc}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.phoenix_metrics), source = local.internal_src, comment = "Phoenix Prometheus metrics (TCP ${local.svc_ports.phoenix_metrics}) from internal" },
   ]
 
   # ClickHouse — HTTP query interface + native TCP protocol. Internal only,
@@ -152,6 +161,54 @@ resource "proxmox_virtual_environment_firewall_rules" "langfuse_container" {
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.langfuse_container]
+}
+
+# Phoenix container (LLM observability — web + OTLP/HTTP 6006, OTLP/gRPC 4317,
+# metrics 9090). The Langfuse sibling on the same VLAN.
+
+resource "proxmox_virtual_environment_firewall_options" "phoenix_container" {
+  for_each = var.phoenix_container_ids
+
+  node_name     = var.node_name
+  container_id  = each.value
+  enabled       = local.firewall_defaults.enabled
+  input_policy  = local.firewall_defaults.input_policy
+  output_policy = local.firewall_defaults.output_policy
+  log_level_in  = local.firewall_defaults.log_level_in
+  log_level_out = local.firewall_defaults.log_level_out
+
+  dhcp = true
+
+  depends_on = [proxmox_virtual_environment_cluster_firewall.main]
+}
+
+resource "proxmox_virtual_environment_firewall_rules" "phoenix_container" {
+  for_each = var.phoenix_container_ids
+
+  node_name    = var.node_name
+  container_id = each.value
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name
+    comment        = "Internal access (SSH, ICMP)"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.phoenix_services.name
+    comment        = "Phoenix web + OTLP ingest (6006/4317) + metrics (9090)"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
+    comment        = "Outbound to internal (object store, DNS)"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
+    comment        = "Outbound HTTPS (updates/telemetry)"
+  }
+
+  depends_on = [proxmox_virtual_environment_firewall_options.phoenix_container]
 }
 
 # ClickHouse container (OLAP store — HTTP 8123 + native 9000, internal only)

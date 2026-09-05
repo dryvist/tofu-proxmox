@@ -83,6 +83,9 @@ variables {
       dify_web          = 80
       langflow_web      = 7860
       langfuse_web      = 3000
+      phoenix_web       = 6006
+      phoenix_grpc      = 4317
+      phoenix_metrics   = 9090
       clickhouse_http   = 8123
       clickhouse_native = 9000
       langgraph_api     = 8124

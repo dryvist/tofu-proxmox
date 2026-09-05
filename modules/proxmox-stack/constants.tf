@@ -101,6 +101,14 @@ locals {
       dify_web     = 80
       langflow_web = 7860
       langfuse_web = 3000
+      # Arize Phoenix (LLM observability — traces/evals), the Langfuse sibling on
+      # the siem VLAN. phoenix_web serves the UI plus the OTLP/HTTP ingest path
+      # (/v1/traces); phoenix_grpc is the OTLP/gRPC ingest, internal only;
+      # phoenix_metrics is the Prometheus /metrics endpoint, scraped directly and
+      # never Traefik-fronted.
+      phoenix_web     = 6006
+      phoenix_grpc    = 4317
+      phoenix_metrics = 9090
       # ClickHouse (clickhouse + observability tags) — dedicated OLAP store for
       # the observability stack. clickhouse_http = HTTP query interface;
       # clickhouse_native = the native TCP client/replication protocol.
