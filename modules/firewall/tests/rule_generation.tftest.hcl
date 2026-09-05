@@ -83,6 +83,8 @@ variables {
       dify_web          = 80
       langflow_web      = 7860
       langfuse_web      = 3000
+      clickhouse_http   = 8123
+      clickhouse_native = 9000
       langgraph_api     = 8124
       agent_chat_ui_web = 3000
       docling_serve_api = 5001

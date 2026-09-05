@@ -102,5 +102,12 @@ locals {
     # Static file host. Browser-only, so it takes the default gate (sso omitted
     # -> true) rather than opting out the way the machine/API rows above do.
     "docs-static" = { backend = "docs-static", port = local.pipeline_constants.service_ports.docs_static_web }
+
+    # Additional user-facing app services (clean portless HTTPS routes)
+    healthchecks = { backend = "healthchecks", port = local.pipeline_constants.service_ports.healthchecks_web }
+    immich       = { backend = "immich", port = local.pipeline_constants.service_ports.immich_web }
+    zot          = { backend = "registry", port = local.pipeline_constants.service_ports.zot_web }
+    autobrr      = { backend = "download-vpn", port = local.pipeline_constants.service_ports.autobrr_web }
+    "idrac-kvm"  = { backend = "idrac-kvm", port = local.pipeline_constants.service_ports.idrac_kvm_web }
   })
 }

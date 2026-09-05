@@ -23,6 +23,14 @@ locals {
     gatus_web       = 8080
     uptime_kuma_web = 3001
 
+    # User-facing service ports for clean HTTPS ingress routing
+    healthchecks_web = 8000
+    zot_web          = 5000
+    immich_web       = 2283
+    idrac_kvm_web    = 8080
+    pbs_web          = 8007
+    autobrr_web      = 7474
+
     # The two most popular third-party Hermes UIs. Both load the agent LOCALLY —
     # hermes-webui in-process from HERMES_HOME, hermes-studio over a unix socket
     # / loopback bridge — so neither can be split into a guest of its own the way

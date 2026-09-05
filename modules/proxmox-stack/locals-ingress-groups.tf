@@ -26,6 +26,11 @@ locals {
     otel          = "siem"
 
     # Platform / management.
+    traefik              = "mgmt"
+    pbs                  = "mgmt"
+    healthchecks         = "mgmt"
+    zot                  = "mgmt"
+    "idrac-kvm"          = "mgmt"
     proxmox              = "mgmt"
     openbao              = "mgmt"
     gatus                = "mgmt"
@@ -35,6 +40,9 @@ locals {
     "terrakube-registry" = "mgmt"
     "terrakube-dex"      = "mgmt"
     semaphore            = "mgmt"
+
+    # Media tier.
+    autobrr = "media_svc"
 
     # AI tier pools.
     llm            = "ai"
