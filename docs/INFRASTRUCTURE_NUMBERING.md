@@ -15,8 +15,10 @@ maintenance windows allow — they are **not** the target.
 
 ## Hostname & Multi-Instance Naming Law
 
-**FUTURE LAW**: For all new multi-instance containers or VMs, the hostname suffix MUST be two digits where the **first digit is the Proxmox node ID**.
-For example, instead of `zammad-1` and `zammad-2`, use `zammad-20` (Node 2, instance 0) and `zammad-30` (Node 3, instance 0).
+A guest name is `<app>-<NM>`: `N` the node's logical digit, `M` a zero-based
+counter for that app on that node — always two digits, never one — and only for
+guests **pinned** to their node. The rule, the pinned/relocatable condition, and
+the plan-time guard that enforces it: **[GUEST_NAMING.md](./GUEST_NAMING.md)**.
 
 ## Node naming standard
 
@@ -200,41 +202,8 @@ disable-never-delete and kept as a distributed search peer during migration.
 
 ## Storage configuration
 
-### Cribl persistent-queue disks
-
-Cribl Stream and Cribl Edge containers carry a separate data disk for the on-disk persistent
-queue (mounted at `/opt/cribl/data`): a small root disk for OS + application, plus a larger
-data disk so a HAProxy/Cribl outage buffers instead of dropping. Ansible formats and mounts
-the data disk; see the Cribl roles in the downstream apps repo.
-
-### Splunk VM disk layout
-
-The Splunk VM carries a boot disk, a legacy data disk, and two tiered storage
-disks:
-
-- **Boot disk**: OS, Splunk application, configuration. Declared `virtio0`. The
-  live interface and size are managed outside this repo; `lifecycle.ignore_changes`
-  covers the whole `disk` attribute, so the declared block is not authoritative.
-- **Legacy data disk (`virtio1`, 200G)**: current Splunk index storage, mounted
-  at `/opt/splunk`. Transitional — kept attached until a separate migration
-  moves data onto the tiered disks below. The mount point matters: the volume
-  covers all of `/opt/splunk`, not just `/opt/splunk/var`, so a capacity check
-  aimed at the deeper path measures the wrong filesystem.
-- **`fast-splunk` (`virtio2`)**: hot + warm buckets on the fast/NVMe tier
-  (`datastore_id = fast-splunk`, `backup = false` by design). Index data is
-  reconstructible, and block-level backups of it would roughly double the
-  storage consumed for no resilience gain. Durability for data worth keeping
-  comes from the frozen tier, not from backing up the index volumes.
-- **`bulk-splunk` (`virtio3`)**: cold buckets on the non-RAID cold tier
-  (`datastore_id = bulk-splunk`, `backup = false` by design; archived to
-  Backblaze B2).
-
-Disk sizes are set in `deployment.json`: `splunk_boot_disk_size`,
-`splunk_data_disk_size` (legacy `virtio1`), `splunk_fast_disk_size` (default
-1024), and `splunk_bulk_disk_size` (default 2048). The tiered disks are declared
-but do not attach until the disk-drift reconciliation completes (see the drift
-doc). See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the per-tier RAID/backup
-posture.
+Cribl persistent-queue disks and the Splunk VM disk layout:
+**[GUEST_STORAGE_LAYOUT.md](./GUEST_STORAGE_LAYOUT.md)**.
 
 ---
 
