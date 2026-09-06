@@ -44,7 +44,9 @@ resource "proxmox_virtual_environment_vm" "vms" {
   # scheme clamped every 6-digit-VMID guest to the same order (0), leaving
   # Proxmox's tiebreak among them undefined.
   startup {
-    order    = each.value.vm_id < 1000 ? each.value.vm_id : floor(each.value.vm_id / 1000)
+    # An explicit startup_order wins; the VMID derivation stays the fallback for
+    # every guest whose boot position does not matter.
+    order    = coalesce(each.value.startup_order, each.value.vm_id < 1000 ? each.value.vm_id : floor(each.value.vm_id / 1000))
     up_delay = var.startup_delay
   }
 

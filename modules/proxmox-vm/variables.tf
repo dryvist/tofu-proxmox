@@ -102,6 +102,11 @@ variable "vms" {
     on_boot = optional(bool, true)
     started = optional(bool, true)
 
+    # Boot ORDER override; lower starts first. Unset keeps the VMID-derived
+    # order above, so this is a no-op until a guest sets it. Ordering is PER
+    # NODE — see docs/CONTAINER_SCHEMA.md.
+    startup_order = optional(number)
+
     # Windows features
     tpm_state = optional(object({
       version      = optional(string, "v2.0")
