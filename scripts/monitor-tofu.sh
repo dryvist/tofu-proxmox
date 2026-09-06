@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Monitor Terraform operations in real-time
-# Usage: ./monitor-terraform.sh [log-file]
-#        Default: /tmp/terraform.log
+# Monitor OpenTofu operations in real-time
+# Usage: ./monitor-tofu.sh [log-file]
+#        Default: /tmp/tofu.log
 set -euo pipefail
 
-LOG_FILE="${1:-/tmp/terraform.log}"
+LOG_FILE="${1:-/tmp/tofu.log}"
 
-echo "=== Terraform Real-Time Monitor ==="
+echo "=== OpenTofu Real-Time Monitor ==="
 echo "Monitoring: $LOG_FILE"
 echo "Press Ctrl+C to stop"
 echo ""

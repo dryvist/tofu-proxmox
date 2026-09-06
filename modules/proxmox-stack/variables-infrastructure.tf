@@ -83,7 +83,7 @@ variable "nodes" {
   description = "Proxmox cluster node inventory (non-secret identity), surfaced to ansible-proxmox via ansible_inventory."
   type = map(object({
     role         = string               # role label: node-1 | node-2 | node-3
-    hardware     = optional(string)     # e.g. amd-desktop, dell-r410, dell-r710
+    hardware     = optional(string)     # capability-shaped label, e.g. compact-node, standard-node, storage-node
     commissioned = optional(bool, true) # false = declared but not yet installed
     # Distinct from commissioned: an already-installed node can still be
     # temporarily ineligible for per-node ("DaemonSet-style") service
