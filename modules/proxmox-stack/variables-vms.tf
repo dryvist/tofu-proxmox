@@ -128,6 +128,11 @@ variable "vms" {
     on_boot = optional(bool, true)
     started = optional(bool, true)
 
+    # Boot ORDER override; lower starts first. Unset keeps the VMID-derived
+    # order in modules/proxmox-vm/main.tf, so this is a no-op until a guest
+    # sets it. See docs/CONTAINER_SCHEMA.md.
+    startup_order = optional(number)
+
     # Features
     agent_enabled = optional(bool, true)
     protection    = optional(bool, false)
@@ -182,6 +187,16 @@ variable "vms" {
       for k, v in var.vms : contains(["std", "cirrus", "vmware", "qxl"], v.vga_type)
     ])
     error_message = "The vga_type for each VM must be one of: std, cirrus, vmware, qxl."
+  }
+
+  # Proxmox stores startup order as a positive integer; 0 and fractions are
+  # silently coerced, which would reorder a guest without saying so.
+  validation {
+    condition = alltrue([
+      for k, v in var.vms :
+      v.startup_order == null || (v.startup_order >= 1 && floor(v.startup_order) == v.startup_order)
+    ])
+    error_message = "vms.<name>.startup_order must be a positive whole number (lower starts first), or unset to keep the VMID-derived order."
   }
 }
 
