@@ -152,7 +152,7 @@ run "allowlisted_pre_law_name_is_accepted" {
   variables {
     containers = {
       # Single-digit suffix, and the digit matches no node. Exempt only because
-      # it is named in the tracked allowlist.
+      # it is named in the (private, here test-supplied) allowlist.
       llm-router-1 = {
         node_name = "node-alpha"
         vm_id     = 501000
@@ -160,6 +160,9 @@ run "allowlisted_pre_law_name_is_accepted" {
         vlan      = "ai"
         dhcp      = true
       }
+    }
+    guest_naming_exceptions = {
+      llm-router-1 = "pre-law name awaiting a planned rename"
     }
   }
 

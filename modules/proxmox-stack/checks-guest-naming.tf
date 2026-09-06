@@ -71,7 +71,7 @@ locals {
         : substr(m[0], 0, 1) != tostring(local.node_logical_ids[g.node])
         ? "${g.kind} \"${g.name}\": node digit ${substr(m[0], 0, 1)} does not match node \"${g.node}\" (logical_id ${local.node_logical_ids[g.node]}). Expected a name ending -${local.node_logical_ids[g.node]}<instance>."
         : ""
-      ) if !contains(var.guest_naming_exceptions, g.name)
+      ) if !contains(keys(var.guest_naming_exceptions), g.name)
     ]
     if contains(keys(local.node_logical_ids), g.node)
   ]))
@@ -83,16 +83,18 @@ locals {
 # rename is a separate, riskier operation — a guest deriving its cluster
 # identity from its hostname rejoins as a NEW peer, leaving the old entry as a
 # failed voter — so the renames ride a planned resize instead.
-# Tracked: Vikunja project 43, item 276. Shrink this list; never grow it.
+#
+# The roster is a real-guest-name list, so it is NOT committed here — a public
+# repository is exactly the wrong place for it (same reason node_name-to-guest
+# topology never appears in prose). It lives in the private desired state
+# alongside the node digit map it is judged against (`deployment.json`'s
+# `guest_naming_exceptions`, wired in main.tf), keyed by guest name with the
+# reason as the value so an entry cannot be added silently. Only the rule is
+# public; the roster stays private. Shrink it; never grow it.
 variable "guest_naming_exceptions" {
-  description = "Guest names exempted from the node-digit naming law, by exact name. Pre-law names awaiting a planned rename only — every entry is debt, tracked in Vikunja project 43 item 276."
-  type        = list(string)
-  default = [
-    # Router pool members, referenced by name literal in locals-ingress-pools.tf.
-    "llm-router-1",
-    "llm-router-2",
-    "llm-router-3",
-  ]
+  description = "Guest names exempted from the node-digit naming law, name -> reason. Sourced from the private desired state, never committed here — every entry is pre-law debt awaiting a planned rename."
+  type        = map(string)
+  default     = {}
 }
 
 # terraform_data is a provider-less plan-time anchor, the same idiom checks.tf

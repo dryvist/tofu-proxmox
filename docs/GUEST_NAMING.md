@@ -66,10 +66,12 @@ from `node_storage` is not judged by the datastore guard.
 | A numeric suffix on a guest with `ha = true` | A relocatable guest cannot truthfully encode a node. |
 | Two nodes with the same `logical_id` | Every name built from that digit is ambiguous. |
 
-Pre-law names awaiting a planned rename are listed explicitly in
-`var.guest_naming_exceptions` in `checks-guest-naming.tf`, each an item of debt
-tracked in the issue tracker. Shrink that list; never grow it, and never weaken
-the rule to make a name pass.
+Pre-law names awaiting a planned rename are listed in the private desired
+state's `guest_naming_exceptions` (guest name -> reason), wired into
+`var.guest_naming_exceptions` in `checks-guest-naming.tf` via `main.tf` — not
+committed here, since the roster is real guest names and this repository is
+public. Shrink that list; never grow it, and never weaken the rule to make a
+name pass.
 
 > **Renaming an existing guest is a separate, riskier operation.** A guest that
 > derives its cluster identity from its hostname rejoins as a **new** peer under
