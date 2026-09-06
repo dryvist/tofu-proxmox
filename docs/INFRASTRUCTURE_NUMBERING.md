@@ -15,8 +15,10 @@ maintenance windows allow — they are **not** the target.
 
 ## Hostname & Multi-Instance Naming Law
 
-**FUTURE LAW**: For all new multi-instance containers or VMs, the hostname suffix MUST be two digits where the **first digit is the Proxmox node ID**.
-For example, instead of `zammad-1` and `zammad-2`, use `zammad-20` (Node 2, instance 0) and `zammad-30` (Node 3, instance 0).
+A guest name is `<app>-<NM>`: `N` the node's logical digit, `M` a zero-based
+counter for that app on that node — always two digits, never one — and only for
+guests **pinned** to their node. The rule, the pinned/relocatable condition, and
+the plan-time guard that enforces it: **[GUEST_NAMING.md](./GUEST_NAMING.md)**.
 
 ## Node naming standard
 
