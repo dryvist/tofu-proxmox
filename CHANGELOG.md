@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.14.0](https://github.com/dryvist/tofu-proxmox/compare/v3.13.0...v3.14.0) (2026-09-06)
+
+
+### Features
+
+* **startup:** add VM startup_order override and order tier-0 guests ([#1076](https://github.com/dryvist/tofu-proxmox/issues/1076)) ([a43b240](https://github.com/dryvist/tofu-proxmox/commit/a43b24044efda6060e9fbeace8641008c0f665cc))
+
 ## [3.13.0](https://github.com/dryvist/tofu-proxmox/compare/v3.12.0...v3.13.0) (2026-09-05)
 
 
