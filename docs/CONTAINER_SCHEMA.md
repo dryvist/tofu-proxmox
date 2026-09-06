@@ -60,10 +60,40 @@ fails the start and latches the service in an error state.
 ## `startup_order` — boot ordering
 
 Unset, boot order is derived from the VMID in
-`modules/proxmox-container/main.tf`: a guest below 1000 uses its VMID
+`modules/proxmox-container/main.tf` (and `modules/proxmox-vm/main.tf`, which
+carries the identical field for VMs): a guest below 1000 uses its VMID
 directly, everything else uses the VMID's thousands prefix. That encodes tier
 only by accident of the numbering scheme, so a legacy three-digit guest sorts
 ahead of every six-digit one and boots before the ingress, the secret store
 and the log collectors. Set `startup_order` on any guest whose boot position
 is load-bearing; lower starts first. Leaving it unset keeps the derivation, so
 adding the field changes no existing guest.
+
+The desired state reserves the low end for the guests everything else waits
+on, lower first:
+
+| Order | Tier |
+| --- | --- |
+| 10 | DNS resolvers |
+| 20 | The secret store |
+| 30 | Databases |
+| 40 | Ingress |
+
+Every VMID-derived value in this estate is 100 or above, so an explicitly
+ordered guest always precedes an unordered one and the rest of the estate
+needs no field at all.
+
+`up_delay` stays at the shared 10 s for every guest, tier-0 included. It is a
+blind sleep between one guest and the next, not a readiness gate — nothing
+checks that the secret store unsealed or that Postgres is accepting
+connections — so a larger number would be a guess that lengthens every cold
+boot without making any dependant's first connection succeed. The dependants'
+own retry is what covers the gap. Raise it only against a measured start time.
+
+### Ordering is per node
+
+Proxmox sequences guest startup **within one node**. There is no cluster-wide
+ordering: a guest on one node and a service it depends on on another start
+concurrently, and no value of `startup_order` on either changes that. Ordering
+is therefore only a guarantee for a dependant colocated with its dependency;
+across nodes, the dependant must tolerate the service being absent and retry.
