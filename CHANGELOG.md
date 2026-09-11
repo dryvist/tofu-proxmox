@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.15.0](https://github.com/dryvist/tofu-proxmox/compare/v3.14.0...v3.15.0) (2026-09-11)
+
+
+### Features
+
+* **ingress:** publish llm UI url_path ([8ab69c7](https://github.com/dryvist/tofu-proxmox/commit/8ab69c7d5824c361d4b4715a3c4e851af523a527))
+* **ingress:** publish llm UI url_path and human-UI audience ([91ffc64](https://github.com/dryvist/tofu-proxmox/commit/91ffc640b69857d1c67187916274aeb9744a832c))
+* **ingress:** show the llm router as a human UI ([8806a92](https://github.com/dryvist/tofu-proxmox/commit/8806a923ed941cf6cb93e82e8a682e0d3e5423df))
+* **naming:** enforce the guest node-digit naming law at plan time ([#1077](https://github.com/dryvist/tofu-proxmox/issues/1077)) ([b91744e](https://github.com/dryvist/tofu-proxmox/commit/b91744eac9238c593ae683233f93f7c702b2105d))
+
+
+### Bug Fixes
+
+* **schema:** close the node object so a mistyped logical_id fails loudly ([#1081](https://github.com/dryvist/tofu-proxmox/issues/1081)) ([789655f](https://github.com/dryvist/tofu-proxmox/commit/789655f977dc4d3403a8900b33e9b0abd40620fb))
+* **scripts:** fail when the node name is unset instead of checking another node ([#1082](https://github.com/dryvist/tofu-proxmox/issues/1082)) ([c5f924e](https://github.com/dryvist/tofu-proxmox/commit/c5f924ee732224de89c22b13ef972a8b84b8b6e0))
+
 ## [3.14.0](https://github.com/dryvist/tofu-proxmox/compare/v3.13.0...v3.14.0) (2026-09-06)
 
 
