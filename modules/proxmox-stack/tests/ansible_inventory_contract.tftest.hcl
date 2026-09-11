@@ -460,6 +460,29 @@ run "ansible_inventory_ingress_route_table" {
         vlan      = "mgmt"
         tags      = ["terraform", "container", "monitoring", "docker"]
       }
+      # One member of the name-keyed llm_router_backends pool
+      # (locals-ingress-pools.tf). Present, the llm POOL route renders. The
+      # llm-router tag is the fabric identity (locals-llm-fabric.tf); DHCP-first
+      # with a 6-digit positional VMID (ai tier 5).
+      "llm-router-1" = {
+        vm_id     = 501000
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "llm-router-1"
+        vlan      = "ai"
+        tags      = ["terraform", "container", "llm-router"]
+      }
+      # s3 renders the machine S3 API row: sso = false in ingress_services and
+      # NOT in ingress_human_unauthed_routes, so it must keep deriving
+      # ui = false — the legacy behavior the llm ui exception must not leak
+      # into. Same shape as the audience run's s3 fixture.
+      "s3" = {
+        vm_id     = 311311
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "s3"
+        vlan      = "siem"
+      }
     }
     domain = "example.com"
   }
@@ -562,6 +585,34 @@ run "ansible_inventory_ingress_route_table" {
   assert {
     condition     = length([for r in output.ansible_inventory.ingress : r if r.name == "proxmox"]) == 0
     error_message = "ingress must omit the proxmox apex route when no node is commissioned"
+  }
+
+  # llm POOL row (rendered by the llm-router-1 fixture container above): the
+  # LiteLLM router UI is fronted at /ui as a HUMAN UI (ui = true) while the
+  # route itself skips the Authelia gate (sso = false, OpenAI-compatible API
+  # clients). ui therefore comes from the ingress_human_unauthed_routes
+  # exception, not from sso — pin all three together or the traefik role
+  # gates the API path or exposes the UI ungated. url_path is read via try()
+  # because the ingress tuple is heterogeneous (most rows lack the key).
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "llm" && try(r.url_path, "") == "/ui" && r.ui == true && r.sso == false
+    ]) == 1
+    error_message = "the llm pool route must carry url_path=\"/ui\", ui=true and sso=false — the UI link contract: the human UI exception must give it ui=true while the API route stays ungated"
+  }
+
+  # Legacy rows unaffected by the llm ui exception: s3 is sso=false and NOT in
+  # ingress_human_unauthed_routes, so it must still derive ui=false. Without
+  # this, the llm exception leaking into the ui derivation (e.g. ui=true for
+  # every sso=false row) would pass the assert above while misfiling every
+  # machine API row into the human column on the boards.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "s3" && r.sso == false && r.ui == false
+    ]) == 1
+    error_message = "s3 must stay sso=false AND ui=false — the llm human-UI exception must not leak into machine rows, or every ungated API row lands in the human column"
   }
 }
 
