@@ -22,6 +22,7 @@ locals {
     "homeassistant",
     "proxmox",
     "pbs",
+    "llm",
   ])
 
   # Routes with no owning guest to inherit a summary from: load-balanced pools,
