@@ -49,7 +49,7 @@ Network devices and hosts configured to send syslog to `<internal-domain>`.
 | UniFi (IPFIX)  | 2055 | UDP      | netflow |
 
 The `netflow` Splunk index receives NetFlow/IPFIX data from UniFi for traffic analysis.
-See `SPLUNK_INDEXES.md` for index retention settings.
+See the ansible-splunk role's index registry (`roles/splunk_docker/defaults/main/`) for index retention settings.
 
 #### UniFi Network Device Configuration
 
@@ -176,5 +176,5 @@ splunk search 'index=unifi earliest=-5m'
 
 ## Related Documentation
 
-- [SPLUNK_INDEXES.md](./SPLUNK_INDEXES.md) - Index definitions and retention
+- Splunk index definitions are in the ansible-splunk role (`roles/splunk_docker/defaults/main/`)
 - [ansible-proxmox-apps README](https://github.com/JacobPEvans/ansible-proxmox-apps) - Ansible roles
