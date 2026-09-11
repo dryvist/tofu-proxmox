@@ -77,7 +77,17 @@
       "type": "object",
       "description": "Cluster node identity, keyed by node name. At least one required.",
       "minProperties": 1,
-      "additionalProperties": true
+      "additionalProperties": {
+        "$ref": "#/definitions/node_input"
+      }
+    },
+    "guest_naming_exceptions": {
+      "type": "object",
+      "description": "Guest names exempted from the node-digit naming law, name -> reason (modules/proxmox-stack/checks-guest-naming.tf). Never add a name here without a reason; shrink, never grow.",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "node_storage": {
       "type": "object",
@@ -135,6 +145,49 @@
     }
   },
   "definitions": {
+    "node_input": {
+      "type": "object",
+      "description": "A single node's identity, matching modules/proxmox-stack/variables-infrastructure.tf's `nodes` object type exactly. additionalProperties is false HERE (unlike most of this schema) precisely because of logical_id: with additionalProperties true, a misspelled or mistyped logical_id key is not a validation error, it is silently accepted as an unknown extra property, and the node it belongs to silently opts OUT of the guest node-digit naming law — every one of its guests stops being judged, with no error anywhere. Closing this object converts that failure from silent to loud. If a new node attribute is ever needed, add it here rather than reopening additionalProperties.",
+      "required": ["role"],
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Per-node role label, e.g. node-1."
+        },
+        "hardware": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Capability-shaped label, e.g. compact-node, standard-node, storage-node."
+        },
+        "commissioned": {
+          "type": "boolean",
+          "description": "false = declared but not yet installed."
+        },
+        "services_enabled": {
+          "type": "boolean",
+          "description": "Gates per-node (DaemonSet-style) service placement only."
+        },
+        "nautobot_device_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "This node's name in the inventory system of record, when it differs from the key."
+        },
+        "cluster_roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Cluster-wide roles this node plays, e.g. storage. Exactly one node must claim each role."
+        },
+        "logical_id": {
+          "type": "integer",
+          "description": "The node's logical digit for the guest node-digit naming law (modules/proxmox-stack/checks-guest-naming.tf). Unset opts the node out of naming enforcement entirely — see the object description above for why that makes this the one key in this object that must never be allowed to typo silently."
+        }
+      }
+    },
     "node_service_template": {
       "type": "object",
       "description": "One per-node service template. Only the shape the generator dereferences unconditionally is required; per_node keys MUST be keys of `nodes` — JSON Schema cannot express that cross-sibling constraint, so it is enforced by the postcondition on data.aws_s3_object.deployment in main.tf.",

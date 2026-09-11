@@ -83,7 +83,7 @@ variable "nodes" {
   description = "Proxmox cluster node inventory (non-secret identity), surfaced to ansible-proxmox via ansible_inventory."
   type = map(object({
     role         = string               # role label: node-1 | node-2 | node-3
-    hardware     = optional(string)     # e.g. amd-desktop, dell-r410, dell-r710
+    hardware     = optional(string)     # capability-shaped label, e.g. compact-node, standard-node, storage-node
     commissioned = optional(bool, true) # false = declared but not yet installed
     # Distinct from commissioned: an already-installed node can still be
     # temporarily ineligible for per-node ("DaemonSet-style") service
@@ -118,6 +118,23 @@ variable "nodes" {
     # drift source. Known values: "storage" (serves the bulk datasets other
     # nodes pull from).
     cluster_roles = optional(list(string), [])
+
+    # Logical node digit — the `N` in a guest name's `-NM` suffix. THE single
+    # declaration of the node-digit map; checks-guest-naming.tf reads it and
+    # nothing else restates it.
+    #
+    # Chosen, not derived. It is NOT the corosync node id (that numbers nodes by
+    # join order, an accident of cluster history) and it is not automatically the
+    # leading digit of the hardware model either, because two models in this
+    # estate lead with the same digit and a shared digit makes every name built
+    # from it ambiguous. Where the model's own digit is free it is the obvious
+    # choice; where it collides, a free digit is picked instead. The guard
+    # rejects a duplicate.
+    #
+    # Unset means the node opts out: guests on it are not judged against the
+    # naming law, the same way a node absent from node_storage is not judged
+    # against the datastore guard.
+    logical_id = optional(number)
   }))
   default = {}
 }

@@ -48,6 +48,7 @@ locals {
         health_check      = true
         health_check_path = "/health/liveliness"
         sso               = false # OpenAI-compatible API clients
+        url_path          = "/ui"
       }
     ] : [],
     # agentgateway MCP fabric: mcp.<domain> (proxy plane) + agentgateway.<domain>

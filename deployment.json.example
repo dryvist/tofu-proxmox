@@ -26,11 +26,12 @@
     "nonprod": "198.51.100.0/24"
   },
   "_nodes_comment": "Proxmox cluster nodes (non-secret identity). proxmox_node above is the primary/default placement. commissioned=false means declared but not yet installed. services_enabled=false gates per-node (\"DaemonSet-style\") service placement only -- an already-commissioned node mid a storage rebuild keeps commissioned=true but sets services_enabled=false until the rebuild finishes; everything else it already runs is unaffected.",
+  "_nodes_comment": "logical_id is the node's LOGICAL DIGIT \u2014 the N in a guest name's -NM suffix, and the single declaration of the node-digit map. It is chosen, not derived, and is NOT the corosync node id (which numbers nodes by join order and changes when a node is rebuilt). Normally the leading digit of the node's hardware model; where two models lead with the same digit, a free digit is picked instead, because two nodes sharing a digit make every name built from it ambiguous \u2014 modules/proxmox-stack/checks-guest-naming.tf rejects a duplicate. Omitting it opts the node out: its guests are not judged against the naming law. See docs/INFRASTRUCTURE_NUMBERING.md.",
   "nodes": {
-    "proxmox-1": { "role": "node-1", "hardware": "amd-desktop" },
-    "proxmox-2": { "role": "node-2", "hardware": "dell-r410", "services_enabled": false },
-    "proxmox-3": { "role": "node-3", "hardware": "dell-r710", "cluster_roles": ["storage"] },
-    "proxmox-4": { "role": "node-4", "hardware": "dell-r710" }
+    "proxmox-1": { "role": "node-1", "hardware": "compact-node", "logical_id": 1 },
+    "proxmox-2": { "role": "node-2", "hardware": "standard-node", "services_enabled": false, "logical_id": 6 },
+    "proxmox-3": { "role": "node-3", "hardware": "storage-node", "cluster_roles": ["storage"], "logical_id": 4 },
+    "proxmox-4": { "role": "node-4", "hardware": "standard-node", "logical_id": 9 }
   },
   "proxmox_iso_debian": "debian-13.2.0-amd64-netinst.iso",
   "proxmox_ct_template_debian": "debian-13-standard_13.1-2_amd64.tar.zst",
