@@ -21,7 +21,7 @@ locals {
     # = the Cribl Edge backend. Lands in the dedicated `honeypot` Splunk index
     # (Path B — forensics/correlation) in parallel with the real-time apprise
     # push (Path A). T-Pot reuses the same frontend with its sourcetype set by
-    # the Cribl Edge pipeline. See docs/HONEYPOTS.md + docs/SPLUNK_INDEXES.md.
+    # the Cribl Edge pipeline. See docs/HONEYPOTS.md and the ansible-splunk role for index definitions.
     honeypot = { standard = 519, high = 1519, index = "honeypot", sourcetype = "honeypot:opencanary" }
     # UniFi firewall/IPS/threat syslog, split from the admin/system stream above so
     # security events land in the dedicated `firewall` index instead of being buried

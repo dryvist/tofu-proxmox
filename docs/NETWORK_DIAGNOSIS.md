@@ -53,7 +53,7 @@ default-route uplink only; the per-link source counters still populate.
 
 ## Splunk: the `netmon_metrics` index
 
-Defined in [`SPLUNK_INDEXES.md`](./SPLUNK_INDEXES.md); created by the `ansible-splunk` role. Probe
+Created by the `ansible-splunk` role (see `roles/splunk_docker/defaults/main/`). Probe
 data is high-volume, so the index uses **90-day** retention — separate from the 365-day
 security-log indexes.
 
@@ -76,4 +76,4 @@ security-log indexes.
 
 - [SMOKEPING.md](./SMOKEPING.md) — aggregate latency/loss/jitter RRD dashboard
 - [LOGGING_PIPELINE.md](./LOGGING_PIPELINE.md) — syslog/NetFlow → Cribl → Splunk architecture
-- [SPLUNK_INDEXES.md](./SPLUNK_INDEXES.md) — index definitions and retention
+- Splunk indexes are defined in the ansible-splunk role (`roles/splunk_docker/defaults/main/`)
