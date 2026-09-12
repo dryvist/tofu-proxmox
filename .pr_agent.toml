@@ -1,0 +1,34 @@
+# PR-Agent configuration for this repository.
+#
+# Read over the API by the shared `pr-agent.yml` workflow, from the pull
+# request's own head branch, so a change here is exercised by the pull request
+# that makes it. Replaces .github/ai-review/checklist.md.
+
+[pr_reviewer]
+extra_instructions = """
+Answer one verdict per point below against the diff only, citing the hunk you
+relied on. Say nothing about a point the diff does not touch.
+
+- Does the change introduce, document, or script a targeted (`-target=...`)
+  apply? A partial apply republishes an incomplete inventory over the full
+  artifact.
+- Does the change add a `check` block for a load-bearing assertion? A failed
+  check only warns, so guards must be pre/postconditions or variable
+  `validation`.
+- Does the change alter a guest's `node_name`? That attribute is ForceNew, so
+  the plan would destroy and recreate a running guest.
+- Does the diff add a literal hostname, IP address, port mapping, or
+  credential? Reach a service by FQDN, never by a literal address, and never
+  commit a secret.
+- Does the change consume a new `deployment.json` attribute without declaring
+  it in the matching variable schema? Undeclared attributes are silently
+  stripped.
+- Does the change set the boot-on-start key for the right guest kind? VMs use
+  `on_boot` and containers use `start_on_boot`; the wrong key is silently
+  stripped and reads back clean.
+- Is every changed `.tf` file `tofu fmt` clean?
+- Are new variables documented with a description, validated where they can be,
+  and marked `sensitive = true` when they carry a secret?
+- Is the pull request title a Conventional Commits subject?
+- Does changed behaviour come with the documentation update it needs?
+"""
