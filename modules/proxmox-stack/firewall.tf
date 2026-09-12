@@ -57,16 +57,17 @@ module "firewall" {
   openbao_container_ids = local.openbao_container_ids
 
   # Postgres + Nautobot + Vikunja containers — 5432 / 8080 / 3456 from internal
-  postgres_container_ids = local.postgres_container_ids
-  nautobot_container_ids = local.nautobot_container_ids
-  vikunja_container_ids  = local.vikunja_container_ids
-  authelia_container_ids = local.authelia_container_ids
-  zammad_container_ids   = local.zammad_container_ids
-  homarr_container_ids   = local.homarr_container_ids
-  homepage_container_ids = local.homepage_container_ids
-  glance_container_ids   = local.glance_container_ids
-  status_container_ids   = local.status_container_ids
-  grafana_container_ids  = local.grafana_container_ids
+  postgres_container_ids    = local.postgres_container_ids
+  nautobot_container_ids    = local.nautobot_container_ids
+  vikunja_container_ids     = local.vikunja_container_ids
+  mcp_gateway_container_ids = local.mcp_gateway_container_ids
+  authelia_container_ids    = local.authelia_container_ids
+  zammad_container_ids      = local.zammad_container_ids
+  homarr_container_ids      = local.homarr_container_ids
+  homepage_container_ids    = local.homepage_container_ids
+  glance_container_ids      = local.glance_container_ids
+  status_container_ids      = local.status_container_ids
+  grafana_container_ids     = local.grafana_container_ids
 
   # Ingress (Traefik HA) containers (ingress tag) — define-disabled guest firewall
   # that pre-allows keepalived VRRP + 80/443 so a later enforcement flip is safe.

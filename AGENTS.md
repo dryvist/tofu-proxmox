@@ -158,7 +158,6 @@ For slow operations and "context deadline exceeded" debugging:
 ### Ansible
 
 - Lint with `ansible-lint` before committing.
-- `molecule test` for roles.
 - Ensure idempotency (running twice produces no changes).
 - Use FQCN (`ansible.builtin.apt`).
 
@@ -236,6 +235,5 @@ Stop and ask before proceeding if any of the following are true:
 - [ ] Variables documented; `sensitive = true` where appropriate.
 - [ ] `tofu validate` passes.
 - [ ] `ansible-lint` passes (if Ansible touched).
-- [ ] `molecule test` passes (if Ansible roles touched).
 - [ ] Conventional commit message.
 - [ ] Documentation updated where needed.

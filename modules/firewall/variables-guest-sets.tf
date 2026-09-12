@@ -102,6 +102,12 @@ variable "vikunja_container_ids" {
   default     = {}
 }
 
+variable "mcp_gateway_container_ids" {
+  description = "Map of MCP gateway container names to their IDs (mcp-gateway tag). Single HTTP/SSE endpoint (IBM mcp-context-forge) — inbound mcp_gateway_web (4444) from internal; egress needs outbound_https for pip install and upstream MCP server API calls."
+  type        = map(number)
+  default     = {}
+}
+
 variable "homarr_container_ids" {
   description = "Map of Homarr container names to their IDs (homarr tag). Dashboard — inbound homarr_web (7575) from internal; egress internal plus HTTPS/HTTP, because the app is installed by a borrowed community-scripts installer that resolves its release from GitHub at converge time."
   type        = map(number)

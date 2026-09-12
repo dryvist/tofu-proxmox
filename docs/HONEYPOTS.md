@@ -34,7 +34,7 @@ notification gateway** that pages you on Slack and your phone in seconds.
 - **Path B (forensic):** the same events ride the existing syslog pipeline
   (frontend **519** → backend **1519**, added to `syslog_port_map` in
   `constants.tf`) into the dedicated `honeypot` Splunk index for history,
-  dashboards, and correlation. See [SPLUNK_INDEXES.md](./SPLUNK_INDEXES.md).
+  dashboards, and correlation. See the ansible-splunk role's index registry (`roles/splunk_docker/defaults/main/` 09-custom-indexes-core.yml and 10-custom-indexes-extra.yml).
 
 ## Sensors (popular + maintained, June 2026)
 
@@ -179,7 +179,7 @@ untrusted segment and never holds anything real.
 ## Related
 
 - [INFRASTRUCTURE_NUMBERING.md](./INFRASTRUCTURE_NUMBERING.md) — VMID scheme
-- [SPLUNK_INDEXES.md](./SPLUNK_INDEXES.md) — the `honeypot` index
+- The `honeypot` index is defined in the ansible-splunk role (`roles/splunk_docker/defaults/main/`)
 - [LOGGING_PIPELINE.md](./LOGGING_PIPELINE.md) — syslog → Cribl → Splunk
 - Upstream:
   [T-Pot](https://github.com/telekom-security/tpotce) ·
