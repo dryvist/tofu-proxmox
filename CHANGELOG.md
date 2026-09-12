@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.16.0](https://github.com/dryvist/tofu-proxmox/compare/v3.15.0...v3.16.0) (2026-09-12)
+
+
+### Features
+
+* **firewall:** add MCP gateway LXC firewall rules and ingress route ([#1089](https://github.com/dryvist/tofu-proxmox/issues/1089)) ([ac7205b](https://github.com/dryvist/tofu-proxmox/commit/ac7205b0789024ff89a50de11902e97353b978c8))
+
+
+### Bug Fixes
+
+* **ci:** drop the empty with block from the release dispatch job ([#1096](https://github.com/dryvist/tofu-proxmox/issues/1096)) ([c393f21](https://github.com/dryvist/tofu-proxmox/commit/c393f21c8b23ce4311cde10c36e720b5b1f14691))
+
 ## [3.15.0](https://github.com/dryvist/tofu-proxmox/compare/v3.14.0...v3.15.0) (2026-09-11)
 
 
