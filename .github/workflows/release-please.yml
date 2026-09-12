@@ -25,5 +25,4 @@ jobs:
     permissions: {}
     uses: dryvist/.github/.github/workflows/_dispatch-flake-consumers.yml@main
     with:
-      event_type: upstream-released
     secrets: inherit
