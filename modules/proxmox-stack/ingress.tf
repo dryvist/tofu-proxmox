@@ -99,9 +99,11 @@ locals {
     homepage = { backend = "homepage", port = local.pipeline_constants.service_ports.homepage_web }
     glance   = { backend = "glance", port = local.pipeline_constants.service_ports.glance_web }
     # Catalog synthetics (Gatus) + keystone status page (Uptime Kuma) on the
-    # shared `status` guest. Browser-only, default Authelia gate.
-    gatus         = { backend = "status", port = local.pipeline_constants.service_ports.gatus_web }
-    "uptime-kuma" = { backend = "status", port = local.pipeline_constants.service_ports.uptime_kuma_web }
+    # shared `status` guest. Browser UIs take the default Authelia gate; the
+    # Gatus endpoints API is token-authenticated (external-endpoint pushers).
+    gatus            = { backend = "status", port = local.pipeline_constants.service_ports.gatus_web }
+    "gatus-external" = { hostname = "gatus", path_prefix = "/api/v1/endpoints/", priority = 100, backend = "status", port = local.pipeline_constants.service_ports.gatus_web, sso = false }
+    "uptime-kuma"    = { backend = "status", port = local.pipeline_constants.service_ports.uptime_kuma_web }
     # Grafana metrics UI (observability guest). Browser-only, default gate.
     grafana         = { backend = "grafana", port = local.pipeline_constants.service_ports.grafana_web }
     smokeping       = { backend = "smokeping", port = local.pipeline_constants.service_ports.smokeping_web }
@@ -111,10 +113,11 @@ locals {
     "docs-static" = { backend = "docs-static", port = local.pipeline_constants.service_ports.docs_static_web }
 
     # Additional user-facing app services (clean portless HTTPS routes)
-    healthchecks = { backend = "healthchecks", port = local.pipeline_constants.service_ports.healthchecks_web }
-    immich       = { backend = "immich", port = local.pipeline_constants.service_ports.immich_web }
-    zot          = { backend = "registry", port = local.pipeline_constants.service_ports.zot_web }
-    autobrr      = { backend = "download-vpn", port = local.pipeline_constants.service_ports.autobrr_web }
-    "idrac-kvm"  = { backend = "idrac-kvm", port = local.pipeline_constants.service_ports.idrac_kvm_web }
+    healthchecks        = { backend = "healthchecks", port = local.pipeline_constants.service_ports.healthchecks_web }
+    "healthchecks-ping" = { hostname = "healthchecks", path_prefix = "/ping/", priority = 100, backend = "healthchecks", port = local.pipeline_constants.service_ports.healthchecks_web, sso = false } # ping-key pings from the deadman pushers
+    immich              = { backend = "immich", port = local.pipeline_constants.service_ports.immich_web }
+    zot                 = { backend = "registry", port = local.pipeline_constants.service_ports.zot_web }
+    autobrr             = { backend = "download-vpn", port = local.pipeline_constants.service_ports.autobrr_web }
+    "idrac-kvm"         = { backend = "idrac-kvm", port = local.pipeline_constants.service_ports.idrac_kvm_web }
   })
 }
