@@ -43,6 +43,9 @@ locals {
       homeassistant_web = 8123
       openproject_web   = 80
       prometheus_web    = 9090
+      # MCP gateway (mcp-gateway tag): single HTTP/SSE endpoint every MCP
+      # client (Claude Code, Codex, Cursor, OpenCode) connects to.
+      mcp_gateway_web = 4444
       # Grafana + VictoriaMetrics observability guest (grafana tag):
       # grafana_web is the Traefik-fronted UI; victoriametrics receives
       # Prometheus remote_write from the pipeline (internal-only).

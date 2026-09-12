@@ -31,7 +31,8 @@ locals {
     nautobot           = { backend = "nautobot", port = local.pipeline_constants.service_ports.nautobot_web }
     "nautobot-api"     = { hostname = "nautobot", path_prefix = "/api/", priority = 100, backend = "nautobot", port = local.pipeline_constants.service_ports.nautobot_web, sso = false }
     "nautobot-graphql" = { hostname = "nautobot", path_prefix = "/graphql/", priority = 100, backend = "nautobot", port = local.pipeline_constants.service_ports.nautobot_web, sso = false }
-    vikunja            = { backend = "vikunja", port = local.pipeline_constants.service_ports.vikunja_web, sso = false } # MCP API tokens hit /api/v1 on this host
+    vikunja            = { backend = "vikunja", port = local.pipeline_constants.service_ports.vikunja_web, sso = false }         # MCP API tokens hit /api/v1 on this host
+    "mcp-gateway"      = { backend = "mcp-gateway", port = local.pipeline_constants.service_ports.mcp_gateway_web, sso = false } # every MCP client authenticates natively, not via browser
     "object-storage"   = { backend = "s3", port = local.pipeline_constants.service_ports.object_storage_console }
     # RustFS S3 API fronted by a valid-TLS hostname. Path-style S3 format.
     s3 = { backend = "s3", port = local.pipeline_constants.service_ports.object_storage_s3, sso = false } # machine S3 clients
