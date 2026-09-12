@@ -66,11 +66,9 @@ jobs:
               - 'scripts/tofu-test-modules.sh'
 
   # ==========================================================================
-  # SHARED GATE — Markdown Lint + File Size via the org reusable gate.
-  # The shared gate's File Size job keys off the `nix`/`markdown` filter
-  # outputs, so the OpenTofu source globs are supplied under the `nix` key to
-  # preserve "file-size runs when terraform OR markdown changed". `nix_validate`
-  # stays off, so that key only drives file-size here.
+  # SHARED GATE — markdown lint, file size, fmt/validate/tflint (`tofu_ci`)
+  # and the OSV differential scan via the org reusable gate. The `terraform`
+  # filter drives both `tofu_ci` and `file_size` there.
   # ==========================================================================
   shared-gate:
     permissions:
@@ -83,15 +81,18 @@ jobs:
       actions: write
     uses: dryvist/.github/.github/workflows/_ci-gate.yml@main
     with:
-      markdown_lint: true
-      file_size: true
+      osv_scan: true
+      tofu_ci: true
       dependency_review: false
       zizmor: false
       filters: |
-        nix:
+        terraform:
           - '**.tf'
           - '**.tfvars'
+          - '**.tftest.hcl'
           - '.terraform.lock.hcl'
+          - '.tflint.hcl'
+          - 'modules/**/tests/**'
           - 'tests/**'
         markdown:
           - '**.md'
@@ -111,12 +112,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2
-      - name: OpenTofu Format
-        run: tofu fmt -check
+      # fmt/validate/tflint run in the org gate (`tofu_ci`); init is still
+      # needed here because `tofu test` needs providers resolved.
       - name: OpenTofu Init
         run: tofu init -backend=false
-      - name: OpenTofu Validate
-        run: tofu validate -no-color
       - name: OpenTofu Test
         run: tofu test -no-color
       # The root invocation above does not recurse into modules/*/tests, so it
