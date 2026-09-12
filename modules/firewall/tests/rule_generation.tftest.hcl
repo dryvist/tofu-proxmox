@@ -48,6 +48,8 @@ variables {
       victoriametrics = 8428
       authelia_portal = 9091
       zammad_web      = 8080
+      # MCP gateway web/API (referenced by mcp_gateway_services_rules)
+      mcp_gateway_web = 4444
       ntp             = 123
       idrac_kvm_r410  = 5410
       idrac_kvm_r710  = 5710
