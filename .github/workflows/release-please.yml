@@ -24,5 +24,5 @@ jobs:
     if: needs.release-please.outputs.release_created == 'true'
     permissions: {}
     uses: dryvist/.github/.github/workflows/_dispatch-flake-consumers.yml@main
-    with:
+    # source_input defaults to the calling repo name.
     secrets: inherit
