@@ -36,6 +36,9 @@ locals {
     semaphore_docker     = 10349 # Semaphore Ansible run UI          -> index=semaphore (new)
     clickhouse_docker    = 10350 # ClickHouse OLAP store             -> index=clickhouse (new)
     phoenix_docker       = 10351 # Arize Phoenix LLM observability   -> index=phoenix (new)
+
+    # Distinct from homelab_llm (10323), which maps to sourcetype=llamaswap.
+    llm_router = 10352 # ansible-proxmox-ai llm_router (LiteLLM proxy) -> index=llm, sourcetype=litellm:proxy
   }
 
   # Splunk landing zone per source, keyed to the SAME names as ai_log_ports so
@@ -69,6 +72,8 @@ locals {
     semaphore_docker     = { index = "semaphore", sourcetype = "semaphore:run" }
     clickhouse_docker    = { index = "clickhouse", sourcetype = "clickhouse:app" }
     phoenix_docker       = { index = "phoenix", sourcetype = "phoenix:app" }
+
+    llm_router = { index = "llm", sourcetype = "litellm:proxy" }
   }
 
   ai_log_routing = {
