@@ -148,11 +148,11 @@ module "homelab" {
   llm_large_serving_host = try(local.deployment.llm_large_serving_host, "")
   llm_large_serving_ip   = try(local.deployment.llm_large_serving_ip, "")
   # CPU LLM pool scaler identity — paths/tags derived in constants-llm-cpu-scaler.tf.
-  llm_cpu_scaler = try(local.deployment.llm_cpu_scaler, {})
-  network_cidrs  = local.deployment.network_cidrs
-  network_domains        = try(local.deployment.network_domains, {})
-  node_storage           = try(local.deployment.node_storage, {})
-  nodes                  = local.deployment.nodes
+  llm_cpu_scaler  = try(local.deployment.llm_cpu_scaler, {})
+  network_cidrs   = local.deployment.network_cidrs
+  network_domains = try(local.deployment.network_domains, {})
+  node_storage    = try(local.deployment.node_storage, {})
+  nodes           = local.deployment.nodes
   # Degraded-window acknowledgement for the OpenBao voter-spread guard —
   # per-run via TF_VAR_openbao_accept_quorum_loss_on_node_failure, default off.
   openbao_accept_quorum_loss_on_node_failure = var.openbao_accept_quorum_loss_on_node_failure

@@ -232,9 +232,7 @@ locals {
       seerr_web       = 5055
       sortarr_web     = 8787
     }
-    serving = local.serving
-    # CPU LLM pool scaler (identity + derived paths + tags). See
-    # constants-llm-cpu-scaler.tf — ansible must not restate the unit name.
-    llm_cpu_scaler = local.llm_cpu_scaler
+    serving        = local.serving
+    llm_cpu_scaler = local.llm_cpu_scaler # see constants-llm-cpu-scaler.tf
   }
 }
