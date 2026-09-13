@@ -49,6 +49,27 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$",
       "description": "Reserved address of the heavy-tier LLM serving host (bare IPv4, no mask). Optional, and omitted rather than guessed: consumers fail loudly on absence. Published to consumers as constants.serving.ip."
     },
+    "llm_cpu_scaler": {
+      "type": "object",
+      "description": "CPU LLM pool scaler. Declare the unit name ONCE; tofu derives /opt|/etc|/var/lib paths and publishes constants.llm_cpu_scaler. Tags name which container tags select pool members. All fields optional — defaults live in modules/proxmox-stack/variables-llm-cpu-scaler.tf.",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "poll_interval_sec": { "type": "integer", "minimum": 1 },
+        "idle_teardown_sec": { "type": "integer", "minimum": 1 },
+        "min_free_ram_mb": { "type": "integer", "minimum": 1 },
+        "tags": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "moe": { "type": "string", "minLength": 1 },
+            "nine_b": { "type": "string", "minLength": 1 },
+            "warm": { "type": "string", "minLength": 1 },
+            "pool": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
     "vm_ssh_public_key": {
       "type": "string",
       "pattern": "^(ssh-|ecdsa-)"

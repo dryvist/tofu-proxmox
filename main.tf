@@ -147,7 +147,9 @@ module "homelab" {
   # than substituting a default. See modules/proxmox-stack/variables-serving.tf.
   llm_large_serving_host = try(local.deployment.llm_large_serving_host, "")
   llm_large_serving_ip   = try(local.deployment.llm_large_serving_ip, "")
-  network_cidrs          = local.deployment.network_cidrs
+  # CPU LLM pool scaler identity — paths/tags derived in constants-llm-cpu-scaler.tf.
+  llm_cpu_scaler = try(local.deployment.llm_cpu_scaler, {})
+  network_cidrs  = local.deployment.network_cidrs
   network_domains        = try(local.deployment.network_domains, {})
   node_storage           = try(local.deployment.node_storage, {})
   nodes                  = local.deployment.nodes

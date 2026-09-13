@@ -9,6 +9,10 @@
   "_llm_large_serving_comment": "Heavy-tier LLM serving host. Both keys are OPTIONAL and exist because this host is a fixed-address reservation made by the network IaC, not a PVE guest -- it never appears in `containers`, so unlike every other host its address cannot be derived as cidrhost(network_cidrs[vlan], vm_id). They are published to the Ansible repositories as constants.serving.host / constants.serving.ip, replacing the copies those repositories used to carry themselves. Omit both if you do not run a heavy tier: consumers report the absence and stop, and that is the intended behaviour -- a substituted default would fail later and somewhere else, as a timeout against an address nobody chose.",
   "llm_large_serving_host": "llm-large-example",
   "llm_large_serving_ip": "192.0.2.10",
+  "_llm_cpu_scaler_comment": "CPU LLM pool scaler identity. Declare `name` ONCE — tofu derives install/config/state paths and systemd unit names and publishes them as constants.llm_cpu_scaler. Tags name which container tags select pool members / the warm instance. Omit the object entirely to take module defaults.",
+  "llm_cpu_scaler": {
+    "name": "llm-cpu-scaler"
+  },
   "network_cidrs": {
     "lan_main": "192.0.2.0/24",
     "mgmt": "198.51.100.0/24",
@@ -1160,6 +1164,132 @@
         },
         {
           "path": "/dev/dri/renderD128"
+        }
+      ]
+    },
+    "_llm_cpu_pool_comment": "CPU inference pool (AI tier 5, ai VLAN). Hostnames follow GUEST_NAMING: -NM = node logical_id + 0-based instance. Tag llm-cpu-warm marks the always-on MoE; llm-cpu-moe / llm-cpu-9b select ansible groups and open llm_fast_api via locals-llm-fabric.tf. VMIDs are illustrative — reconcile against live inventory.",
+    "llm-moe-50": {
+      "vm_id": 503020,
+      "node_name": "pve-r540",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-moe-50",
+      "description": "CPU MoE serving (Qwen3.6-35B-A3B) on pve-r540 — warm instance 0",
+      "cpu_cores": 16,
+      "memory_dedicated": 49152,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-cpu-pool",
+        "llm-cpu-moe",
+        "llm-cpu-warm",
+        "llm-moe"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "start_on_boot": true,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "bulk",
+          "size": "120G",
+          "path": "/var/lib/llm"
+        }
+      ]
+    },
+    "llm-moe-51": {
+      "vm_id": 503030,
+      "node_name": "pve-r540",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-moe-51",
+      "description": "CPU MoE serving (Qwen3.6-35B-A3B) on pve-r540 — scaler instance 1",
+      "cpu_cores": 16,
+      "memory_dedicated": 49152,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-cpu-pool",
+        "llm-cpu-moe",
+        "llm-moe"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "start_on_boot": false,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "bulk",
+          "size": "120G",
+          "path": "/var/lib/llm"
+        }
+      ]
+    },
+    "llm-9b-50": {
+      "vm_id": 503040,
+      "node_name": "pve-r540",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-9b-50",
+      "description": "CPU 9B serving (Qwen3.5-9B) on pve-r540 — scaler instance 0",
+      "cpu_cores": 8,
+      "memory_dedicated": 16384,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-cpu-pool",
+        "llm-cpu-9b",
+        "llm-9b"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "start_on_boot": false,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "bulk",
+          "size": "80G",
+          "path": "/var/lib/llm"
+        }
+      ]
+    },
+    "llm-9b-51": {
+      "vm_id": 503050,
+      "node_name": "pve-r540",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-9b-51",
+      "description": "CPU 9B serving (Qwen3.5-9B) on pve-r540 — scaler instance 1",
+      "cpu_cores": 8,
+      "memory_dedicated": 16384,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-cpu-pool",
+        "llm-cpu-9b",
+        "llm-9b"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "start_on_boot": false,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "bulk",
+          "size": "80G",
+          "path": "/var/lib/llm"
         }
       ]
     },
