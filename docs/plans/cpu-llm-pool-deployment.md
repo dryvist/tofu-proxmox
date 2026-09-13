@@ -1,13 +1,14 @@
 # CPU LLM pool — live deployment.json merge
 
 The four guests, node `logical_id`, and scaler identity live in the private
-RustFS `deployment.json`. The committed
-[`deployment.json.example`](../../deployment.json.example) shows the shape;
-merge before Terrakube apply.
+`deployment.json`. The committed
+[`deployment.json.example`](../../deployment.json.example) shows the shape with
+placeholder node names only; merge the real placement into the private object
+before Terrakube apply.
 
 ## Prerequisites
 
-- `nodes.<cpu-pool-node>.logical_id` matches the guest `-NM` digit (5 for R540).
+- `nodes.<cpu-pool-node>.logical_id` matches the guest `-NM` digit.
 - That node is commissioned with a `bulk` dataset for GGUF mounts.
 - Chosen VMIDs are free on the ai serving band.
 - Top-level `llm_cpu_scaler.name` is set (or omitted to take the module
@@ -17,8 +18,9 @@ merge before Terrakube apply.
 ## Containers to add
 
 Copy the `_llm_cpu_pool_comment` block from `deployment.json.example`
-(`llm-moe-50` through `llm-9b-51`). Guest tags must match
-`llm_cpu_scaler.tags` (module defaults unless overridden).
+(`llm-moe-50` through `llm-9b-51`), then replace placeholder `node_name` /
+VMIDs with the live values. Guest tags must match `llm_cpu_scaler.tags`
+(module defaults unless overridden).
 
 After apply:
 
