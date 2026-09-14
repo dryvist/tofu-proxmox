@@ -2,20 +2,14 @@
 # Referenced by ansible_inventory output for downstream consumption
 locals {
   pipeline_constants = {
-    # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
-    service_ports = merge(local.dashboard_ports, local.herdr_ports, {
-      haproxy_stats     = 8404
-      splunk_web        = 8000
-      splunk_hec        = 8088
-      splunk_mgmt       = 8089
-      splunk_forwarding = 9997
-      cribl_edge_api    = 9420
-      cribl_stream_api  = 9000
-      # Cribl-to-Cribl (S2S/TCP-JSON) ingestion: remote Edge nodes -> HAProxy -> Stream
-      cribl_s2s = 10300
-      # Cribl Stream Prometheus remote_write receiver (internal-only; no Traefik/DNS)
-      cribl_prometheus_rw = 9201
-      apt_cacher_ng       = 3142
+    # Observability/security data-plane ports — splunk/cribl/grafana/victoria
+    # metrics/clickhouse/otel/phoenix/langfuse/smokeping/exporters/elastic —
+    # live in constants-observability.tf (12 KB file-size gate, same split as
+    # dashboard_ports/ai_log_ports). dashboard_ports: see
+    # constants-dashboards.tf.
+    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.observability_ports, {
+      haproxy_stats = 8404
+      apt_cacher_ng = 3142
       # Egress forward-proxy (Squid) for the confined AI agent plane. An
       # `ai-proxied` guest has NO 443-to-any of its own: its only WAN path is
       # CONNECT through this port, where the domain allowlist is enforced.
@@ -42,15 +36,9 @@ locals {
       zammad_web        = 8080 # nginx in-guest, own container IP (independent of nautobot's 8080); Traefik-fronted
       homeassistant_web = 8123
       openproject_web   = 80
-      prometheus_web    = 9090
       # MCP gateway (mcp-gateway tag): single HTTP/SSE endpoint every MCP
       # client (Claude Code, Codex, Cursor, OpenCode) connects to.
       mcp_gateway_web = 4444
-      # Grafana + VictoriaMetrics observability guest (grafana tag):
-      # grafana_web is the Traefik-fronted UI; victoriametrics receives
-      # Prometheus remote_write from the pipeline (internal-only).
-      grafana_web     = 3000
-      victoriametrics = 8428
       docs_static_web = 80 # nginx document root on the static file host
       homarr_web      = 7575
       # Proxmox cluster web UI (:8006) — fronted by Traefik at the ingress
@@ -99,59 +87,15 @@ locals {
       # so it resolves the same hermes_webhook/hermes_dashboard/hermes_api
       # keys above — no separate port constants needed.
       # AI orchestration stack web UIs (Traefik-fronted) — n8n, Dify, LangFlow,
-      # LangGraph, and Langfuse (LLM trace/cost/eval). ingress.tf references these.
+      # and Langfuse (LLM trace/cost/eval). ingress.tf references these.
       n8n_web      = 5678
       dify_web     = 80
       langflow_web = 7860
-      langfuse_web = 3000
-      # Arize Phoenix (LLM observability — traces/evals), the Langfuse sibling on
-      # the siem VLAN. phoenix_web serves the UI plus the OTLP/HTTP ingest path
-      # (/v1/traces); phoenix_grpc is the OTLP/gRPC ingest, internal only;
-      # phoenix_metrics is the Prometheus /metrics endpoint, scraped directly and
-      # never Traefik-fronted.
-      phoenix_web     = 6006
-      phoenix_grpc    = 4317
-      phoenix_metrics = 9090
-      # ClickHouse (clickhouse + observability tags) — dedicated OLAP store for
-      # the observability stack. clickhouse_http = HTTP query interface;
-      # clickhouse_native = the native TCP client/replication protocol.
-      clickhouse_http   = 8123
-      clickhouse_native = 9000
       # LangGraph, self-hosted zero-cloud: `langgraph dev` in-memory server API +
       # its self-hosted Agent Chat UI (Next.js). langgraph_api is deliberately 8124,
       # NOT the LangGraph default 8123, which collides with homeassistant_web above.
       langgraph_api     = 8124
       agent_chat_ui_web = 3000
-      # OpenTelemetry ingest on Cribl Edge — native OTLP sources, one port per
-      # signal type (gRPC/HTTP) so Cribl routes by type without inspecting payload.
-      # AI orchestration apps (OpenLLMetry) emit here; Cribl forks to Langfuse +
-      # Splunk. Standalone sources, unrelated to the cc-edge-copilot-otel pack.
-      otel_traces_grpc  = 4317
-      otel_traces_http  = 4318
-      otel_metrics_grpc = 4327
-      otel_metrics_http = 4328
-      otel_logs_grpc    = 4337
-      otel_logs_http    = 4338
-      # Network-quality monitoring (Prometheus-native stack — see docs/SMOKEPING.md):
-      #   smokeping_web      — SmokePing RRD/CGI UI (optional, fronted by Traefik)
-      #   speedtest_exporter — throughput (Mbps) exporter, scraped by Prometheus
-      #   smokeping_prober   — SuperQ ICMP/UDP latency-distribution histograms (system of record)
-      #   blackbox_exporter  — DNS / HTTP(S) / TLS / TCP probes + reachability SLO
-      #   atlas_exporter     — RIPE Atlas outside-in results (external vantage)
-      #   irtt               — isochronous UDP RTT/jitter server (real RFC-3393 jitter / MOS)
-      smokeping_web      = 80
-      speedtest_exporter = 9798
-      smokeping_prober   = 9374
-      blackbox_exporter  = 9115
-      atlas_exporter     = 9400
-      irtt               = 2112
-      # node_exporter on the Proxmox hosts (host metrics -> siem Cribl Edge scrape)
-      node_exporter = 9100
-      # Per-uplink network diagnosis (CT netmon-*, mgmt VLAN, Docker-in-LXC): the
-      # satellite gRPC exporter scraped by each prober's Telegraf, alongside DOCSIS
-      # modem SNMP and native active probes. Pushes to Cribl -> Splunk
-      # netmon_metrics index. See docs/NETWORK_DIAGNOSIS.md.
-      satellite_exporter = 9817
     })
     syslog_port_map = local.syslog_port_map
     # Legacy flat map: high/backend ports keyed by family, plus the standard
