@@ -81,5 +81,14 @@ locals {
     # modem SNMP and native active probes. Pushes to [ADDRESS] -> Splunk
     # netmon_metrics index. See docs/NETWORK_DIAGNOSIS.md.
     satellite_exporter = 9817
+
+    # --- Elastic Stack (elastic tag, two-node hot/hot cluster) --------------
+    # elastic_http = REST/API/data-plane (internal only; Cribl + app clients
+    # reach it directly, never via Traefik). elastic_transport = node-to-node
+    # protocol (9300) between the two cluster peers — opened only between the
+    # elastic guests. kibana_web = the Traefik-fronted browser UI, pooled.
+    elastic_http      = 9200
+    elastic_transport = 9300
+    kibana_web        = 5601
   }
 }

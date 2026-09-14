@@ -68,6 +68,9 @@ module "firewall" {
   glance_container_ids      = local.glance_container_ids
   status_container_ids      = local.status_container_ids
   grafana_container_ids     = local.grafana_container_ids
+  # Placement-aware (map of {vm_id, node_name}) — the elastic cluster is a
+  # two-node hot/hot pair, so its guest firewall targets each peer's own node.
+  elastic_container_ids = local.elastic_container_ids
 
   # Ingress (Traefik HA) containers (ingress tag) — define-disabled guest firewall
   # that pre-allows keepalived VRRP + 80/443 so a later enforcement flip is safe.

@@ -135,6 +135,102 @@ run "ansible_inventory_vikunja_web_constant" {
   }
 }
 
+# --- elastic stack constants (observability split, #<PR>) ---
+
+run "ansible_inventory_elastic_ports_published" {
+  command = plan
+
+  # Elasticsearch REST/transport + Kibana all flow through the single flat
+  # service_ports map, exactly like every other service port — a consumer must
+  # be able to read them from the published inventory with no other source.
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.elastic_http == 9200
+    error_message = "constants.service_ports.elastic_http must be 9200 (Elasticsearch REST/API)"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.elastic_transport == 9300
+    error_message = "constants.service_ports.elastic_transport must be 9300 (Elasticsearch inter-node)"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.kibana_web == 5601
+    error_message = "constants.service_ports.kibana_web must be 5601 (Kibana UI)"
+  }
+}
+
+run "ansible_inventory_observability_split_preserves_moved_keys" {
+  command = plan
+
+  # The observability/security family moved to constants-observability.tf and
+  # is merged in, so the flat service_ports map must still carry every moved
+  # key at its original value. A dropped or colliding key breaks the firewall
+  # (which reads local.svc_ports == service_ports) and the pipeline consumers.
+  assert {
+    condition = alltrue([
+      # Logging / SIEM data plane
+      output.ansible_inventory.constants.service_ports.splunk_web == 8000,
+      output.ansible_inventory.constants.service_ports.splunk_hec == 8088,
+      output.ansible_inventory.constants.service_ports.splunk_mgmt == 8089,
+      output.ansible_inventory.constants.service_ports.splunk_forwarding == 9997,
+      output.ansible_inventory.constants.service_ports.cribl_edge_api == 9420,
+      output.ansible_inventory.constants.service_ports.cribl_stream_api == 9000,
+      output.ansible_inventory.constants.service_ports.cribl_s2s == 10300,
+      output.ansible_inventory.constants.service_ports.cribl_prometheus_rw == 9201,
+      # Metrics / dashboards / OLAP
+      output.ansible_inventory.constants.service_ports.prometheus_web == 9090,
+      output.ansible_inventory.constants.service_ports.grafana_web == 3000,
+      output.ansible_inventory.constants.service_ports.victoriametrics == 8428,
+      output.ansible_inventory.constants.service_ports.clickhouse_http == 8123,
+      output.ansible_inventory.constants.service_ports.clickhouse_native == 9000,
+      # LLM observability
+      output.ansible_inventory.constants.service_ports.langfuse_web == 3000,
+      output.ansible_inventory.constants.service_ports.phoenix_web == 6006,
+      output.ansible_inventory.constants.service_ports.phoenix_grpc == 4317,
+      output.ansible_inventory.constants.service_ports.phoenix_metrics == 9090,
+      # OTel ingest
+      output.ansible_inventory.constants.service_ports.otel_traces_grpc == 4317,
+      output.ansible_inventory.constants.service_ports.otel_traces_http == 4318,
+      output.ansible_inventory.constants.service_ports.otel_metrics_grpc == 4327,
+      output.ansible_inventory.constants.service_ports.otel_metrics_http == 4328,
+      output.ansible_inventory.constants.service_ports.otel_logs_grpc == 4337,
+      output.ansible_inventory.constants.service_ports.otel_logs_http == 4338,
+      # Network-quality monitoring + host/metric exporters
+      output.ansible_inventory.constants.service_ports.smokeping_web == 80,
+      output.ansible_inventory.constants.service_ports.speedtest_exporter == 9798,
+      output.ansible_inventory.constants.service_ports.smokeping_prober == 9374,
+      output.ansible_inventory.constants.service_ports.blackbox_exporter == 9115,
+      output.ansible_inventory.constants.service_ports.atlas_exporter == 9400,
+      output.ansible_inventory.constants.service_ports.irtt == 2112,
+      output.ansible_inventory.constants.service_ports.node_exporter == 9100,
+      output.ansible_inventory.constants.service_ports.satellite_exporter == 9817,
+    ])
+    error_message = "a key moved to constants-observability.tf changed value or was dropped from service_ports — the observability split must be value-identical"
+  }
+}
+
+run "ansible_inventory_elastic_log_routing_published" {
+  command = plan
+
+  # The elastic guests' OWN app logs all ride the ai_log pipeline to the
+  # elastic Splunk index (like clickhouse/phoenix before it). A consumer
+  # reading ai_log_routing must find both the port entry and its landing zone.
+  assert {
+    condition     = output.ansible_inventory.constants.ai_log_ports.elastic_docker == 10353
+    error_message = "constants.ai_log_ports.elastic_docker must be 10353 (elastic_stack app logs)"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.constants.ai_log_routing.elastic_docker.index == "elastic"
+    error_message = "constants.ai_log_routing.elastic_docker.index must be elastic — the guests' app logs land in the elastic index"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.constants.ai_log_routing.elastic_docker.sourcetype == "elastic:app"
+    error_message = "constants.ai_log_routing.elastic_docker.sourcetype must be elastic:app"
+  }
+}
+
 run "ansible_inventory_constants_exists" {
   command = plan
 
@@ -659,6 +755,81 @@ run "ansible_inventory_ingress_nautobot_not_postgres" {
   assert {
     condition     = length([for r in output.ansible_inventory.ingress : r if r.name == "postgres"]) == 0
     error_message = "postgres must never appear in the ingress table (in-cluster 5432 only, no Traefik front)"
+  }
+}
+
+# --- ingress: kibana load-balanced across the two elastic cluster peers ---
+# The elastic stack runs Kibana on BOTH cluster nodes; the kibana.<domain>
+# route is a health-checked pool over the two FQDN backends (tag-backed, the
+# same derivation as firecrawl/agentgateway). A pool with no member renders no
+# route at all.
+run "ansible_inventory_ingress_kibana_two_peer_pool" {
+  command = plan
+
+  variables {
+    domain = "example.com"
+    containers = {
+      "elastic-node-a" = {
+        vm_id     = 410050
+        node_name = "proxmox-a"
+        dhcp      = true
+        hostname  = "elastic-node-a"
+        vlan      = "siem"
+        tags      = ["terraform", "container", "elastic", "docker"]
+      }
+      "elastic-node-b" = {
+        vm_id     = 410060
+        node_name = "proxmox-b"
+        dhcp      = true
+        hostname  = "elastic-node-b"
+        vlan      = "siem"
+        tags      = ["terraform", "container", "elastic", "docker"]
+      }
+    }
+  }
+
+  # Exactly one kibana route, carrying BOTH peer FQDNs as its backends pool,
+  # on the kibana_web constant (5601).
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress : r if r.name == "kibana"
+    ]) == 1
+    error_message = "ingress must front exactly one kibana route when elastic peers exist"
+  }
+
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress : r
+      if r.name == "kibana" &&
+         r.port == output.ansible_inventory.constants.service_ports.kibana_web &&
+         length(r.backends) == 2 &&
+         contains(r.backends, "elastic-node-a.example.com") &&
+         contains(r.backends, "elastic-node-b.example.com")
+    ]) == 1
+    error_message = "kibana route must pool both elastic FQDNs on the kibana_web constant"
+  }
+
+  # Browser UI: gated (sso expected true — a browser cannot be machine-ungated).
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress : r if r.name == "kibana" && r.sso == true
+    ]) == 1
+    error_message = "kibana route must be SSO-gated (browser UI)"
+  }
+}
+
+# With no elastic-tagged container, the kibana pool has no member and the
+# route must not render at all (no dangling backend to black-hole traffic).
+run "ansible_inventory_ingress_kibana_omitted_without_peers" {
+  command = plan
+
+  variables {
+    domain = "example.com"
+  }
+
+  assert {
+    condition     = length([for r in output.ansible_inventory.ingress : r if r.name == "kibana"]) == 0
+    error_message = "kibana route must be omitted when no elastic-tagged container is deployed"
   }
 }
 

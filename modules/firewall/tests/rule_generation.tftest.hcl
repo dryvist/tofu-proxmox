@@ -99,6 +99,10 @@ variables {
       otel_metrics_http = 4328
       otel_logs_grpc    = 4337
       otel_logs_http    = 4338
+      # Elastic Stack (referenced by elastic_rules)
+      elastic_http     = 9200
+      elastic_transport = 9300
+      kibana_web        = 5601
     }
     syslog_ports = {
       default   = 514
@@ -1008,5 +1012,81 @@ run "herdr_client_rules_track_constants_and_internal_scope" {
   assert {
     condition     = alltrue([for r in local.herdr_client_services_rules : r.source == local.internal_src])
     error_message = "every herdr client service rule must be scoped to the internal networks"
+  }
+}
+
+# --- elastic service rules (Elasticsearch + Kibana) ---
+
+run "elastic_rules_track_constants_and_internal_scope" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.10.0/24", "192.168.20.0/24"]
+  }
+
+  # Exactly three live rules: TCP elastic_http (9200), TCP elastic_transport
+  # (9300, node-to-node) and TCP kibana_web (5601) — all from internal only.
+  assert {
+    condition     = length(local.elastic_services_rules) == 3
+    error_message = "elastic_services_rules must be exactly 3 (elastic_http + elastic_transport + kibana_web), got ${length(local.elastic_services_rules)}"
+  }
+
+  assert {
+    condition     = local.elastic_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.elastic_http)
+    error_message = "elastic http rule must track the elastic_http service-port constant"
+  }
+
+  assert {
+    condition     = local.elastic_services_rules[1].dport == tostring(var.pipeline_constants.service_ports.elastic_transport)
+    error_message = "elastic transport rule must track the elastic_transport service-port constant"
+  }
+
+  assert {
+    condition     = local.elastic_services_rules[2].dport == tostring(var.pipeline_constants.service_ports.kibana_web)
+    error_message = "kibana rule must track the kibana_web service-port constant"
+  }
+
+  assert {
+    condition     = alltrue([for r in local.elastic_services_rules : r.source == local.internal_src])
+    error_message = "every elastic service rule must be scoped to the internal networks"
+  }
+}
+
+# A two-node cluster spans two Proxmox nodes, and the default-deny guest
+# firewall is per-node: the options/rules resources MUST address each guest on
+# the node it actually lives on (each.value.node_name), never the module's
+# single var.node_name — otherwise one guest's rules land on the wrong node.
+run "elastic_firewall_targets_each_guest_node" {
+  command = plan
+
+  variables {
+    elastic_container_ids = {
+      elastic_proxmox_a = { vm_id = 410050, node_name = "proxmox-a" }
+      elastic_proxmox_b = { vm_id = 410060, node_name = "proxmox-b" }
+    }
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_firewall_options.elastic_container["elastic_proxmox_a"].node_name == "proxmox-a" &&
+      proxmox_virtual_environment_firewall_options.elastic_container["elastic_proxmox_b"].node_name == "proxmox-b"
+    )
+    error_message = "elastic firewall options must address each guest on its own node (each.value.node_name), got A=${proxmox_virtual_environment_firewall_options.elastic_container["elastic_proxmox_a"].node_name} B=${proxmox_virtual_environment_firewall_options.elastic_container["elastic_proxmox_b"].node_name}"
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_firewall_rules.elastic_container["elastic_proxmox_a"].node_name == "proxmox-a" &&
+      proxmox_virtual_environment_firewall_rules.elastic_container["elastic_proxmox_b"].node_name == "proxmox-b"
+    )
+    error_message = "elastic firewall rules must address each guest on its own node (each.value.node_name)"
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_firewall_options.elastic_container["elastic_proxmox_a"].container_id == 410050 &&
+      proxmox_virtual_environment_firewall_options.elastic_container["elastic_proxmox_b"].container_id == 410060
+    )
+    error_message = "elastic firewall options must carry the guest's own container_id"
   }
 }

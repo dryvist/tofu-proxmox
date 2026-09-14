@@ -128,5 +128,20 @@ locals {
         sso          = false # OTLP trace-span producers (Claude Code, machines)
       }
     ] : [],
+    # Elastic Stack — one kibana.<domain> route load-balancing the two cluster
+    # peers' Kibana UIs. /api/status is Kibana's readiness endpoint (returns
+    # green once it can reach ES), so a peer whose colocated ES is down is
+    # evicted. Each backend points at BOTH ES hosts, so either survivor serves
+    # the full UI. Browser-only: default gate (sso omitted -> true).
+    length(local.elastic_kibana_backends) > 0 ? [
+      {
+        name              = "kibana"
+        backends          = local.elastic_kibana_backends
+        port              = local.pipeline_constants.service_ports.kibana_web
+        health_check      = true
+        health_check_path = "/api/status"
+        sso               = true # browser UI — gated
+      }
+    ] : [],
   )
 }

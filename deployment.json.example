@@ -868,6 +868,71 @@
         "keyctl": true
       }
     },
+    "_elastic_comment": "Elastic Stack (elasticsearch + kibana) as a TWO-NODE HOT/HOT cluster, one Docker-in-LXC compose stack per host (ansible-proxmox-apps elastic_stack role). Placement: the two always-on hosts as keyed in this object's `nodes` — each guest's `node_name` is set by the private desired state and must NEVER be named here (the names in this example are censored placeholders). Names follow the naming law: elastic-<node-logical-digit><instance> (e.g. elastic-10 / elastic-90 here), pinned (ha:false), resolved from each node's `logical_id` at apply. Both guests carry the `elastic` tag — the tag drives the placement-aware firewall (elastic_rules.tf), the Kibana ingress pool, and elastic_group. Observability tier 4 positional VMIDs (docs vmid-network-tiers); siem VLAN; DNS-first (dhcp:true). ES REST 9200 + transport 9300 internal-only; Kibana 5601 fronted by Traefik. Security ON (xpack) + HTTP/transport TLS from an OpenBao-PKI cluster CA. Each guest gets a persistent `/var/lib/elastic-stack` data mount so indexes survive rebuilds. The 2/2 quorum reality: losing either peer stops writes until it returns — documented in docs/ELASTICSEARCH.md.",
+    "elastic-10": {
+      "vm_id": 410050,
+      "node_name": "proxmox-1",
+      "dhcp": true,
+      "vlan": "siem",
+      "hostname": "elastic-10",
+      "description": "Elastic Stack cluster peer 1 (elasticsearch + kibana, Docker-in-LXC compose). Two-node hot/hot set: both peers data + master-eligible, replicas=1. Security on + TLS (OpenBao PKI CA).",
+      "cpu_cores": 4,
+      "memory_dedicated": 8192,
+      "tags": [
+        "terraform",
+        "container",
+        "elastic",
+        "docker"
+      ],
+      "pool_id": "infrastructure",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 24
+      },
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "100G",
+          "path": "/var/lib/elastic-stack"
+        }
+      ]
+    },
+    "elastic-90": {
+      "vm_id": 410060,
+      "node_name": "proxmox-4",
+      "dhcp": true,
+      "vlan": "siem",
+      "hostname": "elastic-90",
+      "description": "Elastic Stack cluster peer 2 (elasticsearch + kibana, Docker-in-LXC compose). Two-node hot/hot set: both peers data + master-eligible, replicas=1. Security on + TLS (OpenBao PKI CA).",
+      "cpu_cores": 4,
+      "memory_dedicated": 8192,
+      "tags": [
+        "terraform",
+        "container",
+        "elastic",
+        "docker"
+      ],
+      "pool_id": "infrastructure",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 24
+      },
+      "features": {
+        "nesting": true,
+        "keyctl": true
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "100G",
+          "path": "/var/lib/elastic-stack"
+        }
+      ]
+    },
     "authelia": {
       "vm_id": 100050,
       "vlan": "mgmt",

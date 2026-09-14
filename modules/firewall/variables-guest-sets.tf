@@ -227,3 +227,12 @@ variable "tpot_vm_ids" {
   type        = map(number)
   default     = {}
 }
+
+variable "elastic_container_ids" {
+  description = "Map of Elastic Stack LXC names to {vm_id, node_name} (elastic tag). A two-node hot/hot cluster spans TWO [ADDRESS] nodes, and the default-deny guest firewall is per-node resource — so unlike every other guest set (plain map(number), all on the one module node_name) this map carries each guest's placement and elastic_rules.tf addresses its resources with each.value.node_name. Inbound elastic_http (9200, internal) + elastic_transport (9300, cluster peers) + kibana_web (5601, via Traefik); egress outbound-internal + HTTPS (docker.elastic.co image pulls at converge)."
+  type = map(object({
+    vm_id     = number
+    node_name = string
+  }))
+  default = {}
+}

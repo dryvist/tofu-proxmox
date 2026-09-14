@@ -8,7 +8,7 @@ locals {
   # deterministic; skip-missing-peers falls out naturally (an undeclared or
   # gated-off instance simply isn't in var.containers). Adding the next pooled
   # app = add its tag here + one route entry below — nothing else.
-  pooled_backend_tags = ["hindsight", "zammad", "agentgateway", "firecrawl"]
+  pooled_backend_tags = ["hindsight", "zammad", "agentgateway", "firecrawl", "elastic"]
   tag_backend_pools = {
     for tag in local.pooled_backend_tags : tag => [
       for k in sort([
@@ -71,6 +71,15 @@ locals {
   # stateless (identical config from the agentgateway_docker role; targets are
   # themselves pooled or external), so no sticky.
   agentgateway_backends = local.tag_backend_pools["agentgateway"]
+
+  # Elastic Stack pool: two hot/hot cluster peers, both running Kibana.
+  # Kibana on each peer points at BOTH ES hosts, so either backend serves the
+  # full UI regardless of which peer's ES is queried — Load-balanced by Traefik,
+  # sharing xpack encryption keys (elastic_stack role) so sessions survive
+  # failover. Derived by TAG (elastic), same as firecrawl: the hostname carries
+  # the node digit under the multi-instance naming law, so a name literal would
+  # silently drop the route if a guest moved nodes.
+  elastic_kibana_backends = local.tag_backend_pools["elastic"]
 
   # Cribl Stream OTLP pool: LXCs tagged cribl + stream, fronting the in_otel
   # OTLP/HTTP trace-span listener at otel.<domain>. Two-tag identity (matches

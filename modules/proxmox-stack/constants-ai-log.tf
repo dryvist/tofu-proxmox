@@ -39,6 +39,10 @@ locals {
 
     # Distinct from homelab_llm (10323), which maps to sourcetype=llamaswap.
     llm_router = 10352 # ansible-proxmox-ai llm_router (LiteLLM proxy) -> index=llm, sourcetype=litellm:proxy
+
+    # elastic_stack (elastic tag) — Elasticsearch + Kibana Docker-in-LXC
+    # cluster; the guests' OWN app logs land in the elastic Splunk index.
+    elastic_docker = 10353 # Elastic Stack (ES + Kibana)             -> index=elastic
   }
 
   # Splunk landing zone per source, keyed to the SAME names as ai_log_ports so
@@ -74,6 +78,8 @@ locals {
     phoenix_docker       = { index = "phoenix", sourcetype = "phoenix:app" }
 
     llm_router = { index = "llm", sourcetype = "litellm:proxy" }
+
+    elastic_docker = { index = "elastic", sourcetype = "elastic:app" }
   }
 
   ai_log_routing = {
