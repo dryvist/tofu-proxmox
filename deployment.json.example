@@ -9,6 +9,10 @@
   "_llm_large_serving_comment": "Heavy-tier LLM serving host. Both keys are OPTIONAL and exist because this host is a fixed-address reservation made by the network IaC, not a PVE guest -- it never appears in `containers`, so unlike every other host its address cannot be derived as cidrhost(network_cidrs[vlan], vm_id). They are published to the Ansible repositories as constants.serving.host / constants.serving.ip, replacing the copies those repositories used to carry themselves. Omit both if you do not run a heavy tier: consumers report the absence and stop, and that is the intended behaviour -- a substituted default would fail later and somewhere else, as a timeout against an address nobody chose.",
   "llm_large_serving_host": "llm-large-example",
   "llm_large_serving_ip": "192.0.2.10",
+  "_llm_cpu_scaler_comment": "CPU LLM pool scaler identity. Declare `name` ONCE — tofu derives install/config/state paths and systemd unit names and publishes them as constants.llm_cpu_scaler. Tags name which container tags select pool members / the warm instance. Omit the object entirely to take module defaults.",
+  "llm_cpu_scaler": {
+    "name": "llm-cpu-scaler"
+  },
   "network_cidrs": {
     "lan_main": "192.0.2.0/24",
     "mgmt": "198.51.100.0/24",
@@ -31,7 +35,8 @@
     "proxmox-1": { "role": "node-1", "hardware": "compact-node", "logical_id": 1 },
     "proxmox-2": { "role": "node-2", "hardware": "standard-node", "services_enabled": false, "logical_id": 6 },
     "proxmox-3": { "role": "node-3", "hardware": "storage-node", "cluster_roles": ["storage"], "logical_id": 4 },
-    "proxmox-4": { "role": "node-4", "hardware": "standard-node", "logical_id": 9 }
+    "proxmox-4": { "role": "node-4", "hardware": "standard-node", "logical_id": 9 },
+    "proxmox-5": { "role": "node-5", "hardware": "cpu-inference-node", "logical_id": 5 }
   },
   "proxmox_iso_debian": "debian-13.2.0-amd64-netinst.iso",
   "proxmox_ct_template_debian": "debian-13-standard_13.1-2_amd64.tar.zst",
@@ -1160,6 +1165,128 @@
         },
         {
           "path": "/dev/dri/renderD128"
+        }
+      ]
+    },
+    "_llm_cpu_pool_comment": "CPU inference pool (AI tier 5, ai VLAN). Hostnames follow GUEST_NAMING: -NM = node logical_id + 0-based instance (here logical_id 5 → -50/-51 on placeholder proxmox-5). Tag llm-cpu-warm marks the always-on MoE; llm-cpu-moe / llm-cpu-9b select ansible groups and open llm_fast_api via locals-llm-fabric.tf. VMIDs and node_name are illustrative — pin the real node only in the private deployment.json.",
+    "llm-moe-50": {
+      "vm_id": 503020,
+      "node_name": "proxmox-5",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-moe-50",
+      "description": "CPU MoE serving (Qwen3.6-35B-A3B) — warm instance 0",
+      "cpu_cores": 16,
+      "memory_dedicated": 49152,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-cpu-pool",
+        "llm-cpu-moe",
+        "llm-cpu-warm"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "start_on_boot": true,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "bulk",
+          "size": "120G",
+          "path": "/var/lib/llm"
+        }
+      ]
+    },
+    "llm-moe-51": {
+      "vm_id": 503030,
+      "node_name": "proxmox-5",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-moe-51",
+      "description": "CPU MoE serving (Qwen3.6-35B-A3B) — scaler instance 1",
+      "cpu_cores": 16,
+      "memory_dedicated": 49152,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-cpu-pool",
+        "llm-cpu-moe"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "start_on_boot": false,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "bulk",
+          "size": "120G",
+          "path": "/var/lib/llm"
+        }
+      ]
+    },
+    "llm-9b-50": {
+      "vm_id": 503040,
+      "node_name": "proxmox-5",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-9b-50",
+      "description": "CPU 9B serving (Qwen3.5-9B) — scaler instance 0",
+      "cpu_cores": 8,
+      "memory_dedicated": 16384,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-cpu-pool",
+        "llm-cpu-9b"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "start_on_boot": false,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "bulk",
+          "size": "80G",
+          "path": "/var/lib/llm"
+        }
+      ]
+    },
+    "llm-9b-51": {
+      "vm_id": 503050,
+      "node_name": "proxmox-5",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-9b-51",
+      "description": "CPU 9B serving (Qwen3.5-9B) — scaler instance 1",
+      "cpu_cores": 8,
+      "memory_dedicated": 16384,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-cpu-pool",
+        "llm-cpu-9b"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "start_on_boot": false,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "bulk",
+          "size": "80G",
+          "path": "/var/lib/llm"
         }
       ]
     },

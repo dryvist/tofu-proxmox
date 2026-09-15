@@ -232,6 +232,7 @@ locals {
       seerr_web       = 5055
       sortarr_web     = 8787
     }
-    serving = local.serving
+    serving        = local.serving
+    llm_cpu_scaler = local.llm_cpu_scaler # see constants-llm-cpu-scaler.tf
   }
 }
