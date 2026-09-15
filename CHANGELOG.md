@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.17.0](https://github.com/dryvist/tofu-proxmox/compare/v3.16.0...v3.17.0) (2026-09-15)
+
+
+### Features
+
+* **ingress:** token-authenticated push paths for gatus and healthchecks ([#1100](https://github.com/dryvist/tofu-proxmox/issues/1100)) ([29c1b9e](https://github.com/dryvist/tofu-proxmox/commit/29c1b9e8419e0afaa24310c96271b95b022d33de))
+* **llm:** CPU LLM pool guests + scaler constants ([#1104](https://github.com/dryvist/tofu-proxmox/issues/1104)) ([cbb86ae](https://github.com/dryvist/tofu-proxmox/commit/cbb86ae3be55ac5a8173bef876a7396a1e6b81f1))
+* **proxmox-stack:** add llm_router ai_log_ports entry ([#1103](https://github.com/dryvist/tofu-proxmox/issues/1103)) ([620de84](https://github.com/dryvist/tofu-proxmox/commit/620de8478a9d18f739e1d625b2880ed5c742a252))
+
 ## [3.16.0](https://github.com/dryvist/tofu-proxmox/compare/v3.15.0...v3.16.0) (2026-09-12)
 
 
