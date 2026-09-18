@@ -46,6 +46,7 @@ locals {
 
     # AI tier pools.
     llm            = "ai"
+    "llm-ui"       = "ai"
     mcp            = "ai"
     agentgateway   = "ai"
     hindsight      = "ai"

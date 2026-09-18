@@ -22,7 +22,9 @@ locals {
     "homeassistant",
     "proxmox",
     "pbs",
-    "llm",
+    # "llm" removed: it now has its own SSO'd browser row (llm-ui, /ui path
+    # prefix) — the bare API row is machine-only and should stop reading as
+    # human-browsable on the dashboards.
   ])
 
   # Routes with no owning guest to inherit a summary from: load-balanced pools,
@@ -34,6 +36,7 @@ locals {
     hindsight      = "Agent long-term memory API"
     "hindsight-cp" = "Agent memory control plane"
     llm            = "OpenAI-compatible model router"
+    "llm-ui"       = "LiteLLM router admin UI"
     mcp            = "MCP tool proxy"
     openbao        = "Secrets management"
     otel           = "OTLP trace ingest"
