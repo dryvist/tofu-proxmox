@@ -103,7 +103,20 @@ locals {
     gatus         = { backend = "status", port = local.pipeline_constants.service_ports.gatus_web }
     "uptime-kuma" = { backend = "status", port = local.pipeline_constants.service_ports.uptime_kuma_web }
     # Grafana metrics UI (observability guest). Browser-only, default gate.
-    grafana         = { backend = "grafana", port = local.pipeline_constants.service_ports.grafana_web }
+    grafana = { backend = "grafana", port = local.pipeline_constants.service_ports.grafana_web }
+    # The metrics store on the same guest. Agent metric exporters had no
+    # fronted name to send to and reached the guest record directly on its
+    # port, which is the one addressing form the estate does not use.
+    #
+    # Its OTLP ingest paths are exempted from the Authelia forwardAuth
+    # middleware on the Ansible side (a resource regex in
+    # ansible-proxmox-apps), exactly as phoenix and langfuse are: exporters
+    # are machine clients and cannot complete a browser login, so without
+    # the exemption every push is redirected to the portal and dropped while
+    # the pipeline still reports healthy. This stays ONE sso-gated row and
+    # never a second sso = false row — the query and admin surfaces carry no
+    # authentication of their own, so the gate is all that covers them.
+    vm              = { backend = "grafana", port = local.pipeline_constants.service_ports.victoriametrics }
     smokeping       = { backend = "smokeping", port = local.pipeline_constants.service_ports.smokeping_web }
     "haproxy-stats" = { backend = "haproxy", port = local.pipeline_constants.service_ports.haproxy_stats }
     # Static file host. Browser-only, so it takes the default gate (sso omitted
