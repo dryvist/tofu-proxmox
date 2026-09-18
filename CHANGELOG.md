@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.18.0](https://github.com/dryvist/tofu-proxmox/compare/v3.17.0...v3.18.0) (2026-09-18)
+
+
+### Features
+
+* **ingress:** front the metrics store on the ingress zone ([#1112](https://github.com/dryvist/tofu-proxmox/issues/1112)) ([d9834df](https://github.com/dryvist/tofu-proxmox/commit/d9834dff61bff8dd5682a31e0b8118b5dc167516))
+
 ## [3.17.0](https://github.com/dryvist/tofu-proxmox/compare/v3.16.0...v3.17.0) (2026-09-15)
 
 
