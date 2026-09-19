@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.19.0](https://github.com/dryvist/tofu-proxmox/compare/v3.18.0...v3.19.0) (2026-09-19)
+
+
+### Features
+
+* **ingress:** split LiteLLM router UI from API behind Authelia ([#1113](https://github.com/dryvist/tofu-proxmox/issues/1113)) ([47007e3](https://github.com/dryvist/tofu-proxmox/commit/47007e3f228b30d71e8eafd9b2d6fcb137566ef9))
+
 ## [3.18.0](https://github.com/dryvist/tofu-proxmox/compare/v3.17.0...v3.18.0) (2026-09-18)
 
 
