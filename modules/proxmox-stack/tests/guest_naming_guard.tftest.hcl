@@ -151,18 +151,18 @@ run "allowlisted_pre_law_name_is_accepted" {
 
   variables {
     containers = {
-      # Single-digit suffix, and the digit matches no node. Exempt only because
-      # it is named in the (private, here test-supplied) allowlist.
-      llm-router-1 = {
+      # A 5-digit suffix fails both accepted forms. Exempt only because it is
+      # named in the (private, here test-supplied) allowlist.
+      technitium-50000 = {
         node_name = "node-alpha"
         vm_id     = 501000
-        hostname  = "llm-router-1"
+        hostname  = "technitium-50000"
         vlan      = "ai"
         dhcp      = true
       }
     }
     guest_naming_exceptions = {
-      llm-router-1 = "pre-law name awaiting a planned rename"
+      technitium-50000 = "pre-law name awaiting a planned rename"
     }
   }
 
@@ -174,15 +174,107 @@ run "allowlisted_pre_law_name_is_accepted" {
 
 # --- Must-fail cases ---------------------------------------------------------
 
-run "single_digit_suffix_is_rejected" {
+run "placement_neutral_ordinal_is_accepted" {
   command = plan
 
   variables {
     containers = {
-      technitium-5 = {
+      # A 1-4 digit ordinal that names nothing about the node — the revised
+      # law's second accepted form, no exception-list entry needed.
+      llm-router-1 = {
         node_name = "node-alpha"
         vm_id     = 5310051
-        hostname  = "technitium-5"
+        hostname  = "llm-router-1"
+        vlan      = "ai"
+        dhcp      = true
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.guest_naming_failures) == 0
+    error_message = "a placement-neutral ordinal on a pinned guest must pass, got: ${join("; ", local.guest_naming_failures)}"
+  }
+}
+
+run "another_placement_neutral_ordinal_is_accepted" {
+  command = plan
+
+  variables {
+    containers = {
+      postgres-ai-2 = {
+        node_name = "node-beta"
+        vm_id     = 5310053
+        hostname  = "postgres-ai-2"
+        vlan      = "ai"
+        dhcp      = true
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.guest_naming_failures) == 0
+    error_message = "a placement-neutral ordinal on a pinned guest must pass, got: ${join("; ", local.guest_naming_failures)}"
+  }
+}
+
+run "legacy_form_on_the_matching_node_is_still_accepted" {
+  command = plan
+
+  variables {
+    containers = {
+      # The legacy <node-digit><instance> shape remains valid even though the
+      # guard no longer requires it.
+      foo-501 = {
+        node_name = "node-alpha"
+        vm_id     = 5310054
+        hostname  = "foo-501"
+        vlan      = "dns"
+        dhcp      = true
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.guest_naming_failures) == 0
+    error_message = "the legacy node-digit form must still pass, got: ${join("; ", local.guest_naming_failures)}"
+  }
+}
+
+run "mismatched_node_digit_is_accepted_now_that_the_check_is_dropped" {
+  command = plan
+
+  variables {
+    containers = {
+      # Under the revised law a pinned guest's digit is no longer checked
+      # against its node's logical_id — an operator can move a pinned guest
+      # too, and the guard can't see why. Was a must-fail case; now a
+      # must-pass one.
+      technitium-50 = {
+        node_name = "node-beta"
+        vm_id     = 5310052
+        hostname  = "technitium-50"
+        vlan      = "dns"
+        dhcp      = true
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.guest_naming_failures) == 0
+    error_message = "a pinned guest's digit is no longer checked against its node, got: ${join("; ", local.guest_naming_failures)}"
+  }
+}
+
+run "numeric_suffix_over_four_digits_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      technitium-12345 = {
+        node_name = "node-alpha"
+        vm_id     = 5310055
+        hostname  = "technitium-12345"
         vlan      = "dns"
         dhcp      = true
       }
@@ -194,19 +286,18 @@ run "single_digit_suffix_is_rejected" {
   ]
 }
 
-run "node_digit_that_does_not_match_the_node_is_rejected" {
+run "relocatable_guest_carrying_a_placement_neutral_ordinal_is_rejected" {
   command = plan
 
   variables {
     containers = {
-      # The failure this guard exists for: a name that was true on the node the
-      # guest was built on and has been lying since it was evacuated.
-      technitium-50 = {
-        node_name = "node-beta"
-        vm_id     = 5310052
-        hostname  = "technitium-50"
-        vlan      = "dns"
+      foo-1 = {
+        node_name = "node-alpha"
+        vm_id     = 601003
+        hostname  = "foo-1"
+        vlan      = "apps"
         dhcp      = true
+        ha        = true
       }
     }
   }
@@ -242,10 +333,12 @@ run "vm_names_are_judged_too" {
 
   variables {
     vms = {
-      splunk-idx-50 = {
+      # A 5-digit suffix fails both accepted forms — VMs are judged by the
+      # same rule as containers.
+      splunk-idx-123456 = {
         node_name = "node-beta"
         vm_id     = 421100
-        name      = "splunk-idx-50"
+        name      = "splunk-idx-123456"
         vlan      = "siem"
         dhcp      = true
       }

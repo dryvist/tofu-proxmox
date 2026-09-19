@@ -1,19 +1,20 @@
 # Guest naming law, enforced at plan time.
 #
-# THE LAW. A guest name is `<app>-<NM>`: `N` is the node's LOGICAL DIGIT, `M` a
-# zero-based counter for that app on that node. Always two digits, never one.
-# `<app>` is the bare application name — `technitium`, not `technitium-dns`; the
-# protocol is redundant when the app IS the protocol. See
-# docs/GUEST_NAMING.md for the convention in full.
+# THE LAW. A guest name is `<app>-<suffix>`. `<app>` is the bare application
+# name — `technitium`, not `technitium-dns`; the protocol is redundant when
+# the app IS the protocol. `<suffix>` is a 1-4 digit number: either the
+# legacy `<node-digit><2-digit-instance>` form, or a placement-neutral
+# ordinal that names nothing about the node. See docs/GUEST_NAMING.md for the
+# convention in full.
 #
-# THE CONDITION, which is the part that gets forgotten. A name encoding a node
-# is only ever true for a guest that STAYS on that node. Two guests in this
-# estate encode a node they were evacuated away from, and their names have been
-# lying ever since. So the digit is for PINNED guests — the ones whose
-# application supplies its own cross-node redundancy (quorum members, resolver
-# pairs, load-balanced ingress). A guest that relocates for its availability
-# (`ha = true`) must carry no node digit at all: the moment HA moves it, a
-# digit in its name is false.
+# THE CONDITION, which is the part that gets forgotten. A digit that encodes
+# a node is only ever true for a guest that STAYS on that node, and even a
+# pinned guest may be moved by an operator for reasons the guard cannot see —
+# so the guard no longer checks a pinned guest's suffix against its node's
+# digit. It still enforces the one fact that never changes: a guest whose
+# availability comes from HA migration (`ha = true`) must carry no numeric
+# suffix at all, because the scheduler can move it the instant a digit is
+# read as true.
 #
 # SINGLE SOURCE OF TRUTH. The logical digit is `nodes.<node>.logical_id` in the
 # deployment object (variables-infrastructure.tf) and is declared exactly once.
@@ -64,12 +65,10 @@ locals {
   guest_naming_violations = concat(local.duplicate_logical_ids, flatten([
     for g in local.guest_naming_subjects : [
       for m in regexall("-([0-9]+)$", g.name) : (
-        length(m[0]) != 2
-        ? "${g.kind} \"${g.name}\": numeric suffix \"-${m[0]}\" must be exactly two digits — <node-digit><instance>, e.g. -${local.node_logical_ids[g.node]}0"
-        : g.relocatable
+        g.relocatable
         ? "${g.kind} \"${g.name}\": relocatable guest (ha = true) must not encode a node — HA moves it and the digit becomes a lie. Drop the numeric suffix."
-        : substr(m[0], 0, 1) != tostring(local.node_logical_ids[g.node])
-        ? "${g.kind} \"${g.name}\": node digit ${substr(m[0], 0, 1)} does not match node \"${g.node}\" (logical_id ${local.node_logical_ids[g.node]}). Expected a name ending -${local.node_logical_ids[g.node]}<instance>."
+        : length(m[0]) > 4
+        ? "${g.kind} \"${g.name}\": numeric suffix \"-${m[0]}\" is too long — a pinned guest takes a 1-4 digit ordinal (e.g. -${local.node_logical_ids[g.node]}0) or the legacy two-digit node form."
         : ""
       ) if !contains(keys(var.guest_naming_exceptions), g.name)
     ]
