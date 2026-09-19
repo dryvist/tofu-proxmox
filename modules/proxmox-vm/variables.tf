@@ -22,6 +22,12 @@ variable "vms" {
     cpu_type         = optional(string, "host")
     memory_dedicated = optional(number, 1024)
     memory_floating  = optional(number)
+    # Enables reboot-free memory raises: PVE only skips the reboot on a
+    # memory_dedicated increase when "memory" is in the hotplug set AND NUMA
+    # is on (memory hotplug's own prerequisite). Defaults false so no
+    # existing guest changes; enabling it on an existing VM is itself an
+    # in-place update that only takes effect at that VM's next reboot.
+    memory_hotplug = optional(bool, false)
 
     # Storage configuration
     boot_disk = optional(object({
