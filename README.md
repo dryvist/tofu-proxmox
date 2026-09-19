@@ -1,16 +1,21 @@
 # OpenTofu Proxmox Infrastructure
 
-[![CI Gate](https://github.com/dryvist/tofu-proxmox/actions/workflows/ci-gate.yml/badge.svg?branch=main)](https://github.com/dryvist/tofu-proxmox/actions/workflows/ci-gate.yml?query=branch%3Amain)
-[![Post-Merge Tests](https://github.com/dryvist/tofu-proxmox/actions/workflows/post-merge-tests.yml/badge.svg?branch=main)](https://github.com/dryvist/tofu-proxmox/actions/workflows/post-merge-tests.yml?query=branch%3Amain)
-[![Release Please](https://github.com/dryvist/tofu-proxmox/actions/workflows/release-please.yml/badge.svg?branch=main)](https://github.com/dryvist/tofu-proxmox/actions/workflows/release-please.yml?query=branch%3Amain)
+[![CI Gate][badge-ci]][workflow-ci]
+[![Post-Merge Tests][badge-pm]][workflow-pm]
+[![Release Please][badge-rp]][workflow-rp]
+[![Release][badge-release]][release-url]
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-2F7E78?style=flat-square)](LICENSE)
+[![Renovate](https://img.shields.io/badge/renovate-enabled-2F7E78?style=flat-square&logo=renovatebot&logoColor=white)](https://github.com/dryvist/.github)
+[![Docs](https://img.shields.io/badge/docs-jacobpevans.com-4FB3A9?style=flat-square)](https://docs.jacobpevans.com)
 
-> **Read the first two badges as a coverage indicator, not a health one.** Both
-> are scoped to `main`. `ci-gate.yml` triggers on `pull_request` only and
-> `post-merge-tests.yml` has its push trigger disabled, so neither currently
-> runs on `main` and both render "no status". That blank IS the signal: there is
-> no post-merge verification on this repository today. When a gate starts
-> running on `main` these begin reporting its real result, and a red badge then
-> means a merge broke the deployed state.
+[badge-ci]: https://github.com/dryvist/tofu-proxmox/actions/workflows/ci-gate.yml/badge.svg?branch=main
+[workflow-ci]: https://github.com/dryvist/tofu-proxmox/actions/workflows/ci-gate.yml?query=branch%3Amain
+[badge-pm]: https://github.com/dryvist/tofu-proxmox/actions/workflows/post-merge-tests.yml/badge.svg?branch=main
+[workflow-pm]: https://github.com/dryvist/tofu-proxmox/actions/workflows/post-merge-tests.yml?query=branch%3Amain
+[badge-rp]: https://github.com/dryvist/tofu-proxmox/actions/workflows/release-please.yml/badge.svg?branch=main
+[workflow-rp]: https://github.com/dryvist/tofu-proxmox/actions/workflows/release-please.yml?query=branch%3Amain
+[badge-release]: https://img.shields.io/github/v/release/dryvist/tofu-proxmox?sort=semver&style=flat-square&color=2F7E78
+[release-url]: https://github.com/dryvist/tofu-proxmox/releases
 
 OpenTofu infrastructure for the Proxmox VE homelab: VMs, LXC containers,
 resource pools, firewall rules, certificates, and the published Ansible

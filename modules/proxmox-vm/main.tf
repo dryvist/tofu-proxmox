@@ -63,7 +63,11 @@ resource "proxmox_virtual_environment_vm" "vms" {
     cores      = each.value.cpu_cores
     type       = each.value.cpu_type
     hotplugged = 0
+    numa       = each.value.memory_hotplug # NUMA is memory hotplug's prerequisite
   }
+
+  # PVE default (network,disk,usb) unless memory_hotplug opts in "cpu,memory" too.
+  hotplug = each.value.memory_hotplug ? "network,disk,usb,memory,cpu" : null
 
   vga {
     type = each.value.vga_type
@@ -74,6 +78,14 @@ resource "proxmox_virtual_environment_vm" "vms" {
     floating  = each.value.memory_floating != null ? each.value.memory_floating : each.value.memory_dedicated
   }
 
+  # replicate defaults to true on the underlying resource: an unreplicated
+  # guest (e.g. an ephemeral CI runner rebuilt every job) must set it false
+  # per disk, or its high-churn writes (image-build layers, docker cache)
+  # keep accumulating in replication snapshots the guest never needs. Same
+  # regression applies to ssd/discard: leaving ssd=false, discard="ignore"
+  # on an SSD-backed datastore means freed blocks are never TRIMmed, so a
+  # ZFS pool backing high-churn ephemeral disks fills and fragments even
+  # though the guest itself stays small.
   disk {
     datastore_id = coalesce(
       each.value.boot_disk.datastore_id,
@@ -85,6 +97,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
     iothread    = coalesce(each.value.boot_disk.iothread, true)
     ssd         = coalesce(each.value.boot_disk.ssd, false)
     discard     = coalesce(each.value.boot_disk.discard, "ignore")
+    replicate   = coalesce(each.value.boot_disk.replicate, true)
   }
 
   dynamic "disk" {
@@ -97,6 +110,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
       iothread     = disk.value.iothread != null ? disk.value.iothread : true
       ssd          = disk.value.ssd != null ? disk.value.ssd : false
       discard      = coalesce(disk.value.discard, "ignore")
+      replicate    = disk.value.replicate != null ? disk.value.replicate : true
     }
   }
 

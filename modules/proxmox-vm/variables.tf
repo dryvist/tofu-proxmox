@@ -22,6 +22,12 @@ variable "vms" {
     cpu_type         = optional(string, "host")
     memory_dedicated = optional(number, 1024)
     memory_floating  = optional(number)
+    # Enables reboot-free memory raises: PVE only skips the reboot on a
+    # memory_dedicated increase when "memory" is in the hotplug set AND NUMA
+    # is on (memory hotplug's own prerequisite). Defaults false so no
+    # existing guest changes; enabling it on an existing VM is itself an
+    # in-place update that only takes effect at that VM's next reboot.
+    memory_hotplug = optional(bool, false)
 
     # Storage configuration
     boot_disk = optional(object({
@@ -32,6 +38,11 @@ variable "vms" {
       iothread     = optional(bool, true)
       ssd          = optional(bool, false)
       discard      = optional(string, "ignore")
+      # false for a guest that carries no data worth a replica (e.g. an
+      # ephemeral CI runner rebuilt every job) — otherwise every write
+      # (image-build churn, docker cache) is pinned in replication
+      # snapshots the guest will never be restored from.
+      replicate = optional(bool, true)
     }), {})
 
     # Additional disks
@@ -43,6 +54,7 @@ variable "vms" {
       iothread     = optional(bool, true)
       ssd          = optional(bool, false)
       discard      = optional(string, "ignore")
+      replicate    = optional(bool, true)
     })), [])
 
     # Network configuration
