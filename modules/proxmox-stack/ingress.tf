@@ -47,6 +47,8 @@ locals {
     # llm is fronted as a load-balanced router pool (llm_router_backends below).
     chat   = { backend = "open-webui", port = local.pipeline_constants.service_ports.open_webui_web }
     qdrant = { backend = "qdrant", port = local.pipeline_constants.vector_db_ports.qdrant_http, sso = false } # vector API for agents/MCP
+    # llama-server web UI on the fast-tier serving guest (same port the router dials).
+    llama = { backend = "llm-4080", port = local.pipeline_constants.service_ports.llm_fast_api }
     # AI orchestration stack UIs (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
     n8n      = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
     dify     = { backend = "dify", port = local.pipeline_constants.service_ports.dify_web }
