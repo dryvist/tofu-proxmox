@@ -588,19 +588,34 @@ run "ansible_inventory_ingress_route_table" {
     error_message = "ingress must omit the proxmox apex route when no node is commissioned"
   }
 
-  # llm POOL row (rendered by the llm-router-1 fixture container above): the
-  # LiteLLM router UI is fronted at /ui as a HUMAN UI (ui = true) while the
-  # route itself skips the Authelia gate (sso = false, OpenAI-compatible API
-  # clients). ui therefore comes from the ingress_human_unauthed_routes
-  # exception, not from sso — pin all three together or the traefik role
-  # gates the API path or exposes the UI ungated. url_path is read via try()
-  # because the ingress tuple is heterogeneous (most rows lack the key).
+  # The llm hostname carries TWO pool rows, and the split between them is the
+  # security boundary: the browser admin UI at the /ui prefix is gated, the
+  # OpenAI-compatible API on the rest of the hostname is not (its clients
+  # cannot do a browser login).
+  #
+  # The key is path_prefix. That is the name the traefik role reads when it
+  # builds the PathPrefix matcher; a row carrying any other name for it
+  # renders a Host() rule with no prefix at all, so the row silently matches
+  # the WHOLE hostname instead of the one path — which is the ungated-UI
+  # outcome this pair exists to prevent. Read via try() because the ingress
+  # tuple is heterogeneous and most rows lack the key.
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress :
-      r if r.name == "llm" && try(r.url_path, "") == "/ui" && r.ui == true && r.sso == false
+      r if r.name == "llm-ui" && try(r.path_prefix, "") == "/ui" && r.ui == true && r.sso == true
     ]) == 1
-    error_message = "the llm pool route must carry url_path=\"/ui\", ui=true and sso=false — the UI link contract: the human UI exception must give it ui=true while the API route stays ungated"
+    error_message = "the llm-ui row must carry path_prefix=\"/ui\", ui=true and sso=true — the gated browser surface"
+  }
+
+  # The API row is the other half and must be pinned with it: no path prefix
+  # (it is the catch-all for the hostname), ungated, and NOT a human UI, so it
+  # stops appearing in the human column on the dashboards.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "llm" && try(r.path_prefix, "") == "" && r.ui == false && r.sso == false
+    ]) == 1
+    error_message = "the llm row must carry no path_prefix, ui=false and sso=false — the machine-only API surface"
   }
 
   # Legacy rows unaffected by the llm ui exception: s3 is sso=false and NOT in

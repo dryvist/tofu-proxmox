@@ -40,6 +40,37 @@ locals {
     ] : [],
     # LiteLLM router pool: llm.<domain> load-balancing the stateless routers.
     # No sticky — every router serves every model from the same config.
+    #
+    # Split UI from API on the same hostname, same pattern as
+    # nautobot/nautobot-api/nautobot-graphql below: the admin UI
+    # (/ui path prefix) is a browser surface and gets the default Authelia
+    # gate; the OpenAI-compatible API (everything else on this hostname)
+    # stays sso = false because its clients (CLI tools, agents, the whole
+    # AI fabric) cannot do a browser login. Before this split, /ui reached
+    # LiteLLM's admin UI unauthenticated — the same row that carried the
+    # API's sso = false covered the UI path too.
+    length(local.llm_router_backends) > 0 ? [
+      {
+        name              = "llm-ui"
+        hostname          = "llm"
+        backends          = local.llm_router_backends
+        port              = local.pipeline_constants.service_ports.llm_router_api
+        path_prefix       = "/ui"
+        priority          = 100 # must win the match before the catch-all "llm" row
+        health_check      = true
+        health_check_path = "/health/liveliness"
+        sso               = true # browser admin UI — gated
+      }
+    ] : [],
+    # A SEPARATE conditional, not a second element of the one above. The two
+    # rows carry different attribute sets (this one takes the default hostname
+    # and has no path_prefix/priority), and a tuple holding two differently
+    # shaped objects has no common element type to convert to — the conditional
+    # then fails to type-check against the empty branch. One row per
+    # conditional keeps each pair trivially unifiable, which is why every other
+    # block in this file is shaped this way. Adding null placeholders here
+    # would type-check but is worse: an explicit null is not an unset optional,
+    # so `try()` returns it instead of falling through to the default.
     length(local.llm_router_backends) > 0 ? [
       {
         name              = "llm"
@@ -48,7 +79,6 @@ locals {
         health_check      = true
         health_check_path = "/health/liveliness"
         sso               = false # OpenAI-compatible API clients
-        url_path          = "/ui"
       }
     ] : [],
     # agentgateway MCP fabric: mcp.<domain> (proxy plane) + agentgateway.<domain>
