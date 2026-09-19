@@ -63,7 +63,11 @@ resource "proxmox_virtual_environment_vm" "vms" {
     cores      = each.value.cpu_cores
     type       = each.value.cpu_type
     hotplugged = 0
+    numa       = each.value.memory_hotplug # NUMA is memory hotplug's prerequisite
   }
+
+  # PVE default (network,disk,usb) unless memory_hotplug opts in "cpu,memory" too.
+  hotplug = each.value.memory_hotplug ? "network,disk,usb,memory,cpu" : null
 
   vga {
     type = each.value.vga_type

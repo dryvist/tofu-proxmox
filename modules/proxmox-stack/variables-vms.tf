@@ -47,6 +47,10 @@ variable "vms" {
     cpu_type         = optional(string, "x86-64-v2-AES")
     memory_dedicated = optional(number, 2048)
     memory_floating  = optional(number)
+    # See the extended rationale on this field in the proxmox-vm module
+    # variables: default false, opt in per-guest to make a later
+    # memory_dedicated raise reboot-free.
+    memory_hotplug = optional(bool, false)
 
     # Storage configuration
     boot_disk = optional(object({

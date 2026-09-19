@@ -359,6 +359,7 @@
       "description": "Example VM entry \u2014 replace with your own",
       "cpu_cores": 2,
       "memory_dedicated": 2048,
+      "memory_hotplug": false,
       "tags": [
         "terraform"
       ],
