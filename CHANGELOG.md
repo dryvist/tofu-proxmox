@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.20.0](https://github.com/dryvist/tofu-proxmox/compare/v3.19.0...v3.20.0) (2026-09-19)
+
+
+### Features
+
+* **proxmox-vm:** allow a disk to opt out of ZFS replication ([43d1bb8](https://github.com/dryvist/tofu-proxmox/commit/43d1bb8c44d8422437287e2a06dd400865d60612))
+* **proxmox-vm:** allow a disk to opt out of ZFS replication ([c667f7b](https://github.com/dryvist/tofu-proxmox/commit/c667f7bda0ce3b91f294002ac19f77b055617f37))
+* **vm:** optional memory hotplug with NUMA for reboot-free RAM raises ([4c8fa10](https://github.com/dryvist/tofu-proxmox/commit/4c8fa100b512d6f204c05fb071655e33f682603d))
+* **vm:** optional memory hotplug with NUMA for reboot-free RAM raises ([c9f71f7](https://github.com/dryvist/tofu-proxmox/commit/c9f71f79ddd1891a3a41b25f28fa78d9a2ec549e))
+
+
+### Bug Fixes
+
+* **ci:** forward the router secrets to ai-pr-care with secrets: inherit ([6f68786](https://github.com/dryvist/tofu-proxmox/commit/6f687862f4508cc6c748e38f7dc236b2539a6b7d))
+* **ci:** forward the router secrets to ai-pr-care with secrets: inherit ([341f096](https://github.com/dryvist/tofu-proxmox/commit/341f096fd1de31e3d0c4023c4c5f32d7322c5157))
+
 ## [3.19.0](https://github.com/dryvist/tofu-proxmox/compare/v3.18.0...v3.19.0) (2026-09-19)
 
 
