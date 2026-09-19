@@ -47,12 +47,7 @@ locals {
     # llm is fronted as a load-balanced router pool (llm_router_backends below).
     chat   = { backend = "open-webui", port = local.pipeline_constants.service_ports.open_webui_web }
     qdrant = { backend = "qdrant", port = local.pipeline_constants.vector_db_ports.qdrant_http, sso = false } # vector API for agents/MCP
-    # llama-server on the 4080 GPU guest (llm-4080; carries the legacy llm-vllm
-    # tofu tag — see ansible-proxmox-ai inventory/group_vars/llm_vllm_group.yml
-    # for why this guest runs llama.cpp, not vLLM). Same llm_fast_api port the
-    # internal fabric (llm_router, Hermes) already dials directly by FQDN — this
-    # route is a SEPARATE public browser surface for llama-server's own chat/
-    # admin UI, same treatment as llm-ui/agentgateway (sso omitted => true).
+    # llama-server web UI on the fast-tier serving guest (same port the router dials).
     llama = { backend = "llm-4080", port = local.pipeline_constants.service_ports.llm_fast_api }
     # AI orchestration stack UIs (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
     n8n      = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
