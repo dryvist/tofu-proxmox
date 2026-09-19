@@ -3,8 +3,11 @@
 variable "vms" {
   description = "Map of VMs to create"
   type = map(object({
-    vm_id       = number
-    name        = string
+    vm_id = number
+    # No longer read — the name is GENERATED (locals.tf, guest_hostname_vms).
+    # Optional only so the private desired state need not drop the field
+    # before this repo does (see docs/GUEST_NAMING.md).
+    name        = optional(string)
     description = optional(string)
     tags        = optional(list(string), ["terraform"])
     pool_id     = optional(string)
