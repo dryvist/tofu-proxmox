@@ -32,6 +32,11 @@ variable "vms" {
       iothread     = optional(bool, true)
       ssd          = optional(bool, false)
       discard      = optional(string, "ignore")
+      # false for a guest that carries no data worth a replica (e.g. an
+      # ephemeral CI runner rebuilt every job) — otherwise every write
+      # (image-build churn, docker cache) is pinned in replication
+      # snapshots the guest will never be restored from.
+      replicate = optional(bool, true)
     }), {})
 
     # Additional disks
@@ -43,6 +48,7 @@ variable "vms" {
       iothread     = optional(bool, true)
       ssd          = optional(bool, false)
       discard      = optional(string, "ignore")
+      replicate    = optional(bool, true)
     })), [])
 
     # Network configuration
