@@ -1,81 +1,118 @@
 # Guest naming law, enforced at plan time.
 #
-# THE LAW. A guest name is `<app>-<suffix>`. `<app>` is the bare application
-# name — `technitium`, not `technitium-dns`; the protocol is redundant when
-# the app IS the protocol. `<suffix>` is a 1-4 digit number: either the
-# legacy `<node-digit><2-digit-instance>` form, or a placement-neutral
-# ordinal that names nothing about the node. See docs/GUEST_NAMING.md for the
-# convention in full.
+# THE LAW. A guest name is `<app>` or `<app>-<n>`. `<app>` is the bare
+# application name — `technitium`, not `technitium-dns`; the protocol is
+# redundant when the app IS the protocol — never a hardware, model, or node
+# token (`llm-4080`, `docker-540` are illegal). `<n>` is the instance
+# ordinal: 1-2 digits, no leading zero, and for each `<app>` the ordinals in
+# use are exactly `1..N` with no gaps or duplicates — a suffix always means
+# "instance n of N". Placement is NEVER encoded: a node reboot, an HA move,
+# or a rebuild never touches a guest's name, so `ha = true` no longer changes
+# what is accepted. See docs/GUEST_NAMING.md for the convention in full.
 #
-# THE CONDITION, which is the part that gets forgotten. A digit that encodes
-# a node is only ever true for a guest that STAYS on that node, and even a
-# pinned guest may be moved by an operator for reasons the guard cannot see —
-# so the guard no longer checks a pinned guest's suffix against its node's
-# digit. It still enforces the one fact that never changes: a guest whose
-# availability comes from HA migration (`ha = true`) must carry no numeric
-# suffix at all, because the scheduler can move it the instant a digit is
-# read as true.
-#
-# SINGLE SOURCE OF TRUTH. The logical digit is `nodes.<node>.logical_id` in the
-# deployment object (variables-infrastructure.tf) and is declared exactly once.
-# It is deliberately NOT the corosync node id: corosync numbers nodes by join
-# order, which is an accident of cluster history, while the logical digit is
-# chosen to be stable and memorable. The two diverge today and that divergence
-# is intentional — never "reconcile" one to the other.
-#
-# SCOPE. A guest is judged only when its node declares a `logical_id`, matching
-# the convention checks-storage.tf already uses: a node with nothing declared
-# has nothing to compare against, so judging it would invent a verdict.
+# A guest with no suffix is that app's single instance. Adding a second
+# instance renames the first to `-1` — a rename is estate policy
+# (stateless guests are rebuilt, never renamed in place), not something this
+# guard enforces.
 locals {
-  # node key -> logical digit, for nodes that declare one. The single map.
-  node_logical_ids = {
-    for name, n in var.nodes : name => n.logical_id
-    if try(n.logical_id, null) != null
-  }
-
-  # Two nodes sharing a digit makes every name built from it ambiguous. This is
-  # exactly why one node in this estate takes a digit its hardware model does
-  # not suggest — the obvious digit was already taken.
-  duplicate_logical_ids = [
-    for id in distinct(values(local.node_logical_ids)) :
-    "logical_id ${id} is claimed by more than one node (${join(", ", sort([for k, v in local.node_logical_ids : k if v == id]))})"
-    if length([for v in values(local.node_logical_ids) : v if v == id]) > 1
-  ]
-
-  # Every guest, containers and VMs alike, as {name, node, relocatable}. VMs
-  # carry no `ha` attribute today; try() keeps this one list rather than two.
   guest_naming_subjects = concat(
-    [for k, v in var.containers : {
-      name = v.hostname
-      node = v.node_name
-      kind = "container"
-      # `ha = true` is the opt-in that lets Proxmox relocate a guest (ha.tf).
-      # It is the only machine-readable statement in the estate that a guest
-      # moves for its availability, so it is what "relocatable" means here.
-      relocatable = try(v.ha, false)
-    }],
-    [for k, v in var.vms : {
-      name        = v.name
-      node        = v.node_name
-      kind        = "vm"
-      relocatable = try(v.ha, false)
-    }]
+    [for k, v in var.containers : { name = v.hostname, kind = "container" }],
+    [for k, v in var.vms : { name = v.name, kind = "vm" }],
   )
 
-  guest_naming_violations = concat(local.duplicate_logical_ids, flatten([
-    for g in local.guest_naming_subjects : [
-      for m in regexall("-([0-9]+)$", g.name) : (
-        g.relocatable
-        ? "${g.kind} \"${g.name}\": relocatable guest (ha = true) must not encode a node — HA moves it and the digit becomes a lie. Drop the numeric suffix."
-        : length(m[0]) > 4
-        ? "${g.kind} \"${g.name}\": numeric suffix \"-${m[0]}\" is too long — a pinned guest takes a 1-4 digit ordinal (e.g. -${local.node_logical_ids[g.node]}0) or the legacy two-digit node form."
-        : ""
-      ) if !contains(keys(var.guest_naming_exceptions), g.name)
-    ]
-    if contains(keys(local.node_logical_ids), g.node)
-  ]))
+  # Split each name into {app, suffix} on its trailing "-<digits>" run, if
+  # any. A name with no such tail is bare: app = the whole name.
+  guest_naming_split = {
+    for g in local.guest_naming_subjects : g.name => merge(g, {
+      tail_match = regexall("^(.+)-([0-9]+)$", g.name)
+    })
+  }
 
-  guest_naming_failures = [for v in local.guest_naming_violations : v if v != ""]
+  # Exception-listed names are exempt from every check below.
+  guest_naming_judged = {
+    for name, g in local.guest_naming_split : name => g
+    if !contains(keys(var.guest_naming_exceptions), name)
+  }
+
+  # A numeric tail that isn't a 1-2 digit, no-leading-zero ordinal fails
+  # outright — this is also what rejects a hardware/model token (a GPU model
+  # number is a 3-4 digit tail) without a separate check.
+  guest_naming_bad_format = [
+    for name, g in local.guest_naming_judged :
+    "${g.kind} \"${name}\": numeric suffix \"-${g.tail_match[0][1]}\" must be a 1-2 digit ordinal (\"1\"-\"99\", no leading zero) — it names instance n of the app, never a node or a model."
+    if length(g.tail_match) > 0 && !can(regex("^[1-9][0-9]?$", g.tail_match[0][1]))
+  ]
+
+  # Well-formed guests only (bad-format ones are already reported above and
+  # would otherwise pollute a group they never validly belonged to).
+  guest_naming_wellformed = [
+    for name, g in local.guest_naming_judged : {
+      name   = name
+      kind   = g.kind
+      app    = length(g.tail_match) > 0 ? g.tail_match[0][0] : name
+      suffix = length(g.tail_match) > 0 ? tonumber(g.tail_match[0][1]) : null
+    }
+    if length(g.tail_match) == 0 || can(regex("^[1-9][0-9]?$", g.tail_match[0][1]))
+  ]
+
+  guest_naming_apps = distinct([for r in local.guest_naming_wellformed : r.app])
+
+  # Per app: the ordinals in use (raw, may repeat) and the same set deduped
+  # and ascending — `sort()` only orders strings, so ascending order comes
+  # from filtering the known 1-99 domain in order instead. "Instance n of N"
+  # means the deduped ordinals are exactly 1..N — a gap, a duplicate, or a
+  # bare name alongside numbered instances all break that promise.
+  guest_naming_raw_ordinals_by_app = {
+    for app in local.guest_naming_apps : app => [
+      for r in local.guest_naming_wellformed : r.suffix if r.app == app && r.suffix != null
+    ]
+  }
+  guest_naming_ordinals_by_app = {
+    for app in local.guest_naming_apps : app => [
+      for n in range(1, 100) : n if contains(local.guest_naming_raw_ordinals_by_app[app], n)
+    ]
+  }
+  guest_naming_bare_count_by_app = {
+    for app in local.guest_naming_apps : app => length([
+      for r in local.guest_naming_wellformed : r if r.app == app && r.suffix == null
+    ])
+  }
+
+  guest_naming_mixed_form_failures = [
+    for app in local.guest_naming_apps :
+    "app \"${app}\": has both a bare name and numbered instances — a bare name means a single instance; a second instance renames the first to \"-1\"."
+    if local.guest_naming_bare_count_by_app[app] > 0 && length(local.guest_naming_ordinals_by_app[app]) > 0
+  ]
+
+  guest_naming_duplicate_bare_failures = [
+    for app in local.guest_naming_apps :
+    "app \"${app}\": more than one guest with no numeric suffix — a bare name means exactly one instance."
+    if local.guest_naming_bare_count_by_app[app] > 1
+  ]
+
+  guest_naming_duplicate_suffix_failures = [
+    for app in local.guest_naming_apps :
+    "app \"${app}\": more than one guest shares suffix ${jsonencode(local.guest_naming_raw_ordinals_by_app[app])} — each ordinal must appear exactly once."
+    if length(local.guest_naming_raw_ordinals_by_app[app]) != length(local.guest_naming_ordinals_by_app[app])
+  ]
+
+  # Deduped and ascending (by construction above), so "exactly 1..N" holds
+  # iff the highest ordinal equals the count — any gap would make the
+  # highest ordinal larger than the count.
+  guest_naming_gap_failures = [
+    for app in local.guest_naming_apps :
+    "app \"${app}\": suffixes ${jsonencode(local.guest_naming_ordinals_by_app[app])} are not a contiguous 1..${length(local.guest_naming_ordinals_by_app[app])} — an ordinal means instance n of the app's total, no gaps and no duplicates."
+    if length(local.guest_naming_ordinals_by_app[app]) > 0
+    && max(local.guest_naming_ordinals_by_app[app]...) != length(local.guest_naming_ordinals_by_app[app])
+  ]
+
+  guest_naming_failures = concat(
+    local.guest_naming_bad_format,
+    local.guest_naming_mixed_form_failures,
+    local.guest_naming_duplicate_bare_failures,
+    local.guest_naming_duplicate_suffix_failures,
+    local.guest_naming_gap_failures,
+  )
 }
 
 # Guests whose names predate the law and are not renamed by this change. A
@@ -86,12 +123,12 @@ locals {
 # The roster is a real-guest-name list, so it is NOT committed here — a public
 # repository is exactly the wrong place for it (same reason node_name-to-guest
 # topology never appears in prose). It lives in the private desired state
-# alongside the node digit map it is judged against (`deployment.json`'s
-# `guest_naming_exceptions`, wired in main.tf), keyed by guest name with the
-# reason as the value so an entry cannot be added silently. Only the rule is
-# public; the roster stays private. Shrink it; never grow it.
+# alongside the guard's own rule (`deployment.json`'s `guest_naming_exceptions`,
+# wired in main.tf), keyed by guest name with the reason as the value so an
+# entry cannot be added silently. Only the rule is public; the roster stays
+# private. Shrink it; never grow it.
 variable "guest_naming_exceptions" {
-  description = "Guest names exempted from the node-digit naming law, name -> reason. Sourced from the private desired state, never committed here — every entry is pre-law debt awaiting a planned rename."
+  description = "Guest names exempted from the guest naming law, name -> reason. Sourced from the private desired state, never committed here — every entry is pre-law debt awaiting a planned rename."
   type        = map(string)
   default     = {}
 }

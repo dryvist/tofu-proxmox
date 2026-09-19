@@ -723,18 +723,18 @@ run "ansible_inventory_ingress_ha_vip" {
     # network and core services. Every address below is DERIVED via cidrhost
     # from the test CIDR — never a literal host address.
     containers = {
-      "traefik-10" = {
+      "traefik-1" = {
         vm_id     = 101
         node_name = "proxmox-1"
-        hostname  = "traefik-10"
+        hostname  = "traefik-1"
         vlan      = "mgmt"
         tags      = ["terraform", "container", "ingress", "traefik"]
         ip_config = { ipv4_address = "${cidrhost("192.168.5.0/24", 7)}/24" }
       }
-      "traefik-30" = {
+      "traefik-2" = {
         vm_id     = 107
         node_name = "proxmox-1"
-        hostname  = "traefik-30"
+        hostname  = "traefik-2"
         vlan      = "mgmt"
         tags      = ["terraform", "container", "ingress", "traefik"]
         ip_config = { ipv4_address = "${cidrhost("192.168.5.0/24", 8)}/24" }
@@ -832,47 +832,47 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
   variables {
     domain = "example.com"
     containers = {
-      "openbao-31" = {
+      "openbao-5" = {
         vm_id     = 110031
         node_name = "proxmox-1"
         node_name = "proxmox-5"
-        hostname  = "openbao-31"
+        hostname  = "openbao-5"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.31/24" }
         tags      = ["terraform", "container", "openbao", "secrets", "infrastructure"]
       }
-      "openbao-10" = {
+      "openbao-1" = {
         vm_id     = 110010
         node_name = "proxmox-1"
         node_name = "proxmox-1"
-        hostname  = "openbao-10"
+        hostname  = "openbao-1"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.10/24" }
         tags      = ["terraform", "container", "openbao", "secrets", "infrastructure"]
       }
-      "openbao-21" = {
+      "openbao-3" = {
         vm_id     = 110021
         node_name = "proxmox-1"
         node_name = "proxmox-3"
-        hostname  = "openbao-21"
+        hostname  = "openbao-3"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.21/24" }
         tags      = ["terraform", "container", "openbao", "secrets", "infrastructure"]
       }
-      "openbao-30" = {
+      "openbao-4" = {
         vm_id     = 110030
         node_name = "proxmox-1"
         node_name = "proxmox-4"
-        hostname  = "openbao-30"
+        hostname  = "openbao-4"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.30/24" }
         tags      = ["terraform", "container", "openbao", "secrets", "infrastructure"]
       }
-      "openbao-20" = {
+      "openbao-2" = {
         vm_id     = 110020
         node_name = "proxmox-1"
         node_name = "proxmox-2"
-        hostname  = "openbao-20"
+        hostname  = "openbao-2"
         vlan      = "mgmt"
         ip_config = { ipv4_address = "192.168.5.20/24" }
         tags      = ["terraform", "container", "openbao", "secrets", "infrastructure"]
@@ -885,11 +885,11 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       for r in output.ansible_inventory.ingress : r
       if r.name == "openbao"
       && try(r.backends, []) == [
-        "openbao-10.example.com",
-        "openbao-20.example.com",
-        "openbao-21.example.com",
-        "openbao-30.example.com",
-        "openbao-31.example.com",
+        "openbao-1.example.com",
+        "openbao-2.example.com",
+        "openbao-3.example.com",
+        "openbao-4.example.com",
+        "openbao-5.example.com",
       ]
       && try(r.port, 0) == 8200
       && !try(r.sticky, true)
@@ -1167,7 +1167,7 @@ run "vm_node_placement_override" {
       placement = {
         vm_id     = 211
         node_name = "proxmox-1"
-        name      = "placement-proxmox-2"
+        name      = "placement-override"
         vlan      = "apps"
         node_name = "proxmox-2"
       }

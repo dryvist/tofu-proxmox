@@ -584,10 +584,10 @@ run "container_static_ip_with_positional_vmid_skips_cidrhost" {
 
   variables {
     containers = {
-      "technitium-dns-2" = {
+      "technitium-dns-1" = {
         vm_id     = 9900001
         node_name = "proxmox-1"
-        hostname  = "technitium-dns-2"
+        hostname  = "technitium-dns-1"
         vlan      = "dns"
         ip_config = { ipv4_address = "192.168.2.3/24" }
         tags      = ["terraform", "container", "dns"]
@@ -596,13 +596,13 @@ run "container_static_ip_with_positional_vmid_skips_cidrhost" {
   }
 
   assert {
-    condition     = local.container_ipv4["technitium-dns-2"] == "192.168.2.3/24"
-    error_message = "static ip_config must win without evaluating cidrhost for the 7-digit vm_id, got ${local.container_ipv4["technitium-dns-2"]}"
+    condition     = local.container_ipv4["technitium-dns-1"] == "192.168.2.3/24"
+    error_message = "static ip_config must win without evaluating cidrhost for the 7-digit vm_id, got ${local.container_ipv4["technitium-dns-1"]}"
   }
 
   assert {
-    condition     = local.container_gateway["technitium-dns-2"] == "192.168.2.1"
-    error_message = "static positional-VMID guest gateway should be the .1 of its VLAN, got ${local.container_gateway["technitium-dns-2"]}"
+    condition     = local.container_gateway["technitium-dns-1"] == "192.168.2.1"
+    error_message = "static positional-VMID guest gateway should be the .1 of its VLAN, got ${local.container_gateway["technitium-dns-1"]}"
   }
 }
 
@@ -927,13 +927,13 @@ run "openbao_concentration_seven_voters_three_on_one_node_has_no_headroom" {
 
   variables {
     containers = {
-      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
-      "openbao-10" = { vm_id = 110, hostname = "openbao-10", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
-      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-20" = { vm_id = 120, hostname = "openbao-20", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-21" = { vm_id = 121, hostname = "openbao-21", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
-      "openbao-31" = { vm_id = 131, hostname = "openbao-31", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-1" = { vm_id = 140, hostname = "openbao-1", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-2" = { vm_id = 110, hostname = "openbao-2", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-3" = { vm_id = 105, hostname = "openbao-3", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-4" = { vm_id = 120, hostname = "openbao-4", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-5" = { vm_id = 121, hostname = "openbao-5", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-6" = { vm_id = 130, hostname = "openbao-6", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-7" = { vm_id = 131, hostname = "openbao-7", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
     }
   }
 
@@ -956,14 +956,14 @@ run "openbao_concentration_one_added_voter_still_has_no_headroom" {
 
   variables {
     containers = {
-      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
-      "openbao-10" = { vm_id = 110, hostname = "openbao-10", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
-      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-20" = { vm_id = 120, hostname = "openbao-20", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-21" = { vm_id = 121, hostname = "openbao-21", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
-      "openbao-31" = { vm_id = 131, hostname = "openbao-31", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
-      "openbao-41" = { vm_id = 141, hostname = "openbao-41", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
+      "openbao-1" = { vm_id = 140, hostname = "openbao-1", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-2" = { vm_id = 110, hostname = "openbao-2", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-3" = { vm_id = 105, hostname = "openbao-3", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-4" = { vm_id = 120, hostname = "openbao-4", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-5" = { vm_id = 121, hostname = "openbao-5", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-6" = { vm_id = 130, hostname = "openbao-6", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-7" = { vm_id = 131, hostname = "openbao-7", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-8" = { vm_id = 141, hostname = "openbao-8", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
     }
   }
 
@@ -980,15 +980,15 @@ run "openbao_concentration_two_added_voters_create_headroom" {
 
   variables {
     containers = {
-      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
-      "openbao-10" = { vm_id = 110, hostname = "openbao-10", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
-      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-20" = { vm_id = 120, hostname = "openbao-20", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-21" = { vm_id = 121, hostname = "openbao-21", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
-      "openbao-31" = { vm_id = 131, hostname = "openbao-31", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
-      "openbao-41" = { vm_id = 141, hostname = "openbao-41", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
-      "openbao-42" = { vm_id = 142, hostname = "openbao-42", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
+      "openbao-1" = { vm_id = 140, hostname = "openbao-1", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-2" = { vm_id = 110, hostname = "openbao-2", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-3" = { vm_id = 105, hostname = "openbao-3", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-4" = { vm_id = 120, hostname = "openbao-4", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-5" = { vm_id = 121, hostname = "openbao-5", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-6" = { vm_id = 130, hostname = "openbao-6", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-7" = { vm_id = 131, hostname = "openbao-7", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-8" = { vm_id = 141, hostname = "openbao-8", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
+      "openbao-9" = { vm_id = 142, hostname = "openbao-9", vlan = "mgmt", node_name = "proxmox-4", tags = ["openbao"] }
     }
   }
 
@@ -1013,13 +1013,13 @@ run "openbao_concentration_acknowledgement_permits_degraded_window" {
   variables {
     openbao_accept_quorum_loss_on_node_failure = true
     containers = {
-      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
-      "openbao-10" = { vm_id = 110, hostname = "openbao-10", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
-      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-20" = { vm_id = 120, hostname = "openbao-20", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-21" = { vm_id = 121, hostname = "openbao-21", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
-      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
-      "openbao-31" = { vm_id = 131, hostname = "openbao-31", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-1" = { vm_id = 140, hostname = "openbao-1", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-2" = { vm_id = 110, hostname = "openbao-2", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-3" = { vm_id = 105, hostname = "openbao-3", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-4" = { vm_id = 120, hostname = "openbao-4", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-5" = { vm_id = 121, hostname = "openbao-5", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-6" = { vm_id = 130, hostname = "openbao-6", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+      "openbao-7" = { vm_id = 131, hostname = "openbao-7", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
     }
   }
 

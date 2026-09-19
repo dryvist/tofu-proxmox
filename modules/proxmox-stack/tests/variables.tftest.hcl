@@ -740,10 +740,10 @@ run "agent_dependency_tags_do_not_join_service_maps" {
         dhcp      = true
         tags      = ["terraform", "container", "hermes-agent", "chromium", "hindsight-client", "firecrawl-client"]
       }
-      "firecrawl-30" = {
+      "firecrawl-1" = {
         vm_id     = 519000
         node_name = "proxmox-1"
-        hostname  = "firecrawl-30"
+        hostname  = "firecrawl-1"
         vlan      = "ai"
         dhcp      = true
         tags      = ["terraform", "container", "ai", "firecrawl", "docker"]
@@ -752,7 +752,7 @@ run "agent_dependency_tags_do_not_join_service_maps" {
   }
 
   assert {
-    condition     = keys(local.firecrawl_container_ids) == ["firecrawl-30"]
+    condition     = keys(local.firecrawl_container_ids) == ["firecrawl-1"]
     error_message = "only the firecrawl-tagged SERVER guest may appear in firecrawl_container_ids; a firecrawl-client agent guest must not"
   }
 

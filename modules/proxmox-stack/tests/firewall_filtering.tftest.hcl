@@ -266,11 +266,11 @@ run "cribl_edge_not_in_cribl_stream_ids" {
 
   variables {
     containers = {
-      "cribl-edge-01" = {
+      "cribl-edge-1" = {
         vm_id     = 423040
         node_name = "proxmox-1"
         dhcp      = true
-        hostname  = "cribl-edge-01"
+        hostname  = "cribl-edge-1"
         vlan      = "siem"
         tags      = ["terraform", "cribl", "edge", "pipeline", "container"]
       }
@@ -278,12 +278,12 @@ run "cribl_edge_not_in_cribl_stream_ids" {
   }
 
   assert {
-    condition     = !contains(keys(local.cribl_stream_container_ids), "cribl-edge-01")
+    condition     = !contains(keys(local.cribl_stream_container_ids), "cribl-edge-1")
     error_message = "Container with 'cribl' + 'edge' tags must NOT be in cribl_stream_container_ids"
   }
 
   assert {
-    condition     = contains(keys(local.pipeline_container_ids), "cribl-edge-01")
+    condition     = contains(keys(local.pipeline_container_ids), "cribl-edge-1")
     error_message = "Container with 'cribl' + 'edge' tags must be in pipeline_container_ids"
   }
 }
@@ -340,11 +340,11 @@ run "pipeline_and_stream_containers_mutually_exclusive" {
         vlan      = "siem"
         tags      = ["terraform", "haproxy", "pipeline", "container"]
       }
-      "cribl-edge-01" = {
+      "cribl-edge-1" = {
         vm_id     = 423040
         node_name = "proxmox-1"
         dhcp      = true
-        hostname  = "cribl-edge-01"
+        hostname  = "cribl-edge-1"
         vlan      = "siem"
         tags      = ["terraform", "cribl", "edge", "pipeline", "container"]
       }
@@ -361,7 +361,7 @@ run "pipeline_and_stream_containers_mutually_exclusive" {
 
   assert {
     condition     = length(local.pipeline_container_ids) == 2
-    error_message = "pipeline_container_ids should contain haproxy + cribl-edge-01 (2 total)"
+    error_message = "pipeline_container_ids should contain haproxy + cribl-edge-1 (2 total)"
   }
 
   assert {
