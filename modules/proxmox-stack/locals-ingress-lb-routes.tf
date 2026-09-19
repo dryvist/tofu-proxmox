@@ -60,7 +60,18 @@ locals {
         health_check      = true
         health_check_path = "/health/liveliness"
         sso               = true # browser admin UI — gated
-      },
+      }
+    ] : [],
+    # A SEPARATE conditional, not a second element of the one above. The two
+    # rows carry different attribute sets (this one takes the default hostname
+    # and has no path_prefix/priority), and a tuple holding two differently
+    # shaped objects has no common element type to convert to — the conditional
+    # then fails to type-check against the empty branch. One row per
+    # conditional keeps each pair trivially unifiable, which is why every other
+    # block in this file is shaped this way. Adding null placeholders here
+    # would type-check but is worse: an explicit null is not an unset optional,
+    # so `try()` returns it instead of falling through to the default.
+    length(local.llm_router_backends) > 0 ? [
       {
         name              = "llm"
         backends          = local.llm_router_backends
