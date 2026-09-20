@@ -125,7 +125,7 @@ run "container_ipv4_uses_vlan_cidr" {
   # A leased guest advertises a NAME, never an address — there is no second
   # place holding one for it.
   assert {
-    condition     = local.container_address["haproxy"] == "haproxy-421040.${var.domain}"
+    condition     = local.container_address["haproxy"] == "haproxy.${var.domain}"
     error_message = "dhcp guest must advertise its FQDN, got ${local.container_address["haproxy"]}"
   }
 }
@@ -565,7 +565,7 @@ run "container_dhcp_resolves_fqdn_and_null_gateway" {
   }
 
   assert {
-    condition     = local.container_address["speedtest"] == "speedtest-990002.example.com"
+    condition     = local.container_address["speedtest"] == "speedtest.example.com"
     error_message = "dhcp speedtest should advertise FQDN speedtest.example.com, got ${local.container_address["speedtest"]}"
   }
 
@@ -773,7 +773,7 @@ run "inventory_publishes_one_address_authority_per_guest" {
 
   # A leased guest is published by name only.
   assert {
-    condition     = output.ansible_inventory.containers["netq-probe-media"].ip == "netq-probe-media-990003.${var.domain}"
+    condition     = output.ansible_inventory.containers["netq-probe-media"].ip == "netq-probe-media.${var.domain}"
     error_message = "leased guest must be published as an FQDN, got ${output.ansible_inventory.containers["netq-probe-media"].ip}"
   }
 
