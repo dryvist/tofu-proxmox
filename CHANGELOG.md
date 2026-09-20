@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.21.0](https://github.com/dryvist/tofu-proxmox/compare/v3.20.0...v3.21.0) (2026-09-20)
+
+
+### Features
+
+* **ingress:** front the 4080 guest's llama-server UI behind Authelia ([38ab155](https://github.com/dryvist/tofu-proxmox/commit/38ab15561399853c0582a02bda4b1c9920a6047f))
+* **ingress:** front the 4080 guest's llama-server UI behind Authelia ([8685191](https://github.com/dryvist/tofu-proxmox/commit/868519177e4440715d61783e8019bf430fdca772))
+* **naming:** generate every guest name as &lt;app&gt;-&lt;vmid&gt; ([c10dda6](https://github.com/dryvist/tofu-proxmox/commit/c10dda6a8913ae6ce9dd75f8644ac17821c05a62))
+* **naming:** generate every guest name as &lt;app&gt;-&lt;vmid&gt; ([44b1693](https://github.com/dryvist/tofu-proxmox/commit/44b16934bd2f3d775692a84cad4e696940bc243a))
+
+
+### Bug Fixes
+
+* **ingress:** the llm API route sets response_header_timeout to none ([efc0874](https://github.com/dryvist/tofu-proxmox/commit/efc087497f09b111b259b83eec2d3180e561e048))
+* **ingress:** the llm API route sets response_header_timeout to none ([1ac5e75](https://github.com/dryvist/tofu-proxmox/commit/1ac5e755a08c16941ae03ec15f634c52b1e5c42c))
+* **naming:** remove the guest naming guard ([b98e7ed](https://github.com/dryvist/tofu-proxmox/commit/b98e7ed3b4871f09b2ac24e904ff045d1dd8efef))
+* **naming:** remove the guest naming guard — it blocks every apply ([42b9796](https://github.com/dryvist/tofu-proxmox/commit/42b9796f9153fc12e709bd58c84ac1c7a298a3ca))
+
 ## [3.20.0](https://github.com/dryvist/tofu-proxmox/compare/v3.19.0...v3.20.0) (2026-09-19)
 
 
