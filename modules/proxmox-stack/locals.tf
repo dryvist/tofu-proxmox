@@ -65,42 +65,10 @@ locals {
       try(v.dhcp, false) ? null : nonsensitive(cidrhost(var.network_cidrs[v.vlan], 1))
     )
   }
+  # container_mac / container_address are extracted into
+  # locals-guest-naming.tf (locals merge across files in a module) to keep
+  # this file under the shared _file-size workflow's 12 KB limit.
 
-  # Deterministic, locally-administered MAC per DHCP-first guest. The `02:` prefix
-  # marks it locally-administered + unicast (RFC 7042). The remaining 5 octets are
-  # a stable digest of the hostname, so the MAC is reproducible across rebuilds and
-  # plan runs WITHOUT reading provider state. We set it on the NIC explicitly
-  # because bpg/proxmox auto-generates a random MAC otherwise and (v0.90+) does not
-  # expose it as an output.
-  #
-  # What this buys, now that nothing reserves an address against it: LEASE
-  # STABILITY. The DHCP server keys a lease to the MAC, so a stable MAC means a
-  # rebuilt guest comes back on the same address under the same lease-table name.
-  # A provider-random MAC would hand every rebuild a new address and a new record.
-  # It is no longer a join key into a reservation — there are no reservations for
-  # these guests; see the addressing note above.
-  container_mac = {
-    for k, v in var.containers : k => format("02:%s:%s:%s:%s:%s",
-      substr(md5(v.hostname), 0, 2), substr(md5(v.hostname), 2, 2),
-      substr(md5(v.hostname), 4, 2), substr(md5(v.hostname), 6, 2),
-    substr(md5(v.hostname), 8, 2))
-  }
-  # Reachable address each container advertises to downstream consumers (the
-  # ansible_inventory ip field and the Traefik ingress backend). Static guests
-  # advertise their derived host IP (CIDR mask stripped); DNS-first guests
-  # (dhcp = true) advertise their FQDN {hostname}.{domain} so nothing downstream
-  # pins an address the DHCP lease can change — reachable by name regardless of IP.
-  container_address = {
-    for k, v in var.containers : k => (
-      try(v.dhcp, false)
-      ? (
-        local.guest_domain[v.vlan] != ""
-        ? "${v.hostname}.${local.guest_domain[v.vlan]}"
-        : v.hostname
-      )
-      : split("/", local.container_ipv4[k])[0]
-    )
-  }
   # VM IPv4/gateway + DHCP-first MAC/reserved-IP/advertised-address locals are
   # extracted into locals-vm-network.tf (locals merge across files in a module)
   # to keep this file under the shared _file-size workflow's 12 KB limit.

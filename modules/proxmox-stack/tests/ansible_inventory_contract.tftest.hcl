@@ -576,9 +576,9 @@ run "ansible_inventory_ingress_route_table" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress :
-      r if r.name == "smokeping" && r.ip == "smokeping.example.com" && r.port == 80
+      r if r.name == "smokeping" && r.ip == "smokeping-990001.example.com" && r.port == 80
     ]) == 1
-    error_message = "ingress must front DHCP guest smokeping at smokeping.example.com:80 (FQDN backend + constant port)"
+    error_message = "ingress must front DHCP guest smokeping at smokeping-990001.example.com:80 (FQDN backend + constant port)"
   }
 
   # No nodes set in this fixture -> the Proxmox apex pool is empty -> the apex
@@ -665,9 +665,9 @@ run "ansible_inventory_ingress_nautobot_not_postgres" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress :
-      r if r.name == "nautobot" && r.ip == "nautobot.example.com" && r.port == 8080
+      r if r.name == "nautobot" && r.ip == "nautobot-605000.example.com" && r.port == 8080
     ]) == 1
-    error_message = "ingress must front nautobot at nautobot.example.com:8080 (FQDN backend + nautobot_web constant)"
+    error_message = "ingress must front nautobot at nautobot-605000.example.com:8080 (FQDN backend + nautobot_web constant)"
   }
 
   # postgres has no ingress_services row -> it must never surface as a route.
@@ -699,9 +699,9 @@ run "ansible_inventory_ingress_vikunja_fronted" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress :
-      r if r.name == "vikunja" && r.ip == "vikunja.example.com" && r.port == 3456
+      r if r.name == "vikunja" && r.ip == "vikunja-605010.example.com" && r.port == 3456
     ]) == 1
-    error_message = "ingress must front vikunja at vikunja.example.com:3456 (FQDN backend + vikunja_web constant)"
+    error_message = "ingress must front vikunja at vikunja-605010.example.com:3456 (FQDN backend + vikunja_web constant)"
   }
 }
 
@@ -885,11 +885,11 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
       for r in output.ansible_inventory.ingress : r
       if r.name == "openbao"
       && try(r.backends, []) == [
-        "openbao-10.example.com",
-        "openbao-20.example.com",
-        "openbao-21.example.com",
-        "openbao-30.example.com",
-        "openbao-31.example.com",
+        "openbao-110010.example.com",
+        "openbao-110020.example.com",
+        "openbao-110021.example.com",
+        "openbao-110030.example.com",
+        "openbao-110031.example.com",
       ]
       && try(r.port, 0) == 8200
       && !try(r.sticky, true)
