@@ -3,8 +3,11 @@
 variable "containers" {
   description = "Map of containers to create"
   type = map(object({
-    vm_id       = number
-    hostname    = string
+    vm_id = number
+    # No longer read — the hostname is GENERATED (locals.tf,
+    # guest_hostname_containers). Optional only so the private desired state
+    # need not drop the field before this repo does (see docs/GUEST_NAMING.md).
+    hostname    = optional(string)
     description = optional(string)
 
     # One-line board subtitle. Not `description`: that carries placement
