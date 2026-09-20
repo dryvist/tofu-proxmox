@@ -82,14 +82,14 @@ run "fabric_models_mount_is_derived_read_only" {
         dhcp      = true
         tags      = ["llm-fast"]
         mount_points = [
-          { volume = "/models-pool/llama-cpp", path = "/var/lib/llama-cpp/models" },
+          { volume = "/models-pool/llama-cpp", path = "/var/lib/llm" },
         ]
       }
     }
   }
 
   assert {
-    condition     = module.containers[0].container_mount_points["llm-fast"]["/var/lib/llama-cpp/models"] == true
+    condition     = module.containers[0].container_mount_points["llm-fast"]["/var/lib/llm"] == true
     error_message = "an llm-fabric LXC's models mount did not derive read_only — the llama_cpp role's mount assert would still fail."
   }
 }
@@ -162,14 +162,14 @@ run "explicit_false_overrides_the_fabric_derivation" {
         dhcp      = true
         tags      = ["llm-fast"]
         mount_points = [
-          { volume = "/models-pool/llama-cpp", path = "/var/lib/llama-cpp/models", read_only = false },
+          { volume = "/models-pool/llama-cpp", path = "/var/lib/llm", read_only = false },
         ]
       }
     }
   }
 
   assert {
-    condition     = module.containers[0].container_mount_points["llm-fast"]["/var/lib/llama-cpp/models"] == false
+    condition     = module.containers[0].container_mount_points["llm-fast"]["/var/lib/llm"] == false
     error_message = "an explicit read_only = false in the desired state was overridden by the fabric derivation."
   }
 }
