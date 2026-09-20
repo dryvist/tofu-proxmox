@@ -136,7 +136,8 @@ resource "proxmox_virtual_environment_container" "containers" {
       # The provider defaults this to false, which excludes the mount from
       # vzdump entirely. See variables-containers.tf for why the module
       # default inverts it.
-      backup = mount_point.value.backup
+      backup    = mount_point.value.backup
+      read_only = mount_point.value.read_only
     }
   }
 
