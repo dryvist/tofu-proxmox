@@ -39,7 +39,7 @@ locals {
     for k in sort([
       for k, v in var.containers : k
       if contains(coalesce(try(v.tags, null), []), "openbao")
-    ]) : "${local.guest_hostname_containers[k]}.${var.domain}"
+    ]) : "${var.containers[k].hostname}.${var.domain}"
   ]
 
   # LiteLLM router pool: THE fabric endpoint (https://llm.<domain>/v1) for every
