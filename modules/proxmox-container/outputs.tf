@@ -31,3 +31,10 @@ output "container_network_interfaces" {
     configured_interfaces = length(v.network_interface)
   } }
 }
+
+output "container_mount_points" {
+  description = "Per-container mount_point path => read_only, for verifying the read_only wiring without exposing full container state."
+  value = { for k, v in proxmox_virtual_environment_container.containers : k => {
+    for mp in v.mount_point : mp.path => mp.read_only
+  } }
+}

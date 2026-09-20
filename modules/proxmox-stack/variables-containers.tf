@@ -59,6 +59,11 @@ variable "containers" {
       size   = optional(string)
       path   = string
       backup = optional(bool, true)
+      # Nullable (no default): main.tf derives read_only for the llm fabric's
+      # models mount when this is unset, so a null here must stay
+      # distinguishable from an explicit false. See
+      # local.llm_fast_container_ids and var.llm_models_mount_path.
+      read_only = optional(bool)
     })), [])
 
     # Host device nodes mapped into the container. Used by download-vpn for

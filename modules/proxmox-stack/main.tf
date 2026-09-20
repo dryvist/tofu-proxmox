@@ -125,6 +125,19 @@ module "containers" {
         ipv4_address = local.container_ipv4[k]
         ipv4_gateway = local.container_gateway[k]
       }
+      # The llm fabric must never write model weights locally (the llama_cpp
+      # role asserts this — roles/llama_cpp/tasks/main.yml in
+      # ansible-proxmox-ai). Derive read_only for the shared models mount from
+      # fabric membership (local.llm_fast_container_ids) rather than requiring
+      # a per-guest literal in deployment.json; an explicit read_only in the
+      # desired state still wins.
+      mount_points = [
+        for mp in v.mount_points : merge(mp, {
+          read_only = mp.read_only != null ? mp.read_only : (
+            contains(keys(local.llm_fast_container_ids), k) && mp.path == var.llm_models_mount_path
+          )
+        })
+      ]
       # Tag every NIC onto the LXC's service VLAN (802.1Q id from var.vlan_ids).
       # DHCP-first guests also get a deterministic MAC (local.container_mac) so a
       # rebuilt guest renews the SAME lease and keeps its address and its name —
