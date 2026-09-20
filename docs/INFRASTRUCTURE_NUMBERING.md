@@ -15,10 +15,8 @@ maintenance windows allow — they are **not** the target.
 
 ## Hostname & Multi-Instance Naming Law
 
-A guest name is `<app>-<NM>`: `N` the node's logical digit, `M` a zero-based
-counter for that app on that node — always two digits, never one — and only for
-guests **pinned** to their node. The rule, the pinned/relocatable condition, and
-the plan-time guard that enforces it: **[GUEST_NAMING.md](./GUEST_NAMING.md)**.
+A guest name is generated as `<app>-<vmid>`, never hand-declared. Full rule:
+**[GUEST_NAMING.md](./GUEST_NAMING.md)**.
 
 ## Node naming standard
 
