@@ -79,6 +79,12 @@ locals {
         health_check      = true
         health_check_path = "/health/liveliness"
         sso               = false # OpenAI-compatible API clients
+        # The router bounds every request itself (its per-attempt timeout and
+        # fallback ladder); a non-streaming completion sends no byte until the
+        # whole answer exists. The ingress therefore applies no first-header
+        # limit to this route - "0s" is Traefik's "none" - so its own default
+        # cannot cut a request the router is still serving.
+        response_header_timeout = "0s"
       }
     ] : [],
     # agentgateway MCP fabric: mcp.<domain> (proxy plane) + agentgateway.<domain>
