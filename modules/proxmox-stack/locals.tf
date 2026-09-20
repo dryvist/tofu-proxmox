@@ -12,6 +12,18 @@ locals {
     for vlan in keys(var.network_cidrs) : vlan => try(var.network_domains[vlan], var.domain)
   })
 
+  # Every guest name is GENERATED, never declared: <app>-<vm_id>, where <app>
+  # is the desired-state map key with any trailing "-<digits>" stripped (so
+  # today's keys like "llm-router-1" become app "llm-router"). No hostname/name
+  # field is read from deployment.json for this — if the object still carries
+  # one it is silently ignored. See docs/GUEST_NAMING.md.
+  guest_hostname_containers = {
+    for k, v in var.containers : k => "${replace(k, "/-[0-9]+$/", "")}-${v.vm_id}"
+  }
+  guest_hostname_vms = {
+    for k, v in var.vms : k => "${replace(k, "/-[0-9]+$/", "")}-${v.vm_id}"
+  }
+
   # DRY per-VLAN Network Configuration - Single Source of Truth.
   # Every guest IP is derived from its VLAN's CIDR (network-form, from OpenBao)
   # and its VM ID: cidrhost(network_cidrs[vlan], vm_id). The gateway is the .1
@@ -79,11 +91,14 @@ locals {
   # A provider-random MAC would hand every rebuild a new address and a new record.
   # It is no longer a join key into a reservation — there are no reservations for
   # these guests; see the addressing note above.
+  # Seeded from the map key, not the generated hostname: the key is the
+  # resource address and never changes, so the MAC (and therefore the DHCP
+  # lease) survives even though the hostname is now a function of vm_id.
   container_mac = {
     for k, v in var.containers : k => format("02:%s:%s:%s:%s:%s",
-      substr(md5(v.hostname), 0, 2), substr(md5(v.hostname), 2, 2),
-      substr(md5(v.hostname), 4, 2), substr(md5(v.hostname), 6, 2),
-    substr(md5(v.hostname), 8, 2))
+      substr(md5(k), 0, 2), substr(md5(k), 2, 2),
+      substr(md5(k), 4, 2), substr(md5(k), 6, 2),
+    substr(md5(k), 8, 2))
   }
   # Reachable address each container advertises to downstream consumers (the
   # ansible_inventory ip field and the Traefik ingress backend). Static guests
@@ -95,8 +110,8 @@ locals {
       try(v.dhcp, false)
       ? (
         local.guest_domain[v.vlan] != ""
-        ? "${v.hostname}.${local.guest_domain[v.vlan]}"
-        : v.hostname
+        ? "${local.guest_hostname_containers[k]}.${local.guest_domain[v.vlan]}"
+        : local.guest_hostname_containers[k]
       )
       : split("/", local.container_ipv4[k])[0]
     )

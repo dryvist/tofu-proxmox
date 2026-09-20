@@ -28,19 +28,21 @@ locals {
   # same rationale as the container_* locals in locals.tf: the MAC is stable so
   # the lease (and therefore the address and the lease-table DNS name) survives a
   # rebuild. Nothing reserves an address against it.
+  # Seeded from the map key, not the generated name — see container_mac in
+  # locals.tf for why.
   vm_mac = {
     for k, v in var.vms : k => format("02:%s:%s:%s:%s:%s",
-      substr(md5(v.name), 0, 2), substr(md5(v.name), 2, 2),
-      substr(md5(v.name), 4, 2), substr(md5(v.name), 6, 2),
-    substr(md5(v.name), 8, 2))
+      substr(md5(k), 0, 2), substr(md5(k), 2, 2),
+      substr(md5(k), 4, 2), substr(md5(k), 6, 2),
+    substr(md5(k), 8, 2))
   }
   vm_address = {
     for k, v in var.vms : k => (
       try(v.dhcp, false)
       ? (
         local.guest_domain[v.vlan] != ""
-        ? "${v.name}.${local.guest_domain[v.vlan]}"
-        : v.name
+        ? "${local.guest_hostname_vms[k]}.${local.guest_domain[v.vlan]}"
+        : local.guest_hostname_vms[k]
       )
       : split("/", local.vm_ipv4[k])[0]
     )
