@@ -1897,6 +1897,46 @@ run "ansible_inventory_publishes_ha_replication_target" {
   }
 }
 
+# --- models_mount_path (llama_cpp role's tofu-derived models dir) -----------
+
+run "ansible_inventory_publishes_models_mount_path" {
+  command = plan
+
+  variables {
+    containers = {
+      "llm-fast" = {
+        vm_id     = 610010
+        node_name = "proxmox-1"
+        hostname  = "llm-fast"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-fast"]
+        mount_points = [
+          { volume = "/models-pool/llama-cpp", path = "/var/lib/llm" },
+        ]
+      }
+      "llm-4080" = {
+        vm_id     = 610011
+        node_name = "proxmox-1"
+        hostname  = "llm-4080"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-fast"]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_path == "/var/lib/llm"
+    error_message = "a container with a mount_point at var.llm_models_mount_path must publish that path as models_mount_path — the llama_cpp role derives llama_cpp_models_dir from this instead of a hardcoded default"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-4080"].models_mount_path == null
+    error_message = "a container with no mount at var.llm_models_mount_path must publish models_mount_path as null, so the consumer can tell 'no shared mount' from 'mount not yet known' — never a guessed path"
+  }
+}
+
 run "ansible_inventory_publishes_primary_node" {
   command = plan
 
