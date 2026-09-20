@@ -81,11 +81,9 @@ The explicit `openbao-01` / `openbao-02` entries in the `containers` map and the
 not two competing schemes.
 
 Every row comes from a direct read of `sys/storage/raft/configuration`, which
-showed all nine `voter=true` with one elected leader. The `proxmox-4` pair were
-previously recorded here as `unverified`, because reading the flag back needs a
-capability no routine role carries. That gap is now closed by measurement: the
-pair are **full voters**, not declared-but-unconfirmed, so the earlier advice to
-size them as voters and depend on them as non-voters no longer applies.
+showed all nine `voter=true` with one elected leader, including the
+`proxmox-4` pair: they are **full voters**, confirmed by measurement, not
+declared-but-unconfirmed. Size and depend on them as voters.
 
 Read voter membership from the Raft configuration, never from `sys/health`. A
 member that has fallen out of the cluster still answers health — that check is
