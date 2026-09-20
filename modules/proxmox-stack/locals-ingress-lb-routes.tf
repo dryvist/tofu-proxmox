@@ -35,7 +35,12 @@ locals {
         sticky            = false
         health_check      = true
         health_check_path = "/v1/sys/health"
-        sso               = false # token/AppRole/JWT API clients (CLI, Terrakube, roles)
+        # The pool has one eligible member at any moment, so a single probe
+        # that exceeds the estate default empties it. Probe less often and
+        # allow a slow answer; the timeout stays below the interval.
+        health_check_interval = "30s"
+        health_check_timeout  = "20s"
+        sso                   = false # token/AppRole/JWT API clients (CLI, Terrakube, roles)
       }
     ] : [],
     # LiteLLM router pool: llm.<domain> load-balancing the stateless routers.
