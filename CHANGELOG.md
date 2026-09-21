@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.22.0](https://github.com/dryvist/tofu-proxmox/compare/v3.21.1...v3.22.0) (2026-09-21)
+
+
+### Features
+
+* **proxmox-container:** add read_only mount_point option ([#1144](https://github.com/dryvist/tofu-proxmox/issues/1144)) ([817b9b4](https://github.com/dryvist/tofu-proxmox/commit/817b9b4020ca3ca0efb2d8864b4cfa6a8bce50af))
+
 ## [3.21.1](https://github.com/dryvist/tofu-proxmox/compare/v3.21.0...v3.21.1) (2026-09-21)
 
 
