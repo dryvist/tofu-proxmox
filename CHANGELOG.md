@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.21.1](https://github.com/dryvist/tofu-proxmox/compare/v3.21.0...v3.21.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **ingress:** the openbao route sets its own health-check interval and timeout ([#1147](https://github.com/dryvist/tofu-proxmox/issues/1147)) ([41fb7f0](https://github.com/dryvist/tofu-proxmox/commit/41fb7f06ada40ce77a8f317beb94e491c188c0e9))
+
 ## [3.21.0](https://github.com/dryvist/tofu-proxmox/compare/v3.20.0...v3.21.0) (2026-09-20)
 
 
