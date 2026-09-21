@@ -34,6 +34,12 @@ variable "containers" {
       size   = optional(string)
       path   = string
       backup = optional(bool, true)
+      # Mounts the path read-only inside the guest (pct's `ro=1`). A guest that
+      # must never write to a shared dataset — e.g. model weights the llama_cpp
+      # role asserts are read-only — sets this rather than relying on the
+      # source dataset's own permissions, which the guest's root can still
+      # remount rw from inside.
+      read_only = optional(bool, false)
     })), [])
 
     # Device passthrough (e.g. /dev/net/tun for WireGuard inside an LXC).
