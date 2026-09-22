@@ -28,6 +28,20 @@ variable "deployment_key" {
   default     = "deployment.json"
 }
 
+# SSH-CA guest trust — baking the OpenBao SSH client CA into new guests'
+# cloud-init vendor-data, so they're cert-reachable from birth (mirrors the
+# ansible-proxmox-apps ssh_ca_trust role's activation gate, though that role
+# reads an unauthenticated endpoint and fingerprint-pins it; this reads via
+# the workspace's own authenticated OpenBao identity instead — see
+# modules/proxmox-stack/ssh-ca-trust.tf). Left at the default, this is a
+# no-op — no plan diff, no data source evaluated (see the `count` there).
+variable "ssh_ca_trust_rollout_enabled" {
+  description = "Bake OpenBao SSH-CA trust into new guests' cloud-init vendor-data via ssh-client-ca/config/ca (read on the workspace's own OpenBao identity)."
+  type        = bool
+  default     = false
+}
+
+
 variable "openbao_accept_quorum_loss_on_node_failure" {
   description = "Acknowledge that the planned OpenBao voter placement may not survive a one-node loss (cluster at or below Raft quorum). Only for a deliberate degraded maintenance window; default false. Passed through to the proxmox-stack voter-spread guard."
   type        = bool

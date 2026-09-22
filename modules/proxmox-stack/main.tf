@@ -86,6 +86,9 @@ module "vms" {
   default_datastore = var.datastore_default
   domain            = var.domain
 
+  # See ssh-ca-trust.tf — empty map (the default) is a total no-op.
+  ssh_ca_vendor_data_file_ids = local.ssh_ca_vendor_data_file_ids
+
   # SSH credentials for provisioners (BPG provider reads auth from PROXMOX_VE_* env vars)
   proxmox_ssh_username    = var.proxmox_ssh_username
   proxmox_ssh_private_key = var.proxmox_ssh_private_key

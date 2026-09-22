@@ -198,6 +198,8 @@ module "homelab" {
   vm_ssh_public_key   = local.deployment.vm_ssh_public_key
   vms                 = try(local.deployment.vms, {})
 
+  ssh_ca_trust_rollout_enabled = var.ssh_ca_trust_rollout_enabled
+
   inventory_bucket = var.inventory_bucket
   inventory_key    = var.inventory_key
 

@@ -15,6 +15,10 @@ variable "vms" {
     # unless this is true, so a move without it destroys the VM's disks.
     migrate = optional(bool, false)
 
+    # See the extended rationale in proxmox-stack/variables-vms.tf. Looked up
+    # in var.ssh_ca_vendor_data_file_ids by node_name at first boot only.
+    ssh_ca_trust = optional(bool, false)
+
     # Resource configuration
     cpu_cores = optional(number, 2)
     # cpu_type: "host" for single-node homelab stability (zero CPU emulation overhead)
@@ -28,6 +32,14 @@ variable "vms" {
     # existing guest changes; enabling it on an existing VM is itself an
     # in-place update that only takes effect at that VM's next reboot.
     memory_hotplug = optional(bool, false)
+
+    # The bpg provider auto-reboots a VM to apply a non-hotpluggable change
+    # (default true). For a guest whose own apply-executor happens to run ON
+    # that guest (the Terrakube/Semaphore plane host), an auto-reboot mid-run
+    # kills the apply before it finishes — set this false for that guest
+    # specifically and reboot it manually afterward, in a maintenance window.
+    # A guest not in that position should stay at the default true.
+    reboot_after_update = optional(bool, true)
 
     # Storage configuration
     boot_disk = optional(object({
@@ -176,4 +188,10 @@ variable "startup_delay" {
   description = "Delay in seconds after this tier starts before the next tier starts"
   type        = number
   default     = 10
+}
+
+variable "ssh_ca_vendor_data_file_ids" {
+  description = "node_name -> cloud-init vendor-data snippet file id, carrying the pinned OpenBao SSH-CA trust config. Only consulted for a VM with ssh_ca_trust = true; a node with no entry leaves that VM's vendor_data_file_id null (same as the feature being off)."
+  type        = map(string)
+  default     = {}
 }
