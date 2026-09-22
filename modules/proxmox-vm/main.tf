@@ -26,6 +26,8 @@ resource "proxmox_virtual_environment_vm" "vms" {
   pool_id    = each.value.pool_id
   protection = each.value.protection
 
+  reboot_after_update = each.value.reboot_after_update
+
   # ovmf (UEFI) required for guests with tpm_state/efi_disk configured -
   # Windows 11+ hardware checks fail under seabios even with TPM emulated.
   bios = each.value.bios
@@ -36,8 +38,6 @@ resource "proxmox_virtual_environment_vm" "vms" {
   # pinned to the default no matter what the desired state asked for.
   on_boot = each.value.on_boot
   started = each.value.started
-
-  reboot_after_update = each.value.reboot_after_update
 
   # Startup order derives from the VMID itself: the 6-digit scheme's thousands
   # prefix already encodes dependency priority (e.g. 303000 postgres starts
@@ -86,8 +86,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
   # keep accumulating in replication snapshots the guest never needs. Same
   # regression applies to ssd/discard: leaving ssd=false, discard="ignore"
   # on an SSD-backed datastore means freed blocks are never TRIMmed, so a
-  # ZFS pool backing high-churn ephemeral disks fills and fragments even
-  # though the guest itself stays small.
+  # ZFS pool backing high-churn ephemeral disks fills and fragments.
   disk {
     datastore_id = coalesce(
       each.value.boot_disk.datastore_id,
@@ -216,8 +215,6 @@ resource "proxmox_virtual_environment_vm" "vms" {
       keys     = each.value.user_account.keys
     }
 
-    # OpenBao SSH-CA trust, baked in at first boot only (see ignore_changes
-    # below). try(): a node with no rendered snippet falls back to null.
     vendor_data_file_id = try(var.ssh_ca_vendor_data_file_ids[each.value.node_name], null)
   }
 
@@ -263,8 +260,6 @@ resource "proxmox_virtual_environment_vm" "vms" {
       # pick up the dns block at first boot; existing VMs get resolvers via
       # Ansible post-boot.
       initialization[0].dns,
-      # Same failure mode again: a vendor_data_file_id change would rebuild
-      # the non-removable ide2 drive on a running VM. First-boot only.
       initialization[0].vendor_data_file_id,
       # A cloned VM re-imported (e.g. after a manual VMID move) reports its
       # `clone` block as a new addition, which is ForceNew — terraform would
