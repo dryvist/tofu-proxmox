@@ -8,6 +8,11 @@
 # locals-ingress-pools.tf.
 
 locals {
+  # Shared by the primary pool and its failover_fallback below, so the two
+  # never drift apart.
+  openbao_health_check_interval = "30s"
+  openbao_health_check_timeout  = "20s"
+
   ingress_lb_routes = concat(
     # OpenBao HA: one openbao.<domain> route load-balancing the Raft peers.
     # backends (plural) -> multi-server loadBalancer; health_check drops a down
@@ -16,13 +21,9 @@ locals {
     # health_check_path is /v1/sys/health WITHOUT ?standbyok — only the active
     # peer returns 200; standbys return 429 and Traefik evicts them, routing
     # every request straight to the active node. Deliberate: writes must hit the
-    # Raft leader anyway, and the previous ?standbyok=true pooling meant most
-    # requests hit a standby whose forward-to-leader hop is the path that
-    # intermittently fails ("internal error"), so pooling standbys amplified the
-    # failure (verified 2026-07-20; ansible-proxmox-apps#1125). Trade-off: a brief
-    # window during leader election until the health check re-converges — far
-    # cheaper than the continuous failure rate standby-pooling caused. The
-    # `traefik` role renders this path for the route's health check (default "/").
+    # Raft leader anyway, and pooling standbys amplifies a real forward-to-leader
+    # failure. The `traefik` role renders this path for the route's health check
+    # (default "/").
     length(local.openbao_backends) > 0 ? [
       {
         name     = "openbao"
@@ -30,17 +31,26 @@ locals {
         port     = local.pipeline_constants.service_ports.openbao_api
         # No sticky: active-only health checks leave exactly one healthy backend,
         # so a cookie adds nothing — and one minted before a fence/election pins
-        # the client to an evicted backend (observed 2026-07-27: persistent 503s
-        # while the health check showed a healthy leader).
+        # the client to an evicted backend.
         sticky            = false
         health_check      = true
         health_check_path = "/v1/sys/health"
         # The pool has one eligible member at any moment, so a single probe
         # that exceeds the estate default empties it. Probe less often and
         # allow a slow answer; the timeout stays below the interval.
-        health_check_interval = "30s"
-        health_check_timeout  = "20s"
+        health_check_interval = local.openbao_health_check_interval
+        health_check_timeout  = local.openbao_health_check_timeout
         sso                   = false # token/AppRole/JWT API clients (CLI, Terrakube, roles)
+        # A nested standby-eligible pool a `failover` service can route to
+        # only when the primary pool above has no healthy server — never
+        # published as its own route (would leak into ingress/dashboard
+        # consumers as a tile with no Host rule).
+        failover_fallback = {
+          backends              = local.openbao_backends
+          health_check_path     = "/v1/sys/health?standbyok=true&perfstandbyok=true"
+          health_check_interval = local.openbao_health_check_interval
+          health_check_timeout  = local.openbao_health_check_timeout
+        }
       }
     ] : [],
     # LiteLLM router pool: llm.<domain> load-balancing the stateless routers.
