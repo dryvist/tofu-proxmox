@@ -52,6 +52,9 @@ variable "vms" {
     # memory_dedicated raise reboot-free.
     memory_hotplug = optional(bool, false)
 
+    # false: apply a non-hotpluggable change without rebooting the guest.
+    reboot_after_update = optional(bool, true)
+
     # Storage configuration
     boot_disk = optional(object({
       datastore_id = optional(string, "local-lvm")
