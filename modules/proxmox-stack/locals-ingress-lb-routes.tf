@@ -41,6 +41,35 @@ locals {
         health_check_interval = "30s"
         health_check_timeout  = "20s"
         sso                   = false # token/AppRole/JWT API clients (CLI, Terrakube, roles)
+        # Vikunja #3347 / two 2026-09-20 total outages: with only the active
+        # node ever eligible, the pool goes to ZERO during a leader-election
+        # window (not just "6/9 read 429", which is the intended steady
+        # state). `failover_fallback` is a NESTED object, not a sibling route:
+        # a sibling would leak into the published ingress/dashboard lists
+        # (locals-ingress-backends.tf folds every ingress_lb_routes entry into
+        # the ansible_inventory.ingress contract that homarr/glance/homepage
+        # read) as a broken tile with no Host rule of its own. Nesting it here
+        # keeps it invisible to every consumer except the `traefik` role,
+        # which still needs a template change (ansible-proxmox-apps) to emit
+        # Traefik's native `failover` service type for a route carrying this
+        # field — `service` = this pool, `fallback` = the nested pool below,
+        # routed to ONLY when `service` has no healthy server — instead of a
+        # plain `loadBalancer:`. That template change is tracked as a
+        # follow-up, not done by this PR (tofu-proxmox scope only, per lead).
+        #
+        # The fallback pool reuses the same Raft peers but with standbys
+        # forward-eligible (?standbyok&perfstandbyok), so at least one member
+        # answers 200 during the election window — without ever pooling
+        # standbys alongside the primary (that pooling is exactly what
+        # ansible-proxmox-apps#1125 showed amplifies the forward-to-leader
+        # failure), so #1125 cannot recur: the fallback pool is reached only
+        # when the primary is completely empty.
+        failover_fallback = {
+          backends              = local.openbao_backends
+          health_check_path     = "/v1/sys/health?standbyok=true&perfstandbyok=true"
+          health_check_interval = "30s"
+          health_check_timeout  = "20s"
+        }
       }
     ] : [],
     # LiteLLM router pool: llm.<domain> load-balancing the stateless routers.

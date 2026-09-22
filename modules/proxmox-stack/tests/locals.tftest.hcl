@@ -1222,3 +1222,63 @@ run "hermes_ui_container_ids_are_disjoint_from_the_agent" {
     error_message = "each published hermes api_url must end in /v1 or Open WebUI lists no models"
   }
 }
+
+# --- Vikunja #3347: openbao ingress failover fallback ---
+# The primary `openbao` route stays active-only (standbys read 429 by
+# design), but must carry a nested `failover_fallback` pool so the `traefik`
+# role can close the zero-healthy-backend gap during a leader election
+# without pooling standbys alongside the primary (ansible-proxmox-apps#1125).
+
+run "openbao_route_carries_a_failover_fallback_pool" {
+  command = plan
+
+  variables {
+    containers = {
+      "openbao-01" = { vm_id = 140, hostname = "openbao-01", vlan = "mgmt", node_name = "proxmox-1", tags = ["openbao"] }
+      "openbao-02" = { vm_id = 105, hostname = "openbao-02", vlan = "mgmt", node_name = "proxmox-2", tags = ["openbao"] }
+      "openbao-30" = { vm_id = 130, hostname = "openbao-30", vlan = "mgmt", node_name = "proxmox-3", tags = ["openbao"] }
+    }
+    domain = "example.com"
+    # This run tests the ingress route's failover_fallback shape, not voter
+    # concentration (covered separately above) — acknowledge the 3-voter/
+    # 3-node fixture's inherent quorum-on-node-loss tightness rather than
+    # padding it with unrelated voters just to satisfy that guard.
+    openbao_accept_quorum_loss_on_node_failure = true
+  }
+
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.failover_fallback.backends
+      if r.name == "openbao"
+    ]) == ["openbao-01.example.com", "openbao-02.example.com", "openbao-30.example.com"]
+    error_message = "the openbao route's failover_fallback must reuse the same Raft-peer FQDNs as the primary pool"
+  }
+
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.failover_fallback.health_check_path
+      if r.name == "openbao"
+    ]) == "/v1/sys/health?standbyok=true&perfstandbyok=true"
+    error_message = "the failover fallback pool must probe with standbyok+perfstandbyok so standby forwarding is exercised during an election window"
+  }
+
+  # The primary pool's own health check must stay active-only (unchanged
+  # behavior) — the fallback must never widen the PRIMARY pool's eligibility,
+  # only add a separate pool Traefik reaches when the primary is empty.
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.health_check_path
+      if r.name == "openbao"
+    ]) == "/v1/sys/health"
+    error_message = "adding a failover fallback must not change the primary openbao route's own (active-only) health_check_path"
+  }
+
+  # The fallback pool must never appear as its own top-level route: a
+  # sibling route would leak into ansible_inventory.ingress and the
+  # dashboard catalogs derived from it (homarr/glance/homepage) as a tile
+  # with no Traefik router of its own.
+  assert {
+    condition     = length([for r in local.ingress_lb_routes : r if r.name == "openbao-standby"]) == 0
+    error_message = "the failover fallback pool must be nested on the openbao route, never published as its own ingress route"
+  }
+}
