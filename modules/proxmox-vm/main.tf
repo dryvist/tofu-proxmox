@@ -37,9 +37,6 @@ resource "proxmox_virtual_environment_vm" "vms" {
   on_boot = each.value.on_boot
   started = each.value.started
 
-  # See variables.tf: false only for a guest whose own apply-executor runs
-  # on itself, so an auto-reboot mid-apply can't kill the apply that's
-  # applying it.
   reboot_after_update = each.value.reboot_after_update
 
   # Startup order derives from the VMID itself: the 6-digit scheme's thousands
@@ -220,11 +217,8 @@ resource "proxmox_virtual_environment_vm" "vms" {
     }
 
     # OpenBao SSH-CA trust, baked in at first boot only (see ignore_changes
-    # below — same non-removable-ide2-drive reasoning as ip_config/dns).
-    # try() rather than a plain index: a VM opted in on a node with no
-    # rendered snippet (module-level gate off, or that node not covered
-    # yet) must fall back to no vendor-data, not a plan error.
-    vendor_data_file_id = each.value.ssh_ca_trust ? try(var.ssh_ca_vendor_data_file_ids[each.value.node_name], null) : null
+    # below). try(): a node with no rendered snippet falls back to null.
+    vendor_data_file_id = try(var.ssh_ca_vendor_data_file_ids[each.value.node_name], null)
   }
 
   operating_system {
@@ -269,12 +263,8 @@ resource "proxmox_virtual_environment_vm" "vms" {
       # pick up the dns block at first boot; existing VMs get resolvers via
       # Ansible post-boot.
       initialization[0].dns,
-      # Same failure mode again: an SSH-CA rollout enabling/toggling, a
-      # guest's ssh_ca_trust opt-in changing, or the CA itself rotating would
-      # all change vendor_data_file_id and rebuild the non-removable ide2
-      # drive on a running VM. Vendor-data is first-boot-only by design (see
-      # ssh-ca-trust.tf) — an already-running guest's CA trust is Ansible's
-      # to manage post-boot, same division as user_data above.
+      # Same failure mode again: a vendor_data_file_id change would rebuild
+      # the non-removable ide2 drive on a running VM. First-boot only.
       initialization[0].vendor_data_file_id,
       # A cloned VM re-imported (e.g. after a manual VMID move) reports its
       # `clone` block as a new addition, which is ForceNew — terraform would

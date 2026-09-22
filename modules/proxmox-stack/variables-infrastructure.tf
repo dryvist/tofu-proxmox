@@ -122,25 +122,22 @@ variable "nodes" {
   default = {}
 }
 
-# SSH-CA guest trust (see ssh-ca-trust.tf). Two-condition activation gate,
-# same spirit as the sibling ansible-proxmox-apps ssh_ca_trust role: a pinned
-# fingerprint must exist AND rollout must be explicitly enabled. Left at
-# defaults this is a total no-op — no data source evaluated, no file
-# rendered, no plan diff.
+# SSH-CA guest trust (see ssh-ca-trust.tf). Left at the default this is a
+# total no-op — no data source evaluated, no file rendered, no plan diff.
 variable "ssh_ca_trust_rollout_enabled" {
-  description = "Bake OpenBao SSH-CA trust into new guests' cloud-init vendor-data. No-op unless ssh_ca_trust_fingerprint is also set."
+  description = "Bake OpenBao SSH-CA trust into new guests' cloud-init vendor-data."
   type        = bool
   default     = false
 }
 
 variable "ssh_ca_trust_mount" {
-  description = "OpenBao SSH secrets engine mount whose config/ca endpoint is read, matching the ansible-proxmox-apps ssh_ca_trust role's default mount."
+  description = "OpenBao SSH secrets engine mount whose config/ca endpoint is read."
   type        = string
   default     = "ssh-client-ca"
 }
 
 variable "ssh_ca_trust_snippets_datastore_id" {
-  description = "Datastore ID for the SSH-CA vendor-data cloud-init snippet (must support the snippets content type). Same default as splunk-vm's snippets_datastore_id."
+  description = "Datastore ID for the SSH-CA vendor-data cloud-init snippet (must support the snippets content type)."
   type        = string
   default     = "local"
 }

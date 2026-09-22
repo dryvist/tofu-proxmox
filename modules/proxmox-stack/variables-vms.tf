@@ -27,14 +27,6 @@ variable "vms" {
     # disks are disposable, and an accidental migration of a large VM is not.
     migrate = optional(bool, false)
 
-    # Per-guest opt-in to baking OpenBao SSH-CA trust into this VM's
-    # cloud-init vendor-data at first boot (see ssh-ca-trust.tf). No-op
-    # unless var.ssh_ca_trust_rollout_enabled is ALSO true — same
-    # two-condition gate as the sibling ansible-proxmox-apps role, so a
-    # per-guest true left over from a staged rollout can't silently
-    # distribute trust once the module-level gate flips.
-    ssh_ca_trust = optional(bool, false)
-
     # The node holding this VM's storage-replication (pvesr) copy, and so the
     # only node a cluster HA manager may relocate it to on node loss. Unset
     # means no replica exists and the guest is restart-in-place only. Same
@@ -60,9 +52,7 @@ variable "vms" {
     # memory_dedicated raise reboot-free.
     memory_hotplug = optional(bool, false)
 
-    # See the extended rationale on this field in the proxmox-vm module
-    # variables: default true (matches the provider default); false only for
-    # a guest whose own apply-executor runs on itself.
+    # false: apply a non-hotpluggable change without rebooting the guest.
     reboot_after_update = optional(bool, true)
 
     # Storage configuration
