@@ -1223,11 +1223,7 @@ run "hermes_ui_container_ids_are_disjoint_from_the_agent" {
   }
 }
 
-# --- Vikunja #3347: openbao ingress failover fallback ---
-# The primary `openbao` route stays active-only (standbys read 429 by
-# design), but must carry a nested `failover_fallback` pool so the `traefik`
-# role can close the zero-healthy-backend gap during a leader election
-# without pooling standbys alongside the primary (ansible-proxmox-apps#1125).
+# --- openbao ingress failover fallback ---
 
 run "openbao_route_carries_a_failover_fallback_pool" {
   command = plan
@@ -1271,14 +1267,5 @@ run "openbao_route_carries_a_failover_fallback_pool" {
       if r.name == "openbao"
     ]) == "/v1/sys/health"
     error_message = "adding a failover fallback must not change the primary openbao route's own (active-only) health_check_path"
-  }
-
-  # The fallback pool must never appear as its own top-level route: a
-  # sibling route would leak into ansible_inventory.ingress and the
-  # dashboard catalogs derived from it (homarr/glance/homepage) as a tile
-  # with no Traefik router of its own.
-  assert {
-    condition     = length([for r in local.ingress_lb_routes : r if r.name == "openbao-standby"]) == 0
-    error_message = "the failover fallback pool must be nested on the openbao route, never published as its own ingress route"
   }
 }

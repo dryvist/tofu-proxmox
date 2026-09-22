@@ -8,6 +8,11 @@
 # locals-ingress-pools.tf.
 
 locals {
+  # Shared by the primary pool and its failover_fallback below, so the two
+  # never drift apart.
+  openbao_health_check_interval = "30s"
+  openbao_health_check_timeout  = "20s"
+
   ingress_lb_routes = concat(
     # OpenBao HA: one openbao.<domain> route load-balancing the Raft peers.
     # backends (plural) -> multi-server loadBalancer; health_check drops a down
@@ -16,13 +21,9 @@ locals {
     # health_check_path is /v1/sys/health WITHOUT ?standbyok — only the active
     # peer returns 200; standbys return 429 and Traefik evicts them, routing
     # every request straight to the active node. Deliberate: writes must hit the
-    # Raft leader anyway, and the previous ?standbyok=true pooling meant most
-    # requests hit a standby whose forward-to-leader hop is the path that
-    # intermittently fails ("internal error"), so pooling standbys amplified the
-    # failure (verified 2026-07-20; ansible-proxmox-apps#1125). Trade-off: a brief
-    # window during leader election until the health check re-converges — far
-    # cheaper than the continuous failure rate standby-pooling caused. The
-    # `traefik` role renders this path for the route's health check (default "/").
+    # Raft leader anyway, and pooling standbys amplifies a real forward-to-leader
+    # failure. The `traefik` role renders this path for the route's health check
+    # (default "/").
     length(local.openbao_backends) > 0 ? [
       {
         name     = "openbao"
@@ -30,45 +31,25 @@ locals {
         port     = local.pipeline_constants.service_ports.openbao_api
         # No sticky: active-only health checks leave exactly one healthy backend,
         # so a cookie adds nothing — and one minted before a fence/election pins
-        # the client to an evicted backend (observed 2026-07-27: persistent 503s
-        # while the health check showed a healthy leader).
+        # the client to an evicted backend.
         sticky            = false
         health_check      = true
         health_check_path = "/v1/sys/health"
         # The pool has one eligible member at any moment, so a single probe
         # that exceeds the estate default empties it. Probe less often and
         # allow a slow answer; the timeout stays below the interval.
-        health_check_interval = "30s"
-        health_check_timeout  = "20s"
+        health_check_interval = local.openbao_health_check_interval
+        health_check_timeout  = local.openbao_health_check_timeout
         sso                   = false # token/AppRole/JWT API clients (CLI, Terrakube, roles)
-        # Vikunja #3347 / two 2026-09-20 total outages: with only the active
-        # node ever eligible, the pool goes to ZERO during a leader-election
-        # window (not just "6/9 read 429", which is the intended steady
-        # state). `failover_fallback` is a NESTED object, not a sibling route:
-        # a sibling would leak into the published ingress/dashboard lists
-        # (locals-ingress-backends.tf folds every ingress_lb_routes entry into
-        # the ansible_inventory.ingress contract that homarr/glance/homepage
-        # read) as a broken tile with no Host rule of its own. Nesting it here
-        # keeps it invisible to every consumer except the `traefik` role,
-        # which still needs a template change (ansible-proxmox-apps) to emit
-        # Traefik's native `failover` service type for a route carrying this
-        # field — `service` = this pool, `fallback` = the nested pool below,
-        # routed to ONLY when `service` has no healthy server — instead of a
-        # plain `loadBalancer:`. That template change is tracked as a
-        # follow-up, not done by this PR (tofu-proxmox scope only, per lead).
-        #
-        # The fallback pool reuses the same Raft peers but with standbys
-        # forward-eligible (?standbyok&perfstandbyok), so at least one member
-        # answers 200 during the election window — without ever pooling
-        # standbys alongside the primary (that pooling is exactly what
-        # ansible-proxmox-apps#1125 showed amplifies the forward-to-leader
-        # failure), so #1125 cannot recur: the fallback pool is reached only
-        # when the primary is completely empty.
+        # A nested standby-eligible pool a `failover` service can route to
+        # only when the primary pool above has no healthy server — never
+        # published as its own route (would leak into ingress/dashboard
+        # consumers as a tile with no Host rule).
         failover_fallback = {
           backends              = local.openbao_backends
           health_check_path     = "/v1/sys/health?standbyok=true&perfstandbyok=true"
-          health_check_interval = "30s"
-          health_check_timeout  = "20s"
+          health_check_interval = local.openbao_health_check_interval
+          health_check_timeout  = local.openbao_health_check_timeout
         }
       }
     ] : [],
