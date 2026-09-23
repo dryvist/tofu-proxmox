@@ -30,7 +30,8 @@ resource "proxmox_virtual_environment_vm" "vms" {
 
   # ovmf (UEFI) required for guests with tpm_state/efi_disk configured -
   # Windows 11+ hardware checks fail under seabios even with TPM emulated.
-  bios = each.value.bios
+  bios    = each.value.bios
+  machine = each.value.machine
 
   # Startup configuration. `on_boot` covers a node reboot; `started` is the run
   # state asserted at create. The `try()` this replaced silently swallowed the
