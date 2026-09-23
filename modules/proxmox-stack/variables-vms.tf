@@ -153,6 +153,8 @@ variable "vms" {
     # "seabios" or "ovmf". Windows 11+ requires "ovmf" (UEFI) alongside
     # tpm_state/efi_disk to pass hardware install checks.
     bios = optional(string, "seabios")
+    # QEMU machine type, "q35" or "pc"; unset keeps the Proxmox default.
+    machine = optional(string)
 
     # Ansible connection method published in ansible_inventory (inventory_publish.tf).
     # "ssh" (default) or "winrm" for Windows guests.

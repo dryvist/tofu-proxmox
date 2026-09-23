@@ -109,6 +109,8 @@ variable "vms" {
     # "seabios" or "ovmf". Windows 11+ requires "ovmf" (UEFI) alongside
     # tpm_state/efi_disk to pass hardware install checks.
     bios = optional(string, "seabios")
+    # QEMU machine type, "q35" or "pc"; unset keeps the Proxmox default.
+    machine = optional(string)
 
     # Display configuration
     vga_type = optional(string, "std")
