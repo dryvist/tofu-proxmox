@@ -30,11 +30,9 @@ variable "proxmox_node" {
   default     = "proxmox-1"
 }
 
-variable "proxmox_ssh_username" {
-  description = "The SSH username for connecting to the Proxmox node (for cloud-init, etc.)"
+variable "proxmox_user" {
+  description = "The Proxmox login user for SSH and API auth (e.g., \"root\"), no realm"
   type        = string
-  default     = "root@pam"
-  ephemeral   = true
 }
 
 variable "proxmox_ssh_private_key" {

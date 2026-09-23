@@ -161,11 +161,9 @@ variable "default_datastore" {
 # Note: BPG provider authentication is read from PROXMOX_VE_* environment variables
 # These module variables are not needed for provider auth
 
-variable "proxmox_ssh_username" {
-  description = "The SSH username for connecting to the Proxmox node"
+variable "proxmox_user" {
+  description = "The Proxmox login user for SSH and API auth (e.g., \"root\"), no realm"
   type        = string
-  default     = "root@pam"
-  ephemeral   = true
 }
 
 variable "proxmox_ssh_private_key" {
