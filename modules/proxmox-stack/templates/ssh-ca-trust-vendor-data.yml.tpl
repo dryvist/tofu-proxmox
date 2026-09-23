@@ -1,4 +1,3 @@
-## template:jinja
 #cloud-config
 # Managed by tofu-proxmox ssh-ca-trust.tf. First-boot only.
 write_files:

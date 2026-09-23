@@ -46,4 +46,14 @@ resource "proxmox_virtual_environment_file" "ssh_ca_trust_vendor_data" {
     data      = local.ssh_ca_trust_vendor_data
     file_name = "ssh-ca-trust-vendor-data.yml"
   }
+
+  lifecycle {
+    precondition {
+      # cloud-init only parses vendor-data starting with #cloud-config; a
+      # leading ## template:jinja header (or any other prefix) makes it an
+      # unrecognized non-multipart payload that cloud-init silently drops.
+      condition     = startswith(local.ssh_ca_trust_vendor_data, "#cloud-config")
+      error_message = "ssh_ca_trust_vendor_data must start with #cloud-config."
+    }
+  }
 }
