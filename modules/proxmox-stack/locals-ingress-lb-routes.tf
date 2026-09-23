@@ -60,13 +60,16 @@ locals {
     # middleware scoped to that one router in the traefik role).
     # health_check_path reads /health/readiness on both rows: it fails when
     # the database is unreachable, unlike /health/liveliness, and makes no
-    # model call.
+    # model call. strategy = "hrw" (Rendezvous hashing, Traefik's non-cookie
+    # sticky-by-source-IP option) pins a caller to one router without a
+    # cookie, which a machine-API client never carries.
     length(local.llm_router_backends) > 0 ? [
       {
         name              = "llm-ui"
         backends          = local.llm_router_backends
         port              = local.pipeline_constants.service_ports.llm_router_api
         root_redirect     = "/ui/"
+        strategy          = "hrw"
         health_check      = true
         health_check_path = "/health/readiness"
         sso               = true # browser admin UI — gated
@@ -103,6 +106,7 @@ locals {
         name              = "llm"
         backends          = local.llm_router_backends
         port              = local.pipeline_constants.service_ports.llm_router_api
+        strategy          = "hrw"
         health_check      = true
         health_check_path = "/health/readiness"
         sso               = false # OpenAI-compatible API clients
