@@ -40,6 +40,20 @@ locals {
     "-studio"   = "hermes-studio"
   }
 
+  # Board TILE TITLES. Separate from hermes_route_roles above: `desc` is a
+  # one-line subtitle already scoped to one guest's summary, but the route
+  # NAME (the board tile's title today) is a raw slug — "hermes-donna-webui",
+  # "hermes-agent-studio" — indistinguishable at a glance from every other
+  # agent's tiles. Every generated route gets an explicit title instead of
+  # falling through to its name.
+  hermes_route_title_surfaces = {
+    ""          = "(dashboard)"
+    "-webhooks" = "(webhooks)"
+    "-api"      = "(job API)"
+    "-webui"    = "(chat)"
+    "-studio"   = "(studio)"
+  }
+
   # Per-agent route set. Every generated name is a SINGLE label: the wildcard
   # certificate covers one level below the ingress subdomain, so a dot in a
   # route name would put the host outside it.
@@ -56,6 +70,7 @@ locals {
         backend  = k
         port     = local.pipeline_constants.service_ports.hermes_dashboard
         desc     = "${local.hermes_route_agent_name[k]} — ${local.hermes_route_roles[""]}"
+        title    = "Hermes · ${local.hermes_route_agent_name[k]} ${local.hermes_route_title_surfaces[""]}"
       }
       # Webhook receiver — keeps its established path on the dashboard's host.
       "${k}-webhooks" = {
@@ -65,6 +80,7 @@ locals {
         backend     = k
         port        = local.pipeline_constants.service_ports.hermes_webhook
         desc        = "${local.hermes_route_agent_name[k]} — ${local.hermes_route_roles["-webhooks"]}"
+        title       = "Hermes · ${local.hermes_route_agent_name[k]} ${local.hermes_route_title_surfaces["-webhooks"]}"
         sso         = false # HMAC-signed webhooks
       }
       # Job-submission API (`hermes gateway` api_server platform).
@@ -73,6 +89,7 @@ locals {
         backend  = k
         port     = local.pipeline_constants.service_ports.hermes_api
         desc     = "${local.hermes_route_agent_name[k]} — ${local.hermes_route_roles["-api"]}"
+        title    = "Hermes · ${local.hermes_route_agent_name[k]} ${local.hermes_route_title_surfaces["-api"]}"
         sso      = false # bearer-authenticated job API
       }
       # The two co-located third-party UIs (see constants.tf for why they run
@@ -82,12 +99,14 @@ locals {
         backend  = k
         port     = local.pipeline_constants.service_ports.hermes_webui
         desc     = "${local.hermes_route_agent_name[k]} — ${local.hermes_route_roles["-webui"]}"
+        title    = "Hermes · ${local.hermes_route_agent_name[k]} ${local.hermes_route_title_surfaces["-webui"]}"
       }
       "${k}-studio" = {
         hostname = "${try(local.hermes_route_hostnames[k], k)}-studio"
         backend  = k
         port     = local.pipeline_constants.service_ports.hermes_studio
         desc     = "${local.hermes_route_agent_name[k]} — ${local.hermes_route_roles["-studio"]}"
+        title    = "Hermes · ${local.hermes_route_agent_name[k]} ${local.hermes_route_title_surfaces["-studio"]}"
       }
     }
   ]...)

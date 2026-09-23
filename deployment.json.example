@@ -1,6 +1,7 @@
 {
   "_comment": "EXAMPLE FILE for the private, versioned RustFS deployment object read by Terrakube. It contains desired state only; credentials and private keys live at native OpenBao KV paths.",
   "proxmox_node": "proxmox-1",
+  "proxmox_user": "root",
   "environment": "homelab",
   "domain": "example.com",
   "vm_ssh_public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleOnly example@example.com",

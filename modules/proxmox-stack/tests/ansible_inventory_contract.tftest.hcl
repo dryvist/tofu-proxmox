@@ -67,6 +67,7 @@ override_module {
 
 variables {
   vm_ssh_public_key       = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITestKeyData test@test"
+  proxmox_user            = "root"
   proxmox_ssh_private_key = "-----BEGIN OPENSSH PRIVATE KEY-----\ntest\n-----END OPENSSH PRIVATE KEY-----"
   # vlan_ids uses its variable default (single source of truth); network_cidrs is
   # derived from it as 192.168.<vlan_id>.0/24 — no duplicated VLAN/CIDR list.
@@ -460,16 +461,16 @@ run "ansible_inventory_ingress_route_table" {
         vlan      = "mgmt"
         tags      = ["terraform", "container", "monitoring", "docker"]
       }
-      # One member of the NAME-keyed llm_router_backends pool: membership comes
-      # from this literal key matching keys(var.containers), never the tag
-      # (locals-ingress-pools.tf). The llm-router tag is only the fabric
-      # identity (locals-llm-fabric.tf); DHCP-first with a 6-digit positional
-      # VMID (ai tier 5).
-      "llm-router-1" = {
+      # A member of the llm-router TAG pool (locals-ingress-pools.tf,
+      # tag_backend_pools["llm-router"]) — the key/hostname below is
+      # arbitrary and deliberately does not match any of the fleet's real
+      # names, proving membership comes from the tag alone. DHCP-first with a
+      # 6-digit positional VMID (ai tier 5).
+      "fabric-router-fixture" = {
         vm_id     = 501000
         node_name = "proxmox-1"
         dhcp      = true
-        hostname  = "llm-router-1"
+        hostname  = "fabric-router-fixture"
         vlan      = "ai"
         tags      = ["terraform", "container", "llm-router"]
       }
@@ -588,10 +589,18 @@ run "ansible_inventory_ingress_route_table" {
     error_message = "ingress must omit the proxmox apex route when no node is commissioned"
   }
 
-  # The llm hostname carries TWO pool rows, and the split between them is the
-  # security boundary: the browser admin UI at the /ui prefix is gated, the
-  # OpenAI-compatible API on the rest of the hostname is not (its clients
-  # cannot do a browser login).
+  # The llm-ui row is now a standalone hostname: no path_prefix, its bare
+  # root redirects to /ui/ on itself, and it stays gated.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "llm-ui" && try(r.path_prefix, "") == "" && try(r.root_redirect, "") == "/ui/" && r.ui == true && r.sso == true
+    ]) == 1
+    error_message = "the llm-ui row must carry no path_prefix, root_redirect=\"/ui/\", ui=true and sso=true — the standalone gated browser surface"
+  }
+
+  # llm-ui-legacy keeps the old /ui path on the llm hostname gated, so it
+  # never falls through to the ungated API row below.
   #
   # The key is path_prefix. That is the name the traefik role reads when it
   # builds the PathPrefix matcher; a row carrying any other name for it
@@ -602,9 +611,19 @@ run "ansible_inventory_ingress_route_table" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress :
-      r if r.name == "llm-ui" && try(r.path_prefix, "") == "/ui" && r.ui == true && r.sso == true
+      r if r.name == "llm-ui-legacy" && try(r.path_prefix, "") == "/ui" && r.ui == true && r.sso == true
     ]) == 1
-    error_message = "the llm-ui row must carry path_prefix=\"/ui\", ui=true and sso=true — the gated browser surface"
+    error_message = "the llm-ui-legacy row must carry path_prefix=\"/ui\", ui=true and sso=true — the gated browser surface"
+  }
+
+  # llm-ui-legacy is a compat path for the same UI llm-ui already tiles, so it
+  # opts out of the dashboard boards with dashboard = false.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "llm-ui-legacy" && try(r.dashboard, true) == false
+    ]) == 1
+    error_message = "the llm-ui-legacy row must carry dashboard=false — it must not become a second dashboard tile for the llm-ui admin UI"
   }
 
   # The API row is the other half and must be pinned with it: no path prefix
@@ -1789,6 +1808,31 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
     error_message = "every ingress route must publish ui/desc/section; a board cannot split or annotate without them"
   }
 
+  assert {
+    condition = alltrue([
+      for r in output.ansible_inventory.ingress : can(r.title) && length(r.title) > 0
+    ])
+    error_message = "every ingress route must publish a non-empty title; a board tile cannot render with no label"
+  }
+
+  # hermes-agent's five generated routes must each carry a distinct,
+  # surface-naming title — not five copies of the raw route-name slug, which
+  # is the actual defect this attribute exists to fix (see
+  # locals-hermes-routes.tf).
+  assert {
+    condition = length(distinct([
+      for r in output.ansible_inventory.ingress : r.title if r.owner == "hermes-agent"
+    ])) == 5
+    error_message = "hermes-agent's five routes must each carry a distinct, surface-naming title"
+  }
+
+  assert {
+    condition = alltrue([
+      for r in output.ansible_inventory.ingress : r.title != r.name if r.owner == "hermes-agent"
+    ])
+    error_message = "hermes route titles must not silently fall back to the raw route-name slug"
+  }
+
   # ui tracks sso, EXCEPT for the human UIs that skip the gate. vikunja is
   # sso=false and ui=true: if the exception list is dropped it lands in the
   # machine column.
@@ -1812,13 +1856,15 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
   }
 
   # section is DERIVED from route count per guest. hermes-agent serves five,
-  # so it is a section; vikunja serves one, so it is not.
+  # so it is a section; vikunja serves one, so it is not. The header prefers
+  # the same friendly agent name the tile titles use (the guest's summary)
+  # over the raw container key.
   assert {
     condition = alltrue([
       for r in output.ansible_inventory.ingress :
-      r.section == "hermes-agent" if r.owner == "hermes-agent"
+      r.section == "Hermes agent" if r.owner == "hermes-agent"
     ])
-    error_message = "a guest serving several routes must derive a section from its own name"
+    error_message = "a guest serving several routes must derive a section from its friendly agent name"
   }
 
   assert {
@@ -1959,5 +2005,10 @@ run "ansible_inventory_publishes_primary_node" {
       if contains(node.cluster_roles, "storage")
     ]) == "proxmox-2"
     error_message = "nodes must publish cluster_roles so a consumer can resolve 'the node that serves bulk storage' by role rather than by name"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.proxmox_user == "root"
+    error_message = "ansible_inventory must publish proxmox_user so ansible-proxmox reads the same login user this module uses, instead of a hardcoded default"
   }
 }

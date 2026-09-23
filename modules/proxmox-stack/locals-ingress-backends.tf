@@ -39,10 +39,15 @@ locals {
         # Dashboard grouping — see locals-ingress-groups.tf. Inherited from the
         # backend container's VLAN so no second tag list is maintained.
         group = try(svc.group, try(var.containers[svc.backend].vlan, "other"))
-        # A route may state its own desc — several routes on one guest cannot
-        # all read as that guest's summary. Merged in only when set, so an
-        # absent one still falls through to the summary default below.
-      }, try(svc.desc, null) != null ? { desc = svc.desc } : {})
+        # A route may state its own desc and/or title — several routes on one
+        # guest cannot all read as that guest's summary, or all show the same
+        # tile name. Each is merged in only when set, so an absent one still
+        # falls through to its default below (summary for desc, route name
+        # for title).
+        }, merge(
+        try(svc.desc, null) != null ? { desc = svc.desc } : {},
+        try(svc.title, null) != null ? { title = svc.title } : {},
+      ))
       if contains(keys(var.containers), svc.backend)
     ],
     [
@@ -139,6 +144,11 @@ locals {
         try(var.containers[route.owner].summary, null),
         try(local.ingress_pool_descriptions[route.name], null),
       ), "")
+      # Board tile title. Defaults to the route name (unchanged behaviour for
+      # every route that does not set one); a route sets its own title when
+      # the name is a raw slug that reads as indistinguishable from a sibling
+      # route's (see locals-hermes-routes.tf).
+      title = route.name
   }, route)]
 
   # Routes per guest — from the assembled list, so pools/VMs count too.
@@ -149,9 +159,12 @@ locals {
   }
 
   # A guest serving 2+ routes is a section. Derived, so nothing declares it.
+  # The header itself prefers the same friendly agent name the tile titles
+  # use (hermes_route_agent_name) over the raw owner key, so a Hermes agent's
+  # section reads the same as its tiles instead of the container slug.
   ingress = [
     for r in local.ingress_pre : merge(r, {
-      section = try(local.ingress_owner_route_count[r.owner], 0) > 1 ? r.owner : null
+      section = try(local.ingress_owner_route_count[r.owner], 0) > 1 ? try(local.hermes_route_agent_name[r.owner], r.owner) : null
     })
   ]
 }

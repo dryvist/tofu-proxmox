@@ -26,9 +26,10 @@ resource "proxmox_virtual_environment_vm" "vms" {
   pool_id    = each.value.pool_id
   protection = each.value.protection
 
-  # ovmf (UEFI) required for guests with tpm_state/efi_disk configured -
-  # Windows 11+ hardware checks fail under seabios even with TPM emulated.
-  bios = each.value.bios
+  reboot_after_update = each.value.reboot_after_update
+
+  bios    = each.value.bios
+  machine = each.value.machine
 
   # Startup configuration. `on_boot` covers a node reboot; `started` is the run
   # state asserted at create. The `try()` this replaced silently swallowed the
@@ -84,8 +85,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
   # keep accumulating in replication snapshots the guest never needs. Same
   # regression applies to ssd/discard: leaving ssd=false, discard="ignore"
   # on an SSD-backed datastore means freed blocks are never TRIMmed, so a
-  # ZFS pool backing high-churn ephemeral disks fills and fragments even
-  # though the guest itself stays small.
+  # ZFS pool backing high-churn ephemeral disks fills and fragments.
   disk {
     datastore_id = coalesce(
       each.value.boot_disk.datastore_id,
@@ -213,6 +213,8 @@ resource "proxmox_virtual_environment_vm" "vms" {
       password = each.value.user_account.password
       keys     = each.value.user_account.keys
     }
+
+    vendor_data_file_id = try(var.ssh_ca_vendor_data_file_ids[each.value.node_name], null)
   }
 
   operating_system {
@@ -257,6 +259,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
       # pick up the dns block at first boot; existing VMs get resolvers via
       # Ansible post-boot.
       initialization[0].dns,
+      initialization[0].vendor_data_file_id,
       # A cloned VM re-imported (e.g. after a manual VMID move) reports its
       # `clone` block as a new addition, which is ForceNew — terraform would
       # destroy+recreate a healthy VM. The clone source only matters at first

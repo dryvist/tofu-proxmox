@@ -105,6 +105,10 @@ locals {
     # value the rest of this module already treats as authoritative, so there
     # is one declaration of the fact, not two.
     proxmox_node = var.proxmox_node
+    # The Proxmox login user (no realm) for SSH/UI auth — the single source
+    # every consumer (this module's SSH connections and ansible-proxmox) reads,
+    # instead of each declaring its own default.
+    proxmox_user = var.proxmox_user
     # Per-node ZFS storage to provision (pools/datasets/quotas) - ansible-proxmox creates
     # and registers these; Terraform only references the datastore by id on disks.
     node_storage = var.node_storage

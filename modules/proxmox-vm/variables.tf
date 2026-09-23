@@ -29,6 +29,9 @@ variable "vms" {
     # in-place update that only takes effect at that VM's next reboot.
     memory_hotplug = optional(bool, false)
 
+    # false: apply a non-hotpluggable change without rebooting the guest.
+    reboot_after_update = optional(bool, true)
+
     # Storage configuration
     boot_disk = optional(object({
       datastore_id = optional(string, "local-lvm")
@@ -106,6 +109,8 @@ variable "vms" {
     # "seabios" or "ovmf". Windows 11+ requires "ovmf" (UEFI) alongside
     # tpm_state/efi_disk to pass hardware install checks.
     bios = optional(string, "seabios")
+    # QEMU machine type, "q35" or "pc"; unset keeps the Proxmox default.
+    machine = optional(string)
 
     # Display configuration
     vga_type = optional(string, "std")
@@ -158,11 +163,9 @@ variable "default_datastore" {
 # Note: BPG provider authentication is read from PROXMOX_VE_* environment variables
 # These module variables are not needed for provider auth
 
-variable "proxmox_ssh_username" {
-  description = "The SSH username for connecting to the Proxmox node"
+variable "proxmox_user" {
+  description = "The Proxmox login user for SSH and UI auth (bare user, no realm)"
   type        = string
-  default     = "root@pam"
-  ephemeral   = true
 }
 
 variable "proxmox_ssh_private_key" {
@@ -176,4 +179,10 @@ variable "startup_delay" {
   description = "Delay in seconds after this tier starts before the next tier starts"
   type        = number
   default     = 10
+}
+
+variable "ssh_ca_vendor_data_file_ids" {
+  description = "node_name -> cloud-init vendor-data snippet file id. A node with no entry leaves vendor_data_file_id null."
+  type        = map(string)
+  default     = {}
 }

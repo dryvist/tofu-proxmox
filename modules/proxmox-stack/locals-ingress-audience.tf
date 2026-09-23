@@ -22,34 +22,35 @@ locals {
     "homeassistant",
     "proxmox",
     "pbs",
-    # "llm" removed: it now has its own SSO'd browser row (llm-ui, /ui path
-    # prefix) — the bare API row is machine-only and should stop reading as
-    # human-browsable on the dashboards.
+    # "llm" removed: it now has its own SSO'd browser rows (llm-ui,
+    # llm-ui-legacy) — the bare API row is machine-only and should stop
+    # reading as human-browsable on the dashboards.
   ])
 
   # Routes with no owning guest to inherit a summary from: load-balanced pools,
   # the apex, and the VM-backed routes (a VM is not in var.containers).
   ingress_pool_descriptions = {
-    traefik        = "Traefik ingress reverse-proxy dashboard"
-    authelia       = "Authentication and single sign-on portal"
-    agentgateway   = "MCP fabric admin UI"
-    hindsight      = "Agent long-term memory API"
-    "hindsight-cp" = "Agent memory control plane"
-    llm            = "OpenAI-compatible model router"
-    "llm-ui"       = "LiteLLM router admin UI"
-    mcp            = "MCP tool proxy"
-    openbao        = "Secrets management"
-    otel           = "OTLP trace ingest"
-    proxmox        = "Hypervisor cluster UI"
-    pbs            = "Proxmox Backup Server appliance"
-    healthchecks   = "Healthchecks cron/deadman monitoring"
-    immich         = "Immich photo and video backup"
-    zot            = "Zot OCI container registry"
-    autobrr        = "Autobrr download automation"
-    "idrac-kvm"    = "iDRAC HTML5 remote KVM viewer"
-    zammad         = "Incident and ticket tracking"
-    gatus          = "Gatus catalog synthetics (front-door + OIDC client checks)"
-    "uptime-kuma"  = "Uptime Kuma keystone status page"
+    traefik         = "Traefik ingress reverse-proxy dashboard"
+    authelia        = "Authentication and single sign-on portal"
+    agentgateway    = "MCP fabric admin UI"
+    hindsight       = "Agent long-term memory API"
+    "hindsight-cp"  = "Agent memory control plane"
+    llm             = "OpenAI-compatible model router"
+    "llm-ui"        = "LiteLLM router admin UI"
+    "llm-ui-legacy" = "LiteLLM router admin UI (legacy /ui path)"
+    mcp             = "MCP tool proxy"
+    openbao         = "Secrets management"
+    otel            = "OTLP trace ingest"
+    proxmox         = "Hypervisor cluster UI"
+    pbs             = "Proxmox Backup Server appliance"
+    healthchecks    = "Healthchecks cron/deadman monitoring"
+    immich          = "Immich photo and video backup"
+    zot             = "Zot OCI container registry"
+    autobrr         = "Autobrr download automation"
+    "idrac-kvm"     = "iDRAC HTML5 remote KVM viewer"
+    zammad          = "Incident and ticket tracking"
+    gatus           = "Gatus catalog synthetics (front-door + OIDC client checks)"
+    "uptime-kuma"   = "Uptime Kuma keystone status page"
 
     # Splunk VM.
     splunk        = "Log search and analytics"

@@ -21,7 +21,7 @@ The module does **not** manage Route53 hosted zones (see `aws-infra/` for that).
 - A DNS-01 challenge provider (this repo uses AWS Route53; credentials must live in private RustFS or
   OpenBao, never plaintext).
 - SSH access from the Terraform-runner host to the Proxmox node (`var.proxmox_ssh_host`,
-  `var.proxmox_ssh_username`, `var.proxmox_ssh_private_key`).
+  `var.proxmox_user`, `var.proxmox_ssh_private_key`).
 - For VM delivery destinations: SSH access from the Proxmox node to each VM's `target_ip` as
   `root` (cloud-init sets this up via the `vm-access-key` injected at template build time).
 
@@ -81,7 +81,7 @@ module "acme_certificates" {
   }
 
   proxmox_ssh_host        = var.proxmox_ssh_host
-  proxmox_ssh_username    = var.proxmox_ssh_username
+  proxmox_user            = var.proxmox_user
   proxmox_ssh_private_key = var.proxmox_ssh_private_key
   environment             = "homelab"
 }
@@ -123,11 +123,13 @@ delivery to LXCs/VMs after issuance.
 Validation: each destination must set **either** `bundle_path` **or** both `cert_path` and
 `key_path`. VMs additionally require `target_ip`.
 
-### `proxmox_ssh_host` / `proxmox_ssh_username` / `proxmox_ssh_private_key`
+### `proxmox_ssh_host` / `proxmox_user` / `proxmox_ssh_private_key`
 
-SSH credentials for the cert-delivery null_resource. Sourced from OpenBao
-(`PROXMOX_VE_HOSTNAME`, `PROXMOX_SSH_USERNAME`, `PROXMOX_SSH_PRIVATE_KEY`) and threaded through
-`native root configuration` → root `main.tf`.
+SSH credentials for the cert-delivery null_resource. `proxmox_ssh_host` and
+`proxmox_ssh_private_key` are sourced from OpenBao (`PROXMOX_VE_HOSTNAME`,
+`PROXMOX_SSH_PRIVATE_KEY`); `proxmox_user` comes from the desired state
+(`deployment.json`'s `proxmox_user` key) — it is config, not a secret. Both
+thread through `native root configuration` → root `main.tf`.
 
 ## Delivery model
 

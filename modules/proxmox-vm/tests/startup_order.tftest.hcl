@@ -17,7 +17,7 @@ variables {
   domain                  = "example.test"
   environment             = "test"
   default_datastore       = "local-zfs"
-  proxmox_ssh_username    = "root"
+  proxmox_user            = "root"
   proxmox_ssh_private_key = "not-a-real-key"
 
   vms = {

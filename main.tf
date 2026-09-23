@@ -64,7 +64,7 @@ provider "proxmox" {
 
   ssh {
     agent       = false
-    username    = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_USERNAME
+    username    = local.deployment.proxmox_user
     private_key = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_PRIVATE_KEY
   }
 }
@@ -161,7 +161,7 @@ module "homelab" {
   proxmox_node                               = local.deployment.proxmox_node
   proxmox_ssh_host                           = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_VE_HOSTNAME
   proxmox_ssh_private_key                    = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_PRIVATE_KEY
-  proxmox_ssh_username                       = ephemeral.vault_kv_secret_v2.proxmox.data.PROXMOX_SSH_USERNAME
+  proxmox_user                               = local.deployment.proxmox_user
 
   rack_servers          = try(local.deployment.rack_servers, {})
   splunk_boot_disk_size = try(local.deployment.splunk_boot_disk_size, 25)
@@ -197,6 +197,8 @@ module "homelab" {
   vdi_preserved_vlans = try(local.deployment.vdi_preserved_vlans, [])
   vm_ssh_public_key   = local.deployment.vm_ssh_public_key
   vms                 = try(local.deployment.vms, {})
+
+  ssh_ca_trust_rollout_enabled = var.ssh_ca_trust_rollout_enabled
 
   inventory_bucket = var.inventory_bucket
   inventory_key    = var.inventory_key

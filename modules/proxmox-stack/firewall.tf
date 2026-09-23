@@ -3,6 +3,17 @@
 # with every new service (each adds a *_container_ids pass), so it lives here
 # rather than crowding main.tf (same split rationale as the locals-*.tf files).
 
+# LLM router — port 4000 accepts only the ingress Traefik instances (the
+# routers' one caller through the estate-wide FQDN) and the Prometheus
+# scraper, never every internal network. Both addresses are derived from the
+# inventory (ingress_hosts, the monitoring-tagged container), never literals.
+locals {
+  llm_router_trusted_src = join(",", compact(concat(
+    local.ingress_hosts,
+    [try(local.container_address["prometheus"], "")]
+  )))
+}
+
 # Firewall module - rules for Splunk and containers
 module "firewall" {
   source = "../firewall"
@@ -109,6 +120,7 @@ module "firewall" {
   # LLM fabric LXCs: llm-router (LiteLLM proxy) + llm-fast (GPU llama-swap server)
   llm_router_container_ids = local.llm_router_container_ids
   llm_fast_container_ids   = local.llm_fast_container_ids
+  llm_router_trusted_src   = local.llm_router_trusted_src
 
   # Shared spend store for the router pool (llm-redis tag). Reachable from the
   # ai VLAN only — one client population, and an unauthenticated Redis is an RCE

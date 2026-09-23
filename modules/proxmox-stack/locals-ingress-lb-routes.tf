@@ -8,6 +8,11 @@
 # locals-ingress-pools.tf.
 
 locals {
+  # Shared by the primary pool and its failover_fallback below, so the two
+  # never drift apart.
+  openbao_health_check_interval = "30s"
+  openbao_health_check_timeout  = "20s"
+
   ingress_lb_routes = concat(
     # OpenBao HA: one openbao.<domain> route load-balancing the Raft peers.
     # backends (plural) -> multi-server loadBalancer; health_check drops a down
@@ -16,13 +21,9 @@ locals {
     # health_check_path is /v1/sys/health WITHOUT ?standbyok — only the active
     # peer returns 200; standbys return 429 and Traefik evicts them, routing
     # every request straight to the active node. Deliberate: writes must hit the
-    # Raft leader anyway, and the previous ?standbyok=true pooling meant most
-    # requests hit a standby whose forward-to-leader hop is the path that
-    # intermittently fails ("internal error"), so pooling standbys amplified the
-    # failure (verified 2026-07-20; ansible-proxmox-apps#1125). Trade-off: a brief
-    # window during leader election until the health check re-converges — far
-    # cheaper than the continuous failure rate standby-pooling caused. The
-    # `traefik` role renders this path for the route's health check (default "/").
+    # Raft leader anyway, and pooling standbys amplifies a real forward-to-leader
+    # failure. The `traefik` role renders this path for the route's health check
+    # (default "/").
     length(local.openbao_backends) > 0 ? [
       {
         name     = "openbao"
@@ -30,41 +31,68 @@ locals {
         port     = local.pipeline_constants.service_ports.openbao_api
         # No sticky: active-only health checks leave exactly one healthy backend,
         # so a cookie adds nothing — and one minted before a fence/election pins
-        # the client to an evicted backend (observed 2026-07-27: persistent 503s
-        # while the health check showed a healthy leader).
+        # the client to an evicted backend.
         sticky            = false
         health_check      = true
         health_check_path = "/v1/sys/health"
         # The pool has one eligible member at any moment, so a single probe
         # that exceeds the estate default empties it. Probe less often and
         # allow a slow answer; the timeout stays below the interval.
-        health_check_interval = "30s"
-        health_check_timeout  = "20s"
+        health_check_interval = local.openbao_health_check_interval
+        health_check_timeout  = local.openbao_health_check_timeout
         sso                   = false # token/AppRole/JWT API clients (CLI, Terrakube, roles)
+        # A nested standby-eligible pool a `failover` service can route to
+        # only when the primary pool above has no healthy server — never
+        # published as its own route (would leak into ingress/dashboard
+        # consumers as a tile with no Host rule).
+        failover_fallback = {
+          backends              = local.openbao_backends
+          health_check_path     = "/v1/sys/health?standbyok=true&perfstandbyok=true"
+          health_check_interval = local.openbao_health_check_interval
+          health_check_timeout  = local.openbao_health_check_timeout
+        }
       }
     ] : [],
-    # LiteLLM router pool: llm.<domain> load-balancing the stateless routers.
-    # No sticky — every router serves every model from the same config.
-    #
-    # Split UI from API on the same hostname, same pattern as
-    # nautobot/nautobot-api/nautobot-graphql below: the admin UI
-    # (/ui path prefix) is a browser surface and gets the default Authelia
-    # gate; the OpenAI-compatible API (everything else on this hostname)
-    # stays sso = false because its clients (CLI tools, agents, the whole
-    # AI fabric) cannot do a browser login. Before this split, /ui reached
-    # LiteLLM's admin UI unauthenticated — the same row that carried the
-    # API's sso = false covered the UI path too.
+    # LiteLLM router pool: llm.<domain> is the OpenAI-compatible API;
+    # llm-ui.<domain> is the admin UI on its own hostname, so its browser
+    # calls to the API land on the same origin. root_redirect sends the UI
+    # host's bare root to its own /ui/ path (rendered as a redirectRegex
+    # middleware scoped to that one router in the traefik role).
+    # health_check_path reads /health/readiness on both rows: it fails when
+    # the database is unreachable, unlike /health/liveliness, and makes no
+    # model call. strategy = "hrw" (Rendezvous hashing, Traefik's non-cookie
+    # sticky-by-source-IP option) pins a caller to one router without a
+    # cookie, which a machine-API client never carries.
     length(local.llm_router_backends) > 0 ? [
       {
         name              = "llm-ui"
+        backends          = local.llm_router_backends
+        port              = local.pipeline_constants.service_ports.llm_router_api
+        root_redirect     = "/ui/"
+        strategy          = "hrw"
+        health_check      = true
+        health_check_path = "/health/readiness"
+        sso               = true # browser admin UI — gated
+      }
+    ] : [],
+    # llm.<domain>/ui: the pre-existing admin UI path on the API hostname,
+    # kept gated so that path never falls through to the ungated API row
+    # below. Same pattern as nautobot/nautobot-api/nautobot-graphql — priority
+    # wins the match ahead of the catch-all "llm" row. dashboard = false: this
+    # is a compat path for the same UI llm-ui already tiles, not a second
+    # tile.
+    length(local.llm_router_backends) > 0 ? [
+      {
+        name              = "llm-ui-legacy"
         hostname          = "llm"
         backends          = local.llm_router_backends
         port              = local.pipeline_constants.service_ports.llm_router_api
         path_prefix       = "/ui"
         priority          = 100 # must win the match before the catch-all "llm" row
         health_check      = true
-        health_check_path = "/health/liveliness"
+        health_check_path = "/health/readiness"
         sso               = true # browser admin UI — gated
+        dashboard         = false
       }
     ] : [],
     # A SEPARATE conditional, not a second element of the one above. The two
@@ -81,8 +109,9 @@ locals {
         name              = "llm"
         backends          = local.llm_router_backends
         port              = local.pipeline_constants.service_ports.llm_router_api
+        strategy          = "hrw"
         health_check      = true
-        health_check_path = "/health/liveliness"
+        health_check_path = "/health/readiness"
         sso               = false # OpenAI-compatible API clients
         # The router bounds every request itself (its per-attempt timeout and
         # fallback ladder); a non-streaming completion sends no byte until the

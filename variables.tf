@@ -28,6 +28,14 @@ variable "deployment_key" {
   default     = "deployment.json"
 }
 
+# Bakes the OpenBao SSH client CA into new guests' cloud-init vendor-data.
+# Left at the default, this is a no-op.
+variable "ssh_ca_trust_rollout_enabled" {
+  description = "Bake OpenBao SSH-CA trust into new guests' cloud-init vendor-data via ssh-client-ca/config/ca (read on the workspace's own OpenBao identity)."
+  type        = bool
+  default     = false
+}
+
 variable "openbao_accept_quorum_loss_on_node_failure" {
   description = "Acknowledge that the planned OpenBao voter placement may not survive a one-node loss (cluster at or below Raft quorum). Only for a deliberate degraded maintenance window; default false. Passed through to the proxmox-stack voter-spread guard."
   type        = bool

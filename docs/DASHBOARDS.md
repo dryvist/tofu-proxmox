@@ -20,6 +20,10 @@ Practical consequence: **a service gets on every dashboard by having a Traefik
 route**, never by being added to a dashboard's own list. There is no second list
 to keep in sync, and there is no way for a board to drift out of date.
 
+A route that carries `dashboard = false` still gets a Traefik router, but no
+tile on any board — for a compat path that reaches a UI another route already
+tiles (e.g. `llm-ui-legacy`).
+
 ### Grouping
 
 Each assembled route carries a `group`, used as the section heading on every
@@ -36,6 +40,25 @@ The `ansible_inventory_ingress_route_table` contract test asserts both that ever
 row carries a non-empty group and that a container-backed row actually inherits
 its backend's VLAN — the second assertion is what catches inheritance silently
 collapsing while the first still passes.
+
+### Two more fields every board reads: `ui` and `title`
+
+Each route also carries `ui` (true for a human browser surface, false for a
+machine endpoint) and `title` (the tile's display label). Boards use `ui` to
+split human surfaces from machine ones, and never show the two commingled.
+
+`ui` defaults to whether the route is SSO-gated, because a machine client can
+do neither a browser login nor anything a person opens either way. The named
+exceptions (a UI that skips the gate because it authenticates natively, like
+Vikunja or Plex) live in `locals-ingress-audience.tf`.
+
+`title` defaults to the route's name. A route sets its own title when the
+name is a raw slug that would look identical to a sibling route's — every
+Hermes agent route does this, so five tiles per agent read as "Hermes ·
+{agent} (chat)", "Hermes · {agent} (studio)", and so on instead of five
+copies of "{agent}-webui", "{agent}-studio". The
+`ansible_inventory_ingress_carries_audience_metadata` contract test asserts
+`title` is never empty.
 
 ## The three dashboards
 

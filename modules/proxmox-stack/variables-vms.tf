@@ -52,6 +52,9 @@ variable "vms" {
     # memory_dedicated raise reboot-free.
     memory_hotplug = optional(bool, false)
 
+    # false: apply a non-hotpluggable change without rebooting the guest.
+    reboot_after_update = optional(bool, true)
+
     # Storage configuration
     boot_disk = optional(object({
       datastore_id = optional(string, "local-lvm")
@@ -150,6 +153,8 @@ variable "vms" {
     # "seabios" or "ovmf". Windows 11+ requires "ovmf" (UEFI) alongside
     # tpm_state/efi_disk to pass hardware install checks.
     bios = optional(string, "seabios")
+    # QEMU machine type, "q35" or "pc"; unset keeps the Proxmox default.
+    machine = optional(string)
 
     # Ansible connection method published in ansible_inventory (inventory_publish.tf).
     # "ssh" (default) or "winrm" for Windows guests.

@@ -70,6 +70,7 @@ variables {
   # real key banner: a fixture that mimics one is indistinguishable from a
   # leaked key to every scanner that reads this repo, and the sibling suites
   # that do mimic one should be moved to this form too.
+  proxmox_user            = "root"
   proxmox_ssh_private_key = "-----BEGIN TEST FIXTURE, NOT A KEY-----"
   network_cidrs           = { for name, id in var.vlan_ids : name => "192.168.${id}.0/24" }
   node_storage            = {}
