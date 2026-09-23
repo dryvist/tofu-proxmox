@@ -77,11 +77,9 @@ variable "proxmox_ssh_host" {
   ephemeral   = true
 }
 
-variable "proxmox_ssh_username" {
-  description = "SSH username for the Proxmox node (e.g., \"root\")."
+variable "proxmox_user" {
+  description = "The Proxmox login user for SSH and UI auth (bare user, no realm)"
   type        = string
-  default     = "root"
-  ephemeral   = true
 }
 
 variable "proxmox_ssh_private_key" {

@@ -74,6 +74,7 @@ variables {
   # derived from it as 192.168.<vlan_id>.0/24 — no duplicated VLAN/CIDR list.
   network_cidrs           = { for name, id in var.vlan_ids : name => "192.168.${id}.0/24" }
   vm_ssh_public_key       = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITestKeyData test@test"
+  proxmox_user            = "root"
   proxmox_ssh_private_key = "-----BEGIN OPENSSH PRIVATE KEY-----\ntest\n-----END OPENSSH PRIVATE KEY-----"
 }
 

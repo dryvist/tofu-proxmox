@@ -67,6 +67,7 @@ override_module {
 
 variables {
   vm_ssh_public_key       = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITestKeyData test@test"
+  proxmox_user            = "root"
   proxmox_ssh_private_key = "-----BEGIN OPENSSH PRIVATE KEY-----\ntest\n-----END OPENSSH PRIVATE KEY-----"
   # vlan_ids uses its variable default (single source of truth); network_cidrs is
   # derived from it as 192.168.<vlan_id>.0/24 — no duplicated VLAN/CIDR list.
@@ -1977,5 +1978,10 @@ run "ansible_inventory_publishes_primary_node" {
       if contains(node.cluster_roles, "storage")
     ]) == "proxmox-2"
     error_message = "nodes must publish cluster_roles so a consumer can resolve 'the node that serves bulk storage' by role rather than by name"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.proxmox_user == "root"
+    error_message = "ansible_inventory must publish proxmox_user so ansible-proxmox reads the same login user this module uses, instead of a hardcoded default"
   }
 }

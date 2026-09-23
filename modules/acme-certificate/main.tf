@@ -118,7 +118,7 @@ resource "null_resource" "cert_delivery" {
   connection {
     type        = "ssh"
     host        = var.proxmox_ssh_host
-    user        = var.proxmox_ssh_username
+    user        = var.proxmox_user
     private_key = var.proxmox_ssh_private_key
   }
 

@@ -108,7 +108,7 @@ module "vms" {
 | `default_datastore` | Default datastore for VMs | `string` | ❌ | `"local-lvm"` |
 | `proxmox_api_token` | Proxmox API token | `string` | ✅ | - |
 | `proxmox_api_endpoint` | Proxmox API endpoint | `string` | ✅ | - |
-| `proxmox_ssh_username` | SSH username | `string` | ❌ | `"root@pam"` |
+| `proxmox_user` | Proxmox login user (no realm) | `string` | ✅ | n/a |
 | `proxmox_ssh_private_key` | SSH private key | `string` | ✅ | - |
 
 ### VM Object Schema

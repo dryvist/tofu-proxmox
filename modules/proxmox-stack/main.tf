@@ -90,7 +90,7 @@ module "vms" {
   ssh_ca_vendor_data_file_ids = local.ssh_ca_vendor_data_file_ids
 
   # SSH credentials for provisioners (BPG provider reads auth from PROXMOX_VE_* env vars)
-  proxmox_ssh_username    = var.proxmox_ssh_username
+  proxmox_user            = var.proxmox_user
   proxmox_ssh_private_key = var.proxmox_ssh_private_key
 
   depends_on = [
@@ -215,7 +215,7 @@ module "acme_certificates" {
 
   # SSH credentials for cert-delivery provisioner.
   proxmox_ssh_host        = var.proxmox_ssh_host
-  proxmox_ssh_username    = var.proxmox_ssh_username
+  proxmox_user            = var.proxmox_user
   proxmox_ssh_private_key = var.proxmox_ssh_private_key
 
   # Ensure the LXCs/VMs we deliver to exist before the cert lands.

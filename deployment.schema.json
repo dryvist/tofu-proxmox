@@ -10,6 +10,7 @@
     "nodes",
     "pools",
     "proxmox_node",
+    "proxmox_user",
     "vm_ssh_public_key"
   ],
   "additionalProperties": true,
@@ -138,6 +139,11 @@
     "proxmox_node": {
       "type": "string",
       "minLength": 1
+    },
+    "proxmox_user": {
+      "type": "string",
+      "pattern": "^[a-z_][a-z0-9_-]*$",
+      "description": "Proxmox login user (bare OS/PAM user, no realm) for every Proxmox SSH and UI login"
     },
     "environment": {
       "type": "string",
