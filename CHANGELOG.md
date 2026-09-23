@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.23.0](https://github.com/dryvist/tofu-proxmox/compare/v3.22.0...v3.23.0) (2026-09-23)
+
+
+### Features
+
+* **cloud-init:** bake OpenBao SSH-CA trust into new guests at birth ([#1158](https://github.com/dryvist/tofu-proxmox/issues/1158)) ([f78a17e](https://github.com/dryvist/tofu-proxmox/commit/f78a17e06211f285aa543a2079e506e29fe89c0c))
+* **dashboards:** distinguishable Hermes route titles, friendly section names ([#1166](https://github.com/dryvist/tofu-proxmox/issues/1166)) ([868c150](https://github.com/dryvist/tofu-proxmox/commit/868c15089cda5195ae5f704e4e4bda3b705afb21))
+* **ingress:** add hrw loadBalancer strategy to the llm pools ([#1160](https://github.com/dryvist/tofu-proxmox/issues/1160)) ([b3ba764](https://github.com/dryvist/tofu-proxmox/commit/b3ba764392c3ec409bd3968f366cd3fcf6e4cd4b))
+* **ingress:** add openbao failover fallback pool ([#1157](https://github.com/dryvist/tofu-proxmox/issues/1157)) ([1e4f0c0](https://github.com/dryvist/tofu-proxmox/commit/1e4f0c06f87358f0e9f3fddfd25fe0339752c8d4))
+* **ingress:** split llm-ui onto its own hostname, gate the legacy path ([#1159](https://github.com/dryvist/tofu-proxmox/issues/1159)) ([9b476a7](https://github.com/dryvist/tofu-proxmox/commit/9b476a774cc1d431d2c770e04e336996ae1e738b))
+* **proxmox-vm:** declare the VM machine type ([#1167](https://github.com/dryvist/tofu-proxmox/issues/1167)) ([1ef52ec](https://github.com/dryvist/tofu-proxmox/commit/1ef52ecad90369383993718734e028fa7c734713))
+
+
+### Bug Fixes
+
+* **firewall:** scope the LLM router port to ingress and Prometheus ([#1161](https://github.com/dryvist/tofu-proxmox/issues/1161)) ([db1ef37](https://github.com/dryvist/tofu-proxmox/commit/db1ef379045e8d15d936a8abe8656c33e022c781))
+* **proxmox-stack:** derive the LLM router ingress pool by tag, not name ([#1162](https://github.com/dryvist/tofu-proxmox/issues/1162)) ([91294d1](https://github.com/dryvist/tofu-proxmox/commit/91294d17f86b677b4d34d7163a9430908d1b23fe))
+* **ssh-ca:** start the trust vendor-data at #cloud-config ([#1165](https://github.com/dryvist/tofu-proxmox/issues/1165)) ([17ba824](https://github.com/dryvist/tofu-proxmox/commit/17ba82447ce2f0c9b936835fdf9e57868f581e98))
+
 ## [3.22.0](https://github.com/dryvist/tofu-proxmox/compare/v3.21.1...v3.22.0) (2026-09-21)
 
 
