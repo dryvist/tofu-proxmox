@@ -53,27 +53,39 @@ locals {
         }
       }
     ] : [],
-    # LiteLLM router pool: llm.<domain> load-balancing the stateless routers.
-    # No sticky — every router serves every model from the same config.
-    #
-    # Split UI from API on the same hostname, same pattern as
-    # nautobot/nautobot-api/nautobot-graphql below: the admin UI
-    # (/ui path prefix) is a browser surface and gets the default Authelia
-    # gate; the OpenAI-compatible API (everything else on this hostname)
-    # stays sso = false because its clients (CLI tools, agents, the whole
-    # AI fabric) cannot do a browser login. Before this split, /ui reached
-    # LiteLLM's admin UI unauthenticated — the same row that carried the
-    # API's sso = false covered the UI path too.
+    # LiteLLM router pool: llm.<domain> is the OpenAI-compatible API;
+    # llm-ui.<domain> is the admin UI on its own hostname, so its browser
+    # calls to the API land on the same origin. root_redirect sends the UI
+    # host's bare root to its own /ui/ path (rendered as a redirectRegex
+    # middleware scoped to that one router in the traefik role).
+    # health_check_path reads /health/readiness on both rows: it fails when
+    # the database is unreachable, unlike /health/liveliness, and makes no
+    # model call.
     length(local.llm_router_backends) > 0 ? [
       {
         name              = "llm-ui"
+        backends          = local.llm_router_backends
+        port              = local.pipeline_constants.service_ports.llm_router_api
+        root_redirect     = "/ui/"
+        health_check      = true
+        health_check_path = "/health/readiness"
+        sso               = true # browser admin UI — gated
+      }
+    ] : [],
+    # llm.<domain>/ui: the pre-existing admin UI path on the API hostname,
+    # kept gated so that path never falls through to the ungated API row
+    # below. Same pattern as nautobot/nautobot-api/nautobot-graphql — priority
+    # wins the match ahead of the catch-all "llm" row.
+    length(local.llm_router_backends) > 0 ? [
+      {
+        name              = "llm-ui-legacy"
         hostname          = "llm"
         backends          = local.llm_router_backends
         port              = local.pipeline_constants.service_ports.llm_router_api
         path_prefix       = "/ui"
         priority          = 100 # must win the match before the catch-all "llm" row
         health_check      = true
-        health_check_path = "/health/liveliness"
+        health_check_path = "/health/readiness"
         sso               = true # browser admin UI — gated
       }
     ] : [],
@@ -92,7 +104,7 @@ locals {
         backends          = local.llm_router_backends
         port              = local.pipeline_constants.service_ports.llm_router_api
         health_check      = true
-        health_check_path = "/health/liveliness"
+        health_check_path = "/health/readiness"
         sso               = false # OpenAI-compatible API clients
         # The router bounds every request itself (its per-attempt timeout and
         # fallback ladder); a non-streaming completion sends no byte until the
