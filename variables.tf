@@ -28,6 +28,16 @@ variable "deployment_key" {
   default     = "deployment.json"
 }
 
+# Passed straight through to modules/proxmox-root; see that module's
+# variables.tf for the contract. Unset for every caller of this repository's
+# own root — this only matters to a caller that sources
+# modules/proxmox-root directly (Vikunja 3492).
+variable "deployment_json" {
+  description = "Raw deployment.json content, bypassing the RustFS fetch when set. See modules/proxmox-root/variables.tf."
+  type        = string
+  default     = null
+}
+
 # Bakes the OpenBao SSH client CA into new guests' cloud-init vendor-data.
 # Left at the default, this is a no-op.
 variable "ssh_ca_trust_rollout_enabled" {

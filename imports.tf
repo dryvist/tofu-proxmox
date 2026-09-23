@@ -39,7 +39,7 @@ locals {
 import {
   for_each = toset(local.adopt_containers)
 
-  to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers[each.value]
+  to = module.stack.module.homelab.module.containers[0].proxmox_virtual_environment_container.containers[each.value]
 
   # Resolved against the MERGED container map, not `deployment.containers`
   # alone: the OpenBao voters are synthesised from `openbao_cluster.placement`
@@ -50,7 +50,13 @@ import {
   # to the primary node. Mirror that same coalesce here: taking the raw
   # attribute would yield an import id of `null/<vmid>` for any container
   # relying on the default, which fails to adopt with a confusing error.
-  id = "${coalesce(try(local.containers[each.value].node_name, null), local.deployment.proxmox_node)}/${local.containers[each.value].vm_id}"
+  #
+  # module.stack.{containers,deployment} (not a root-level local): the
+  # deployment decode moved into modules/proxmox-root so it can be reused as
+  # a module (Vikunja 3492); these two outputs exist solely so this
+  # root-only import block can keep resolving ids the same way. See
+  # modules/proxmox-root/outputs.tf.
+  id = "${coalesce(try(module.stack.containers[each.value].node_name, null), module.stack.deployment.proxmox_node)}/${module.stack.containers[each.value].vm_id}"
 }
 
 # Adoption of a guest that was never declared at all, as opposed to the
@@ -76,8 +82,8 @@ import {
 # plan be run — it should then show zero destroys for either container: an
 # add for technitium-30, nothing for the entry that already left state.
 import {
-  to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["technitium-30"]
-  id = "${local.deployment.containers["technitium-30"].node_name}/${local.deployment.containers["technitium-30"].vm_id}"
+  to = module.stack.module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["technitium-30"]
+  id = "${module.stack.deployment.containers["technitium-30"].node_name}/${module.stack.deployment.containers["technitium-30"].vm_id}"
 }
 
 # Adoption of a live, running Traefik ingress instance that Terraform has
@@ -101,8 +107,8 @@ import {
 # above does: "traefik-30" is synthesised by node_service_containers and
 # does not exist in the raw declared map.
 import {
-  to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["traefik-30"]
-  id = "${local.containers["traefik-30"].node_name}/${local.containers["traefik-30"].vm_id}"
+  to = module.stack.module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["traefik-30"]
+  id = "${module.stack.containers["traefik-30"].node_name}/${module.stack.containers["traefik-30"].vm_id}"
 }
 
 # Adoption of VMs whose state entry points at a node they no longer run on.
@@ -113,8 +119,8 @@ import {
 import {
   for_each = toset(local.adopt_vms)
 
-  to = module.homelab.module.vms.proxmox_virtual_environment_vm.vms[each.value]
-  id = "${local.deployment.vms[each.value].node_name}/${local.deployment.vms[each.value].vm_id}"
+  to = module.stack.module.homelab.module.vms.proxmox_virtual_environment_vm.vms[each.value]
+  id = "${module.stack.deployment.vms[each.value].node_name}/${module.stack.deployment.vms[each.value].vm_id}"
 }
 
 # Adoption of the Windows VM install ISOs. They were downloaded to the node's
@@ -123,21 +129,21 @@ import {
 # a plan error "already exists" instead of adopting the file. The id format is
 # node_name/datastore_id:content_type/file_name (bpg/proxmox provider).
 import {
-  to = module.homelab.proxmox_download_file.virtio_iso
-  id = "${local.deployment.proxmox_node}/${try(local.deployment.datastore_iso, "local")}:iso/virtio-win.iso"
+  to = module.stack.module.homelab.proxmox_download_file.virtio_iso
+  id = "${module.stack.deployment.proxmox_node}/${try(module.stack.deployment.datastore_iso, "local")}:iso/virtio-win.iso"
 }
 
 import {
-  to = module.homelab.proxmox_download_file.win10_iso
-  id = "${local.deployment.proxmox_node}/${try(local.deployment.datastore_iso, "local")}:iso/Windows10.iso"
+  to = module.stack.module.homelab.proxmox_download_file.win10_iso
+  id = "${module.stack.deployment.proxmox_node}/${try(module.stack.deployment.datastore_iso, "local")}:iso/Windows10.iso"
 }
 
 import {
-  to = module.homelab.proxmox_download_file.win11_iso
-  id = "${local.deployment.proxmox_node}/${try(local.deployment.datastore_iso, "local")}:iso/Windows11.iso"
+  to = module.stack.module.homelab.proxmox_download_file.win11_iso
+  id = "${module.stack.deployment.proxmox_node}/${try(module.stack.deployment.datastore_iso, "local")}:iso/Windows11.iso"
 }
 
 import {
-  to = module.homelab.proxmox_download_file.win25_iso
-  id = "${local.deployment.proxmox_node}/${try(local.deployment.datastore_iso, "local")}:iso/WindowsServer2025.iso"
+  to = module.stack.module.homelab.proxmox_download_file.win25_iso
+  id = "${module.stack.deployment.proxmox_node}/${try(module.stack.deployment.datastore_iso, "local")}:iso/WindowsServer2025.iso"
 }

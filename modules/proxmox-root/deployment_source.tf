@@ -1,18 +1,28 @@
 # Desired-state object: the fetch, and the guards that reject a desired state
 # which would produce a broken plan.
 #
-# Split out of main.tf, which crossed the repository's hard file-size gate.
-# Nothing about the block changed in the move.
-
+# Two sources, resolved to the same `local.deployment_body` string:
+#   - the default: fetch the private RustFS object (unchanged behaviour).
+#   - var.deployment_json: a caller passes the content directly (a git-tracked
+#     desired-state repo, e.g. Vikunja 3492's homelab-live, committing
+#     deployment.json and reading it with `file()`), skipping the S3 fetch
+#     entirely. This is how the whole composition becomes usable as a module
+#     from another repository's root while every existing caller — including
+#     this repository's own root, one directory up — keeps working unchanged.
+#
+# Both guards below are postconditions/validations rather than `check` blocks:
+# a failed `check` only WARNS (verified on the pinned OpenTofu 1.11 — the plan
+# completes with exit 0), while a postcondition or a variable validation fails
+# the plan hard. The S3 path's postconditions read self.body because a local
+# derived from that data source cannot be referenced from its own lifecycle
+# block; the deployment_json path mirrors the same four checks as variable
+# validations, since there is no resource to hang a postcondition off of.
 data "aws_s3_object" "deployment" {
+  count = var.deployment_json == null ? 1 : 0
+
   bucket = var.deployment_bucket
   key    = var.deployment_key
 
-  # Both guards below are postconditions rather than `check` blocks: a failed
-  # check only WARNS (verified on the pinned OpenTofu 1.11 — the plan completes
-  # with exit 0), while a postcondition fails the plan hard, against the real
-  # fetched object, on every run. They read self.body because a local derived
-  # from this data source cannot be referenced from its own lifecycle block.
   lifecycle {
     # Deployment contract: a truncated or half-written object would otherwise
     # proceed to plan the destruction of every guest it no longer mentions.
@@ -111,4 +121,16 @@ data "aws_s3_object" "deployment" {
       )
     }
   }
+}
+
+locals {
+  deployment_body = var.deployment_json != null ? var.deployment_json : data.aws_s3_object.deployment[0].body
+
+  # See variables.tf: empty keeps today's degrade-without-failing behaviour
+  # for a caller that supplies deployment_json without its own etag.
+  desired_state_etag = (
+    var.desired_state_etag != null
+    ? var.desired_state_etag
+    : (var.deployment_json == null ? data.aws_s3_object.deployment[0].etag : "")
+  )
 }

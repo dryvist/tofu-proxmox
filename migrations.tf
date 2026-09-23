@@ -40,6 +40,19 @@ moved {
   to   = module.homelab.module.firewall
 }
 
+# The composition (providers, ephemeral credential fetches, the deployment
+# decode, and the module.homelab call) moved one level down into
+# modules/proxmox-root so it can be sourced as a module by another
+# repository's own root (Vikunja 3492 — see modules/proxmox-root/main.tf for
+# why). This is the same technique the migration above used: a `moved` block
+# so every existing infrastructure address is preserved with no destroy or
+# recreate, this time reparenting the whole module in one block rather than
+# resource by resource.
+moved {
+  from = module.homelab
+  to   = module.stack.module.homelab
+}
+
 # The former AWS inventory object remains available during the migration soak.
 # Terrakube creates the replacement in RustFS; retire the orphaned AWS object
 # separately only after every Ansible consumer has proven the native path.
