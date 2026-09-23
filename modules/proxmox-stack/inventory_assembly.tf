@@ -105,7 +105,7 @@ locals {
     # value the rest of this module already treats as authoritative, so there
     # is one declaration of the fact, not two.
     proxmox_node = var.proxmox_node
-    # The Proxmox login user (no realm) for SSH/API auth — the single source
+    # The Proxmox login user (no realm) for SSH/UI auth — the single source
     # every consumer (this module's SSH connections and ansible-proxmox) reads,
     # instead of each declaring its own default.
     proxmox_user = var.proxmox_user

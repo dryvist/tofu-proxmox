@@ -81,7 +81,7 @@ module "acme_certificates" {
   }
 
   proxmox_ssh_host        = var.proxmox_ssh_host
-  proxmox_user    = var.proxmox_user
+  proxmox_user            = var.proxmox_user
   proxmox_ssh_private_key = var.proxmox_ssh_private_key
   environment             = "homelab"
 }

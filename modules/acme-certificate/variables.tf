@@ -78,7 +78,7 @@ variable "proxmox_ssh_host" {
 }
 
 variable "proxmox_user" {
-  description = "The Proxmox login user for SSH and API auth (e.g., \"root\"), no realm"
+  description = "The Proxmox login user for SSH and UI auth (bare user, no realm)"
   type        = string
 }
 
