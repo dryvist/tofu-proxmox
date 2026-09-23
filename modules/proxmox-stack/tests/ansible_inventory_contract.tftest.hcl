@@ -588,10 +588,18 @@ run "ansible_inventory_ingress_route_table" {
     error_message = "ingress must omit the proxmox apex route when no node is commissioned"
   }
 
-  # The llm hostname carries TWO pool rows, and the split between them is the
-  # security boundary: the browser admin UI at the /ui prefix is gated, the
-  # OpenAI-compatible API on the rest of the hostname is not (its clients
-  # cannot do a browser login).
+  # The llm-ui row is now a standalone hostname: no path_prefix, its bare
+  # root redirects to /ui/ on itself, and it stays gated.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "llm-ui" && try(r.path_prefix, "") == "" && try(r.root_redirect, "") == "/ui/" && r.ui == true && r.sso == true
+    ]) == 1
+    error_message = "the llm-ui row must carry no path_prefix, root_redirect=\"/ui/\", ui=true and sso=true — the standalone gated browser surface"
+  }
+
+  # llm-ui-legacy keeps the old /ui path on the llm hostname gated, so it
+  # never falls through to the ungated API row below.
   #
   # The key is path_prefix. That is the name the traefik role reads when it
   # builds the PathPrefix matcher; a row carrying any other name for it
@@ -602,9 +610,9 @@ run "ansible_inventory_ingress_route_table" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress :
-      r if r.name == "llm-ui" && try(r.path_prefix, "") == "/ui" && r.ui == true && r.sso == true
+      r if r.name == "llm-ui-legacy" && try(r.path_prefix, "") == "/ui" && r.ui == true && r.sso == true
     ]) == 1
-    error_message = "the llm-ui row must carry path_prefix=\"/ui\", ui=true and sso=true — the gated browser surface"
+    error_message = "the llm-ui-legacy row must carry path_prefix=\"/ui\", ui=true and sso=true — the gated browser surface"
   }
 
   # The API row is the other half and must be pinned with it: no path prefix
