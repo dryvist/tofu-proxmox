@@ -1808,6 +1808,31 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
     error_message = "every ingress route must publish ui/desc/section; a board cannot split or annotate without them"
   }
 
+  assert {
+    condition = alltrue([
+      for r in output.ansible_inventory.ingress : can(r.title) && length(r.title) > 0
+    ])
+    error_message = "every ingress route must publish a non-empty title; a board tile cannot render with no label"
+  }
+
+  # hermes-agent's five generated routes must each carry a distinct,
+  # surface-naming title — not five copies of the raw route-name slug, which
+  # is the actual defect this attribute exists to fix (see
+  # locals-hermes-routes.tf).
+  assert {
+    condition = length(distinct([
+      for r in output.ansible_inventory.ingress : r.title if r.owner == "hermes-agent"
+    ])) == 5
+    error_message = "hermes-agent's five routes must each carry a distinct, surface-naming title"
+  }
+
+  assert {
+    condition = alltrue([
+      for r in output.ansible_inventory.ingress : r.title != r.name if r.owner == "hermes-agent"
+    ])
+    error_message = "hermes route titles must not silently fall back to the raw route-name slug"
+  }
+
   # ui tracks sso, EXCEPT for the human UIs that skip the gate. vikunja is
   # sso=false and ui=true: if the exception list is dropped it lands in the
   # machine column.
@@ -1831,13 +1856,15 @@ run "ansible_inventory_ingress_carries_audience_metadata" {
   }
 
   # section is DERIVED from route count per guest. hermes-agent serves five,
-  # so it is a section; vikunja serves one, so it is not.
+  # so it is a section; vikunja serves one, so it is not. The header prefers
+  # the same friendly agent name the tile titles use (the guest's summary)
+  # over the raw container key.
   assert {
     condition = alltrue([
       for r in output.ansible_inventory.ingress :
-      r.section == "hermes-agent" if r.owner == "hermes-agent"
+      r.section == "Hermes agent" if r.owner == "hermes-agent"
     ])
-    error_message = "a guest serving several routes must derive a section from its own name"
+    error_message = "a guest serving several routes must derive a section from its friendly agent name"
   }
 
   assert {

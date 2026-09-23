@@ -45,7 +45,7 @@ locals {
     prometheus        = { backend = "prometheus", port = local.pipeline_constants.service_ports.prometheus_web }
     homarr            = { backend = "homarr", port = local.pipeline_constants.service_ports.homarr_web }
     # llm is fronted as a load-balanced router pool (llm_router_backends below).
-    chat   = { backend = "open-webui", port = local.pipeline_constants.service_ports.open_webui_web }
+    chat   = { backend = "open-webui", port = local.pipeline_constants.service_ports.open_webui_web, title = "Open WebUI (all agents)" }
     qdrant = { backend = "qdrant", port = local.pipeline_constants.vector_db_ports.qdrant_http, sso = false } # vector API for agents/MCP
     # llama-server web UI on the fast-tier serving guest (same port the router dials).
     llama = { backend = "llm-4080", port = local.pipeline_constants.service_ports.llm_fast_api }
@@ -89,10 +89,10 @@ locals {
     # The `herdr` server guest has no route: it is reached over SSH
     # (`herdr --remote herdr`). Its Slack bridge needs none either — Slack
     # Socket Mode is an outbound WebSocket, so nothing has to reach in.
-    herdr = { backend = "herdr-ui", port = local.pipeline_constants.service_ports.herdr_relay_ws }
+    herdr = { backend = "herdr-ui", port = local.pipeline_constants.service_ports.herdr_relay_ws, title = "herdr (approvals)" }
 
-    "hermes-ui"       = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_workspace }
-    "mission-control" = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_mission_control }
+    "hermes-ui"       = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_workspace, title = "Hermes Workspace" }
+    "mission-control" = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_mission_control, title = "Mission Control" } # unrelated co-located product, not a Hermes surface
     # Estate dashboards. All three are populated from local.ingress itself, so
     # every fronted service appears on every board without a second list.
     # Browser-only surfaces: each takes the default gate (sso omitted => true).
