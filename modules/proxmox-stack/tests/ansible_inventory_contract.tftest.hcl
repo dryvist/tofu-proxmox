@@ -460,16 +460,16 @@ run "ansible_inventory_ingress_route_table" {
         vlan      = "mgmt"
         tags      = ["terraform", "container", "monitoring", "docker"]
       }
-      # One member of the NAME-keyed llm_router_backends pool: membership comes
-      # from this literal key matching keys(var.containers), never the tag
-      # (locals-ingress-pools.tf). The llm-router tag is only the fabric
-      # identity (locals-llm-fabric.tf); DHCP-first with a 6-digit positional
-      # VMID (ai tier 5).
-      "llm-router-1" = {
+      # A member of the llm-router TAG pool (locals-ingress-pools.tf,
+      # tag_backend_pools["llm-router"]) — the key/hostname below is
+      # arbitrary and deliberately does not match any of the fleet's real
+      # names, proving membership comes from the tag alone. DHCP-first with a
+      # 6-digit positional VMID (ai tier 5).
+      "fabric-router-fixture" = {
         vm_id     = 501000
         node_name = "proxmox-1"
         dhcp      = true
-        hostname  = "llm-router-1"
+        hostname  = "fabric-router-fixture"
         vlan      = "ai"
         tags      = ["terraform", "container", "llm-router"]
       }

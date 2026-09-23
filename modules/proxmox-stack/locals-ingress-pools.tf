@@ -8,7 +8,7 @@ locals {
   # deterministic; skip-missing-peers falls out naturally (an undeclared or
   # gated-off instance simply isn't in var.containers). Adding the next pooled
   # app = add its tag here + one route entry below — nothing else.
-  pooled_backend_tags = ["hindsight", "zammad", "agentgateway", "firecrawl"]
+  pooled_backend_tags = ["hindsight", "zammad", "agentgateway", "firecrawl", "llm-router"]
   tag_backend_pools = {
     for tag in local.pooled_backend_tags : tag => [
       for k in sort([
@@ -43,12 +43,11 @@ locals {
   ]
 
   # LiteLLM router pool: THE fabric endpoint (https://llm.<domain>/v1) for every
-  # consumer, load-balanced across the stateless router guests. Name-keyed (not
-  # tag-keyed) because the routers predate the tag convention.
-  llm_router_backends = [
-    for k in ["llm-router-1", "llm-router-2", "llm-router-3"] : local.container_address[k]
-    if contains(keys(var.containers), k)
-  ]
+  # consumer, load-balanced across the stateless router guests. Was name-keyed
+  # to the original three (predating the tag convention); folded into the
+  # generic tag pool above so a new router guest joins by carrying the
+  # llm-router tag alone, the same as every other pooled service.
+  llm_router_backends = local.tag_backend_pools["llm-router"]
 
   # Hindsight agent-memory pool: stateless replicas (all state in the ai-VLAN
   # Postgres cluster), no sticky. Clients — agentgateway's MCP target, Hermes
