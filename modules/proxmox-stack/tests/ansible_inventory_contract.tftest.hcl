@@ -615,6 +615,16 @@ run "ansible_inventory_ingress_route_table" {
     error_message = "the llm-ui-legacy row must carry path_prefix=\"/ui\", ui=true and sso=true — the gated browser surface"
   }
 
+  # llm-ui-legacy is a compat path for the same UI llm-ui already tiles, so it
+  # opts out of the dashboard boards with dashboard = false.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "llm-ui-legacy" && try(r.dashboard, true) == false
+    ]) == 1
+    error_message = "the llm-ui-legacy row must carry dashboard=false — it must not become a second dashboard tile for the llm-ui admin UI"
+  }
+
   # The API row is the other half and must be pinned with it: no path prefix
   # (it is the catch-all for the hostname), ungated, and NOT a human UI, so it
   # stops appearing in the human column on the dashboards.

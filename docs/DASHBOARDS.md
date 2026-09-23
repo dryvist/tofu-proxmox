@@ -20,6 +20,10 @@ Practical consequence: **a service gets on every dashboard by having a Traefik
 route**, never by being added to a dashboard's own list. There is no second list
 to keep in sync, and there is no way for a board to drift out of date.
 
+A route that carries `dashboard = false` still gets a Traefik router, but no
+tile on any board — for a compat path that reaches a UI another route already
+tiles (e.g. `llm-ui-legacy`).
+
 ### Grouping
 
 Each assembled route carries a `group`, used as the section heading on every

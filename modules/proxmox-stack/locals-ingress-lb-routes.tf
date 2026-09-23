@@ -78,7 +78,9 @@ locals {
     # llm.<domain>/ui: the pre-existing admin UI path on the API hostname,
     # kept gated so that path never falls through to the ungated API row
     # below. Same pattern as nautobot/nautobot-api/nautobot-graphql — priority
-    # wins the match ahead of the catch-all "llm" row.
+    # wins the match ahead of the catch-all "llm" row. dashboard = false: this
+    # is a compat path for the same UI llm-ui already tiles, not a second
+    # tile.
     length(local.llm_router_backends) > 0 ? [
       {
         name              = "llm-ui-legacy"
@@ -90,6 +92,7 @@ locals {
         health_check      = true
         health_check_path = "/health/readiness"
         sso               = true # browser admin UI — gated
+        dashboard         = false
       }
     ] : [],
     # A SEPARATE conditional, not a second element of the one above. The two
