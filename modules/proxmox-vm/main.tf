@@ -28,8 +28,6 @@ resource "proxmox_virtual_environment_vm" "vms" {
 
   reboot_after_update = each.value.reboot_after_update
 
-  # ovmf (UEFI) required for guests with tpm_state/efi_disk configured -
-  # Windows 11+ hardware checks fail under seabios even with TPM emulated.
   bios    = each.value.bios
   machine = each.value.machine
 
