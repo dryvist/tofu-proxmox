@@ -7,9 +7,11 @@
 # defined in locals.tf — cross-file local refs resolve within the module.
 locals {
   # llm-router — the LiteLLM proxy fronting the fabric. Inbound llm_router_api
-  # from internal so callers reach the OpenAI-compatible router endpoint.
+  # from only the ingress Traefik instances and the Prometheus scraper
+  # (var.llm_router_trusted_src) — every other caller reaches the router
+  # through Traefik, so a wider "from internal" source is not needed here.
   llm_router_services_rules = [
-    { proto = "tcp", dport = tostring(local.svc_ports.llm_router_api), source = local.internal_src, comment = "LLM router / LiteLLM proxy (TCP ${local.svc_ports.llm_router_api}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.llm_router_api), source = var.llm_router_trusted_src, comment = "LLM router / LiteLLM proxy (TCP ${local.svc_ports.llm_router_api}) from ingress + Prometheus" },
   ]
 
   # llm-fast — the llama-swap GPU server. Inbound llm_fast_api from internal

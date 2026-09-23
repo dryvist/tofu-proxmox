@@ -12,6 +12,8 @@ variables {
   splunk_network     = "192.168.20.200"
   internal_networks  = ["192.168.0.0/16"]
   ai_network         = "192.168.50.0/24"
+  # Ingress Traefik instances + the Prometheus scraper, not internal_networks.
+  llm_router_trusted_src = "192.168.10.7,192.168.10.8,192.168.20.30"
   pipeline_constants = {
     service_ports = {
       haproxy_stats     = 8404
@@ -804,6 +806,36 @@ run "postgres_rule_tracks_constant_and_internal_scope" {
   assert {
     condition     = local.postgres_services_rules[0].source == "192.168.10.0/24,192.168.20.0/24"
     error_message = "postgres rule source must be the comma-joined internal networks, got '${local.postgres_services_rules[0].source}'"
+  }
+}
+
+run "llm_router_rule_tracks_constant_and_trusted_src" {
+  command = plan
+
+  variables {
+    internal_networks      = ["192.168.10.0/24", "192.168.20.0/24"]
+    llm_router_trusted_src = "192.168.10.7,192.168.10.8,192.168.20.30"
+  }
+
+  # Exactly one live rule: TCP 4000 from the trusted source, not internal_networks.
+  assert {
+    condition     = length(local.llm_router_services_rules) == 1
+    error_message = "llm_router_services_rules must be exactly 1 (TCP 4000), got ${length(local.llm_router_services_rules)}"
+  }
+
+  assert {
+    condition     = local.llm_router_services_rules[0].proto == "tcp" && local.llm_router_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.llm_router_api)
+    error_message = "llm_router rule must be TCP tracking service_ports.llm_router_api, got proto='${local.llm_router_services_rules[0].proto}' dport='${local.llm_router_services_rules[0].dport}'"
+  }
+
+  assert {
+    condition     = local.llm_router_services_rules[0].source == var.llm_router_trusted_src
+    error_message = "llm_router rule source must be var.llm_router_trusted_src, got '${local.llm_router_services_rules[0].source}'"
+  }
+
+  assert {
+    condition     = local.llm_router_services_rules[0].source != join(",", var.internal_networks)
+    error_message = "llm_router rule source must NOT be the comma-joined internal networks — it is scoped to ingress + Prometheus, not every internal network"
   }
 }
 
