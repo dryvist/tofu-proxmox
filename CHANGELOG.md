@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.24.0](https://github.com/dryvist/tofu-proxmox/compare/v3.23.0...v3.24.0) (2026-09-24)
+
+
+### Features
+
+* **deployment-source:** read deployment.json from a local file, else RustFS ([#1174](https://github.com/dryvist/tofu-proxmox/issues/1174)) ([70ef620](https://github.com/dryvist/tofu-proxmox/commit/70ef620ae6599a1b5212dff86094b59334b2abbb))
+
 ## [3.23.0](https://github.com/dryvist/tofu-proxmox/compare/v3.22.0...v3.23.0) (2026-09-23)
 
 
