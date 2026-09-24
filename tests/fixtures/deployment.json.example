@@ -1,0 +1,22 @@
+{
+  "containers": {
+    "c1": {"vm_id": 100, "hostname": "c1", "vlan": "lan_main", "node_name": "n1"},
+    "technitium-30": {"vm_id": 130, "hostname": "technitium-30", "vlan": "dns", "node_name": "n1"},
+    "traefik-30": {"vm_id": 131, "hostname": "traefik-30", "vlan": "apps", "node_name": "n1"}
+  },
+  "nodes": {"n1": {"role": "node-1", "cluster_roles": ["storage"]}},
+  "pools": {"p1": {}},
+  "proxmox_node": "n1",
+  "proxmox_user": "terraform@pve",
+  "domain": "file-source.example",
+  "network_cidrs": {
+    "lan_main": "10.0.0.0/24",
+    "ai": "10.0.50.0/24",
+    "apps": "10.0.60.0/24",
+    "compute": "10.0.10.0/24",
+    "dns": "10.0.2.0/24",
+    "mgmt": "10.0.5.0/24",
+    "siem": "10.0.40.0/24"
+  },
+  "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture"
+}

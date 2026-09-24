@@ -43,20 +43,23 @@ tofu test                      # ROOT ONLY — see below
 > assertions live in `modules/*/tests`; the script above derives the suite
 > set from the tree, prints the assertion count, and fails if it's zero.
 
-### Where an apply runs — not here
+### Where an apply runs
 
-Plans, applies, imports, and state ops run only in the private Terrakube
+Plans, applies, imports, and state ops run in the private Terrakube
 workspace, on OpenBao workload identity (the sole machine-secret path).
-**`tofu apply` never works from a workstation, by design**: every workspace
-sets `allowRemoteApply = false` server-side, refusing any CLI apply — apply
-happens only as an audited, workspace-locked **Terrakube job** on the
-workspace's own OpenBao identity, never an autonomous step. `fmt`,
-`validate`, `test`, `console`, `plan` are unaffected and run anywhere,
-including autonomously by an AI agent on the pre-existing `tofu login`
-token — `apply` is excluded from that set. GitHub pushes do **not** trigger
-Terrakube jobs; trigger one via the Terrakube API directly, using the token
-in `~/.terraform.d/credentials.tfrc.json` on the execution host (e.g.
-`curl -X POST .../api/v1/organization/<org-id>/job`).
+Every workspace sets `allowRemoteApply = false`, so a CLI `tofu apply` is
+refused; an apply is a workspace-locked **Terrakube job**, and the AI agent
+runs it end to end on the `tofu login` token in
+`~/.terraform.d/credentials.tfrc.json`:
+
+1. `tofu plan` from the committed root uploads a configuration version.
+2. `POST /api/v1/organization/<org-id>/job` with the plan → approval →
+   apply template and `overrideSource` pinned to that upload.
+3. Gate the job's own plan log (expected adds/changes, zero unexpected
+   destroys), then `PATCH` the job `approved`.
+4. Verify: every step `completed`, a new workspace history row for the job.
+
+GitHub pushes do **not** trigger Terrakube jobs.
 
 > On macOS, `tofu` is ad-hoc-signed and gets denied against a backend on a
 > directly-attached subnet — symptom is a misleading `connect: no route to

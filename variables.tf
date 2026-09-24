@@ -28,6 +28,12 @@ variable "deployment_key" {
   default     = "deployment.json"
 }
 
+variable "deployment_file" {
+  description = "Root-relative path to a local desired-state file, checked before the RustFS fallback. Overridable so tftest can point it at a fixture without a real deployment.json in the working directory."
+  type        = string
+  default     = "deployment.json"
+}
+
 # Bakes the OpenBao SSH client CA into new guests' cloud-init vendor-data.
 # Left at the default, this is a no-op.
 variable "ssh_ca_trust_rollout_enabled" {
