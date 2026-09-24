@@ -118,8 +118,6 @@ jobs:
         run: tofu init -backend=false
       - name: OpenTofu Test
         run: tofu test -no-color
-      - name: OpenTofu Validate (local deployment.json)
-        run: ./scripts/tofu-test-root.sh
       # The root invocation above does not recurse into modules/*/tests, so it
       # passes having run none of them (#580). The script derives the suite set
       # from the tree and fails on a zero-assertion run.

@@ -1,10 +1,7 @@
-# Does the root still fall back to the RustFS object when no local
-# deployment.json exists? Every ordinary checkout is in this state, since
-# deployment.json is gitignored here.
-#
-# Scoped to the two objects this file tests via plan_options.target, else a
-# plan of the whole root also has to satisfy imports.tf's unconditional
-# `import` blocks and module.homelab's own arguments, unrelated to this file.
+# Covers both desired-state sources plus the guards that gate them. Scoped
+# to plan_options.target in every run, else a plan of the whole root also
+# has to satisfy imports.tf's unconditional `import` blocks and
+# module.homelab's own arguments, unrelated to this file.
 
 mock_provider "aws" {}
 
@@ -53,4 +50,53 @@ run "file_absent_falls_back_to_s3" {
     condition     = local.desired_state_etag == "mock-etag-value"
     error_message = "desired_state_etag should be the RustFS object's own ETag on this path, not a content hash."
   }
+}
+
+run "file_present_skips_s3" {
+  command = plan
+
+  variables {
+    deployment_file = "tests/fixtures/deployment.json.example"
+  }
+
+  plan_options {
+    target = [
+      data.aws_s3_object.deployment,
+      output.deployment_validated,
+    ]
+  }
+
+  assert {
+    condition     = length(data.aws_s3_object.deployment) == 0
+    error_message = "with a local deployment.json, the RustFS data source must not be planned (count must be 0)."
+  }
+
+  assert {
+    condition     = local.deployment.domain == "file-source.example"
+    error_message = "the local file's body should have reached local.deployment through the shared precondition path."
+  }
+
+  assert {
+    condition     = local.desired_state_etag == filemd5("tests/fixtures/deployment.json.example")
+    error_message = "desired_state_etag should be a content hash of the local file on this path, not an S3 ETag."
+  }
+}
+
+run "file_present_empty_containers_fails_the_guard" {
+  command = plan
+
+  variables {
+    deployment_file = "tests/fixtures/deployment-broken.json.example"
+  }
+
+  plan_options {
+    target = [
+      data.aws_s3_object.deployment,
+      output.deployment_validated,
+    ]
+  }
+
+  # Proves the guard actually fires — tofu validate cannot: preconditions
+  # only evaluate at plan/apply.
+  expect_failures = [output.deployment_validated]
 }

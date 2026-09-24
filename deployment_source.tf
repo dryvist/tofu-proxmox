@@ -4,8 +4,13 @@
 # A deployment.json in the root directory takes priority over the object-store
 # copy. A checkout without one (every caller today) keeps the existing
 # RustFS-fetch behaviour unchanged.
+locals {
+  deployment_file_path   = "${path.root}/${var.deployment_file}"
+  deployment_file_exists = fileexists(local.deployment_file_path)
+}
+
 data "aws_s3_object" "deployment" {
-  count = fileexists("${path.root}/deployment.json") ? 0 : 1
+  count = local.deployment_file_exists ? 0 : 1
 
   bucket = var.deployment_bucket
   key    = var.deployment_key
@@ -13,8 +18,8 @@ data "aws_s3_object" "deployment" {
 
 locals {
   deployment_body = (
-    fileexists("${path.root}/deployment.json")
-    ? file("${path.root}/deployment.json")
+    local.deployment_file_exists
+    ? file(local.deployment_file_path)
     : data.aws_s3_object.deployment[0].body
   )
 
@@ -23,8 +28,8 @@ locals {
   # on the RustFS path; a content hash on the local-file path, since there is
   # no ETag to report there.
   desired_state_etag = (
-    fileexists("${path.root}/deployment.json")
-    ? filemd5("${path.root}/deployment.json")
+    local.deployment_file_exists
+    ? filemd5(local.deployment_file_path)
     : data.aws_s3_object.deployment[0].etag
   )
 }
