@@ -1,0 +1,10 @@
+{
+  "containers": {},
+  "nodes": {"n1": {"role": "node-1", "cluster_roles": ["storage"]}},
+  "pools": {"p1": {}},
+  "proxmox_node": "n1",
+  "proxmox_user": "terraform@pve",
+  "domain": "broken.example",
+  "network_cidrs": {"lan_main": "10.0.0.0/24"},
+  "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture"
+}
