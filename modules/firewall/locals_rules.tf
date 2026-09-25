@@ -58,6 +58,7 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.splunk_hec), source = local.internal_src, comment = "Cribl Edge HEC input (netmon Telegraf push, reuses the splunk_hec port) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s), source = local.internal_src, comment = "Cribl S2S frontend (remote Edge -> HAProxy -> Stream) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s_metrics), source = local.internal_src, comment = "Cribl S2S metrics frontend (remote Edge -> HAProxy -> Stream) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.cribl_pve_metrics), source = local.internal_src, comment = "Cribl PVE metrics frontend (Proxmox -> HAProxy -> Stream) from internal" },
   ]
 
   netflow_rules = [
@@ -100,6 +101,7 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_stream_api), source = local.internal_src, comment = "Cribl Stream API from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s), source = local.internal_src, comment = "Cribl S2S input (HAProxy -> Stream) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s_metrics), source = local.internal_src, comment = "Cribl S2S metrics input (HAProxy -> Stream) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.cribl_pve_metrics), source = local.internal_src, comment = "Cribl PVE metrics input (HAProxy -> Stream) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_prometheus_rw), source = local.internal_src, comment = "Prometheus remote_write receiver from internal" },
   ]
 
