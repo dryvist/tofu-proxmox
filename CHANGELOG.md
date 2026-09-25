@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.25.0](https://github.com/dryvist/tofu-proxmox/compare/v3.24.0...v3.25.0) (2026-09-25)
+
+
+### Features
+
+* **wall:** route, port and firewall for the server-room wall guest ([#1178](https://github.com/dryvist/tofu-proxmox/issues/1178)) ([0f63a0c](https://github.com/dryvist/tofu-proxmox/commit/0f63a0cad225b93de0a00707e5771af32ec43285))
+
 ## [3.24.0](https://github.com/dryvist/tofu-proxmox/compare/v3.23.0...v3.24.0) (2026-09-24)
 
 
