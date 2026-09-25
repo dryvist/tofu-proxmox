@@ -77,6 +77,7 @@ module "firewall" {
   homarr_container_ids      = local.homarr_container_ids
   homepage_container_ids    = local.homepage_container_ids
   glance_container_ids      = local.glance_container_ids
+  wall_container_ids        = local.wall_container_ids
   status_container_ids      = local.status_container_ids
   grafana_container_ids     = local.grafana_container_ids
 
