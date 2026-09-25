@@ -25,4 +25,6 @@ jobs:
     permissions: {}
     uses: dryvist/.github/.github/workflows/_dispatch-flake-consumers.yml@main
     # source_input defaults to the calling repo name.
+    with:
+      event_type: upstream-released
     secrets: inherit
