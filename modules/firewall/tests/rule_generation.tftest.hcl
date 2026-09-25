@@ -25,6 +25,7 @@ variables {
       cribl_stream_api  = 9000
       # Cribl S2S + Prometheus remote_write (referenced by pipeline/cribl_stream rules)
       cribl_s2s           = 10300
+      cribl_s2s_metrics   = 10360
       cribl_prometheus_rw = 9201
       apt_cacher_ng       = 3142
       # Agent-plane egress forward proxy (referenced by ai_proxied/squid rules)
@@ -241,10 +242,10 @@ run "pipeline_services_rules_always_three" {
     internal_networks = ["192.168.10.0/24", "192.168.20.0/24", "192.168.30.0/24"]
   }
 
-  # HAProxy stats (8404) + Cribl Edge API (9420) + Cribl Edge HEC input (8088) + Cribl S2S frontend (10300)
+  # HAProxy stats (8404) + Cribl Edge API (9420) + Cribl Edge HEC input (8088) + Cribl S2S frontend (10300) + Cribl S2S metrics frontend (10360)
   assert {
-    condition     = length(local.pipeline_services_rules) == 4
-    error_message = "pipeline_services_rules must be exactly 4, got ${length(local.pipeline_services_rules)}"
+    condition     = length(local.pipeline_services_rules) == 5
+    error_message = "pipeline_services_rules must be exactly 5, got ${length(local.pipeline_services_rules)}"
   }
 }
 
@@ -282,10 +283,10 @@ run "cribl_stream_rules_always_one" {
     internal_networks = ["192.168.10.0/24", "192.168.20.0/24", "192.168.30.0/24"]
   }
 
-  # Cribl Stream API (9000) + Cribl S2S input (10300) + Prometheus remote_write (9201)
+  # Cribl Stream API (9000) + Cribl S2S input (10300) + Cribl S2S metrics input (10360) + Prometheus remote_write (9201)
   assert {
-    condition     = length(local.cribl_stream_services_rules) == 3
-    error_message = "cribl_stream_services_rules must be exactly 3, got ${length(local.cribl_stream_services_rules)}"
+    condition     = length(local.cribl_stream_services_rules) == 4
+    error_message = "cribl_stream_services_rules must be exactly 4, got ${length(local.cribl_stream_services_rules)}"
   }
 }
 

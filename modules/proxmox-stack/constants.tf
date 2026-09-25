@@ -13,6 +13,14 @@ locals {
       cribl_stream_api  = 9000
       # Cribl-to-Cribl (S2S/TCP-JSON) ingestion: remote Edge nodes -> HAProxy -> Stream
       cribl_s2s = 10300
+      # Dedicated S2S receiver for Edge host/GPU metric events (remote Edge ->
+      # HAProxy -> Stream -> victoriametrics_rw). Split out from cribl_s2s: Cribl
+      # best practice is a dedicated port per source so routing is by listener,
+      # not payload inspection — same rationale as ai_log_ports
+      # (constants-ai-log.tf). Splunk already receives these events directly
+      # from Edge's own HEC output (os_metrics index); this port exists only to
+      # reach victoriametrics_rw.
+      cribl_s2s_metrics = 10360
       # Cribl Stream Prometheus remote_write receiver (internal-only; no Traefik/DNS)
       cribl_prometheus_rw = 9201
       apt_cacher_ng       = 3142

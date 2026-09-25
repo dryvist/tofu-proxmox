@@ -121,6 +121,16 @@ resource "proxmox_virtual_environment_firewall_rules" "pipeline_container" {
     comment = "ZT: Cribl S2S intra-pipeline"
   }
 
+  rule {
+    enabled = local.zt_enabled
+    type    = "in"
+    action  = "ACCEPT"
+    proto   = "tcp"
+    dport   = tostring(local.svc_ports.cribl_s2s_metrics)
+    source  = join(",", compact([local.zt_src["pipeline"], local.zt_src["siem"]]))
+    comment = "ZT: Cribl S2S metrics intra-pipeline"
+  }
+
   dynamic "rule" {
     for_each = contains(keys(var.cribl_edge_container_ids), each.key) ? [1] : []
     content {
