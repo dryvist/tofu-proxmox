@@ -16,6 +16,8 @@ locals {
     # own guest, so the upstream defaults never collide.
     homepage_web = 3000
     glance_web   = 8080
+    # Server-room wall (homelab-wall): static pages + read-only data gateway.
+    wall_web = 8080
 
     # Status guest (Docker-in-LXC): Gatus catalog synthetics + Uptime Kuma
     # keystone status page. Distinct host ports so Traefik can route each;

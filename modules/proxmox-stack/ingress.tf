@@ -100,6 +100,7 @@ locals {
     # forwardAuth here is the only thing in front of it.
     homepage = { backend = "homepage", port = local.pipeline_constants.service_ports.homepage_web }
     glance   = { backend = "glance", port = local.pipeline_constants.service_ports.glance_web }
+    wall     = { backend = "wall", port = local.pipeline_constants.service_ports.wall_web }
     # Catalog synthetics (Gatus) + keystone status page (Uptime Kuma) on the
     # shared `status` guest. Browser-only, default Authelia gate.
     gatus         = { backend = "status", port = local.pipeline_constants.service_ports.gatus_web }

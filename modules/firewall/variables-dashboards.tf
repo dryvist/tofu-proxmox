@@ -18,6 +18,12 @@ variable "glance_container_ids" {
   default     = {}
 }
 
+variable "wall_container_ids" {
+  description = "Map of wall container names to their IDs (wall tag). Server-room wall display — static pages plus a read-only data gateway, inbound wall_web (8080) from internal; egress internal (data sources) plus HTTPS/HTTP for the pinned release download and apt."
+  type        = map(number)
+  default     = {}
+}
+
 variable "status_container_ids" {
   description = "Map of status-guest container names to their IDs (status tag). Hosts Gatus (gatus_web) and Uptime Kuma (uptime_kuma_web) as a Docker-in-LXC compose stack — inbound both ports from internal; egress internal plus HTTPS/HTTP so Gatus can probe public Authelia-gated URLs and pull images."
   type        = map(number)
