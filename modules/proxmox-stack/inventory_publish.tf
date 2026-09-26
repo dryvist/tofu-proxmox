@@ -41,9 +41,11 @@ resource "aws_s3_object" "ansible_inventory" {
         c.ip != null && c.ip != "" &&
         c.node != null && c.node != "" &&
         c.hostname != null && c.hostname != "" &&
-        c.vmid != null
+        c.vmid != null &&
+        c.fqdn != null && c.fqdn != "" &&
+        contains(["community.proxmox.proxmox_pct_remote", "ssh"], c.ansible_connection)
       ])
-      error_message = "One or more containers have an empty ip/node/hostname/vmid in the inventory — the Ansible connection target and DNS A-records derive from these. Inspect module.containers output and deployment.json."
+      error_message = "One or more containers have an empty ip/fqdn/node/hostname/vmid or an unsupported ansible_connection in the inventory — the Ansible connection target and DNS A-records derive from these. Inspect module.containers output and deployment.json."
     }
     precondition {
       # ansible-proxmox downloads this exact filename onto every node's local
