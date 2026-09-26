@@ -55,6 +55,15 @@ locals {
       source  = local.internal_src
       comment = "agentgateway stats server Prometheus /metrics (TCP ${local.svc_ports.agentgateway_metrics}) from internal"
     },
+    {
+      # Explicit, named rule for the Prometheus scraper, alongside the
+      # broader internal rule above. Inert (empty source) when
+      # var.prometheus_scraper_trusted_src is unset.
+      proto   = "tcp"
+      dport   = tostring(local.svc_ports.agentgateway_metrics)
+      source  = var.prometheus_scraper_trusted_src
+      comment = "agentgateway stats server Prometheus /metrics (TCP ${local.svc_ports.agentgateway_metrics}) from the Prometheus scraper"
+    },
   ]
 }
 
