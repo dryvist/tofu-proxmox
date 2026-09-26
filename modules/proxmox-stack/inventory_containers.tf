@@ -86,20 +86,44 @@ locals {
       # A VM's equivalent in the vms block is a PLAIN read, because
       # boot_disk.datastore_id carries a default and is therefore never null.
       datastore = coalesce(var.containers[k].root_disk.datastore_id, var.datastore_default)
-      # The shared model-weights mount path for THIS guest, if it declares one
-      # at var.llm_models_mount_path — null when it doesn't (e.g. a node with
-      # no fast/bulk pool, which serves models from its root disk by design).
-      # ONE base variable (var.llm_models_mount_path) feeds both this and
-      # main.tf's read_only derivation, so the ansible_inventory and the
-      # container's actual mount can never name two different paths. The
-      # llama_cpp role derives llama_cpp_models_dir from this instead of a
-      # second, independently-maintained default.
+      # The shared models mount's spec for THIS guest, if it declares one at
+      # var.llm_models_mount_path — null on every field when it doesn't (e.g.
+      # a node with no fast/bulk pool, which serves models from its root disk
+      # by design). All four fields read local.container_mount_points
+      # (locals-llm-fabric.tf), the SAME resolved list
+      # modules/proxmox-container is built from, so the ansible_inventory and
+      # the container's actual mount can never name a different path, storage,
+      # size, or read_only. The llama_cpp role derives llama_cpp_models_dir
+      # from models_mount_path instead of a second, independently-maintained
+      # default.
+      #
+      # `storage`/`size` are the desired ALLOCATION request (e.g. "fast",
+      # "120G") — NOT the live backing path, which only exists once Proxmox
+      # has actually allocated it and must still be resolved live via
+      # pvesh/pvesm (see llm_model_store_seed's own README), which is also
+      # what reads these fields to create a not-yet-live mount natively
+      # (`pct set`) — `mount_point` is in
+      # modules/proxmox-container/main.tf's ignore_changes (root@pam-only),
+      # so terraform never applies a mount_points change to an
+      # already-created container.
       #
       # one(): a container can have at most one mount at this exact path —
       # zero matches returns null, more than one is a desired-state error the
       # provider itself would already reject (duplicate mount path).
       models_mount_path = one([
-        for mp in var.containers[k].mount_points : mp.path
+        for mp in local.container_mount_points[k] : mp.path
+        if mp.path == var.llm_models_mount_path
+      ])
+      models_mount_storage = one([
+        for mp in local.container_mount_points[k] : mp.volume
+        if mp.path == var.llm_models_mount_path
+      ])
+      models_mount_size = one([
+        for mp in local.container_mount_points[k] : mp.size
+        if mp.path == var.llm_models_mount_path
+      ])
+      models_mount_read_only = one([
+        for mp in local.container_mount_points[k] : mp.read_only
         if mp.path == var.llm_models_mount_path
       ])
     }

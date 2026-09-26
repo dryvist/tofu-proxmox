@@ -2077,6 +2077,97 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 }
 
+# --- models_mount_storage / _size / _read_only (a consumer that must CREATE
+# the mount, not just read a path assumed to already exist — e.g.
+# ansible-proxmox's llm_model_store_seed attaching a newly-declared mount to
+# an existing guest, since mount_point is ignore_changes'd here and terraform
+# never applies it after first creation) -------------------------------------
+
+run "ansible_inventory_publishes_models_mount_allocation_spec" {
+  command = plan
+
+  variables {
+    containers = {
+      "llm-fast" = {
+        vm_id     = 610012
+        node_name = "proxmox-1"
+        hostname  = "llm-fast"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-fast"]
+        mount_points = [
+          { volume = "fast", size = "120G", path = "/var/lib/llm" },
+        ]
+      }
+      "llm-4080" = {
+        vm_id     = 610013
+        node_name = "proxmox-1"
+        hostname  = "llm-4080"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-fast"]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_storage == "fast"
+    error_message = "a declared models mount's storage pool must be published — a consumer that has to CREATE the mount (pct set) cannot invent a target storage pool"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_size == "120G"
+    error_message = "a declared models mount's size must be published — a consumer creating the mount cannot invent an allocation size"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_read_only == true
+    error_message = "an llm-fabric member's models mount with no explicit read_only must publish the SAME derived true main.tf itself would apply — not the raw (null) desired-state value"
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["llm-fast"].models_mount_read_only
+      == module.containers[0].container_mount_points["llm-fast"]["/var/lib/llm"]
+    )
+    error_message = "the published inventory's models_mount_read_only must equal the CREATED container's own mount_point.read_only (both read local.container_mount_points) — a second, separately-derived copy of either could drift from the other"
+  }
+
+  assert {
+    condition = alltrue([
+      output.ansible_inventory.containers["llm-4080"].models_mount_storage == null,
+      output.ansible_inventory.containers["llm-4080"].models_mount_size == null,
+      output.ansible_inventory.containers["llm-4080"].models_mount_read_only == null,
+    ])
+    error_message = "a container with no mount at var.llm_models_mount_path must publish null allocation fields too, matching models_mount_path"
+  }
+}
+
+run "ansible_inventory_models_mount_read_only_explicit_override_published" {
+  command = plan
+
+  variables {
+    containers = {
+      "llm-fast" = {
+        vm_id     = 610014
+        node_name = "proxmox-1"
+        hostname  = "llm-fast"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-fast"]
+        mount_points = [
+          { volume = "fast", size = "120G", path = "/var/lib/llm", read_only = false },
+        ]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_read_only == false
+    error_message = "an explicit read_only = false in the desired state must be published as-is, not overridden by the fabric derivation"
+  }
+}
+
 run "ansible_inventory_publishes_primary_node" {
   command = plan
 
