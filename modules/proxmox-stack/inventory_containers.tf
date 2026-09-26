@@ -102,6 +102,44 @@ locals {
         for mp in var.containers[k].mount_points : mp.path
         if mp.path == var.llm_models_mount_path
       ])
+      # The rest of the SAME declared mount's spec, for a consumer that must
+      # CREATE it (never just read a path that's assumed to already exist).
+      # `mount_point` is in modules/proxmox-container/main.tf's
+      # ignore_changes — the BPG API token cannot set it (root@pam-only), so
+      # terraform never applies a mount_points change after a container's
+      # first creation. Adding an entry to deployment.json for an EXISTING
+      # container therefore updates this published inventory (it reads the
+      # desired var, not the live resource) without ever touching the live
+      # guest — ansible-proxmox's llm_model_store_seed role is what reads
+      # these three fields to create the mount natively (`pct set`) before
+      # resolving and seeding it, the same way media_lxc_features already
+      # applies its own root@pam-only mount_point changes.
+      #
+      # `storage`/`size` are the desired ALLOCATION request (e.g. "fast",
+      # "120G") — NOT the live backing path, which only exists once Proxmox
+      # has actually allocated it and must still be resolved live via
+      # pvesh/pvesm (see llm_model_store_seed's own README). null on every
+      # field when this container declares no mount at
+      # var.llm_models_mount_path, matching models_mount_path above.
+      models_mount_storage = one([
+        for mp in var.containers[k].mount_points : mp.volume
+        if mp.path == var.llm_models_mount_path
+      ])
+      models_mount_size = one([
+        for mp in var.containers[k].mount_points : mp.size
+        if mp.path == var.llm_models_mount_path
+      ])
+      # Mirrors main.tf's OWN read_only derivation exactly (an explicit
+      # desired-state value wins; otherwise true for every
+      # local.llm_fast_container_ids member) — never the raw declared value
+      # alone, which is main.tf's un-derived input and would under-report a
+      # fabric member relying on the automatic default.
+      models_mount_read_only = one([
+        for mp in var.containers[k].mount_points : (
+          mp.read_only != null ? mp.read_only : contains(keys(local.llm_fast_container_ids), k)
+        )
+        if mp.path == var.llm_models_mount_path
+      ])
     }
   }
 }
