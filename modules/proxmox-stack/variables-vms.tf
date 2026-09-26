@@ -171,10 +171,38 @@ variable "vms" {
       datastore_id      = string
     }))
 
+    # Boot a vendor-built disk image instead of installing from cdrom_file_id
+    # or cloning clone_template — see the same field on the proxmox-vm module
+    # for the full contract (mutually exclusive with clone_template; the
+    # provider's decompression_algorithm does not support xz).
+    disk_image = optional(object({
+      url                     = string
+      file_name               = string
+      checksum                = optional(string)
+      checksum_algorithm      = optional(string)
+      decompression_algorithm = optional(string)
+    }))
+
     # Cloud-init configuration
     cloud_init_user_data = optional(string)
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.vms : v.disk_image == null || v.clone_template == null
+    ])
+    error_message = "vms.<name>.disk_image and clone_template are mutually exclusive — a VM either clones a template or imports a vendor disk image, never both."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.vms :
+      v.disk_image == null || v.disk_image.decompression_algorithm == null ||
+      contains(["gz", "lzo", "zst", "bz2"], v.disk_image.decompression_algorithm)
+    ])
+    error_message = "vms.<name>.disk_image.decompression_algorithm must be one of gz, lzo, zst, bz2 — the provider's download_file resource does not support xz."
+  }
 
   validation {
     condition = alltrue([

@@ -59,6 +59,7 @@ module "vms" {
       tpm_state      = v.tpm_state
       efi_disk       = v.efi_disk
       clone_template = v.clone_template
+      disk_image     = v.disk_image
       # DRY: IP/gateway derived from the VM's VLAN CIDR + vm_id (see locals.tf).
       ip_config = {
         ipv4_address = local.vm_ipv4[k]

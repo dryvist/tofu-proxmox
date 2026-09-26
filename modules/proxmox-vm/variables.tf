@@ -135,11 +135,47 @@ variable "vms" {
       datastore_id      = string
     }))
 
+    # Boot a vendor-built disk image (e.g. an appliance OVA/qcow2) instead of
+    # installing from cdrom_file_id or cloning clone_template. The module
+    # downloads `url` onto the VM's own node as a PVE `import`-type volume,
+    # then imports it as the boot disk (disk.import_from) at first creation.
+    #
+    # Mutually exclusive with clone_template — see the validation below.
+    #
+    # decompression_algorithm is limited by the provider's download_file
+    # resource to gz | lzo | zst | bz2. It does NOT support xz, so a
+    # .xz-compressed vendor image (e.g. Home Assistant OS's published qcow2.xz)
+    # must be decompressed or recompressed to one of those before the url is
+    # set here.
+    disk_image = optional(object({
+      url                     = string
+      file_name               = string
+      checksum                = optional(string)
+      checksum_algorithm      = optional(string)
+      decompression_algorithm = optional(string)
+    }))
+
   }))
   default = {}
 
   # VGA type is validated against allowed types
   # Allowed values: std, cirrus, vmware, qxl
+
+  validation {
+    condition = alltrue([
+      for k, v in var.vms : v.disk_image == null || v.clone_template == null
+    ])
+    error_message = "vms.<name>.disk_image and clone_template are mutually exclusive — a VM either clones a template or imports a vendor disk image, never both."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.vms :
+      v.disk_image == null || v.disk_image.decompression_algorithm == null ||
+      contains(["gz", "lzo", "zst", "bz2"], v.disk_image.decompression_algorithm)
+    ])
+    error_message = "vms.<name>.disk_image.decompression_algorithm must be one of gz, lzo, zst, bz2 — the provider's download_file resource does not support xz."
+  }
 }
 
 variable "domain" {
