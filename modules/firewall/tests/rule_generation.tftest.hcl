@@ -759,6 +759,39 @@ run "node_exporter_rule_inert_without_siem_cidr" {
   }
 }
 
+run "guest_node_exporter_rule_scoped_to_scraper" {
+  command = plan
+
+  variables {
+    internal_networks              = ["192.168.10.0/24", "192.168.20.0/24"]
+    prometheus_scraper_trusted_src = "192.168.20.30"
+  }
+
+  assert {
+    condition     = local.internal_access_rules[2].dport == tostring(var.pipeline_constants.service_ports.node_exporter)
+    error_message = "guest node_exporter rule must track service_ports.node_exporter, got '${local.internal_access_rules[2].dport}'"
+  }
+
+  assert {
+    condition     = local.internal_access_rules[2].source == var.prometheus_scraper_trusted_src
+    error_message = "guest node_exporter rule source must be the Prometheus scraper, got '${local.internal_access_rules[2].source}'"
+  }
+}
+
+run "guest_node_exporter_rule_omitted_without_scraper" {
+  command = plan
+
+  variables {
+    internal_networks              = ["192.168.0.0/16"]
+    prometheus_scraper_trusted_src = ""
+  }
+
+  assert {
+    condition     = length(local.internal_access_rules) == 2
+    error_message = "guest node_exporter rule must be omitted when no scraper address exists, got ${length(local.internal_access_rules)} rules"
+  }
+}
+
 # --- media per-guest web rules ---
 
 run "media_web_rules_track_constants" {

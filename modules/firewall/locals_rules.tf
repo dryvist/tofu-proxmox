@@ -34,10 +34,15 @@ locals {
   pipeline_syslog_ports = [for k, v in local.syslog_port_map : v.high]
   pipeline_syslog_range = join(",", [for v in sort(local.pipeline_syslog_ports) : tostring(v)])
 
-  internal_access_rules = [
+  # Every guest carries this group, so it also holds the guest node_exporter
+  # scrape. That rule is omitted (not emptied) when no scraper address exists:
+  # a sourceless rule on every guest would accept 9100 from anywhere.
+  internal_access_rules = concat([
     { proto = "tcp", dport = "22", source = local.internal_src, comment = "SSH from internal networks" },
     { proto = "icmp", dport = null, source = local.internal_src, comment = "ICMP from internal networks" },
-  ]
+    ], var.prometheus_scraper_trusted_src == "" ? [] : [
+    { proto = "tcp", dport = tostring(local.svc_ports.node_exporter), source = var.prometheus_scraper_trusted_src, comment = "node_exporter scrape from the Prometheus scraper" },
+  ])
 
   splunk_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.splunk_web), source = local.internal_src, comment = "Splunk Web UI from internal" },
