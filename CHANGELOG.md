@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.25.1](https://github.com/dryvist/tofu-proxmox/compare/v3.25.0...v3.25.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **ci:** pass upstream-released event_type to dispatch-consumers ([#1182](https://github.com/dryvist/tofu-proxmox/issues/1182)) ([8a78f38](https://github.com/dryvist/tofu-proxmox/commit/8a78f38a0806812ad2ed40e00205d22c8d43bf43))
+
 ## [3.25.0](https://github.com/dryvist/tofu-proxmox/compare/v3.24.0...v3.25.0) (2026-09-25)
 
 
