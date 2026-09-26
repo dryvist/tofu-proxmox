@@ -54,6 +54,8 @@ module "vms" {
 
   vms = {
     for k, v in var.vms : k => merge(v, {
+      # GENERATED unless declared — see locals-guest-naming.tf.
+      name           = local.guest_hostname_vms[k]
       node_name      = v.node_name
       cdrom_file_id  = v.cdrom_file_id
       tpm_state      = v.tpm_state
@@ -110,6 +112,8 @@ module "containers" {
 
   containers = {
     for k, v in var.containers : k => merge(v, {
+      # GENERATED unless declared — see locals-guest-naming.tf.
+      hostname  = local.guest_hostname_containers[k]
       node_name = v.node_name
       # Per-guest override, falling back to the estate's shared Debian template.
       # coalesce() would reject a null second argument, so use the try/default
