@@ -130,10 +130,12 @@ run "container_key_with_trailing_digit_strips_it_from_the_app" {
 run "container_key_already_shaped_app_dash_vmid_round_trips" {
   command = plan
 
-  # Mirrors what the openbao/node-service generators now emit as a map key
-  # (root main.tf / locals-node-services.tf): "<app>-<vm_id>" round-trips
-  # unchanged because stripping the trailing "-<vm_id>" and re-appending it
-  # is a no-op.
+  # A key already shaped "<app>-<vm_id>" round-trips unchanged, because
+  # stripping the trailing "-<vm_id>" and re-appending it is a no-op. (The
+  # openbao/node-service generators do NOT emit keys in this shape today —
+  # they keep the ordinal "<prefix><NN>" form for a live-guest-identity
+  # reason documented in docs/GUEST_NAMING.md — this only exercises the
+  # shared local's general behavior.)
   variables {
     containers = {
       "openbao-110010" = {

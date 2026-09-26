@@ -92,17 +92,15 @@ import {
 # means the generator expands to nothing and this for_each is empty -- a
 # no-op, exactly like adopt_containers/adopt_vms above when their list is
 # empty. Once the private deployment.json's per_node entry lands, the
-# generator produces exactly one "traefik-<vm_id>" key (see
-# modules/proxmox-stack/locals-guest-naming.tf: the per-node generator sets
-# no hostname of its own, so the guest naming local derives it from the map
-# key), and this adopts it in place instead of planning a
-# destroy-and-recreate of a running guest.
+# generator produces exactly one "traefik-<NN>" key (the "<prefix><NN>"
+# ordinal form — see locals-node-services.tf for why that scheme is not
+# re-landed onto <app>-<vm_id>), and this adopts it in place instead of
+# planning a destroy-and-recreate of a running guest.
 #
 # Resolved by PREFIX MATCH against local.node_service_containers, not a
-# hardcoded key: the generated key is "<name_prefix minus trailing '-'>-<vm_id>",
-# and vm_id is a private per-node allocation this repo never hardcodes (see
-# imports.tf's own rule above it). A literal string here would silently stop
-# matching the moment that vm_id — or the naming scheme generating it — changes.
+# hardcoded key: the suffix is a private per-node allocation this repo never
+# hardcodes (see imports.tf's own rule above it). A literal string here would
+# silently stop matching the moment that suffix changes.
 locals {
   traefik_adopt_keys = [
     for k in keys(local.node_service_containers) : k if startswith(k, "traefik-")
