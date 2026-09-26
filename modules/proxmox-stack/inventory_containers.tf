@@ -36,11 +36,26 @@ locals {
       # keeps the attribute DECLARED, and an undeclared attribute is silently
       # stripped from the desired state rather than erroring.
       ha_replication_target = var.containers[k].ha_replication_target
-      # Connection settings for proxmox_pct_remote (community.proxmox)
-      ansible_connection = "community.proxmox.proxmox_pct_remote"
+      # Connection method: "community.proxmox.proxmox_pct_remote" (default, via
+      # the node's pct CLI) or "ssh" once this specific container's sshd is
+      # verified CA-trust-ready. See variables-containers.tf. Every other host
+      # stays on pct_remote until explicitly flipped — this is a per-container,
+      # not per-fleet, switch.
+      ansible_connection = var.containers[k].ansible_connection
       ansible_pct_vmid   = v.id
-      tags               = v.tags
-      pool_id            = v.pool_id
+      # The guest's stable DNS name, published unconditionally (unlike `ip`,
+      # which is the raw address for a static guest). This is what a direct
+      # OpenSSH connection targets once ansible_connection = "ssh": the SSH-CA
+      # cert is issued for the guest's hostname, not whichever address it
+      # happens to hold, and a name survives a DHCP lease change that an IP
+      # would not.
+      fqdn = (
+        local.guest_domain[var.containers[k].vlan] != ""
+        ? "${var.containers[k].hostname}.${local.guest_domain[var.containers[k].vlan]}"
+        : var.containers[k].hostname
+      )
+      tags    = v.tags
+      pool_id = v.pool_id
       # Declared sizing, published so Nautobot can be the SSoT for it.
       # VirtualMachine.vcpus/memory/disk were null for every guest because
       # nothing carried these downstream — the desired state has them, the

@@ -121,6 +121,14 @@ variable "containers" {
     # See docs/CONTAINER_SCHEMA.md.
     ha_replication_target = optional(string)
 
+    # Ansible connection method published in ansible_inventory
+    # (inventory_publish.tf). Every container defaults to
+    # "community.proxmox.proxmox_pct_remote" (the current transport, via the
+    # node's pct CLI) — this is a no-op field until an operator flips a
+    # specific, sshd-ready container to "ssh" once its SSH-CA trust is
+    # verified. Mirrors var.vms[k].ansible_connection (variables-vms.tf).
+    ansible_connection = optional(string, "community.proxmox.proxmox_pct_remote")
+
     # LXC features (set nesting=true for Docker-in-LXC on unprivileged containers;
     # privileged containers run Docker without features — requires root@pam to set any flag)
     features = optional(object({

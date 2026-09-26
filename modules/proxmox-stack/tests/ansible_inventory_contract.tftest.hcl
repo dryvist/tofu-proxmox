@@ -424,6 +424,100 @@ run "ansible_inventory_container_node_override_propagated" {
   }
 }
 
+# --- per-container ansible_connection + fqdn (LXC direct-SSH transport switch) ---
+#
+# Every container defaults to pct_remote (today's transport) so this field is a
+# no-op until an operator explicitly flips a specific, sshd-ready container to
+# "ssh". fqdn is published unconditionally, unlike `ip`, which is a static
+# guest's raw address — the ssh connection targets the stable name, not
+# whichever address a static guest happens to hold.
+
+run "ansible_inventory_container_ansible_connection_default_and_fqdn_fallback" {
+  command = plan
+
+  variables {
+    containers = {
+      "pct-default" = {
+        vm_id     = 220
+        node_name = "proxmox-1"
+        hostname  = "pct-default"
+        vlan      = "apps"
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["pct-default"].ansible_connection == "community.proxmox.proxmox_pct_remote"
+    error_message = "a container that does not set ansible_connection must default to community.proxmox.proxmox_pct_remote — the transport switch is a per-container opt-in, never a fleet-wide default change"
+  }
+
+  # var.domain defaults to "" in this file's fixture — fqdn must fall back to
+  # the bare hostname rather than publish a trailing-dot or empty-suffix name.
+  assert {
+    condition     = output.ansible_inventory.containers["pct-default"].fqdn == "pct-default"
+    error_message = "fqdn must fall back to the bare hostname when the guest's VLAN has no domain configured"
+  }
+}
+
+run "ansible_inventory_container_ansible_connection_ssh_and_fqdn_with_domain" {
+  command = plan
+
+  variables {
+    domain = "example.internal"
+    containers = {
+      "ssh-ready" = {
+        vm_id              = 221
+        node_name          = "proxmox-1"
+        hostname           = "ssh-ready"
+        vlan               = "apps"
+        ansible_connection = "ssh"
+      }
+      "pct-sibling" = {
+        vm_id     = 222
+        node_name = "proxmox-1"
+        hostname  = "pct-sibling"
+        vlan      = "apps"
+      }
+    }
+  }
+
+  # Flipping one container must not flip its sibling — the switch is per-host.
+  assert {
+    condition     = output.ansible_inventory.containers["ssh-ready"].ansible_connection == "ssh"
+    error_message = "ansible_connection = \"ssh\" on a container must propagate to ansible_inventory.containers[*].ansible_connection"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["pct-sibling"].ansible_connection == "community.proxmox.proxmox_pct_remote"
+    error_message = "flipping one container to ssh must not change an unrelated container's default transport"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["ssh-ready"].fqdn == "ssh-ready.example.internal"
+    error_message = "fqdn must be \"<hostname>.<domain>\" once a domain is configured for the guest's VLAN"
+  }
+}
+
+run "ansible_inventory_container_invalid_ansible_connection_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "bad-connection" = {
+        vm_id              = 223
+        node_name          = "proxmox-1"
+        hostname           = "bad-connection"
+        vlan               = "apps"
+        ansible_connection = "winrm"
+      }
+    }
+  }
+
+  expect_failures = [
+    aws_s3_object.ansible_inventory,
+  ]
+}
+
 # --- ingress: Traefik route table contract ---
 #
 # `ansible_inventory.ingress` is the SINGLE source the ansible-proxmox-apps
