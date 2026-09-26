@@ -3,6 +3,14 @@
 # with every new service (each adds a *_container_ids pass), so it lives here
 # rather than crowding main.tf (same split rationale as the locals-*.tf files).
 
+# The Prometheus scraper's own address — derived once from the inventory
+# (the prometheus-tagged container), never a literal, and reused by every
+# service that names it as a trusted source (LLM router today; Hindsight
+# metrics + agentgateway metrics below) instead of each re-deriving it.
+locals {
+  prometheus_scraper_src = try(local.container_address["prometheus"], "")
+}
+
 # LLM router — port 4000 accepts only the ingress Traefik instances (the
 # routers' one caller through the estate-wide FQDN) and the Prometheus
 # scraper, never every internal network. Both addresses are derived from the
@@ -10,7 +18,7 @@
 locals {
   llm_router_trusted_src = join(",", compact(concat(
     local.ingress_hosts,
-    [try(local.container_address["prometheus"], "")]
+    [local.prometheus_scraper_src]
   )))
 }
 
@@ -47,6 +55,11 @@ module "firewall" {
 
   # Hindsight agent-memory containers (hindsight tag) — API 8888 / CP UI 9999
   hindsight_container_ids = local.hindsight_container_ids
+
+  # Shared trusted source for every service metrics endpoint the Prometheus
+  # scraper reads directly (Hindsight /metrics on the API port, agentgateway's
+  # stats server) — same derivation llm_router_trusted_src uses above.
+  prometheus_scraper_trusted_src = local.prometheus_scraper_src
 
   # RAG engine containers: LlamaIndex (rag tag)
   rag_container_ids = local.rag_container_ids

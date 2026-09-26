@@ -424,6 +424,100 @@ run "ansible_inventory_container_node_override_propagated" {
   }
 }
 
+# --- per-container ansible_connection + fqdn (LXC direct-SSH transport switch) ---
+#
+# Every container defaults to pct_remote (today's transport) so this field is a
+# no-op until an operator explicitly flips a specific, sshd-ready container to
+# "ssh". fqdn is published unconditionally, unlike `ip`, which is a static
+# guest's raw address — the ssh connection targets the stable name, not
+# whichever address a static guest happens to hold.
+
+run "ansible_inventory_container_ansible_connection_default_and_fqdn_fallback" {
+  command = plan
+
+  variables {
+    containers = {
+      "pct-default" = {
+        vm_id     = 220
+        node_name = "proxmox-1"
+        hostname  = "pct-default"
+        vlan      = "apps"
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["pct-default"].ansible_connection == "community.proxmox.proxmox_pct_remote"
+    error_message = "a container that does not set ansible_connection must default to community.proxmox.proxmox_pct_remote — the transport switch is a per-container opt-in, never a fleet-wide default change"
+  }
+
+  # var.domain defaults to "" in this file's fixture — fqdn must fall back to
+  # the bare hostname rather than publish a trailing-dot or empty-suffix name.
+  assert {
+    condition     = output.ansible_inventory.containers["pct-default"].fqdn == "pct-default"
+    error_message = "fqdn must fall back to the bare hostname when the guest's VLAN has no domain configured"
+  }
+}
+
+run "ansible_inventory_container_ansible_connection_ssh_and_fqdn_with_domain" {
+  command = plan
+
+  variables {
+    domain = "example.internal"
+    containers = {
+      "ssh-ready" = {
+        vm_id              = 221
+        node_name          = "proxmox-1"
+        hostname           = "ssh-ready"
+        vlan               = "apps"
+        ansible_connection = "ssh"
+      }
+      "pct-sibling" = {
+        vm_id     = 222
+        node_name = "proxmox-1"
+        hostname  = "pct-sibling"
+        vlan      = "apps"
+      }
+    }
+  }
+
+  # Flipping one container must not flip its sibling — the switch is per-host.
+  assert {
+    condition     = output.ansible_inventory.containers["ssh-ready"].ansible_connection == "ssh"
+    error_message = "ansible_connection = \"ssh\" on a container must propagate to ansible_inventory.containers[*].ansible_connection"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["pct-sibling"].ansible_connection == "community.proxmox.proxmox_pct_remote"
+    error_message = "flipping one container to ssh must not change an unrelated container's default transport"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["ssh-ready"].fqdn == "ssh-ready.example.internal"
+    error_message = "fqdn must be \"<hostname>.<domain>\" once a domain is configured for the guest's VLAN"
+  }
+}
+
+run "ansible_inventory_container_invalid_ansible_connection_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "bad-connection" = {
+        vm_id              = 223
+        node_name          = "proxmox-1"
+        hostname           = "bad-connection"
+        vlan               = "apps"
+        ansible_connection = "winrm"
+      }
+    }
+  }
+
+  expect_failures = [
+    aws_s3_object.ansible_inventory,
+  ]
+}
+
 # --- ingress: Traefik route table contract ---
 #
 # `ansible_inventory.ingress` is the SINGLE source the ansible-proxmox-apps
@@ -1980,6 +2074,97 @@ run "ansible_inventory_publishes_models_mount_path" {
   assert {
     condition     = output.ansible_inventory.containers["llm-4080"].models_mount_path == null
     error_message = "a container with no mount at var.llm_models_mount_path must publish models_mount_path as null, so the consumer can tell 'no shared mount' from 'mount not yet known' — never a guessed path"
+  }
+}
+
+# --- models_mount_storage / _size / _read_only (a consumer that must CREATE
+# the mount, not just read a path assumed to already exist — e.g.
+# ansible-proxmox's llm_model_store_seed attaching a newly-declared mount to
+# an existing guest, since mount_point is ignore_changes'd here and terraform
+# never applies it after first creation) -------------------------------------
+
+run "ansible_inventory_publishes_models_mount_allocation_spec" {
+  command = plan
+
+  variables {
+    containers = {
+      "llm-fast" = {
+        vm_id     = 610012
+        node_name = "proxmox-1"
+        hostname  = "llm-fast"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-fast"]
+        mount_points = [
+          { volume = "fast", size = "120G", path = "/var/lib/llm" },
+        ]
+      }
+      "llm-4080" = {
+        vm_id     = 610013
+        node_name = "proxmox-1"
+        hostname  = "llm-4080"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-fast"]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_storage == "fast"
+    error_message = "a declared models mount's storage pool must be published — a consumer that has to CREATE the mount (pct set) cannot invent a target storage pool"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_size == "120G"
+    error_message = "a declared models mount's size must be published — a consumer creating the mount cannot invent an allocation size"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_read_only == true
+    error_message = "an llm-fabric member's models mount with no explicit read_only must publish the SAME derived true main.tf itself would apply — not the raw (null) desired-state value"
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["llm-fast"].models_mount_read_only
+      == module.containers[0].container_mount_points["llm-fast"]["/var/lib/llm"]
+    )
+    error_message = "the published inventory's models_mount_read_only must equal the CREATED container's own mount_point.read_only (both read local.container_mount_points) — a second, separately-derived copy of either could drift from the other"
+  }
+
+  assert {
+    condition = alltrue([
+      output.ansible_inventory.containers["llm-4080"].models_mount_storage == null,
+      output.ansible_inventory.containers["llm-4080"].models_mount_size == null,
+      output.ansible_inventory.containers["llm-4080"].models_mount_read_only == null,
+    ])
+    error_message = "a container with no mount at var.llm_models_mount_path must publish null allocation fields too, matching models_mount_path"
+  }
+}
+
+run "ansible_inventory_models_mount_read_only_explicit_override_published" {
+  command = plan
+
+  variables {
+    containers = {
+      "llm-fast" = {
+        vm_id     = 610014
+        node_name = "proxmox-1"
+        hostname  = "llm-fast"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-fast"]
+        mount_points = [
+          { volume = "fast", size = "120G", path = "/var/lib/llm", read_only = false },
+        ]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_mount_read_only == false
+    error_message = "an explicit read_only = false in the desired state must be published as-is, not overridden by the fabric derivation"
   }
 }
 

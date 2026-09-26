@@ -3,7 +3,8 @@
 locals {
   pipeline_constants = {
     # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
-    service_ports = merge(local.dashboard_ports, local.herdr_ports, {
+    # cribl_metrics_ports: see constants-cribl-metrics.tf (same gate).
+    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, {
       haproxy_stats     = 8404
       splunk_web        = 8000
       splunk_hec        = 8088
@@ -11,11 +12,7 @@ locals {
       splunk_forwarding = 9997
       cribl_edge_api    = 9420
       cribl_stream_api  = 9000
-      # Cribl-to-Cribl (S2S/TCP-JSON) ingestion: remote Edge nodes -> HAProxy -> Stream
-      cribl_s2s = 10300
-      # Cribl Stream Prometheus remote_write receiver (internal-only; no Traefik/DNS)
-      cribl_prometheus_rw = 9201
-      apt_cacher_ng       = 3142
+      apt_cacher_ng     = 3142
       # Egress forward-proxy (Squid) for the confined AI agent plane. An
       # `ai-proxied` guest has NO 443-to-any of its own: its only WAN path is
       # CONNECT through this port, where the domain allowlist is enforced.
