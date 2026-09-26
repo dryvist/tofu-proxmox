@@ -16,6 +16,11 @@ locals {
   hindsight_services_rules = [
     { proto = "tcp", dport = tostring(local.memory_ports.hindsight_api), source = local.internal_src, comment = "Hindsight API + MCP from internal" },
     { proto = "tcp", dport = tostring(local.memory_ports.hindsight_cp), source = local.internal_src, comment = "Hindsight Control Plane UI from internal" },
+    # Hindsight serves /metrics unauthenticated on the same API port (no
+    # separate metrics listener upstream) — an explicit, named rule for the
+    # Prometheus scraper, alongside the broader internal rule above. Inert
+    # (empty source) when var.prometheus_scraper_trusted_src is unset.
+    { proto = "tcp", dport = tostring(local.memory_ports.hindsight_api), source = var.prometheus_scraper_trusted_src, comment = "Hindsight /metrics (API port) from the Prometheus scraper" },
   ]
 }
 
