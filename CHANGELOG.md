@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.26.0](https://github.com/dryvist/tofu-proxmox/compare/v3.25.1...v3.26.0) (2026-09-26)
+
+
+### Features
+
+* **firewall:** add a dedicated Cribl S2S port for Edge metric events ([#1183](https://github.com/dryvist/tofu-proxmox/issues/1183)) ([80ef478](https://github.com/dryvist/tofu-proxmox/commit/80ef4784df38d6bd1a04a42fdb3eaa2b7ae65458))
+* **firewall:** allow the Prometheus scraper to reach Hindsight and agentgateway metrics ([#1189](https://github.com/dryvist/tofu-proxmox/issues/1189)) ([8adfb9a](https://github.com/dryvist/tofu-proxmox/commit/8adfb9a65ceda621f7960b893e426b0c7f0547fb))
+* **inventory:** add per-container ansible_connection and fqdn fields ([#1188](https://github.com/dryvist/tofu-proxmox/issues/1188)) ([7c77b25](https://github.com/dryvist/tofu-proxmox/commit/7c77b25f4e00500b5a819a613397f63c913ae5ed))
+* **proxmox-stack:** publish the models mount's allocation spec ([#1191](https://github.com/dryvist/tofu-proxmox/issues/1191)) ([ac30ffa](https://github.com/dryvist/tofu-proxmox/commit/ac30ffa0c0d04e1448427b01c2c98aecd0e0dd4c))
+
+
+### Bug Fixes
+
+* **firewall:** allow the Prometheus scraper to reach guest node_exporter ([#1190](https://github.com/dryvist/tofu-proxmox/issues/1190)) ([48fb303](https://github.com/dryvist/tofu-proxmox/commit/48fb303ed9f84d4ae4a050dfe318d44007fb96cc))
+
 ## [3.25.1](https://github.com/dryvist/tofu-proxmox/compare/v3.25.0...v3.25.1) (2026-09-26)
 
 
