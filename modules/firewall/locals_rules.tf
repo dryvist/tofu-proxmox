@@ -57,14 +57,11 @@ locals {
     { proto = "tcp", dport = local.pipeline_syslog_range, source = local.internal_src, comment = "Pipeline syslog backends TCP (${local.pipeline_syslog_range}) from internal" },
   ]
 
-  pipeline_services_rules = [
-    { proto = "tcp", dport = tostring(local.svc_ports.haproxy_stats), source = local.internal_src, comment = "HAProxy stats from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_edge_api), source = local.internal_src, comment = "Cribl Edge API from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.splunk_hec), source = local.internal_src, comment = "Cribl Edge HEC input (netmon Telegraf push, reuses the splunk_hec port) from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s), source = local.internal_src, comment = "Cribl S2S frontend (remote Edge -> HAProxy -> Stream) from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s_metrics), source = local.internal_src, comment = "Cribl S2S metrics frontend (remote Edge -> HAProxy -> Stream) from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_pve_metrics), source = local.internal_src, comment = "Cribl PVE metrics frontend (Proxmox -> HAProxy -> Stream) from internal" },
-  ]
+  # pipeline_services_rules is defined in cribl_rules.tf (alongside the other
+  # Cribl pipeline rule lists) to keep this file under the shared
+  # _file-size workflow's 12 KB limit. locals merge across files in a
+  # module, so the rule list referenced by the security groups resolves the
+  # same.
 
   netflow_rules = [
     { proto = "udp", dport = tostring(local.netflow_ports.unifi), source = local.internal_src, comment = "NetFlow/IPFIX UDP from internal" },
@@ -102,13 +99,8 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.apt_cacher_ng), source = local.internal_src, comment = "apt-cacher-ng from internal" },
   ]
 
-  cribl_stream_services_rules = [
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_stream_api), source = local.internal_src, comment = "Cribl Stream API from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s), source = local.internal_src, comment = "Cribl S2S input (HAProxy -> Stream) from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s_metrics), source = local.internal_src, comment = "Cribl S2S metrics input (HAProxy -> Stream) from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_pve_metrics), source = local.internal_src, comment = "Cribl PVE metrics input (HAProxy -> Stream) from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.cribl_prometheus_rw), source = local.internal_src, comment = "Prometheus remote_write receiver from internal" },
-  ]
+  # cribl_stream_services_rules is defined in cribl_rules.tf — same 12 KB
+  # file-size split as pipeline_services_rules above.
 
   s3_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.object_storage_s3), source = local.internal_src, comment = "Object storage (RustFS) S3 API from internal" },
