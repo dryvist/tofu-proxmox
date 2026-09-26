@@ -28,4 +28,18 @@ locals {
     for k, v in var.containers : k => v.vm_id
     if contains(try(v.tags, []), "llm-redis")
   }
+
+  # Every container's mount_points with read_only resolved once. Fed to
+  # modules/proxmox-container (main.tf) to create the mounts and to
+  # inventory_containers.tf to publish the shared models mount's spec, so the
+  # two can never derive read_only differently.
+  container_mount_points = {
+    for k, v in var.containers : k => [
+      for mp in v.mount_points : merge(mp, {
+        read_only = mp.read_only != null ? mp.read_only : (
+          contains(keys(local.llm_fast_container_ids), k) && mp.path == var.llm_models_mount_path
+        )
+      })
+    ]
+  }
 }

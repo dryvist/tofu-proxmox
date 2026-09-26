@@ -2126,6 +2126,14 @@ run "ansible_inventory_publishes_models_mount_allocation_spec" {
   }
 
   assert {
+    condition = (
+      output.ansible_inventory.containers["llm-fast"].models_mount_read_only
+      == module.containers[0].container_mount_points["llm-fast"]["/var/lib/llm"]
+    )
+    error_message = "the published inventory's models_mount_read_only must equal the CREATED container's own mount_point.read_only (both read local.container_mount_points) — a second, separately-derived copy of either could drift from the other"
+  }
+
+  assert {
     condition = alltrue([
       output.ansible_inventory.containers["llm-4080"].models_mount_storage == null,
       output.ansible_inventory.containers["llm-4080"].models_mount_size == null,
