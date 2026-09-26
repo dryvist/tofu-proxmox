@@ -14,6 +14,9 @@ variables {
   ai_network         = "192.168.50.0/24"
   # Ingress Traefik instances + the Prometheus scraper, not internal_networks.
   llm_router_trusted_src = "192.168.10.7,192.168.10.8,192.168.20.30"
+  # The Prometheus scraper's own address, reused by Hindsight/agentgateway
+  # metrics rules below.
+  prometheus_scraper_trusted_src = "192.168.20.30"
   pipeline_constants = {
     service_ports = {
       haproxy_stats     = 8404
@@ -1016,6 +1019,77 @@ run "grafana_rules_track_constants_and_internal_scope" {
   assert {
     condition     = alltrue([for r in local.grafana_services_rules : r.source == local.internal_src])
     error_message = "every grafana service rule must be scoped to the internal networks"
+  }
+}
+
+# --- hindsight + agentgateway metrics scrape rules ---
+
+run "hindsight_metrics_rule_tracks_constant_and_scraper_src" {
+  command = plan
+
+  variables {
+    internal_networks              = ["192.168.10.0/24", "192.168.20.0/24"]
+    prometheus_scraper_trusted_src = "192.168.20.30"
+  }
+
+  # API/MCP + CP UI (internal) + the dedicated metrics-from-scraper rule.
+  assert {
+    condition     = length(local.hindsight_services_rules) == 3
+    error_message = "hindsight_services_rules must be exactly 3 (API+MCP, CP UI, metrics-from-scraper), got ${length(local.hindsight_services_rules)}"
+  }
+
+  assert {
+    condition     = local.hindsight_services_rules[2].dport == tostring(var.pipeline_constants.memory_ports.hindsight_api)
+    error_message = "hindsight metrics rule must track memory_ports.hindsight_api, got '${local.hindsight_services_rules[2].dport}'"
+  }
+
+  assert {
+    condition     = local.hindsight_services_rules[2].source == var.prometheus_scraper_trusted_src
+    error_message = "hindsight metrics rule source must be var.prometheus_scraper_trusted_src, got '${local.hindsight_services_rules[2].source}'"
+  }
+
+  assert {
+    condition     = local.hindsight_services_rules[2].source != join(",", var.internal_networks)
+    error_message = "hindsight metrics rule must be scoped to the scraper, not every internal network"
+  }
+}
+
+run "hindsight_metrics_rule_inert_without_scraper" {
+  command = plan
+
+  variables {
+    internal_networks              = ["192.168.0.0/16"]
+    prometheus_scraper_trusted_src = ""
+  }
+
+  assert {
+    condition     = local.hindsight_services_rules[2].source == ""
+    error_message = "hindsight metrics rule must be inert (empty source) when no scraper address is available"
+  }
+}
+
+run "agentgateway_metrics_rule_tracks_constant_and_scraper_src" {
+  command = plan
+
+  variables {
+    internal_networks              = ["192.168.10.0/24", "192.168.20.0/24"]
+    prometheus_scraper_trusted_src = "192.168.20.30"
+  }
+
+  # proxy + admin + metrics(internal) + the dedicated metrics-from-scraper rule.
+  assert {
+    condition     = length(local.agentgateway_services_rules) == 4
+    error_message = "agentgateway_services_rules must be exactly 4 (proxy, admin, metrics, metrics-from-scraper), got ${length(local.agentgateway_services_rules)}"
+  }
+
+  assert {
+    condition     = local.agentgateway_services_rules[3].dport == tostring(var.pipeline_constants.service_ports.agentgateway_metrics)
+    error_message = "agentgateway metrics rule must track service_ports.agentgateway_metrics, got '${local.agentgateway_services_rules[3].dport}'"
+  }
+
+  assert {
+    condition     = local.agentgateway_services_rules[3].source == var.prometheus_scraper_trusted_src
+    error_message = "agentgateway metrics rule source must be var.prometheus_scraper_trusted_src, got '${local.agentgateway_services_rules[3].source}'"
   }
 }
 
