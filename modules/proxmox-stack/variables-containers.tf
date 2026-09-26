@@ -3,8 +3,11 @@
 variable "containers" {
   description = "Map of containers to create"
   type = map(object({
-    vm_id       = number
-    hostname    = string
+    vm_id = number
+    # Omit to get the generated name (<app>-<vm_id>, local.guest_hostname_containers
+    # in locals-guest-naming.tf); a declared value here is kept as-is until its own
+    # rename wave. See docs/GUEST_NAMING.md.
+    hostname    = optional(string)
     description = optional(string)
 
     # One-line board subtitle. Not `description`: that carries placement

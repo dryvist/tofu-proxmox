@@ -80,17 +80,22 @@ locals {
       for suffix in suffixes : {
         node_name = node_name
         suffix    = suffix
+        vm_id     = try(local.openbao_cluster.vm_id_base, 110000) + suffix
       }
     ]
   ]) : []
+  # Map key is "<app>-<vm_id>" — the same string modules/proxmox-stack's
+  # guest_hostname_containers would generate from it (no trailing "-<digits>"
+  # left after stripping "-<vm_id>" from a key that already ends in it), so
+  # hostname is left unset here and generated once, downstream. This is what
+  # replaced the old "<prefix><NN>" ordinal suffix.
   openbao_generated_containers = local.openbao_cluster_enabled ? {
     for peer in local.openbao_cluster_peers :
-    format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix) => merge(
+    "${trimsuffix(try(local.openbao_cluster.name_prefix, "openbao-"), "-")}-${peer.vm_id}" => merge(
       try(local.openbao_cluster.container_defaults, {}),
       {
-        vm_id     = try(local.openbao_cluster.vm_id_base, 110000) + peer.suffix
+        vm_id     = peer.vm_id
         vlan      = local.openbao_cluster.vlan
-        hostname  = format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix)
         node_name = peer.node_name
         # Static and derived (cidrhost over the cluster's own VLAN + peer
         # suffix), not dhcp + a reserved octet — see docs/DR_HA.md W6 for why.

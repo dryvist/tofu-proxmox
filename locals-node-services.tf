@@ -23,11 +23,11 @@ locals {
   # otherwise eligible — vm_id/IP are reserved-octet allocations, never
   # derived by formula, so an unlisted node has no safe address to assign.
   node_service_templates = try(local.deployment.node_services, {})
-  # Naming law: every generated name ends in a two-digit <node-id><counter>
-  # suffix (node 3 instance 0 -> "-30"), never a single digit -- names are
-  # deliberately non-transferable (rebuild-from-scratch doctrine), same as
-  # the openbao_generated_containers suffix above. `suffix` is numeric in
-  # per_node and zero-padded here (%02d), matching that pattern exactly.
+  # Naming law: the map key (and, once generated downstream, the hostname) is
+  # "<app>-<vm_id>" — modules/proxmox-stack's guest_hostname_containers strips
+  # any trailing "-<digits>" from the key and re-appends vm_id, so a key that
+  # already ends in its own vm_id round-trips unchanged. hostname is left
+  # unset here on purpose; see locals-guest-naming.tf in that module.
   # Whether each generated instance is DNS-first (DHCP) or takes a static
   # address, resolved ONCE per service/node. The addressing block below reads
   # this twice — for `dhcp` and for `ip_config` — and those two must agree by
@@ -44,12 +44,11 @@ locals {
   node_service_containers = merge([
     for service_name, tmpl in local.node_service_templates : {
       for node_name, node in local.deployment.nodes :
-      format("%s%02d", try(tmpl.name_prefix, "${service_name}-"), tmpl.per_node[node_name].suffix) => merge(
+      "${trimsuffix(try(tmpl.name_prefix, "${service_name}-"), "-")}-${tmpl.per_node[node_name].vm_id}" => merge(
         try(tmpl.container_defaults, {}),
         {
           vm_id     = tmpl.per_node[node_name].vm_id
           vlan      = tmpl.vlan
-          hostname  = format("%s%02d", try(tmpl.name_prefix, "${service_name}-"), tmpl.per_node[node_name].suffix)
           node_name = node_name
         },
         # Addressing: full DHCP is the standard (static assignment, when wanted,
