@@ -41,7 +41,7 @@ locals {
       # verified CA-trust-ready. See variables-containers.tf. Every other host
       # stays on pct_remote until explicitly flipped — this is a per-container,
       # not per-fleet, switch.
-      ansible_connection = try(var.containers[k].ansible_connection, "community.proxmox.proxmox_pct_remote")
+      ansible_connection = var.containers[k].ansible_connection
       ansible_pct_vmid   = v.id
       # The guest's stable DNS name, published unconditionally (unlike `ip`,
       # which is the raw address for a static guest). This is what a direct
