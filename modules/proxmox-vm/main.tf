@@ -7,6 +7,27 @@ terraform {
   }
 }
 
+# Downloads each VM's disk_image (see variables.tf) onto its own node as a
+# PVE `import`-type volume, so it can be attached below as disk.import_from.
+# Mirrors the existing debian_cloudimg pattern in
+# modules/proxmox-stack/base_templates.tf: content_type = "import", and
+# import_from built from datastore_id + file_name rather than the download
+# resource's `id`, which is not in the "datastore:content/file" form the
+# disk block expects.
+resource "proxmox_download_file" "disk_image" {
+  for_each = { for k, v in var.vms : k => v if v.disk_image != null }
+
+  content_type = "import"
+  datastore_id = coalesce(each.value.boot_disk.datastore_id, var.default_datastore)
+  node_name    = each.value.node_name
+  file_name    = each.value.disk_image.file_name
+  url          = each.value.disk_image.url
+
+  checksum                = each.value.disk_image.checksum
+  checksum_algorithm      = each.value.disk_image.checksum_algorithm
+  decompression_algorithm = each.value.disk_image.decompression_algorithm
+}
+
 resource "proxmox_virtual_environment_vm" "vms" {
   for_each = var.vms
 
@@ -91,13 +112,19 @@ resource "proxmox_virtual_environment_vm" "vms" {
       each.value.boot_disk.datastore_id,
       var.default_datastore
     )
-    interface   = coalesce(each.value.boot_disk.interface, "scsi0")
-    size        = coalesce(each.value.boot_disk.size, 32)
+    interface = coalesce(each.value.boot_disk.interface, "scsi0")
+    # An imported disk image carries its own size; declaring one here would
+    # ask the provider to resize it on top of the import.
+    size        = each.value.disk_image == null ? coalesce(each.value.boot_disk.size, 32) : null
     file_format = coalesce(each.value.boot_disk.file_format, "raw")
     iothread    = coalesce(each.value.boot_disk.iothread, true)
     ssd         = coalesce(each.value.boot_disk.ssd, false)
     discard     = coalesce(each.value.boot_disk.discard, "ignore")
     replicate   = coalesce(each.value.boot_disk.replicate, true)
+    # Referencing the download resource's attribute (not a literal string)
+    # gives Terraform an implicit dependency edge, same as
+    # base_templates.tf's debian_cloudimg import.
+    import_from = each.value.disk_image != null ? "${proxmox_download_file.disk_image[each.key].datastore_id}:import/${proxmox_download_file.disk_image[each.key].file_name}" : null
   }
 
   dynamic "disk" {
@@ -265,6 +292,13 @@ resource "proxmox_virtual_environment_vm" "vms" {
       # destroy+recreate a healthy VM. The clone source only matters at first
       # creation, so ignore it: imports and template changes never rebuild a VM.
       clone,
+      # The provider never re-imports an existing disk on update (it skips
+      # import_from past creation — see bpg/terraform-provider-proxmox#2385),
+      # but it does report the imported source back on every read, which
+      # would otherwise plan a diff the moment disk_image.url changes (e.g. a
+      # new vendor image version) — same failure base_templates.tf's
+      # debian_cloudimg template already guards against.
+      disk[0].import_from,
     ]
 
     # A linked clone is copy-on-write off the template's own disk, so the two
