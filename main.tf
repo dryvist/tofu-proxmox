@@ -80,15 +80,26 @@ locals {
       for suffix in suffixes : {
         node_name = node_name
         suffix    = suffix
+        vm_id     = try(local.openbao_cluster.vm_id_base, 110000) + suffix
       }
     ]
   ]) : []
+  # NOT re-landed onto <app>-<vm_id>: the map key IS this container's resource
+  # address (module.containers[0]...containers[<key>]), and the live cluster
+  # already has voters running under the "<prefix><NN>" ordinal key (verified
+  # via a credentialed plan against the live workspace: openbao-01, -02, -10,
+  # -20, -21, -31, -42 all exist in state today). This generator has no
+  # per-peer "declared hostname" field a human could set to opt an existing
+  # peer out — the whole object is synthesized — so switching this key/hostname
+  # to <app>-<vm_id> is not a rename, it is a destroy-and-recreate of every
+  # live Raft voter. See docs/GUEST_NAMING.md for the conflict this is and
+  # the follow-up needed to close it properly.
   openbao_generated_containers = local.openbao_cluster_enabled ? {
     for peer in local.openbao_cluster_peers :
     format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix) => merge(
       try(local.openbao_cluster.container_defaults, {}),
       {
-        vm_id     = try(local.openbao_cluster.vm_id_base, 110000) + peer.suffix
+        vm_id     = peer.vm_id
         vlan      = local.openbao_cluster.vlan
         hostname  = format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix)
         node_name = peer.node_name

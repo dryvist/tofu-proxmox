@@ -3,8 +3,11 @@
 variable "vms" {
   description = "Map of VMs to create"
   type = map(object({
-    vm_id       = number
-    name        = string
+    vm_id = number
+    # Omit to get the generated name (<app>-<vm_id>, local.guest_hostname_vms in
+    # locals-guest-naming.tf); a declared value here is kept as-is until its own
+    # rename wave. See docs/GUEST_NAMING.md.
+    name        = optional(string)
     description = optional(string)
     tags        = optional(list(string), ["terraform"])
     pool_id     = optional(string)

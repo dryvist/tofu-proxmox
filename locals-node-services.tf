@@ -28,6 +28,13 @@ locals {
   # deliberately non-transferable (rebuild-from-scratch doctrine), same as
   # the openbao_generated_containers suffix above. `suffix` is numeric in
   # per_node and zero-padded here (%02d), matching that pattern exactly.
+  #
+  # NOT re-landed onto <app>-<vm_id>: the map key is this container's resource
+  # address, and the live Traefik instance already adopted under this ordinal
+  # key would need a destroy-and-recreate to move onto the generated form —
+  # the same conflict documented on openbao_generated_containers in root
+  # main.tf. See docs/GUEST_NAMING.md.
+  #
   # Whether each generated instance is DNS-first (DHCP) or takes a static
   # address, resolved ONCE per service/node. The addressing block below reads
   # this twice — for `dhcp` and for `ip_config` — and those two must agree by
