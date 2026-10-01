@@ -1,33 +1,3 @@
-terraform {
-  required_providers {
-    proxmox = {
-      source  = "bpg/proxmox"
-      version = "~> 0.113"
-    }
-  }
-}
-
-# Downloads each VM's disk_image (see variables.tf) onto its own node as a
-# PVE `import`-type volume, so it can be attached below as disk.import_from.
-# Mirrors the existing debian_cloudimg pattern in
-# modules/proxmox-stack/base_templates.tf: content_type = "import", and
-# import_from built from datastore_id + file_name rather than the download
-# resource's `id`, which is not in the "datastore:content/file" form the
-# disk block expects.
-resource "proxmox_download_file" "disk_image" {
-  for_each = { for k, v in var.vms : k => v if v.disk_image != null }
-
-  content_type = "import"
-  datastore_id = coalesce(each.value.boot_disk.datastore_id, var.default_datastore)
-  node_name    = each.value.node_name
-  file_name    = each.value.disk_image.file_name
-  url          = each.value.disk_image.url
-
-  checksum                = each.value.disk_image.checksum
-  checksum_algorithm      = each.value.disk_image.checksum_algorithm
-  decompression_algorithm = each.value.disk_image.decompression_algorithm
-}
-
 resource "proxmox_virtual_environment_vm" "vms" {
   for_each = var.vms
 
@@ -100,13 +70,10 @@ resource "proxmox_virtual_environment_vm" "vms" {
     floating  = each.value.memory_floating != null ? each.value.memory_floating : each.value.memory_dedicated
   }
 
-  # replicate defaults to true on the underlying resource: an unreplicated
-  # guest (e.g. an ephemeral CI runner rebuilt every job) must set it false
-  # per disk, or its high-churn writes (image-build layers, docker cache)
-  # keep accumulating in replication snapshots the guest never needs. Same
-  # regression applies to ssd/discard: leaving ssd=false, discard="ignore"
-  # on an SSD-backed datastore means freed blocks are never TRIMmed, so a
-  # ZFS pool backing high-churn ephemeral disks fills and fragments.
+  # replicate defaults to true: an unreplicated guest (e.g. an ephemeral CI
+  # runner) must set it false per disk, or its churn piles up in replication
+  # snapshots. Likewise ssd=false/discard="ignore" on SSD storage never TRIMs,
+  # so a ZFS pool behind high-churn disks fills and fragments.
   disk {
     datastore_id = coalesce(
       each.value.boot_disk.datastore_id,
@@ -195,20 +162,11 @@ resource "proxmox_virtual_environment_vm" "vms" {
   initialization {
     datastore_id = var.default_datastore
 
-    # DNS search domain + resolver. Explicit rather than inherited: a guest that
-    # inherits the node's resolvers at provision time silently keeps them
-    # forever, and that stale-resolver drift broke docker-host DNS entirely
-    # (2026-06-10).
-    #
-    # The explicit value is the guest's OWN VLAN gateway, which conditionally
-    # forwards the internal zone to the resolver fleet. Pointing at the resolver
-    # addresses instead would bake a copy of the fleet's addressing into every
-    # guest — the same stale-forever problem, one level up: renumber a resolver
-    # and each guest holds the old list until rebuilt. A guest's gateway does
-    # not move when the fleet changes.
-    #
-    # Takes effect on cloud-init re-run/reboot; the lifecycle block below
-    # ignores dns diffs on existing VMs, so this reaches new VMs only.
+    # DNS search domain + resolver, explicit: a guest that inherits the node's
+    # resolvers keeps them forever (that drift broke docker-host DNS,
+    # 2026-06-10). The resolver is the guest's own VLAN gateway, which forwards
+    # the internal zone to the resolver fleet — listing fleet addresses would
+    # go stale the same way on a renumber. New VMs only: lifecycle ignores dns.
     dynamic "dns" {
       for_each = var.domain != "" || each.value.ip_config.ipv4_gateway != null ? [1] : []
       content {
@@ -251,13 +209,10 @@ resource "proxmox_virtual_environment_vm" "vms" {
   # Timeout configurations - operation-level timeouts
   timeout_clone  = 1800 # 30 min - disk copy can be slow
   timeout_create = 1800 # 30 min - cloud-init execution
-  # A migration moves the guest's disks, so it scales with disk size, not with
-  # a fixed "operation" cost like the others here. 15 min only covered a
-  # migration that never actually ran: the first VM this repo moves carries
-  # 150 GB, which does not finish in that window on a 1 GbE path. A timeout is
-  # an upper bound before tofu declares failure, not a delay, so a generous
-  # value costs nothing on fast paths and prevents a half-migrated guest.
-  timeout_migrate = 7200 # 2 h - scales with disk size, not a fixed op
+  # A migration moves the disks, so it scales with disk size: 150 GB does not
+  # finish in 15 min on 1 GbE. An upper bound, not a delay — generous is free
+  # on fast paths and prevents a half-migrated guest.
+  timeout_migrate = 7200 # 2 h
 
   timeout_reboot      = 900 # 15 min - standard
   timeout_shutdown_vm = 900 # 15 min - standard
