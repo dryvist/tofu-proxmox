@@ -9,5 +9,7 @@ locals {
     cribl_s2s_metrics = 10360
     # Cribl Stream Prometheus remote_write receiver.
     cribl_prometheus_rw = 9201
+    # Graphite wire-protocol receiver on Cribl Stream's Metrics source.
+    cribl_pve_metrics = 10370
   }
 }
