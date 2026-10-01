@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    proxmox = {
-      source  = "bpg/proxmox"
-      version = "~> 0.113"
-    }
-  }
-}
-
 resource "proxmox_virtual_environment_vm" "vms" {
   for_each = var.vms
 
@@ -79,25 +70,28 @@ resource "proxmox_virtual_environment_vm" "vms" {
     floating  = each.value.memory_floating != null ? each.value.memory_floating : each.value.memory_dedicated
   }
 
-  # replicate defaults to true on the underlying resource: an unreplicated
-  # guest (e.g. an ephemeral CI runner rebuilt every job) must set it false
-  # per disk, or its high-churn writes (image-build layers, docker cache)
-  # keep accumulating in replication snapshots the guest never needs. Same
-  # regression applies to ssd/discard: leaving ssd=false, discard="ignore"
-  # on an SSD-backed datastore means freed blocks are never TRIMmed, so a
-  # ZFS pool backing high-churn ephemeral disks fills and fragments.
+  # replicate defaults to true: an unreplicated guest (e.g. an ephemeral CI
+  # runner) must set it false per disk, or its churn piles up in replication
+  # snapshots. Likewise ssd=false/discard="ignore" on SSD storage never TRIMs,
+  # so a ZFS pool behind high-churn disks fills and fragments.
   disk {
     datastore_id = coalesce(
       each.value.boot_disk.datastore_id,
       var.default_datastore
     )
-    interface   = coalesce(each.value.boot_disk.interface, "scsi0")
-    size        = coalesce(each.value.boot_disk.size, 32)
+    interface = coalesce(each.value.boot_disk.interface, "scsi0")
+    # An imported disk image carries its own size; declaring one here would
+    # ask the provider to resize it on top of the import.
+    size        = each.value.disk_image == null ? coalesce(each.value.boot_disk.size, 32) : null
     file_format = coalesce(each.value.boot_disk.file_format, "raw")
     iothread    = coalesce(each.value.boot_disk.iothread, true)
     ssd         = coalesce(each.value.boot_disk.ssd, false)
     discard     = coalesce(each.value.boot_disk.discard, "ignore")
     replicate   = coalesce(each.value.boot_disk.replicate, true)
+    # Referencing the download resource's attribute (not a literal string)
+    # gives Terraform an implicit dependency edge, same as
+    # base_templates.tf's debian_cloudimg import.
+    import_from = each.value.disk_image != null ? "${proxmox_download_file.disk_image[each.key].datastore_id}:import/${proxmox_download_file.disk_image[each.key].file_name}" : null
   }
 
   dynamic "disk" {
@@ -168,20 +162,11 @@ resource "proxmox_virtual_environment_vm" "vms" {
   initialization {
     datastore_id = var.default_datastore
 
-    # DNS search domain + resolver. Explicit rather than inherited: a guest that
-    # inherits the node's resolvers at provision time silently keeps them
-    # forever, and that stale-resolver drift broke docker-host DNS entirely
-    # (2026-06-10).
-    #
-    # The explicit value is the guest's OWN VLAN gateway, which conditionally
-    # forwards the internal zone to the resolver fleet. Pointing at the resolver
-    # addresses instead would bake a copy of the fleet's addressing into every
-    # guest — the same stale-forever problem, one level up: renumber a resolver
-    # and each guest holds the old list until rebuilt. A guest's gateway does
-    # not move when the fleet changes.
-    #
-    # Takes effect on cloud-init re-run/reboot; the lifecycle block below
-    # ignores dns diffs on existing VMs, so this reaches new VMs only.
+    # DNS search domain + resolver, explicit: a guest that inherits the node's
+    # resolvers keeps them forever (that drift broke docker-host DNS,
+    # 2026-06-10). The resolver is the guest's own VLAN gateway, which forwards
+    # the internal zone to the resolver fleet — listing fleet addresses would
+    # go stale the same way on a renumber. New VMs only: lifecycle ignores dns.
     dynamic "dns" {
       for_each = var.domain != "" || each.value.ip_config.ipv4_gateway != null ? [1] : []
       content {
@@ -224,13 +209,10 @@ resource "proxmox_virtual_environment_vm" "vms" {
   # Timeout configurations - operation-level timeouts
   timeout_clone  = 1800 # 30 min - disk copy can be slow
   timeout_create = 1800 # 30 min - cloud-init execution
-  # A migration moves the guest's disks, so it scales with disk size, not with
-  # a fixed "operation" cost like the others here. 15 min only covered a
-  # migration that never actually ran: the first VM this repo moves carries
-  # 150 GB, which does not finish in that window on a 1 GbE path. A timeout is
-  # an upper bound before tofu declares failure, not a delay, so a generous
-  # value costs nothing on fast paths and prevents a half-migrated guest.
-  timeout_migrate = 7200 # 2 h - scales with disk size, not a fixed op
+  # A migration moves the disks, so it scales with disk size: 150 GB does not
+  # finish in 15 min on 1 GbE. An upper bound, not a delay — generous is free
+  # on fast paths and prevents a half-migrated guest.
+  timeout_migrate = 7200 # 2 h
 
   timeout_reboot      = 900 # 15 min - standard
   timeout_shutdown_vm = 900 # 15 min - standard
@@ -265,6 +247,13 @@ resource "proxmox_virtual_environment_vm" "vms" {
       # destroy+recreate a healthy VM. The clone source only matters at first
       # creation, so ignore it: imports and template changes never rebuild a VM.
       clone,
+      # The provider never re-imports an existing disk on update (it skips
+      # import_from past creation — see bpg/terraform-provider-proxmox#2385),
+      # but it does report the imported source back on every read, which
+      # would otherwise plan a diff the moment disk_image.url changes (e.g. a
+      # new vendor image version) — same failure base_templates.tf's
+      # debian_cloudimg template already guards against.
+      disk[0].import_from,
     ]
 
     # A linked clone is copy-on-write off the template's own disk, so the two
