@@ -160,11 +160,9 @@ locals {
         sso               = false # agent/machine memory API
         # A synchronous retain answers only after fact extraction finishes,
         # which outlasts the ingress default first-header limit. The service
-        # bounds every operation itself (per-operation wall-clock ceilings),
-        # so this route applies no first-header limit - "0s" is Traefik's
-        # "none" - and the default cannot answer 504 for a retain still being
-        # served. Only this route; every other route keeps the default.
-        response_header_timeout = "0s"
+        # caps a retain at 720s, so this route allows 780s for the first
+        # response header. Only this route; every other route keeps the default.
+        response_header_timeout = "780s"
       }
     ] : [],
     length(local.hindsight_backends) > 0 ? [
