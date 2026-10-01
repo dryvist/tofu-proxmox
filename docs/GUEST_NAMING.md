@@ -46,12 +46,3 @@ and `node_services` placement data (an optional per-peer hostname override,
 so an existing peer can declare its live key the same way a regular guest
 declares `hostname`) before the ordinal formatting can be removed from
 these two paths. Until then they keep `format("%s%02d", prefix, suffix)`.
-
-## History
-
-An earlier version of this rule generated every hostname unconditionally,
-ignoring any declared value (see this repo's git history for the PRs that
-introduced and then reverted it). That renamed every existing guest in the
-same apply, which is the rename wave this rule is designed to avoid. The
-declared-beats-generated rule above is what replaced it, for the
-`containers`/`vms` paths where it is safe.

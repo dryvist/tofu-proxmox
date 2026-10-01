@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.27.0](https://github.com/dryvist/tofu-proxmox/compare/v3.26.0...v3.27.0) (2026-09-26)
+
+
+### Features
+
+* **proxmox-stack:** register PVE's native metric server into Cribl ([#1184](https://github.com/dryvist/tofu-proxmox/issues/1184)) ([517d8c6](https://github.com/dryvist/tofu-proxmox/commit/517d8c6e960a058cfb98bc86d9305308a9dc4349))
+
 ## [3.26.0](https://github.com/dryvist/tofu-proxmox/compare/v3.25.1...v3.26.0) (2026-09-26)
 
 

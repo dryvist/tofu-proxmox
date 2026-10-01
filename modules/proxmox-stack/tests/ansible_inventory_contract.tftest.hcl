@@ -1321,6 +1321,39 @@ run "vm_iso_appliance_plans" {
   }
 }
 
+# A disk_image (vendor qcow2 import) VM must plan and land on its node, the
+# same passthrough shape as cdrom_file_id/clone_template above. This is the
+# shape a HAOS-style appliance import uses: no clone_template, no cdrom.
+run "vm_disk_image_import_plans" {
+  command = plan
+
+  variables {
+    vms = {
+      haos = {
+        vm_id     = 120
+        node_name = "proxmox-2"
+        name      = "haos"
+        vlan      = "compute"
+        bios      = "ovmf"
+        boot_disk = { datastore_id = "local-zfs" }
+        efi_disk  = { datastore_id = "local-zfs" }
+        disk_image = {
+          url                = "https://example.test/haos.qcow2"
+          file_name          = "haos.qcow2"
+          checksum           = "deadbeef"
+          checksum_algorithm = "sha256"
+        }
+        tags = ["terraform", "haos"]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.vms["haos"].node == "proxmox-2"
+    error_message = "disk_image VM (vendor image import, no clone_template/cdrom) must plan and land on its node"
+  }
+}
+
 # --- base LXC template ---
 #
 # ansible-proxmox ensures this exact filename on every node's local storage

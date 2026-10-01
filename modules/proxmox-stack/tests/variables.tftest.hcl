@@ -128,6 +128,56 @@ run "vm_with_invalid_vga_type_rejected" {
   ]
 }
 
+run "vm_with_disk_image_and_clone_template_rejected" {
+  command = plan
+
+  variables {
+    vms = {
+      test = {
+        vm_id     = 100
+        node_name = "proxmox-1"
+        name      = "test-vm"
+        vlan      = "apps"
+        clone_template = {
+          template_id = 9210
+        }
+        disk_image = {
+          url       = "https://example.test/appliance.qcow2"
+          file_name = "appliance.qcow2"
+        }
+      }
+    }
+  }
+
+  expect_failures = [
+    var.vms,
+  ]
+}
+
+run "vm_with_disk_image_xz_decompression_rejected" {
+  command = plan
+
+  variables {
+    vms = {
+      test = {
+        vm_id     = 100
+        node_name = "proxmox-1"
+        name      = "test-vm"
+        vlan      = "apps"
+        disk_image = {
+          url                     = "https://example.test/appliance.qcow2.xz"
+          file_name               = "appliance.qcow2"
+          decompression_algorithm = "xz"
+        }
+      }
+    }
+  }
+
+  expect_failures = [
+    var.vms,
+  ]
+}
+
 run "vm_with_id_below_minimum_rejected" {
   command = plan
 

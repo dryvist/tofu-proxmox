@@ -158,11 +158,18 @@ locals {
         health_check      = true
         health_check_path = "/health"
         sso               = false # agent/machine memory API
-      },
+        # A synchronous retain answers only after fact extraction finishes,
+        # which outlasts the ingress default first-header limit. The service
+        # caps a retain at 720s, so this route allows 780s for the first
+        # response header. Only this route; every other route keeps the default.
+        response_header_timeout = "780s"
+      }
+    ] : [],
+    length(local.hindsight_backends) > 0 ? [
       {
-        # Control Plane admin UI (access-key gated in the app). Same attribute
-        # shape as the API route above — both arms of the conditional must
-        # unify to one object type.
+        # Control Plane admin UI (access-key gated in the app). A SEPARATE
+        # conditional from the API row: the rows carry different attribute
+        # sets, so they cannot share one tuple.
         name              = "hindsight-cp"
         backends          = local.hindsight_backends
         port              = local.pipeline_constants.memory_ports.hindsight_cp
