@@ -30,7 +30,7 @@ locals {
     # The schema that DOES run against real output is consumer-side
     # (ansible-proxmox-apps tests/inventory_load/tofu_inventory.schema.json) and
     # is additionalProperties:true, which is why an added key is safe here.
-    schema_version = "2.1.0"
+    schema_version = "2.2.0"
     # Which desired state this came from — see the variables' own descriptions.
     desired_state = {
       etag = var.desired_state_etag
@@ -87,6 +87,15 @@ locals {
     # The ansible-proxmox-apps traefik + technitium_dns roles derive their routers
     # and DNS aliases from this single source instead of hand-listing hosts.
     ingress = local.ingress
+    workstation_connections = var.proxmox_ingress == null || length(local.proxmox_ui_backends) == 0 ? {} : {
+      proxman = {
+        url              = "https://${var.proxmox_ingress.fqdn}"
+        type             = "pve"
+        auth_method      = "traditional"
+        credential_mount = var.proxmox_ingress.credential_mount
+        credential_path  = var.proxmox_ingress.credential_path
+      }
+    }
     # Ingress HA: the keepalived VRRP virtual IP every fronted service DNS record
     # points at, and the list of ingress-instance addresses (keepalived
     # unicast_peer members). Empty vip + <2 hosts => the keepalived role no-ops,

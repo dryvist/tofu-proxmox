@@ -98,7 +98,7 @@ locals {
     # checks give a stable per-browser session + drop a down node from the pool.
     # Omitted entirely if no node is commissioned (empty pool -> no route).
     length(local.proxmox_ui_backends) > 0 ? [
-      {
+      merge({
         name         = "proxmox"
         apex         = true
         backends     = local.proxmox_ui_backends
@@ -108,7 +108,12 @@ locals {
         sticky       = true
         health_check = true
         sso          = false # tofu provider / API clients share this route
-      }
+        }, { for key, value in {
+          fqdn = try(var.proxmox_ingress.fqdn, "")
+          } : key => value if var.proxmox_ingress != null }, { for key, value in {
+          host_aliases = distinct(try(var.proxmox_ingress.aliases, []))
+          tls_domains  = distinct(concat([try(var.proxmox_ingress.fqdn, "")], try(var.proxmox_ingress.aliases, [])))
+      } : key => value if var.proxmox_ingress != null })
     ] : [],
     # Proxmox Backup Server VM appliance (clean https://pbs.<domain> on port 443)
     contains(keys(var.vms), "pbs") ? [
