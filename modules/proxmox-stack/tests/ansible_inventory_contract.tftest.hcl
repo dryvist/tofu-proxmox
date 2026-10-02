@@ -80,8 +80,8 @@ run "ansible_inventory_schema_version" {
   command = plan
 
   assert {
-    condition     = output.ansible_inventory.schema_version == "2.1.0"
-    error_message = "ansible_inventory must carry schema_version \"2.1.0\" so the homelab-contracts schema gate can confirm the emitted shape"
+    condition     = output.ansible_inventory.schema_version == "2.2.0"
+    error_message = "ansible_inventory must carry schema_version \"2.2.0\" so the homelab-contracts schema gate can confirm the emitted shape"
   }
 }
 
