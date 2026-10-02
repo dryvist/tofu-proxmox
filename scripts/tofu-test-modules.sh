@@ -5,9 +5,10 @@
 # reports success having run nothing from the modules. Each suite has to be
 # entered on its own.
 #
-# The set of suites is DERIVED from which modules carry a tests/ directory,
-# never hand-listed. A hand-listed set silently omits the next module that
-# gains tests, and an omitted suite is indistinguishable from a passing one.
+# The set of suites is DERIVED from which modules carry a tests/ directory
+# under modules/ or aws-infra/modules/, never hand-listed. A hand-listed set
+# silently omits the next module that gains tests, and an omitted suite is
+# indistinguishable from a passing one.
 #
 # Assertions are counted and printed, and a run that executes zero of them
 # fails. A suite that stops running otherwise reports success by doing nothing.
@@ -18,7 +19,7 @@ PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
 cd "${PROJECT_ROOT}"
 
 shopt -s nullglob
-suites=(modules/*/tests)
+suites=(modules/*/tests aws-infra/modules/*/tests)
 shopt -u nullglob
 
 if [ ${#suites[@]} -eq 0 ]; then

@@ -43,6 +43,26 @@ provider "aws" {
   token      = ephemeral.vault_aws_access_credentials.route53.security_token
 }
 
+# Second, separately scoped STS session for the ACME IAM deployer. Minted
+# only when enable_acme_iam is true, from a role with permissions limited to
+# managing the acme-* group/policy -- never the Route53 records role above.
+ephemeral "vault_aws_access_credentials" "acme_iam" {
+  count  = var.enable_acme_iam ? 1 : 0
+  mount  = var.openbao_aws_mount
+  role   = var.openbao_acme_iam_role
+  type   = "sts"
+  region = var.aws_region
+  ttl    = var.openbao_aws_ttl
+}
+
+provider "aws" {
+  alias      = "acme_iam"
+  region     = var.aws_region
+  access_key = one(ephemeral.vault_aws_access_credentials.acme_iam[*].access_key)
+  secret_key = one(ephemeral.vault_aws_access_credentials.acme_iam[*].secret_key)
+  token      = one(ephemeral.vault_aws_access_credentials.acme_iam[*].security_token)
+}
+
 # Route53 DNS Records module - manages A record for Proxmox VE UI
 module "route53_records" {
   count  = var.enable_route53_dns ? 1 : 0
@@ -59,8 +79,23 @@ module "route53_records" {
   environment              = var.environment
 }
 
+# ACME DNS-01 IAM policy - manages ONLY the scoped group/policy used by the
+# existing ACME user (e.g. Traefik lego). Off by default: merging this change
+# does nothing until the bootstrap deployer role exists (see
+# aws-infra/bootstrap/acme-iam-deployer.md) and enable_acme_iam is flipped on.
+module "acme_iam" {
+  count  = var.enable_acme_iam ? 1 : 0
+  source = "./modules/acme-iam"
+  providers = {
+    aws = aws.acme_iam
+  }
+
+  acme_iam_user_name  = var.acme_iam_user_name
+  acme_iam_group_name = var.acme_iam_group_name
+  route53_zone_ids    = var.acme_route53_zone_ids
+}
+
 # Future AWS resources go here:
-# - IAM users/roles for Terraform
 # - S3 buckets for backups
 # - CloudWatch alarms
 # - etc.
