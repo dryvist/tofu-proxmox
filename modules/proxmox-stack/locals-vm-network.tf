@@ -30,17 +30,17 @@ locals {
   # rebuild. Nothing reserves an address against it.
   vm_mac = {
     for k, v in var.vms : k => format("02:%s:%s:%s:%s:%s",
-      substr(md5(v.name), 0, 2), substr(md5(v.name), 2, 2),
-      substr(md5(v.name), 4, 2), substr(md5(v.name), 6, 2),
-    substr(md5(v.name), 8, 2))
+      substr(md5(local.guest_hostname_vms[k]), 0, 2), substr(md5(local.guest_hostname_vms[k]), 2, 2),
+      substr(md5(local.guest_hostname_vms[k]), 4, 2), substr(md5(local.guest_hostname_vms[k]), 6, 2),
+    substr(md5(local.guest_hostname_vms[k]), 8, 2))
   }
   vm_address = {
     for k, v in var.vms : k => (
       try(v.dhcp, false)
       ? (
         local.guest_domain[v.vlan] != ""
-        ? "${v.name}.${local.guest_domain[v.vlan]}"
-        : v.name
+        ? "${local.guest_hostname_vms[k]}.${local.guest_domain[v.vlan]}"
+        : local.guest_hostname_vms[k]
       )
       : split("/", local.vm_ipv4[k])[0]
     )

@@ -88,21 +88,34 @@ import {
 #
 # Traefik is the first consumer of the per-node "DaemonSet" service pattern
 # (locals-node-services.tf / node_service_containers), documented in
-# deployment.json.example under node_services.traefik. That template was
-# never populated in the live private object, so the generator currently
-# expands zero per_node entries and produces no "traefik-30" key. The
-# companion (uncommitted) deployment.json change adds one per_node entry
-# matching this guest's live spec (vm_id, tags, disk, unprivileged flag)
-# exactly, so the import adopts in place instead of planning a
-# destroy-and-recreate of a running guest.
+# deployment.json.example under node_services.traefik. Zero per_node entries
+# means the generator expands to nothing and this for_each is empty -- a
+# no-op, exactly like adopt_containers/adopt_vms above when their list is
+# empty. Once the private deployment.json's per_node entry lands, the
+# generator produces exactly one "traefik-<NN>" key (the "<prefix><NN>"
+# ordinal form — see locals-node-services.tf for why that scheme is not
+# re-landed onto <app>-<vm_id>), and this adopts it in place instead of
+# planning a destroy-and-recreate of a running guest.
 #
-# The id is resolved against local.containers (the merged map), never
-# local.deployment.containers, for the same reason the relocation block
-# above does: "traefik-30" is synthesised by node_service_containers and
-# does not exist in the raw declared map.
+# Resolved by PREFIX MATCH against local.node_service_containers, not a
+# hardcoded key: the suffix is a private per-node allocation this repo never
+# hardcodes (see imports.tf's own rule above it). A literal string here would
+# silently stop matching the moment that suffix changes.
+locals {
+  traefik_adopt_keys = [
+    for k in keys(local.node_service_containers) : k if startswith(k, "traefik-")
+  ]
+}
+
 import {
-  to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["traefik-30"]
-  id = "${local.containers["traefik-30"].node_name}/${local.containers["traefik-30"].vm_id}"
+  for_each = toset(local.traefik_adopt_keys)
+
+  to = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers[each.value]
+  # The id is resolved against local.containers (the merged map), never
+  # local.deployment.containers, for the same reason the relocation block
+  # above does: this key is synthesised by node_service_containers and does
+  # not exist in the raw declared map.
+  id = "${local.containers[each.value].node_name}/${local.containers[each.value].vm_id}"
 }
 
 # Adoption of VMs whose state entry points at a node they no longer run on.

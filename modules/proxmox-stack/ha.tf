@@ -53,7 +53,7 @@ resource "proxmox_haresource" "containers" {
 
   resource_id = "ct:${each.value.vm_id}"
   state       = "started"
-  comment     = "Managed by OpenTofu — ${each.value.hostname}"
+  comment     = "Managed by OpenTofu — ${local.guest_hostname_containers[each.key]}"
 
   # Restart in place a few times before relocating: a relocation is what
   # desynchronises this repo's state, so it should be the second resort.

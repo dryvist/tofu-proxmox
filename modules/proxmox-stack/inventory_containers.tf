@@ -12,7 +12,7 @@ locals {
   inventory_containers = {
     for k, v in(length(var.containers) > 0 ? module.containers[0].container_details : {}) : k => {
       vmid     = v.id
-      hostname = var.containers[k].hostname
+      hostname = local.guest_hostname_containers[k]
       ip       = local.container_address[k] # static: per-VLAN cidrhost IP (CIDR stripped); DHCP guests: FQDN (DNS-first)
       # The guest's live MAC, published for EVERY container.
       #
@@ -51,8 +51,8 @@ locals {
       # would not.
       fqdn = (
         local.guest_domain[var.containers[k].vlan] != ""
-        ? "${var.containers[k].hostname}.${local.guest_domain[var.containers[k].vlan]}"
-        : var.containers[k].hostname
+        ? "${local.guest_hostname_containers[k]}.${local.guest_domain[var.containers[k].vlan]}"
+        : local.guest_hostname_containers[k]
       )
       tags    = v.tags
       pool_id = v.pool_id

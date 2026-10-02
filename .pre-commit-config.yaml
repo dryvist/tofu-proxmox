@@ -16,7 +16,7 @@ repos:
   # terraform_validate and terraform_tflint need the nix-provided binary, so they
   # are local hooks that use direnv exec to enter the nix shell first.
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.92.0
+    rev: v1.109.1
     hooks:
       - id: terraform_fmt
 
