@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.28.0](https://github.com/dryvist/tofu-proxmox/compare/v3.27.0...v3.28.0) (2026-10-02)
+
+
+### Features
+
+* **naming:** generated hostnames for new containers/VMs ([7e51317](https://github.com/dryvist/tofu-proxmox/commit/7e51317a6b5a5c569cccfe7deb0a50a12901b97f))
+* **proxmox-vm:** boot a VM from an imported vendor disk image ([85e5fde](https://github.com/dryvist/tofu-proxmox/commit/85e5fdefb6d04628948f5f0ef66feb987a82a1b1))
+
+
+### Bug Fixes
+
+* **ingress:** lift first-header limit on the memory API route ([#1204](https://github.com/dryvist/tofu-proxmox/issues/1204)) ([a54a68a](https://github.com/dryvist/tofu-proxmox/commit/a54a68ae6df985f0407836fca63b956b12fde9e7))
+
 ## [3.27.0](https://github.com/dryvist/tofu-proxmox/compare/v3.26.0...v3.27.0) (2026-09-26)
 
 
