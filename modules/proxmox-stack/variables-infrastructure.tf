@@ -6,6 +6,25 @@ variable "domain" {
   default     = ""
 }
 
+variable "proxmox_ingress" {
+  description = "Optional private cluster ingress identity and workstation credential reference. The FQDN is independent of the node DNS domain."
+  type = object({
+    fqdn             = string
+    aliases          = optional(list(string), [])
+    credential_mount = string
+    credential_path  = string
+  })
+  default = null
+
+  validation {
+    condition = var.proxmox_ingress == null ? true : alltrue([
+      for name in concat([var.proxmox_ingress.fqdn], var.proxmox_ingress.aliases) :
+      can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", name))
+    ]) && var.proxmox_ingress.credential_mount != "" && var.proxmox_ingress.credential_path != ""
+    error_message = "Cluster ingress names must be DNS FQDNs and the credential mount/path must be non-empty."
+  }
+}
+
 # Per-VLAN override of `domain`. Every VLAN's UniFi network carries its own DNS
 # domain (tofu-unifi's per-network domain_name), and that is what the gateway
 # actually answers a DHCP-first guest's FQDN under — `domain` alone is only

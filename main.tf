@@ -141,6 +141,7 @@ module "homelab" {
   datastores              = try(local.deployment.datastores, {})
   dns_plugins             = try(local.deployment.dns_plugins, {})
   domain                  = local.deployment.domain
+  proxmox_ingress         = try(local.deployment.proxmox_ingress, null)
   environment             = try(local.deployment.environment, "homelab")
   # Install-media object prefix. Optional because most applies never touch a
   # template build; when the key is absent the module's placeholder default
