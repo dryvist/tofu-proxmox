@@ -579,8 +579,35 @@ run "ansible_inventory_ingress_route_table" {
         hostname  = "s3"
         vlan      = "siem"
       }
+      # Two Homarr guests: routes come from the homarr tag (locals-homarr.tf),
+      # one per guest, named by container key. The second key is arbitrary.
+      "homarr" = {
+        vm_id     = 605030
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "homarr"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "homarr", "dashboard"]
+      }
+      "homarr-fixture-two" = {
+        vm_id     = 605070
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "homarr-fixture-two"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "homarr", "dashboard"]
+      }
     }
     domain = "example.com"
+  }
+
+  # Every homarr-tagged guest gets its own SSO-gated route on homarr_web.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if contains(["homarr", "homarr-fixture-two"], r.name) && r.port == 7575 && r.sso
+    ]) == 2
+    error_message = "each homarr-tagged guest must get one SSO-gated route on homarr_web, named by its container key"
   }
 
   # plex: backend "plex" (192.168.70.210) on media_ports.plex_web (32400).

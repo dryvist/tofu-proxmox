@@ -71,6 +71,11 @@ copies of "{agent}-webui", "{agent}-studio". The
 All three are declared with the shared `dashboard` tag alongside their own, so
 the set is addressable as a whole.
 
+Homarr can run as more than one guest. Every guest tagged `homarr` gets the
+`homarr-svc` firewall rules and its own SSO-gated route named by its container
+key (`locals-homarr.tf`), so adding an instance to the desired state needs no
+edit in this repo. Each instance pins its own Homarr release on the Ansible side.
+
 ## Health surfaces (where to look)
 
 | Question | UI |
