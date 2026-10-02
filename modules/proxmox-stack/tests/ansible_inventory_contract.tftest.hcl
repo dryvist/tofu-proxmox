@@ -579,8 +579,51 @@ run "ansible_inventory_ingress_route_table" {
         hostname  = "s3"
         vlan      = "siem"
       }
+      # Two Homarr guests: routes come from the homarr tag (locals-homarr.tf),
+      # one per guest, named by container key. The second key is arbitrary.
+      "homarr" = {
+        vm_id     = 605030
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "homarr"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "homarr", "dashboard"]
+      }
+      "homarr-fixture-two" = {
+        vm_id     = 605070
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "homarr-fixture-two"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "homarr", "dashboard"]
+      }
+      "homarr-v2" = {
+        vm_id     = 605080
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "homarr-v2"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "homarr", "dashboard"]
+      }
     }
     domain = "example.com"
+  }
+
+  # Every homarr-tagged guest gets its own route on homarr_web, SSO-gated
+  # unless ingress_human_unauthed_routes lists it.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if contains(["homarr", "homarr-fixture-two"], r.name) && r.port == 7575 && r.sso
+    ]) == 2
+    error_message = "each homarr-tagged guest must get one SSO-gated route on homarr_web, named by its container key"
+  }
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "homarr-v2" && r.port == 7575 && !r.sso && r.ui
+    ]) == 1
+    error_message = "a homarr guest listed in ingress_human_unauthed_routes must get an ungated, human-facing route"
   }
 
   # plex: backend "plex" (192.168.70.210) on media_ports.plex_web (32400).

@@ -22,6 +22,10 @@ locals {
     "homeassistant",
     "proxmox",
     "pbs",
+    # The second Homarr guest is a read-only household dashboard: its boards
+    # are public inside Homarr, so anyone on the home network sees them
+    # without a login. Editing still needs Homarr's own credentials.
+    "homarr-v2",
     # "llm" removed: it now has its own SSO'd browser rows (llm-ui,
     # llm-ui-legacy) — the bare API row is machine-only and should stop
     # reading as human-browsable on the dashboards.
