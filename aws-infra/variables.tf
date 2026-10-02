@@ -135,6 +135,48 @@ variable "route53_a_records" {
   }
 }
 
+# ACME DNS-01 IAM policy (deployer-managed, off by default)
+
+variable "enable_acme_iam" {
+  description = "Enable management of the scoped ACME DNS-01 IAM group/policy. Off by default so merging this change does nothing until the bootstrap deployer role exists."
+  type        = bool
+  default     = false
+}
+
+variable "openbao_acme_iam_role" {
+  description = "OpenBao AWS role that mints the tightly bounded ACME-IAM-deployer session, separate from openbao_aws_role"
+  type        = string
+  default     = "tf-acme-iam"
+}
+
+variable "acme_iam_user_name" {
+  description = "Name of the existing IAM user used by ACME DNS-01 clients (e.g. Traefik lego). Required when enable_acme_iam is true; never created by this configuration."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = !var.enable_acme_iam || can(regex("^acme-[a-z0-9-]+$", var.acme_iam_user_name))
+    error_message = "acme_iam_user_name must start with 'acme-' and be set when enable_acme_iam is true."
+  }
+}
+
+variable "acme_iam_group_name" {
+  description = "Name of the IAM group this module creates to carry the scoped ACME DNS-01 policy"
+  type        = string
+  default     = "acme-dns01"
+}
+
+variable "acme_route53_zone_ids" {
+  description = "Route53 hosted zone IDs the ACME DNS-01 group may write _acme-challenge TXT records in (e.g. the parent zone and the ingress zone). Required when enable_acme_iam is true."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = !var.enable_acme_iam || length(var.acme_route53_zone_ids) > 0
+    error_message = "acme_route53_zone_ids must contain at least one zone ID when enable_acme_iam is true."
+  }
+}
+
 # General
 
 variable "environment" {
