@@ -50,16 +50,36 @@ Create an IAM role named `tf-acme-iam` with:
   (OpenBao's AWS secrets engine, via the same account/provider). Copy that
   role's trust policy as the starting point.
 - **Permissions boundary**: `acme-iam-deployer-boundary` from step (a).
-- **Permission policy**: the same actions as the boundary (Get/Put/Delete on
-  `acme-*` group policies, Create/Delete on `acme-*` groups, group
-  membership on `acme-*` groups and `acme-*` users), restricted to
-  `arn:aws:iam::*:user/acme-*` and `arn:aws:iam::*:group/acme-*`, **plus**
-  explicit denies:
+- **Permission policy**: the same Allow statement as the boundary in step
+  (a), scoped to exactly the resources this module's three Terraform
+  resources touch (`aws_iam_group`, `aws_iam_group_policy`,
+  `aws_iam_group_membership`), **plus** explicit denies closing off
+  everything else IAM:
 
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
+    {
+      "Sid": "AllowOnlyAcmeIamObjects",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetUser",
+        "iam:GetGroup",
+        "iam:GetGroupPolicy",
+        "iam:PutGroupPolicy",
+        "iam:DeleteGroupPolicy",
+        "iam:CreateGroup",
+        "iam:DeleteGroup",
+        "iam:AddUserToGroup",
+        "iam:RemoveUserFromGroup",
+        "iam:ListGroupsForUser"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:user/acme-*",
+        "arn:aws:iam::*:group/acme-*"
+      ]
+    },
     {
       "Sid": "DenyUserAndKeyCreation",
       "Effect": "Deny",
@@ -114,7 +134,7 @@ escalation via role creation/assumption entirely.
    pattern as the existing `tf-proxmox` entry:
 
    ```text
-   vault write aws/roles/tf-acme-iam \
+   bao write aws/roles/tf-acme-iam \
      role_arns=arn:aws:iam::<account-id>:role/tf-acme-iam \
      credential_type=assumed_role
    ```
