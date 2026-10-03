@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.29.0](https://github.com/dryvist/tofu-proxmox/compare/v3.28.0...v3.29.0) (2026-10-03)
+
+
+### Features
+
+* **homarr:** generate one ingress route per homarr guest ([#1215](https://github.com/dryvist/tofu-proxmox/issues/1215)) ([561fcaf](https://github.com/dryvist/tofu-proxmox/commit/561fcaffa22b1e47cd2d4152ae743b0781aac371))
+* publish cluster ingress identities and workstation profile ([#1213](https://github.com/dryvist/tofu-proxmox/issues/1213)) ([e211606](https://github.com/dryvist/tofu-proxmox/commit/e211606995b819d24f06af3b9a9aa9e2d954059e))
+* scoped ACME DNS-01 IAM group/policy (flagged off) ([#1214](https://github.com/dryvist/tofu-proxmox/issues/1214)) ([ac1f6db](https://github.com/dryvist/tofu-proxmox/commit/ac1f6dbfeb1639da5bd28820571333e0cf71c1b1))
+
 ## [3.28.0](https://github.com/dryvist/tofu-proxmox/compare/v3.27.0...v3.28.0) (2026-10-02)
 
 
