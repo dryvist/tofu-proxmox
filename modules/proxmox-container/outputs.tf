@@ -33,8 +33,8 @@ output "container_network_interfaces" {
 }
 
 output "container_mount_points" {
-  description = "Per-container mount_point path => read_only, for verifying the read_only wiring without exposing full container state."
-  value = { for k, v in proxmox_virtual_environment_container.containers : k => {
-    for mp in v.mount_point : mp.path => mp.read_only
-  } }
+  description = "Per-container mount_point path => read_only, for verifying the read_only wiring without exposing full container state. Two mounts at one path report the later one, the mount the guest sees."
+  value = { for k, v in proxmox_virtual_environment_container.containers : k => merge([
+    for mp in v.mount_point : { (mp.path) = mp.read_only }
+  ]...) }
 }
