@@ -15,6 +15,17 @@
   ],
   "additionalProperties": true,
   "properties": {
+    "proxmox_ingress": {
+      "type": "object",
+      "required": ["fqdn", "credential_mount", "credential_path"],
+      "additionalProperties": false,
+      "properties": {
+        "fqdn": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$" },
+        "aliases": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$" } },
+        "credential_mount": { "type": "string", "minLength": 1 },
+        "credential_path": { "type": "string", "minLength": 1 }
+      }
+    },
     "domain": {
       "type": "string",
       "minLength": 1

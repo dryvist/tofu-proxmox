@@ -14,7 +14,7 @@ locals {
   #       route (default true when omitted). false for machine/API endpoints
   #       (clients cannot do a browser login) and for apps whose non-browser
   #       clients authenticate natively (e.g. Plex apps).
-  ingress_services = merge(local.hermes_agent_routes, {
+  ingress_services = merge(local.hermes_agent_routes, local.homarr_routes, {
     # Authelia portal itself — never gated (it IS the login page).
     authelia    = { backend = "authelia", port = local.pipeline_constants.service_ports.authelia_portal, sso = false }
     plex        = { backend = "plex", port = local.pipeline_constants.media_ports.plex_web, sso = false } # Plex clients auth via plex.tv
@@ -43,7 +43,6 @@ locals {
     homeassistant     = { backend = "homeassistant", port = local.pipeline_constants.service_ports.homeassistant_web, sso = false } # companion apps auth natively
     openproject       = { backend = "openproject", port = local.pipeline_constants.service_ports.openproject_web }
     prometheus        = { backend = "prometheus", port = local.pipeline_constants.service_ports.prometheus_web }
-    homarr            = { backend = "homarr", port = local.pipeline_constants.service_ports.homarr_web }
     # llm is fronted as a load-balanced router pool (llm_router_backends below).
     chat   = { backend = "open-webui", port = local.pipeline_constants.service_ports.open_webui_web, title = "Open WebUI (all agents)" }
     qdrant = { backend = "qdrant", port = local.pipeline_constants.vector_db_ports.qdrant_http, sso = false } # vector API for agents/MCP
