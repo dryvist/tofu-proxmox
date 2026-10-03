@@ -625,6 +625,42 @@
         "password": "",
         "keys": []
       }
+    },
+    "_ai_sandbox_comment": "Docker host for untrusted agent CLIs run as ephemeral containers (`agent-sandbox` tag, modules/firewall/ai_sandbox_rules.tf). The `docker` tag puts it in the docker_vms inventory group; `agent-sandbox` selects the firewall profile and the agent_sandbox_host inventory group. The profile is default-deny both ways: internal DNS/NTP/OpenBao/log ingest, outbound 80/443 to any (narrowed to an allowlist by the proxy running on the host itself), SSH/ICMP from internal, and HTTPS from the ingress instances only. Disks: scsi1 is the Docker data disk the docker_vms play formats as /var/lib/docker; size it for images plus per-job workspaces. dhcp:true and no `name` -> hostname is generated as ai-sandbox-<vm_id>. VMID 515100 = tier 5 (AI VLAN) / sub 1 / crit 5 / OS 1 (VM) / instance 0 / env 0.",
+    "ai-sandbox-01": {
+      "vm_id": 515100,
+      "dhcp": true,
+      "vlan": "ai",
+      "description": "Docker host for untrusted agent CLIs in ephemeral containers, confined by the agent-sandbox firewall profile and the on-host egress allowlist",
+      "node_name": "proxmox-1",
+      "cpu_cores": 8,
+      "memory_dedicated": 32768,
+      "migrate": true,
+      "tags": [
+        "opentofu",
+        "docker",
+        "agent-sandbox"
+      ],
+      "pool_id": "ai",
+      "boot_disk": {
+        "datastore_id": "local-zfs",
+        "size": 50
+      },
+      "additional_disks": [
+        {
+          "interface": "scsi1",
+          "datastore_id": "local-zfs",
+          "size": 100
+        }
+      ],
+      "clone_template": {
+        "template_id": 9000
+      },
+      "user_account": {
+        "username": "debian",
+        "password": "",
+        "keys": []
+      }
     }
   },
   "containers": {

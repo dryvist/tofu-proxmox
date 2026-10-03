@@ -1153,3 +1153,69 @@ run "herdr_client_rules_track_constants_and_internal_scope" {
     error_message = "every herdr client service rule must be scoped to the internal networks"
   }
 }
+
+# --- agent-sandbox VM profile ---
+
+run "ai_sandbox_ingress_rule_scoped_to_ingress_src" {
+  command = plan
+
+  variables {
+    ai_sandbox_ingress_src = "192.168.10.7,192.168.10.8"
+  }
+
+  assert {
+    condition     = length(local.ai_sandbox_ingress_rules) == 1
+    error_message = "ai_sandbox_ingress_rules must be exactly one rule (HTTPS from ingress), got ${length(local.ai_sandbox_ingress_rules)}"
+  }
+
+  assert {
+    condition     = local.ai_sandbox_ingress_rules[0].proto == "tcp" && local.ai_sandbox_ingress_rules[0].dport == "443"
+    error_message = "ai_sandbox ingress rule must be TCP 443, got proto='${local.ai_sandbox_ingress_rules[0].proto}' dport='${local.ai_sandbox_ingress_rules[0].dport}'"
+  }
+
+  assert {
+    condition     = local.ai_sandbox_ingress_rules[0].source == var.ai_sandbox_ingress_src
+    error_message = "ai_sandbox ingress source must be var.ai_sandbox_ingress_src, got '${local.ai_sandbox_ingress_rules[0].source}'"
+  }
+
+  assert {
+    condition     = local.ai_sandbox_ingress_rules[0].source != local.internal_src
+    error_message = "ai_sandbox ingress source must NOT be the internal networks — it is scoped to the ingress instances"
+  }
+}
+
+# A sourceless inbound rule would accept the port from anywhere.
+run "ai_sandbox_ingress_rule_omitted_without_ingress_src" {
+  command = plan
+
+  assert {
+    condition     = length(local.ai_sandbox_ingress_rules) == 0
+    error_message = "with no ingress address the ai_sandbox inbound rule must be omitted, got ${length(local.ai_sandbox_ingress_rules)}"
+  }
+}
+
+# Default deny both ways; the profile reaches WAN only through the shared
+# outbound groups and never opens a blanket inbound.
+run "ai_sandbox_vm_denies_by_default_and_attaches_the_profile_groups" {
+  command = plan
+
+  variables {
+    ai_sandbox_vm_ids = { "ai-sandbox-01" = 515100 }
+  }
+
+  assert {
+    condition     = proxmox_virtual_environment_firewall_options.ai_sandbox_vm["ai-sandbox-01"].input_policy == "DROP" && proxmox_virtual_environment_firewall_options.ai_sandbox_vm["ai-sandbox-01"].output_policy == "DROP"
+    error_message = "the ai_sandbox VM must default-deny in and out"
+  }
+
+  assert {
+    condition = toset([for r in proxmox_virtual_environment_firewall_rules.ai_sandbox_vm["ai-sandbox-01"].rule : r.security_group]) == toset([
+      proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.ai_proxied_egress.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_http.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.ai_sandbox_ingress.name,
+    ])
+    error_message = "the ai_sandbox VM must attach exactly internal_access, ai_proxied_egress, outbound_https, outbound_http and ai_sandbox_ingress"
+  }
+}
