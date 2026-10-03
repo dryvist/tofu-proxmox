@@ -150,7 +150,7 @@ gcloud-credentials.json
 kubeconfig
 *.kubeconfig
 
-# Doppler secrets fallback cache (encrypted snapshot of the WHOLE config) + setup
+# Local credential caches
 doppler.json
 .doppler/
 
