@@ -222,6 +222,10 @@ resource "proxmox_virtual_environment_container" "containers" {
       # (terraform-proxmox #390). Storage-VOLUME mounts declared in deployment.json
       # are still created at provision time; only post-creation reconciliation is
       # ignored (mounts are effectively set-once here).
+      # After creation the mount points belong to ansible-proxmox, never to this
+      # module: `media_lxc_features` (host bind mounts), `llm_model_store_seed`
+      # (the llm fabric's models mount) and `pve_backup_jobs` (per-mount backup
+      # flags). A mount those roles add or change is not drift to correct here.
       mount_point,
       # Ignore idmap drift, same rationale as mount_point. The media containers'
       # uid/gid passthrough (e.g. gid 13000 ↔ 13000 for the /data mount) is applied
