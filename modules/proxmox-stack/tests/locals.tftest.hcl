@@ -856,6 +856,11 @@ run "ai_log_routing_exported_in_pipeline_constants" {
     condition     = local.pipeline_constants.ai_log_routing.openbao_audit.sourcetype == "openbao:audit"
     error_message = "openbao_audit must carry sourcetype openbao:audit"
   }
+
+  assert {
+    condition     = local.pipeline_constants.ai_log_routing.llamaindex == { port = 10353, index = "llm", sourcetype = "llamaindex:app" }
+    error_message = "llamaindex must route to Cribl port 10353 and Splunk index=llm"
+  }
 }
 
 # --- media_container_ids tag-filter tests ---

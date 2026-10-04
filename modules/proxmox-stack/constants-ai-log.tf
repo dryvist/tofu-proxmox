@@ -39,6 +39,7 @@ locals {
 
     # Distinct from homelab_llm (10323), which maps to sourcetype=llamaswap.
     llm_router = 10352 # ansible-proxmox-ai llm_router (LiteLLM proxy) -> index=llm, sourcetype=litellm:proxy
+    llamaindex = 10353 # LlamaIndex RAG indexer -> index=llm, sourcetype=llamaindex:app
   }
 
   # Splunk landing zone per source, keyed to the SAME names as ai_log_ports so
@@ -74,6 +75,7 @@ locals {
     phoenix_docker       = { index = "phoenix", sourcetype = "phoenix:app" }
 
     llm_router = { index = "llm", sourcetype = "litellm:proxy" }
+    llamaindex = { index = "llm", sourcetype = "llamaindex:app" }
   }
 
   ai_log_routing = {
