@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.31.0](https://github.com/dryvist/tofu-proxmox/compare/v3.30.0...v3.31.0) (2026-10-04)
+
+
+### Features
+
+* **firewall:** allow Cribl Stream HEC input ([#1227](https://github.com/dryvist/tofu-proxmox/issues/1227)) ([c490088](https://github.com/dryvist/tofu-proxmox/commit/c490088fa1e54c5da696060d772495f8ca7582fe))
+
+
+### Bug Fixes
+
+* **observability:** map LlamaIndex logs to Cribl ([#1226](https://github.com/dryvist/tofu-proxmox/issues/1226)) ([9748cc7](https://github.com/dryvist/tofu-proxmox/commit/9748cc7d9746059720fe653bae76874207d6c292))
+
 ## [3.30.0](https://github.com/dryvist/tofu-proxmox/compare/v3.29.0...v3.30.0) (2026-10-04)
 
 
