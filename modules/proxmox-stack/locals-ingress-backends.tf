@@ -128,6 +128,19 @@ locals {
         ui           = true
       }
     ] : [],
+    # ZCode Web runs on the Docker VM selected by the agent-sandbox tag. The
+    # host publishes HTTP on 443; Traefik terminates external TLS and applies
+    # the default SSO gate. The Ansible role supports one sandbox host.
+    length(local.ai_sandbox_vm_ids) == 1 ? [
+      {
+        name   = "zcode"
+        owner  = keys(local.ai_sandbox_vm_ids)[0]
+        ip     = local.vm_address[keys(local.ai_sandbox_vm_ids)[0]]
+        port   = local.pipeline_constants.service_ports.zcode_web
+        scheme = "http"
+        sso    = true
+      }
+    ] : [],
     local.ingress_lb_routes,
     # IaC automation platform routes (Terrakube + Semaphore on the iac-platform
     # VM) — assembled in locals-ingress-iac.tf to keep this file under the shared
