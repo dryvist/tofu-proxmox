@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.30.0](https://github.com/dryvist/tofu-proxmox/compare/v3.29.0...v3.30.0) (2026-10-04)
+
+
+### Features
+
+* **firewall:** add agent-sandbox VM profile ([bf1568c](https://github.com/dryvist/tofu-proxmox/commit/bf1568c1e557c6a11fb4a5ce4d24eb9dc19133ba))
+* **firewall:** add agent-sandbox VM profile ([7d3d576](https://github.com/dryvist/tofu-proxmox/commit/7d3d5763a5cc32a499868fbbcdb5f88deab0c79a))
+* **ingress:** add SSO-gated ZCode Web route ([#1222](https://github.com/dryvist/tofu-proxmox/issues/1222)) ([45ea89d](https://github.com/dryvist/tofu-proxmox/commit/45ea89de88d3af6565aecc60ffa673c6a2bcda20))
+
+
+### Bug Fixes
+
+* **proxmox-container:** publish container_mount_points with one entry per path ([#1220](https://github.com/dryvist/tofu-proxmox/issues/1220)) ([4b8c706](https://github.com/dryvist/tofu-proxmox/commit/4b8c706f49f625dc7d6f08e2eb3452d75031e875))
+
 ## [3.29.0](https://github.com/dryvist/tofu-proxmox/compare/v3.28.0...v3.29.0) (2026-10-03)
 
 
