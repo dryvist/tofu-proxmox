@@ -158,6 +158,11 @@ module "firewall" {
   ai_proxied_container_ids  = local.ai_proxied_container_ids
   squid_proxy_container_ids = local.squid_proxy_container_ids
 
+  # AI sandbox VM (agent-sandbox tag): untrusted-agent Docker host; HTTPS in
+  # from the ingress Traefik instances only.
+  ai_sandbox_vm_ids      = local.ai_sandbox_vm_ids
+  ai_sandbox_ingress_src = local.ai_sandbox_ingress_src
+
   # Honeypots (honeypot/notify/tpot tags); filters in locals-honeypot.tf.
   honeypot_container_ids        = local.honeypot_container_ids
   honeypot_notify_container_ids = local.honeypot_notify_container_ids

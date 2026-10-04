@@ -4,7 +4,7 @@ locals {
   pipeline_constants = {
     # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
     # cribl_metrics_ports: see constants-cribl-metrics.tf (same gate).
-    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, {
+    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, local.zcode_ports, {
       haproxy_stats     = 8404
       splunk_web        = 8000
       splunk_hec        = 8088

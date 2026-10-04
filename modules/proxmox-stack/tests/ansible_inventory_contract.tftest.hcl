@@ -606,6 +606,15 @@ run "ansible_inventory_ingress_route_table" {
         tags      = ["terraform", "container", "homarr", "dashboard"]
       }
     }
+    vms = {
+      "sandbox-fixture" = {
+        vm_id     = 505050
+        node_name = "proxmox-1"
+        dhcp      = true
+        vlan      = "ai"
+        tags      = ["terraform", "docker", "agent-sandbox"]
+      }
+    }
     domain = "example.com"
   }
 
@@ -688,6 +697,36 @@ run "ansible_inventory_ingress_route_table" {
       r if r.name == "splunk" && r.group == "siem"
     ]) == 1
     error_message = "a backend-less route must take its group from ingress_route_groups (splunk => siem), not the \"other\" fallback"
+  }
+
+  # ZCode Web is selected from the sandbox VM tag and uses the VM's derived
+  # FQDN, its published backend port, plain HTTP behind Traefik, and SSO.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "zcode"
+    ]) == 1
+    error_message = "the agent-sandbox tag must produce exactly one ZCode Web ingress route"
+  }
+
+  assert {
+    condition = try(
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).owner == "sandbox-fixture"
+      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ip == "sandbox-fixture-505050.example.com",
+      false
+    )
+    error_message = "ZCode Web must use the tag-selected VM and its derived FQDN"
+  }
+
+  assert {
+    condition = try(
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).port == local.pipeline_constants.service_ports.zcode_web
+      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).scheme == "http"
+      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).sso
+      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ui,
+      false
+    )
+    error_message = "ZCode Web must use HTTP on its published port with the SSO gate"
   }
 
   # Table rows without an explicit opt-out default to gated (sso = true):

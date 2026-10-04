@@ -624,3 +624,56 @@ run "generic_database_tag_not_in_postgres_ids" {
     error_message = "a container tagged only 'database' (not 'postgres') must NOT be in postgres_container_ids"
   }
 }
+
+# --- ai_sandbox_vm_ids tests ---
+
+# Only a VM carrying the agent-sandbox tag selects the sandbox firewall
+# profile; the docker tag alone (a CI runner host) must not.
+run "agent_sandbox_tag_selects_only_the_sandbox_vm" {
+  command = plan
+
+  variables {
+    vms = {
+      "ai-sandbox-01" = {
+        vm_id     = 515100
+        node_name = "proxmox-1"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["opentofu", "docker", "agent-sandbox"]
+      }
+      "docker-host" = {
+        vm_id     = 250
+        node_name = "proxmox-1"
+        vlan      = "nonprod"
+        dhcp      = true
+        tags      = ["opentofu", "docker"]
+      }
+    }
+  }
+
+  assert {
+    condition     = keys(local.ai_sandbox_vm_ids) == ["ai-sandbox-01"] && local.ai_sandbox_vm_ids["ai-sandbox-01"] == 515100
+    error_message = "only the agent-sandbox-tagged VM must be in ai_sandbox_vm_ids, got ${jsonencode(local.ai_sandbox_vm_ids)}"
+  }
+}
+
+run "no_agent_sandbox_tag_leaves_the_set_empty" {
+  command = plan
+
+  variables {
+    vms = {
+      "docker-host" = {
+        vm_id     = 250
+        node_name = "proxmox-1"
+        vlan      = "nonprod"
+        dhcp      = true
+        tags      = ["opentofu", "docker"]
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.ai_sandbox_vm_ids) == 0
+    error_message = "a VM without the agent-sandbox tag must not get the sandbox firewall profile"
+  }
+}
