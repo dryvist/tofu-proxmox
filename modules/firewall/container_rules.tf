@@ -32,7 +32,7 @@ resource "proxmox_virtual_environment_firewall_rules" "cribl_stream_container" {
 
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.cribl_stream_services.name
-    comment        = "Cribl Stream API (9000)"
+    comment        = "Cribl Stream API and HEC input"
   }
 
   rule {
