@@ -42,6 +42,14 @@ variable "node_storage" {
         create_home   = optional(bool)
       })), [])
     }))
+    # NFS client mounts realized on this node by ansible-proxmox. The source
+    # and mount path stay alongside the per-node storage declaration; consumers
+    # default opts to a read-only, boot-tolerant mount when omitted.
+    nfs_mounts = optional(list(object({
+      src  = string
+      path = string
+      opts = optional(string)
+    })))
     pools = map(object({
       type = optional(string, "zfspool")
       raid = optional(string) # raidz1, raidz2, mirror (informational; see topology)

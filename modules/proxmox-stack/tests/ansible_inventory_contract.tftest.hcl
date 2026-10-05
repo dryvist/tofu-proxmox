@@ -2168,6 +2168,7 @@ run "ansible_inventory_publishes_models_mount_path" {
         tags      = ["llm-fast"]
         mount_points = [
           { volume = "/models-pool/llama-cpp", path = "/var/lib/llm" },
+          { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache" },
         ]
       }
       "llm-4080" = {
@@ -2177,6 +2178,14 @@ run "ansible_inventory_publishes_models_mount_path" {
         vlan      = "ai"
         dhcp      = true
         tags      = ["llm-fast"]
+      }
+    }
+    node_storage = {
+      "proxmox-1" = {
+        pools = {}
+        nfs_mounts = [
+          { src = "storage:/bulk/models", path = "/var/lib/llm" },
+        ]
       }
     }
   }
@@ -2189,6 +2198,21 @@ run "ansible_inventory_publishes_models_mount_path" {
   assert {
     condition     = output.ansible_inventory.containers["llm-4080"].models_mount_path == null
     error_message = "a container with no mount at var.llm_models_mount_path must publish models_mount_path as null, so the consumer can tell 'no shared mount' from 'mount not yet known' — never a guessed path"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_cache_mount_path == "/var/lib/llm-cache"
+    error_message = "a container with a mount at var.llm_models_cache_mount_path must publish that path for the GPU serving role"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-4080"].models_cache_mount_path == null
+    error_message = "a container without a model-cache mount must publish null instead of a guessed cache path"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-1"].nfs_mounts[0].src == "storage:/bulk/models"
+    error_message = "node-declared NFS client mounts must survive the typed node_storage inventory contract"
   }
 }
 
