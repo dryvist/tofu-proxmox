@@ -561,12 +561,13 @@ run "ansible_inventory_ingress_route_table" {
       # names, proving membership comes from the tag alone. DHCP-first with a
       # 6-digit positional VMID (ai tier 5).
       "fabric-router-fixture" = {
-        vm_id     = 501000
-        node_name = "proxmox-1"
-        dhcp      = true
-        hostname  = "fabric-router-fixture"
-        vlan      = "ai"
-        tags      = ["terraform", "container", "llm-router"]
+        vm_id            = 501000
+        node_name        = "proxmox-1"
+        dhcp             = true
+        hostname         = "fabric-router-fixture"
+        vlan             = "ai"
+        memory_dedicated = 4096
+        tags             = ["terraform", "container", "llm-router"]
       }
       # s3 renders the machine S3 API row: sso = false in ingress_services and
       # NOT in ingress_human_unauthed_routes, so it must keep deriving

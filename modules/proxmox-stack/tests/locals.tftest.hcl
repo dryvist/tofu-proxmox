@@ -1062,12 +1062,13 @@ run "llm_redis_container_ids_are_disjoint_from_the_router_pool" {
   variables {
     containers = {
       "llm-router-1" = {
-        vm_id     = 301
-        node_name = "proxmox-1"
-        hostname  = "llm-router-1"
-        vlan      = "ai"
-        dhcp      = true
-        tags      = ["terraform", "container", "llm-router"]
+        vm_id            = 301
+        node_name        = "proxmox-1"
+        hostname         = "llm-router-1"
+        vlan             = "ai"
+        dhcp             = true
+        memory_dedicated = 4096
+        tags             = ["terraform", "container", "llm-router"]
       }
       "llm-redis-1" = {
         vm_id     = 302

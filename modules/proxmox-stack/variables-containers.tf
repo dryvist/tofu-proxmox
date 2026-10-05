@@ -164,6 +164,14 @@ variable "containers" {
     error_message = "Container memory must be between 64 MB and 64 GB."
   }
 
+  validation {
+    condition = alltrue([
+      for k, v in var.containers : v.memory_dedicated >= 4096
+      if contains(coalesce(try(v.tags, null), []), "llm-router")
+    ])
+    error_message = "Containers tagged 'llm-router' require at least 4096 MB of dedicated memory."
+  }
+
   # A static guest must actually declare its address. dhcp = false with no
   # ipv4_address falls through to the vm_id-derived cidrhost() branch, which
   # silently produces a wrong (or out-of-range) address for any guest carrying a
