@@ -17,3 +17,12 @@ variable "llm_models_mount_path" {
   type        = string
   default     = "/var/lib/llm"
 }
+
+# The writable, node-local cache mount consumed by the GPU serving role. Keep
+# its published path derived from the same mount_points list used to create the
+# LXC, so the Ansible role can fail closed when the cache is not mounted.
+variable "llm_models_cache_mount_path" {
+  description = "Path of the writable local model-cache mount published to the GPU serving role."
+  type        = string
+  default     = "/var/lib/llm-cache"
+}
