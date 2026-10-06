@@ -2169,6 +2169,7 @@ run "ansible_inventory_publishes_models_mount_path" {
         tags      = ["llm-fast"]
         mount_points = [
           { volume = "/models-pool/llama-cpp", path = "/var/lib/llm" },
+          { volume = "/models-pool/llm-origin", path = "/var/lib/llm-origin", read_only = false },
           { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache" },
         ]
       }
@@ -2183,7 +2184,21 @@ run "ansible_inventory_publishes_models_mount_path" {
     }
     node_storage = {
       "proxmox-1" = {
-        pools = {}
+        pools = {
+          bulk = {
+            datasets = {
+              models = {
+                quota      = "300G"
+                nfs_export = "rw,all_squash"
+                nfs_export_permissions = {
+                  owner = "65534"
+                  group = "65534"
+                  mode  = "0775"
+                }
+              }
+            }
+          }
+        }
         nfs_mounts = [
           { src = "storage:/bulk/models", path = "/var/lib/llm" },
         ]
@@ -2202,6 +2217,26 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_origin_mount_path == "/var/lib/llm-origin"
+    error_message = "a container with a mount at var.llm_models_origin_mount_path must publish that path as models_origin_mount_path"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_origin_mount_read_only == false
+    error_message = "a writable declared model-origin mount must publish its actual read_only setting"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-4080"].models_origin_mount_path == null
+    error_message = "a container without a model-origin mount must publish null instead of a guessed path"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-4080"].models_origin_mount_read_only == null
+    error_message = "a container without a model-origin mount must publish null instead of a guessed read_only setting"
+  }
+
+  assert {
     condition     = output.ansible_inventory.containers["llm-fast"].models_cache_mount_path == "/var/lib/llm-cache"
     error_message = "a container with a mount at var.llm_models_cache_mount_path must publish that path for the GPU serving role"
   }
@@ -2214,6 +2249,11 @@ run "ansible_inventory_publishes_models_mount_path" {
   assert {
     condition     = output.ansible_inventory.node_storage["proxmox-1"].nfs_mounts[0].src == "storage:/bulk/models"
     error_message = "node-declared NFS client mounts must survive the typed node_storage inventory contract"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-1"].pools.bulk.datasets.models.nfs_export_permissions.mode == "0775"
+    error_message = "declared NFS export permissions must survive the typed node_storage inventory contract"
   }
 }
 
