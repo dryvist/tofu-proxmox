@@ -255,6 +255,47 @@ run "container_with_memory_below_minimum_rejected" {
     var.containers,
   ]
 }
+
+run "llm_router_below_memory_requirement_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      test = {
+        vm_id            = 100
+        node_name        = "proxmox-1"
+        hostname         = "test"
+        vlan             = "apps"
+        dhcp             = true
+        tags             = ["llm-router"]
+        memory_dedicated = 2048
+      }
+    }
+  }
+
+  expect_failures = [
+    var.containers,
+  ]
+}
+
+run "llm_router_at_memory_requirement_accepted" {
+  command = plan
+
+  variables {
+    containers = {
+      test = {
+        vm_id            = 100
+        node_name        = "proxmox-1"
+        hostname         = "test"
+        vlan             = "apps"
+        dhcp             = true
+        tags             = ["llm-router"]
+        memory_dedicated = 4096
+      }
+    }
+  }
+}
+
 run "template_id_out_of_range_rejected" {
   command = plan
 
