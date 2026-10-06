@@ -28,7 +28,15 @@
 locals {
   # Guests whose live node and state node have diverged. Empty is the steady
   # state; a name here is a claim that the guest is live and mis-tracked.
-  adopt_containers = []
+  adopt_containers = [
+    "llm-router-4",
+    "agentgateway-3",
+    "mcp-gateway",
+    "squid",
+    "nautobot",
+    "vikunja",
+    "llm-4080",
+  ]
 
   # Same contract as adopt_containers, for VMs. A VM named in the container
   # list is silently ignored -- the list drives the container resource, and a
