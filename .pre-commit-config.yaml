@@ -16,13 +16,13 @@ repos:
   # terraform_validate and terraform_tflint need the nix-provided binary, so they
   # are local hooks that use direnv exec to enter the nix shell first.
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.109.1
+    rev: v1.109.2
     hooks:
       - id: terraform_fmt
 
   # Checkov - Terraform IaC security scanner
   - repo: https://github.com/bridgecrewio/checkov.git
-    rev: 3.2.526
+    rev: 3.3.22
     hooks:
       - id: checkov
         args: ['-d', '.', '--framework', 'terraform', '--quiet']

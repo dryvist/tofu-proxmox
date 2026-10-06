@@ -1359,7 +1359,7 @@
       "dhcp": true,
       "vlan": "ai",
       "hostname": "llm-router-1",
-      "description": "LiteLLM proxy fronting the fabric (llm_router_api) \u2014 routes to llm-fast + off-box model endpoints (Docker-in-LXC)",
+      "description": "LiteLLM proxy fronting the fabric (llm_router_api) \u2014 routes to llm-fast and off-box model endpoints (native Python venv)",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
       "tags": [
