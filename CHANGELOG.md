@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.32.0](https://github.com/dryvist/tofu-proxmox/compare/v3.31.0...v3.32.0) (2026-10-06)
+
+
+### Features
+
+* **tofu:** publish model cache and NFS mounts ([#1231](https://github.com/dryvist/tofu-proxmox/issues/1231)) ([16890e1](https://github.com/dryvist/tofu-proxmox/commit/16890e14fcf60dcbc5ce1a029db99564c59af04f))
+
 ## [3.31.0](https://github.com/dryvist/tofu-proxmox/compare/v3.30.0...v3.31.0) (2026-10-04)
 
 
