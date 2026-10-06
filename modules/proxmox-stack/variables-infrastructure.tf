@@ -135,8 +135,22 @@ variable "nodes" {
     # drift source. Known values: "storage" (serves the bulk datasets other
     # nodes pull from).
     cluster_roles = optional(list(string), [])
+
+    # Reviewed SSH host public key ("<type> <base64>") for this node. Published
+    # through ansible_inventory so a consumer pins the node's identity from
+    # declared state. Declared here for the same reason as nautobot_device_name:
+    # this type strips any attribute it does not name.
+    ssh_host_key = optional(string)
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for n in values(var.nodes) :
+      n.ssh_host_key == null || can(regex("^(ssh-ed25519|ecdsa-sha2-nistp256|rsa-sha2-512|ssh-rsa) [A-Za-z0-9+/=]+$", n.ssh_host_key))
+    ])
+    error_message = "nodes[*].ssh_host_key must be a public key line of the form '<type> <base64>' (ssh-ed25519, ecdsa-sha2-nistp256, rsa-sha2-512 or ssh-rsa)."
+  }
 }
 
 # SSH-CA guest trust (see ssh-ca-trust.tf). Left at the default this is a

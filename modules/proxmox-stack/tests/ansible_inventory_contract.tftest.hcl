@@ -1243,6 +1243,42 @@ run "ansible_inventory_nodes_device_name_propagated" {
   }
 }
 
+# ssh_host_key is declared on the node object type for the same reason: an
+# undeclared attribute is stripped silently. Assert it reaches ansible_inventory,
+# stays null when unset, and that a malformed value is rejected.
+run "ansible_inventory_nodes_ssh_host_key_propagated" {
+  command = plan
+
+  variables {
+    nodes = {
+      proxmox-1 = { role = "node-1", ssh_host_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH2QDszDQwNSUqmsclrovwjRdHRbZcXG+6QXFGOp5lUJ" }
+      proxmox-3 = { role = "node-3" }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.nodes["proxmox-1"].ssh_host_key == "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH2QDszDQwNSUqmsclrovwjRdHRbZcXG+6QXFGOp5lUJ"
+    error_message = "ssh_host_key must survive the node object type and reach ansible_inventory"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.nodes["proxmox-3"].ssh_host_key == null
+    error_message = "an unset ssh_host_key must publish as null"
+  }
+}
+
+run "nodes_ssh_host_key_rejects_malformed" {
+  command = plan
+
+  variables {
+    nodes = {
+      proxmox-1 = { role = "node-1", ssh_host_key = "not a key" }
+    }
+  }
+
+  expect_failures = [var.nodes]
+}
+
 # The dataset object type strips any attribute it does not declare, silently:
 # an undeclared key reaches neither the output nor an error. `sparse` was lost
 # exactly this way — it passed the desired-state JSON schema, survived an apply,
