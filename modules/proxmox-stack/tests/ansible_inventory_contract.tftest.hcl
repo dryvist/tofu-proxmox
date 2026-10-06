@@ -2377,3 +2377,63 @@ run "ansible_inventory_publishes_primary_node" {
     error_message = "ansible_inventory must publish proxmox_user so ansible-proxmox reads the same login user this module uses, instead of a hardcoded default"
   }
 }
+
+# --- single-GPU serving guest: mount contract, hard NFS, fronted name -------
+
+run "single_gpu_guest_publishes_mounts_and_ingress" {
+  command = plan
+
+  variables {
+    containers = {
+      "llm-6000" = {
+        vm_id            = 610020
+        node_name        = "proxmox-1"
+        hostname         = "llm-6000"
+        vlan             = "ai"
+        dhcp             = true
+        unprivileged     = false
+        cpu_cores        = 12
+        memory_dedicated = 49152
+        root_disk        = { size = 64 }
+        tags             = ["terraform", "container", "ai", "llm-fast", "llm-gpu"]
+        mount_points = [
+          { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache", backup = false },
+          { volume = "/var/lib/llm-origin", path = "/var/lib/llm-origin", read_only = false, backup = false },
+        ]
+      }
+    }
+    node_storage = {
+      "proxmox-1" = {
+        pools = {}
+        nfs_mounts = [
+          { src = "storage:/bulk/models", path = "/var/lib/llm-origin", opts = "rw,hard,nofail,_netdev,timeo=600" },
+        ]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-6000"].models_cache_mount_path == "/var/lib/llm-cache"
+    error_message = "the single-GPU guest must publish its node-local cache mount path"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-6000"].models_origin_mount_path == "/var/lib/llm-origin" && output.ansible_inventory.containers["llm-6000"].models_origin_mount_read_only == false
+    error_message = "the single-GPU guest must publish a writable origin mount (explicit read_only = false)"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-6000"].models_mount_path == null
+    error_message = "the single-GPU guest declares no shared serving mount and must publish null for it"
+  }
+
+  assert {
+    condition     = can(regex("(^|,)hard(,|$)", output.ansible_inventory.node_storage["proxmox-1"].nfs_mounts[0].opts)) && !can(regex("(^|,)soft(,|$)", output.ansible_inventory.node_storage["proxmox-1"].nfs_mounts[0].opts))
+    error_message = "the writable origin NFS mount must be declared hard, never soft"
+  }
+
+  assert {
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-6000"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-6000"]).sso
+    error_message = "the single-GPU guest must publish an ungated ingress route to the serving port"
+  }
+}

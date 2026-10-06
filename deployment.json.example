@@ -69,6 +69,16 @@
   "datastores": {},
   "_node_storage_comment": "Per-node ZFS storage DECLARATION. Terraform does NOT create ZFS pools (zpool create is OS-level). ansible-proxmox reads this via the ansible_inventory output to create pools/datasets/quotas and (when register=true) `pvesm add zfspool`. Adapt pool names and RAID levels for your hardware.",
   "node_storage": {
+    "proxmox-5": {
+      "nfs_mounts": [
+        {
+          "src": "storage-node:/bulk/models",
+          "path": "/var/lib/llm-origin",
+          "opts": "rw,hard,nofail,_netdev,timeo=600"
+        }
+      ],
+      "pools": {}
+    },
     "proxmox-2": {
       "pools": {
         "example-pool": {
@@ -1203,6 +1213,43 @@
         },
         {
           "path": "/dev/dri/renderD128"
+        }
+      ]
+    },
+    "_llm_gpu_guest_comment": "Single-GPU serving guest (AI tier 5, ai VLAN). Privileged LXC; the NVIDIA device nodes are bound by ansible-proxmox lxc_gpu_features (map key = this hostname), so device_passthrough stays empty. Tag llm-gpu places it in the llm_gpu_group; a mount at var.llm_models_cache_mount_path (writable, node-local, excluded from vzdump) and a writable mount at var.llm_models_origin_mount_path (the NFS origin the node mounts, see node_storage.proxmox-5.nfs_mounts) are published to the serving role. The node NFS mount is declared hard, because a soft mount can short-write the writable origin under a transient outage. Host-path binds and privileged create are root@pam-only. VMID and node are illustrative.",
+    "llm-6000": {
+      "vm_id": 503060,
+      "node_name": "proxmox-5",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-6000",
+      "description": "Single-GPU model serving guest (vLLM and llama.cpp, OpenAI-compatible on llm_fast_api). Privileged LXC with NVIDIA passthrough.",
+      "cpu_cores": 12,
+      "memory_dedicated": 49152,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-fast",
+        "llm-gpu"
+      ],
+      "pool_id": "ai",
+      "unprivileged": false,
+      "start_on_boot": true,
+      "root_disk": {
+        "size": 64
+      },
+      "mount_points": [
+        {
+          "volume": "/var/lib/llm-cache",
+          "path": "/var/lib/llm-cache",
+          "backup": false
+        },
+        {
+          "volume": "/var/lib/llm-origin",
+          "path": "/var/lib/llm-origin",
+          "read_only": false,
+          "backup": false
         }
       ]
     },
