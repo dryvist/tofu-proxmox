@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.33.0](https://github.com/dryvist/tofu-proxmox/compare/v3.32.0...v3.33.0) (2026-10-07)
+
+
+### Features
+
+* **proxmox-stack:** publish a reviewed SSH host key per node ([#1240](https://github.com/dryvist/tofu-proxmox/issues/1240)) ([575b411](https://github.com/dryvist/tofu-proxmox/commit/575b411307c8157a60b4bbe31c80b9008444b2b2))
+* **tofu-proxmox:** declare the single-GPU serving guest and its HTTPS name ([#1239](https://github.com/dryvist/tofu-proxmox/issues/1239)) ([2437f6e](https://github.com/dryvist/tofu-proxmox/commit/2437f6eb5251b77139710f2d81a3fa044b0ed9d4))
+* **tofu-proxmox:** publish model origin mount contract ([#1238](https://github.com/dryvist/tofu-proxmox/issues/1238)) ([7e6a940](https://github.com/dryvist/tofu-proxmox/commit/7e6a9408fadb95e04dd9dcc982816718d937718c))
+
+
+### Bug Fixes
+
+* **containers:** enforce LiteLLM memory floor ([#1234](https://github.com/dryvist/tofu-proxmox/issues/1234)) ([d97abcd](https://github.com/dryvist/tofu-proxmox/commit/d97abcd3a9d2e94962c75b3e829a50c27c3521ad))
+
 ## [3.32.0](https://github.com/dryvist/tofu-proxmox/compare/v3.31.0...v3.32.0) (2026-10-06)
 
 
