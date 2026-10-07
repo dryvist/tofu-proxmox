@@ -2625,3 +2625,25 @@ run "gpu_engine_selector_enables_only_its_matching_guest" {
     error_message = "only the selector-matched engine guest may be running."
   }
 }
+
+run "node_memory_budgets_are_optional_in_published_inventory" {
+  command = plan
+  variables {
+    nodes = {
+      compute-a = { role = "compute", memory_budget_mb = 29761 }
+      server-a  = { role = "server", cluster_roles = ["storage"] }
+    }
+  }
+  assert {
+    condition     = output.ansible_inventory.nodes["compute-a"].memory_budget_mb == 29761
+    error_message = "The published inventory must retain configured node budgets."
+  }
+  assert {
+    condition     = !contains(keys(output.ansible_inventory.nodes["server-a"]), "memory_budget_mb")
+    error_message = "Legacy nodes must omit the absent budget rather than publish null."
+  }
+  assert {
+    condition     = output.ansible_inventory.nodes["server-a"].cluster_roles == tolist(["storage"])
+    error_message = "Budget omission must preserve the existing node contract."
+  }
+}

@@ -240,6 +240,11 @@
           "pattern": "^(ssh-ed25519|ecdsa-sha2-nistp256|rsa-sha2-512|ssh-rsa) [A-Za-z0-9+/=]+$",
           "description": "Reviewed SSH host public key for this node, '<type> <base64>'."
         },
+        "memory_budget_mb": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Guest memory budget in MiB: physical RAM minus an explicit host reserve."
+        },
         "cluster_roles": {
           "type": "array",
           "items": {

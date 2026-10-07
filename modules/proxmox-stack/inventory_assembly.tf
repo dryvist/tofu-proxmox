@@ -106,7 +106,12 @@ locals {
     # Host-level NAS service config - consumed by ansible-proxmox to provision ZFS dataset + Samba
     # Cluster node inventory (non-secret identity) - ansible-proxmox targets hosts and
     # skips nodes where commissioned = false.
-    nodes = var.nodes
+    nodes = {
+      for node, cfg in var.nodes : node => {
+        for key, value in cfg : key => value
+        if key != "memory_budget_mb" || value != null
+      }
+    }
 
     # The cluster's primary node, by name. Published because consumers need
     # "which node is primary" and previously answered it from an environment
