@@ -2437,10 +2437,10 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
 
   variables {
     containers = {
-      "llm-6000" = {
+      "llm-blackwell-7-96" = {
         vm_id            = 610020
         node_name        = "proxmox-1"
-        hostname         = "llm-6000"
+        hostname         = "llm-blackwell-7-96"
         vlan             = "ai"
         dhcp             = true
         unprivileged     = false
@@ -2465,17 +2465,17 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-6000"].models_cache_mount_path == "/var/lib/llm-cache"
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_cache_mount_path == "/var/lib/llm-cache"
     error_message = "the single-GPU guest must publish its node-local cache mount path"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-6000"].models_origin_mount_path == "/var/lib/llm-origin" && output.ansible_inventory.containers["llm-6000"].models_origin_mount_read_only == false
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_origin_mount_path == "/var/lib/llm-origin" && output.ansible_inventory.containers["llm-blackwell-7-96"].models_origin_mount_read_only == false
     error_message = "the single-GPU guest must publish a writable origin mount (explicit read_only = false)"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-6000"].models_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_mount_path == null
     error_message = "the single-GPU guest declares no shared serving mount and must publish null for it"
   }
 
@@ -2485,7 +2485,7 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
   }
 
   assert {
-    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-6000"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-6000"]).sso
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96"]).sso
     error_message = "the single-GPU guest must publish an ungated ingress route to the serving port"
   }
 }

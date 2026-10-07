@@ -50,7 +50,7 @@ locals {
     llama = { backend = "llm-ada-lovelace-6X-16", port = local.pipeline_constants.service_ports.llm_fast_api }
     # Single-GPU serving guest: its own HTTPS name (443, no port in the origin)
     # for the benchmark client. A machine API client, so no browser login gate.
-    "llm-6000" = { backend = "llm-6000", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
+    "llm-blackwell-7-96" = { backend = "llm-blackwell-7-96", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
     # AI orchestration stack UIs (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
     n8n      = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
     dify     = { backend = "dify", port = local.pipeline_constants.service_ports.dify_web }
