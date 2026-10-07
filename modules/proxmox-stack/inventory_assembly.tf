@@ -30,13 +30,24 @@ locals {
     # The schema that DOES run against real output is consumer-side
     # (ansible-proxmox-apps tests/inventory_load/tofu_inventory.schema.json) and
     # is additionalProperties:true, which is why an added key is safe here.
-    schema_version = "2.2.0"
+    schema_version = "2.3.0"
     # Which desired state this came from — see the variables' own descriptions.
     desired_state = {
       etag = var.desired_state_etag
     }
+    llm_gpu_engine = var.llm_gpu_engine
     # LXC Containers - using proxmox_pct_remote connection
     containers = local.inventory_containers
+    # Shared APT cache URLs, derived once from capability-tagged guest FQDNs.
+    # Every Ansible consumer reads this list; cache membership and preference
+    # order stay owned by the published inventory.
+    cache_proxy_urls = {
+      apt_cache = sort([
+        for container in values(local.inventory_containers) :
+        "http://${container.fqdn}:${local.pipeline_constants.service_ports.apt_cacher_ng}"
+        if contains(container.tags, "apt-cache")
+      ])
+    }
     # Regular VMs - using SSH connection
     # DRY: static VMs advertise their vm_id-derived IP; DHCP-first VMs advertise
     # their FQDN (local.vm_address) with a lease-stabilizing deterministic MAC,
@@ -105,7 +116,12 @@ locals {
     # Host-level NAS service config - consumed by ansible-proxmox to provision ZFS dataset + Samba
     # Cluster node inventory (non-secret identity) - ansible-proxmox targets hosts and
     # skips nodes where commissioned = false.
-    nodes = var.nodes
+    nodes = {
+      for node, cfg in var.nodes : node => {
+        for key, value in cfg : key => value
+        if key != "memory_budget_mb" || value != null
+      }
+    }
 
     # The cluster's primary node, by name. Published because consumers need
     # "which node is primary" and previously answered it from an environment

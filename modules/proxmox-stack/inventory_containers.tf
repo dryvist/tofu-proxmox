@@ -54,8 +54,12 @@ locals {
         ? "${local.guest_hostname_containers[k]}.${local.guest_domain[var.containers[k].vlan]}"
         : local.guest_hostname_containers[k]
       )
-      tags    = v.tags
-      pool_id = v.pool_id
+      tags                                  = v.tags
+      pool_id                               = v.pool_id
+      llm_gpu_engine_identity               = local.containers_with_engine_runtime[k].llm_gpu_engine_identity
+      llm_gpu_engine_legacy_runtime_managed = contains(keys(local.llm_gpu_engine_legacy_members), k)
+      started                               = local.containers_with_engine_runtime[k].started
+      start_on_boot                         = local.containers_with_engine_runtime[k].start_on_boot
       # Declared sizing, published so Nautobot can be the SSoT for it.
       # VirtualMachine.vcpus/memory/disk were null for every guest because
       # nothing carried these downstream — the desired state has them, the

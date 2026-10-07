@@ -80,8 +80,8 @@ run "ansible_inventory_schema_version" {
   command = plan
 
   assert {
-    condition     = output.ansible_inventory.schema_version == "2.2.0"
-    error_message = "ansible_inventory must carry schema_version \"2.2.0\" so the homelab-contracts schema gate can confirm the emitted shape"
+    condition     = output.ansible_inventory.schema_version == "2.3.0"
+    error_message = "ansible_inventory must carry schema_version \"2.3.0\" so the homelab-contracts schema gate can confirm the emitted shape"
   }
 }
 
@@ -712,8 +712,8 @@ run "ansible_inventory_ingress_route_table" {
 
   assert {
     condition = try(
-      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).owner == "sandbox-fixture"
-      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ip == "sandbox-fixture-505050.example.com",
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).owner == "sandbox-fixture" &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ip == "sandbox-fixture-505050.example.com",
       false
     )
     error_message = "ZCode Web must use the tag-selected VM and its derived FQDN"
@@ -721,10 +721,10 @@ run "ansible_inventory_ingress_route_table" {
 
   assert {
     condition = try(
-      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).port == local.pipeline_constants.service_ports.zcode_web
-      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).scheme == "http"
-      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).sso
-      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ui,
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).port == local.pipeline_constants.service_ports.zcode_web &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).scheme == "http" &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).sso &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ui,
       false
     )
     error_message = "ZCode Web must use HTTP on its published port with the SSO gate"
@@ -1009,14 +1009,14 @@ run "ansible_inventory_ingress_apex_proxmox" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress : r
-      if r.name == "proxmox"
-      && try(r.apex, false)
-      && try(r.backends, []) == ["proxmox1.example.com", "proxmox2.example.com"]
-      && try(r.port, 0) == 8006
-      && try(r.scheme, "") == "https"
-      && try(r.insecure_tls, false)
-      && try(r.sticky, false)
-      && try(r.health_check, false)
+      if r.name == "proxmox" &&
+      try(r.apex, false) &&
+      try(r.backends, []) == ["proxmox1.example.com", "proxmox2.example.com"] &&
+      try(r.port, 0) == 8006 &&
+      try(r.scheme, "") == "https" &&
+      try(r.insecure_tls, false) &&
+      try(r.sticky, false) &&
+      try(r.health_check, false)
     ]) == 1
     error_message = "ingress must front the Proxmox UI apex (the subdomain apex) with an https sticky health-checked pool over the commissioned node role FQDNs, excluding un-commissioned nodes"
   }
@@ -1079,18 +1079,18 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress : r
-      if r.name == "openbao"
-      && try(r.backends, []) == [
+      if r.name == "openbao" &&
+      try(r.backends, []) == [
         "openbao-10.example.com",
         "openbao-20.example.com",
         "openbao-21.example.com",
         "openbao-30.example.com",
         "openbao-31.example.com",
-      ]
-      && try(r.port, 0) == 8200
-      && !try(r.sticky, true)
-      && try(r.health_check, false)
-      && try(r.health_check_path, "") == "/v1/sys/health"
+      ] &&
+      try(r.port, 0) == 8200 &&
+      !try(r.sticky, true) &&
+      try(r.health_check, false) &&
+      try(r.health_check_path, "") == "/v1/sys/health"
     ]) == 1
     error_message = "ingress must front OpenBao with a sorted, non-sticky, active-only 5-backend HA pool addressed by <hostname>.<domain> FQDN (never a bare/derived IP, which goes stale the moment a peer is rebuilt elsewhere) and a health check of /v1/sys/health with no standbyok — routes to the Raft leader; no sticky cookie, or clients get pinned to an evicted backend across elections"
   }
@@ -1240,6 +1240,22 @@ run "ansible_inventory_nodes_device_name_propagated" {
   assert {
     condition     = output.ansible_inventory.nodes["proxmox-3"].nautobot_device_name == null
     error_message = "an unset nautobot_device_name must publish as null, so a consumer can fall back to the key"
+  }
+}
+
+# Capability tags must survive the closed node object type and reach consumers.
+run "ansible_inventory_node_capability_tags_propagated" {
+  command = plan
+
+  variables {
+    nodes = {
+      example-node = { role = "example-node", tags = ["nvidia-gpu"] }
+    }
+  }
+
+  assert {
+    condition     = length(output.ansible_inventory.nodes["example-node"].tags) == 1 && contains(output.ansible_inventory.nodes["example-node"].tags, "nvidia-gpu")
+    error_message = "node capability tags must survive the node object type and reach ansible_inventory"
   }
 }
 
@@ -2209,10 +2225,10 @@ run "ansible_inventory_publishes_models_mount_path" {
           { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache" },
         ]
       }
-      "llm-4080" = {
+      "llm-ada-lovelace-6X-16" = {
         vm_id     = 610011
         node_name = "proxmox-1"
-        hostname  = "llm-4080"
+        hostname  = "llm-ada-lovelace-6X-16"
         vlan      = "ai"
         dhcp      = true
         tags      = ["llm-fast"]
@@ -2248,7 +2264,7 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-4080"].models_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_mount_path == null
     error_message = "a container with no mount at var.llm_models_mount_path must publish models_mount_path as null, so the consumer can tell 'no shared mount' from 'mount not yet known' — never a guessed path"
   }
 
@@ -2263,12 +2279,12 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-4080"].models_origin_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_origin_mount_path == null
     error_message = "a container without a model-origin mount must publish null instead of a guessed path"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-4080"].models_origin_mount_read_only == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_origin_mount_read_only == null
     error_message = "a container without a model-origin mount must publish null instead of a guessed read_only setting"
   }
 
@@ -2278,7 +2294,7 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-4080"].models_cache_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_cache_mount_path == null
     error_message = "a container without a model-cache mount must publish null instead of a guessed cache path"
   }
 
@@ -2315,10 +2331,10 @@ run "ansible_inventory_publishes_models_mount_allocation_spec" {
           { volume = "fast", size = "120G", path = "/var/lib/llm" },
         ]
       }
-      "llm-4080" = {
+      "llm-ada-lovelace-6X-16" = {
         vm_id     = 610013
         node_name = "proxmox-1"
-        hostname  = "llm-4080"
+        hostname  = "llm-ada-lovelace-6X-16"
         vlan      = "ai"
         dhcp      = true
         tags      = ["llm-fast"]
@@ -2351,9 +2367,9 @@ run "ansible_inventory_publishes_models_mount_allocation_spec" {
 
   assert {
     condition = alltrue([
-      output.ansible_inventory.containers["llm-4080"].models_mount_storage == null,
-      output.ansible_inventory.containers["llm-4080"].models_mount_size == null,
-      output.ansible_inventory.containers["llm-4080"].models_mount_read_only == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_mount_storage == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_mount_size == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_mount_read_only == null,
     ])
     error_message = "a container with no mount at var.llm_models_mount_path must publish null allocation fields too, matching models_mount_path"
   }
@@ -2421,10 +2437,10 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
 
   variables {
     containers = {
-      "llm-6000" = {
+      "llm-blackwell-7-96" = {
         vm_id            = 610020
         node_name        = "proxmox-1"
-        hostname         = "llm-6000"
+        hostname         = "llm-blackwell-7-96"
         vlan             = "ai"
         dhcp             = true
         unprivileged     = false
@@ -2449,17 +2465,17 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-6000"].models_cache_mount_path == "/var/lib/llm-cache"
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_cache_mount_path == "/var/lib/llm-cache"
     error_message = "the single-GPU guest must publish its node-local cache mount path"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-6000"].models_origin_mount_path == "/var/lib/llm-origin" && output.ansible_inventory.containers["llm-6000"].models_origin_mount_read_only == false
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_origin_mount_path == "/var/lib/llm-origin" && output.ansible_inventory.containers["llm-blackwell-7-96"].models_origin_mount_read_only == false
     error_message = "the single-GPU guest must publish a writable origin mount (explicit read_only = false)"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-6000"].models_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_mount_path == null
     error_message = "the single-GPU guest declares no shared serving mount and must publish null for it"
   }
 
@@ -2469,7 +2485,181 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
   }
 
   assert {
-    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-6000"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-6000"]).sso
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96"]).sso
     error_message = "the single-GPU guest must publish an ungated ingress route to the serving port"
+  }
+}
+
+run "gpu_engine_selector_drives_the_published_pair_state" {
+  command = plan
+
+  variables {
+    llm_gpu_engine = "llama_cpp"
+    containers = {
+      "engine-a" = {
+        vm_id                   = 610021
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "llama_cpp"
+      }
+      "engine-b" = {
+        vm_id                   = 610022
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "vllm"
+      }
+      "legacy-gpu" = {
+        vm_id         = 610023
+        node_name     = "proxmox-1"
+        vlan          = "ai"
+        dhcp          = true
+        tags          = ["llm-gpu"]
+        started       = true
+        start_on_boot = true
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.llm_gpu_engine == "llama_cpp"
+    error_message = "the inventory must publish the single selected GPU serving engine."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["engine-a"].llm_gpu_engine_identity == "llama_cpp" &&
+      output.ansible_inventory.containers["engine-b"].llm_gpu_engine_identity == "vllm"
+    )
+    error_message = "each GPU guest must publish its fixed engine identity."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["engine-a"].started == true &&
+      output.ansible_inventory.containers["engine-a"].start_on_boot == true &&
+      output.ansible_inventory.containers["engine-b"].started == false &&
+      output.ansible_inventory.containers["engine-b"].start_on_boot == false &&
+      output.ansible_inventory.containers["legacy-gpu"].started == false &&
+      output.ansible_inventory.containers["legacy-gpu"].start_on_boot == false &&
+      output.ansible_inventory.containers["legacy-gpu"].llm_gpu_engine_legacy_runtime_managed == true
+    )
+    error_message = "only the selector-matched engine may run; the legacy guest must be stopped and disabled at boot."
+  }
+}
+
+run "legacy_gpu_guest_runtime_is_untouched_until_the_pair_is_declared" {
+  command = plan
+
+  variables {
+    llm_gpu_engine = "llama_cpp"
+    containers = {
+      "legacy-gpu" = {
+        vm_id         = 610023
+        node_name     = "proxmox-1"
+        vlan          = "ai"
+        dhcp          = true
+        tags          = ["llm-gpu"]
+        started       = true
+        start_on_boot = true
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["legacy-gpu"].started == true &&
+      output.ansible_inventory.containers["legacy-gpu"].start_on_boot == true &&
+      output.ansible_inventory.containers["legacy-gpu"].llm_gpu_engine_legacy_runtime_managed == false
+    )
+    error_message = "the legacy GPU guest must keep serving until the replacement pair is declared."
+  }
+}
+
+run "gpu_engine_pair_rejects_duplicate_engine_identity" {
+  command = plan
+
+  variables {
+    llm_gpu_engine = "llama_cpp"
+    containers = {
+      "engine-a" = {
+        vm_id                   = 610021
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "llama_cpp"
+      }
+      "engine-b" = {
+        vm_id                   = 610022
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "llama_cpp"
+      }
+    }
+  }
+
+  expect_failures = [terraform_data.llm_gpu_engine_pair_guard]
+}
+
+run "gpu_engine_selector_enables_only_its_matching_guest" {
+  command = plan
+
+  variables {
+    llm_gpu_engine = "vllm"
+    containers = {
+      "engine-a" = {
+        vm_id                   = 610021
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "llama_cpp"
+      }
+      "engine-b" = {
+        vm_id                   = 610022
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "vllm"
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.llm_gpu_engine == "vllm"
+    error_message = "the selected engine must be published to inventory."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["engine-a"].started == false &&
+      output.ansible_inventory.containers["engine-a"].start_on_boot == false &&
+      output.ansible_inventory.containers["engine-b"].started == true &&
+      output.ansible_inventory.containers["engine-b"].start_on_boot == true
+    )
+    error_message = "only the selector-matched engine guest may be running."
+  }
+}
+
+run "node_memory_budgets_are_optional_in_published_inventory" {
+  command = plan
+  variables {
+    nodes = {
+      compute-a = { role = "compute", memory_budget_mb = 29761 }
+      server-a  = { role = "server", cluster_roles = ["storage"] }
+    }
+  }
+  assert {
+    condition     = output.ansible_inventory.nodes["compute-a"].memory_budget_mb == 29761
+    error_message = "The published inventory must retain configured node budgets."
+  }
+  assert {
+    condition     = !contains(keys(output.ansible_inventory.nodes["server-a"]), "memory_budget_mb")
+    error_message = "Legacy nodes must omit the absent budget rather than publish null."
+  }
+  assert {
+    condition     = output.ansible_inventory.nodes["server-a"].cluster_roles == tolist(["storage"])
+    error_message = "Budget omission must preserve the existing node contract."
   }
 }

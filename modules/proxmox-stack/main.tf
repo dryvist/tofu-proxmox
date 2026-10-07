@@ -112,7 +112,7 @@ module "containers" {
   source = "../proxmox-container"
 
   containers = {
-    for k, v in var.containers : k => merge(v, {
+    for k, v in local.containers_with_engine_runtime : k => merge(v, {
       # GENERATED unless declared — see locals-guest-naming.tf.
       hostname  = local.guest_hostname_containers[k]
       node_name = v.node_name

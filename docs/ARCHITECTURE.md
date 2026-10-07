@@ -119,3 +119,14 @@ connection and ingress fields before publication.
   `servarr_wiring` role because the provider cannot accept ephemeral secrets.
 - Provider arguments that cannot be write-only require encrypted, tightly
   scoped Terrakube state until ownership can move to a native Ansible path.
+
+## Guest memory budgets
+
+Set `nodes.<node>.memory_budget_mb` in the private desired state to the node's
+physical RAM in MiB minus an explicit host reserve. A hard plan precondition
+rejects total allocated guest RAM above that budget. The total includes every
+container, generated per-node service, generic VM and dedicated VM; current
+usage, swap and ballooning do not reduce the allocation. Existing nodes without
+a budget retain their behavior, and the published inventory omits the absent
+field. This guard checks declared allocations; operators must verify physical
+capacity and reserve before setting a budget.

@@ -136,6 +136,15 @@ variable "nodes" {
     # nodes pull from).
     cluster_roles = optional(list(string), [])
 
+    # Capability tags are the single node-level selector input consumed by
+    # Ansible roles such as NVIDIA driver provisioning. Keep them alongside
+    # guest tags in the published inventory so consumers derive groups from
+    # desired state rather than maintaining host-name allowlists.
+    tags = optional(list(string), [])
+
+    # Physical RAM minus the host reserve, declared privately in MiB.
+    memory_budget_mb = optional(number)
+
     # Reviewed SSH host public key ("<type> <base64>") for this node. Published
     # through ansible_inventory so a consumer pins the node's identity from
     # declared state. Declared here for the same reason as nautobot_device_name:
@@ -143,6 +152,15 @@ variable "nodes" {
     ssh_host_key = optional(string)
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for n in values(var.nodes) : n.memory_budget_mb == null ? true : (
+        n.memory_budget_mb > 0 && floor(n.memory_budget_mb) == n.memory_budget_mb
+      )
+    ])
+    error_message = "nodes[*].memory_budget_mb must be a positive integer in MiB."
+  }
 
   validation {
     condition = alltrue([

@@ -61,6 +61,11 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$",
       "description": "Reserved address of the heavy-tier LLM serving host (bare IPv4, no mask). Optional, and omitted rather than guessed: consumers fail loudly on absence. Published to consumers as constants.serving.ip."
     },
+    "llm_gpu_engine": {
+      "type": "string",
+      "enum": ["llama_cpp", "vllm"],
+      "description": "Single serving-engine selector for the GPU LXC pair; defaults to llama_cpp when absent."
+    },
     "llm_cpu_scaler": {
       "type": "object",
       "description": "CPU LLM pool scaler. Declare the unit name ONCE; tofu derives /opt|/etc|/var/lib paths and publishes constants.llm_cpu_scaler. Tags name which container tags select pool members. All fields optional — defaults live in modules/proxmox-stack/variables-llm-cpu-scaler.tf.",
@@ -235,6 +240,11 @@
           "pattern": "^(ssh-ed25519|ecdsa-sha2-nistp256|rsa-sha2-512|ssh-rsa) [A-Za-z0-9+/=]+$",
           "description": "Reviewed SSH host public key for this node, '<type> <base64>'."
         },
+        "memory_budget_mb": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Guest memory budget in MiB: physical RAM minus an explicit host reserve."
+        },
         "cluster_roles": {
           "type": "array",
           "items": {
@@ -242,6 +252,12 @@
             "minLength": 1
           },
           "description": "Cluster-wide roles this node plays, e.g. storage. Exactly one node must claim each role."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Capability tags consumed by Ansible to derive node groups and select matching roles."
         },
         "logical_id": {
           "type": "integer",
@@ -336,6 +352,11 @@
           "type": "string",
           "minLength": 1,
           "description": "Proxmox node this container is placed on. Must be a key of `nodes`."
+        },
+        "llm_gpu_engine_identity": {
+          "type": "string",
+          "enum": ["llama_cpp", "vllm"],
+          "description": "Immutable engine identity for one member of the GPU serving LXC pair."
         },
         "ct_template": {
           "type": "string",

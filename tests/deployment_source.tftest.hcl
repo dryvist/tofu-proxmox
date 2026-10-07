@@ -100,3 +100,36 @@ run "file_present_empty_containers_fails_the_guard" {
   # only evaluate at plan/apply.
   expect_failures = [output.deployment_validated]
 }
+
+# Per-node services enter the same complete container map passed to the stack.
+run "generated_services_join_budgeted_containers" {
+  command = plan
+  plan_options { target = [data.aws_s3_object.deployment, output.deployment_validated] }
+  override_data {
+    target = data.aws_s3_object.deployment
+    values = {
+      body = <<-JSON
+        {
+          "containers": {"c1": {"vm_id": 100, "hostname": "c1", "vlan": "lan_main", "node_name": "n1", "memory_dedicated": 2048}},
+          "nodes": {"n1": {"role": "node-1", "cluster_roles": ["storage"], "memory_budget_mb": 29761}},
+          "node_services": {"service": {"vlan": "lan_main", "container_defaults": {"memory_dedicated": 1024}, "per_node": {"n1": {"vm_id": 101, "suffix": 10}}}},
+          "pools": {"p1": {}},
+          "proxmox_node": "n1",
+          "proxmox_user": "root",
+          "domain": "file-source.example",
+          "network_cidrs": {"lan_main": "10.0.0.0/24"},
+          "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture"
+        }
+      JSON
+      etag = "mock-budget-etag"
+    }
+  }
+  assert {
+    condition     = local.containers["service-10"].memory_dedicated == 1024 && local.containers["c1"].memory_dedicated == 2048
+    error_message = "Generated per-node allocations must join explicit containers before stack budgeting."
+  }
+  assert {
+    condition     = local.deployment.nodes.n1.memory_budget_mb == 29761
+    error_message = "The desired-state node budget must reach the stack input unchanged."
+  }
+}
