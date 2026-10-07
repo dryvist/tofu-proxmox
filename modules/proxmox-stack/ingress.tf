@@ -47,7 +47,7 @@ locals {
     chat   = { backend = "open-webui", port = local.pipeline_constants.service_ports.open_webui_web, title = "Open WebUI (all agents)" }
     qdrant = { backend = "qdrant", port = local.pipeline_constants.vector_db_ports.qdrant_http, sso = false } # vector API for agents/MCP
     # llama-server web UI on the fast-tier serving guest (same port the router dials).
-    llama = { backend = "llm-4080", port = local.pipeline_constants.service_ports.llm_fast_api }
+    llama = { backend = "llm-ada-lovelace-6X-16", port = local.pipeline_constants.service_ports.llm_fast_api }
     # Single-GPU serving guest: its own HTTPS name (443, no port in the origin)
     # for the benchmark client. A machine API client, so no browser login gate.
     "llm-6000" = { backend = "llm-6000", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
