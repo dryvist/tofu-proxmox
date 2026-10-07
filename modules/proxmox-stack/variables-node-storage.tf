@@ -93,6 +93,11 @@ variable "node_storage" {
         quota      = optional(string)
         mountpoint = optional(string)
         nfs_export = optional(string)
+        nfs_export_permissions = optional(object({
+          owner = string
+          group = string
+          mode  = string
+        }))
         # When set, ansible-proxmox registers this dataset as its own Proxmox
         # zfspool storage id (`pvesm add zfspool <pvesm_id> -pool <pool>/<dataset>`),
         # so a VM/LXC disk can target it directly as a first-class datastore_id.
@@ -156,6 +161,22 @@ variable "node_storage" {
       ])
     ])
     error_message = "smb.valid_users must list only groups (\"@nas\" or \"+nas\"); a bare name is read by Samba as a username, and a login name must not appear in the desired state."
+  }
+
+  validation {
+    condition = alltrue([
+      for node, cfg in var.node_storage : alltrue([
+        for pool, p in cfg.pools : alltrue([
+          for ds, d in p.datasets : d.nfs_export_permissions == null || (
+            try(length(trimspace(d.nfs_export)), 0) > 0 &&
+            length(trimspace(d.nfs_export_permissions.owner)) > 0 &&
+            length(trimspace(d.nfs_export_permissions.group)) > 0 &&
+            can(regex("^[0-7]{4}$", d.nfs_export_permissions.mode))
+          )
+        ])
+      ])
+    ])
+    error_message = "datasets.nfs_export_permissions requires a non-empty nfs_export, explicit owner and group, and a four-digit octal mode."
   }
 
   # Two accounts sharing a secret_prefix would resolve to the same OpenBao

@@ -126,6 +126,16 @@ locals {
         for mp in local.container_mount_points[k] : mp.read_only
         if mp.path == var.llm_models_mount_path
       ])
+      # Keep the NFS model origin distinct from the shared serving mount and
+      # writable cache; publish only a path declared in this guest's mounts.
+      models_origin_mount_path = one([
+        for mp in local.container_mount_points[k] : mp.path
+        if mp.path == var.llm_models_origin_mount_path
+      ])
+      models_origin_mount_read_only = one([
+        for mp in local.container_mount_points[k] : mp.read_only
+        if mp.path == var.llm_models_origin_mount_path
+      ])
       # The GPU serving role has a separate writable cache. Publish the path
       # from the LXC's actual mount_points instead of guessing it downstream.
       models_cache_mount_path = one([

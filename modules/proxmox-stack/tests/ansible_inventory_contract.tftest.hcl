@@ -561,12 +561,13 @@ run "ansible_inventory_ingress_route_table" {
       # names, proving membership comes from the tag alone. DHCP-first with a
       # 6-digit positional VMID (ai tier 5).
       "fabric-router-fixture" = {
-        vm_id     = 501000
-        node_name = "proxmox-1"
-        dhcp      = true
-        hostname  = "fabric-router-fixture"
-        vlan      = "ai"
-        tags      = ["terraform", "container", "llm-router"]
+        vm_id            = 501000
+        node_name        = "proxmox-1"
+        dhcp             = true
+        hostname         = "fabric-router-fixture"
+        vlan             = "ai"
+        memory_dedicated = 4096
+        tags             = ["terraform", "container", "llm-router"]
       }
       # s3 renders the machine S3 API row: sso = false in ingress_services and
       # NOT in ingress_human_unauthed_routes, so it must keep deriving
@@ -1240,6 +1241,42 @@ run "ansible_inventory_nodes_device_name_propagated" {
     condition     = output.ansible_inventory.nodes["proxmox-3"].nautobot_device_name == null
     error_message = "an unset nautobot_device_name must publish as null, so a consumer can fall back to the key"
   }
+}
+
+# ssh_host_key is declared on the node object type for the same reason: an
+# undeclared attribute is stripped silently. Assert it reaches ansible_inventory,
+# stays null when unset, and that a malformed value is rejected.
+run "ansible_inventory_nodes_ssh_host_key_propagated" {
+  command = plan
+
+  variables {
+    nodes = {
+      proxmox-1 = { role = "node-1", ssh_host_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH2QDszDQwNSUqmsclrovwjRdHRbZcXG+6QXFGOp5lUJ" }
+      proxmox-3 = { role = "node-3" }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.nodes["proxmox-1"].ssh_host_key == "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH2QDszDQwNSUqmsclrovwjRdHRbZcXG+6QXFGOp5lUJ"
+    error_message = "ssh_host_key must survive the node object type and reach ansible_inventory"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.nodes["proxmox-3"].ssh_host_key == null
+    error_message = "an unset ssh_host_key must publish as null"
+  }
+}
+
+run "nodes_ssh_host_key_rejects_malformed" {
+  command = plan
+
+  variables {
+    nodes = {
+      proxmox-1 = { role = "node-1", ssh_host_key = "not a key" }
+    }
+  }
+
+  expect_failures = [var.nodes]
 }
 
 # The dataset object type strips any attribute it does not declare, silently:
@@ -2168,6 +2205,7 @@ run "ansible_inventory_publishes_models_mount_path" {
         tags      = ["llm-fast"]
         mount_points = [
           { volume = "/models-pool/llama-cpp", path = "/var/lib/llm" },
+          { volume = "/models-pool/llm-origin", path = "/var/lib/llm-origin", read_only = false },
           { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache" },
         ]
       }
@@ -2182,7 +2220,21 @@ run "ansible_inventory_publishes_models_mount_path" {
     }
     node_storage = {
       "proxmox-1" = {
-        pools = {}
+        pools = {
+          bulk = {
+            datasets = {
+              models = {
+                quota      = "300G"
+                nfs_export = "rw,all_squash"
+                nfs_export_permissions = {
+                  owner = "65534"
+                  group = "65534"
+                  mode  = "0775"
+                }
+              }
+            }
+          }
+        }
         nfs_mounts = [
           { src = "storage:/bulk/models", path = "/var/lib/llm" },
         ]
@@ -2201,6 +2253,26 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_origin_mount_path == "/var/lib/llm-origin"
+    error_message = "a container with a mount at var.llm_models_origin_mount_path must publish that path as models_origin_mount_path"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-fast"].models_origin_mount_read_only == false
+    error_message = "a writable declared model-origin mount must publish its actual read_only setting"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-4080"].models_origin_mount_path == null
+    error_message = "a container without a model-origin mount must publish null instead of a guessed path"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-4080"].models_origin_mount_read_only == null
+    error_message = "a container without a model-origin mount must publish null instead of a guessed read_only setting"
+  }
+
+  assert {
     condition     = output.ansible_inventory.containers["llm-fast"].models_cache_mount_path == "/var/lib/llm-cache"
     error_message = "a container with a mount at var.llm_models_cache_mount_path must publish that path for the GPU serving role"
   }
@@ -2213,6 +2285,11 @@ run "ansible_inventory_publishes_models_mount_path" {
   assert {
     condition     = output.ansible_inventory.node_storage["proxmox-1"].nfs_mounts[0].src == "storage:/bulk/models"
     error_message = "node-declared NFS client mounts must survive the typed node_storage inventory contract"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.node_storage["proxmox-1"].pools.bulk.datasets.models.nfs_export_permissions.mode == "0775"
+    error_message = "declared NFS export permissions must survive the typed node_storage inventory contract"
   }
 }
 
@@ -2334,5 +2411,65 @@ run "ansible_inventory_publishes_primary_node" {
   assert {
     condition     = output.ansible_inventory.proxmox_user == "root"
     error_message = "ansible_inventory must publish proxmox_user so ansible-proxmox reads the same login user this module uses, instead of a hardcoded default"
+  }
+}
+
+# --- single-GPU serving guest: mount contract, hard NFS, fronted name -------
+
+run "single_gpu_guest_publishes_mounts_and_ingress" {
+  command = plan
+
+  variables {
+    containers = {
+      "llm-6000" = {
+        vm_id            = 610020
+        node_name        = "proxmox-1"
+        hostname         = "llm-6000"
+        vlan             = "ai"
+        dhcp             = true
+        unprivileged     = false
+        cpu_cores        = 12
+        memory_dedicated = 49152
+        root_disk        = { size = 64 }
+        tags             = ["terraform", "container", "ai", "llm-fast", "llm-gpu"]
+        mount_points = [
+          { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache", backup = false },
+          { volume = "/var/lib/llm-origin", path = "/var/lib/llm-origin", read_only = false, backup = false },
+        ]
+      }
+    }
+    node_storage = {
+      "proxmox-1" = {
+        pools = {}
+        nfs_mounts = [
+          { src = "storage:/bulk/models", path = "/var/lib/llm-origin", opts = "rw,hard,nofail,_netdev,timeo=600" },
+        ]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-6000"].models_cache_mount_path == "/var/lib/llm-cache"
+    error_message = "the single-GPU guest must publish its node-local cache mount path"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-6000"].models_origin_mount_path == "/var/lib/llm-origin" && output.ansible_inventory.containers["llm-6000"].models_origin_mount_read_only == false
+    error_message = "the single-GPU guest must publish a writable origin mount (explicit read_only = false)"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-6000"].models_mount_path == null
+    error_message = "the single-GPU guest declares no shared serving mount and must publish null for it"
+  }
+
+  assert {
+    condition     = can(regex("(^|,)hard(,|$)", output.ansible_inventory.node_storage["proxmox-1"].nfs_mounts[0].opts)) && !can(regex("(^|,)soft(,|$)", output.ansible_inventory.node_storage["proxmox-1"].nfs_mounts[0].opts))
+    error_message = "the writable origin NFS mount must be declared hard, never soft"
+  }
+
+  assert {
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-6000"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-6000"]).sso
+    error_message = "the single-GPU guest must publish an ungated ingress route to the serving port"
   }
 }

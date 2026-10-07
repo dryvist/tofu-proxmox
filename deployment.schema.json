@@ -230,6 +230,11 @@
           "minLength": 1,
           "description": "This node's name in the inventory system of record, when it differs from the key."
         },
+        "ssh_host_key": {
+          "type": "string",
+          "pattern": "^(ssh-ed25519|ecdsa-sha2-nistp256|rsa-sha2-512|ssh-rsa) [A-Za-z0-9+/=]+$",
+          "description": "Reviewed SSH host public key for this node, '<type> <base64>'."
+        },
         "cluster_roles": {
           "type": "array",
           "items": {

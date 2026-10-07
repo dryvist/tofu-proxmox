@@ -18,6 +18,14 @@ variable "llm_models_mount_path" {
   default     = "/var/lib/llm"
 }
 
+# The NFS model-origin mount is published separately from the shared serving
+# mount and the node-local cache, using each guest's declared mount_points.
+variable "llm_models_origin_mount_path" {
+  description = "Path of the NFS model-origin mount published to the GPU serving role."
+  type        = string
+  default     = "/var/lib/llm-origin"
+}
+
 # The writable, node-local cache mount consumed by the GPU serving role. Keep
 # its published path derived from the same mount_points list used to create the
 # LXC, so the Ansible role can fail closed when the cache is not mounted.
