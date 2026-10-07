@@ -80,8 +80,8 @@ run "ansible_inventory_schema_version" {
   command = plan
 
   assert {
-    condition     = output.ansible_inventory.schema_version == "2.2.0"
-    error_message = "ansible_inventory must carry schema_version \"2.2.0\" so the homelab-contracts schema gate can confirm the emitted shape"
+    condition     = output.ansible_inventory.schema_version == "2.3.0"
+    error_message = "ansible_inventory must carry schema_version \"2.3.0\" so the homelab-contracts schema gate can confirm the emitted shape"
   }
 }
 
@@ -1240,6 +1240,22 @@ run "ansible_inventory_nodes_device_name_propagated" {
   assert {
     condition     = output.ansible_inventory.nodes["proxmox-3"].nautobot_device_name == null
     error_message = "an unset nautobot_device_name must publish as null, so a consumer can fall back to the key"
+  }
+}
+
+# Capability tags must survive the closed node object type and reach consumers.
+run "ansible_inventory_node_capability_tags_propagated" {
+  command = plan
+
+  variables {
+    nodes = {
+      example-node = { role = "example-node", tags = ["nvidia-gpu"] }
+    }
+  }
+
+  assert {
+    condition     = length(output.ansible_inventory.nodes["example-node"].tags) == 1 && contains(output.ansible_inventory.nodes["example-node"].tags, "nvidia-gpu")
+    error_message = "node capability tags must survive the node object type and reach ansible_inventory"
   }
 }
 

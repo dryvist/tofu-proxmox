@@ -136,6 +136,12 @@ variable "nodes" {
     # nodes pull from).
     cluster_roles = optional(list(string), [])
 
+    # Capability tags are the single node-level selector input consumed by
+    # Ansible roles such as NVIDIA driver provisioning. Keep them alongside
+    # guest tags in the published inventory so consumers derive groups from
+    # desired state rather than maintaining host-name allowlists.
+    tags = optional(list(string), [])
+
     # Reviewed SSH host public key ("<type> <base64>") for this node. Published
     # through ansible_inventory so a consumer pins the node's identity from
     # declared state. Declared here for the same reason as nautobot_device_name:
