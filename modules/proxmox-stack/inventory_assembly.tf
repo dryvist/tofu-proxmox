@@ -38,6 +38,16 @@ locals {
     llm_gpu_engine = var.llm_gpu_engine
     # LXC Containers - using proxmox_pct_remote connection
     containers = local.inventory_containers
+    # Shared APT cache URLs, derived once from capability-tagged guest FQDNs.
+    # Every Ansible consumer reads this list; cache membership and preference
+    # order stay owned by the published inventory.
+    cache_proxy_urls = {
+      apt_cache = sort([
+        for container in values(local.inventory_containers) :
+        "http://${container.fqdn}:${local.pipeline_constants.service_ports.apt_cacher_ng}"
+        if contains(container.tags, "apt-cache")
+      ])
+    }
     # Regular VMs - using SSH connection
     # DRY: static VMs advertise their vm_id-derived IP; DHCP-first VMs advertise
     # their FQDN (local.vm_address) with a lease-stabilizing deterministic MAC,
