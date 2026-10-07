@@ -712,8 +712,8 @@ run "ansible_inventory_ingress_route_table" {
 
   assert {
     condition = try(
-      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).owner == "sandbox-fixture"
-      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ip == "sandbox-fixture-505050.example.com",
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).owner == "sandbox-fixture" &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ip == "sandbox-fixture-505050.example.com",
       false
     )
     error_message = "ZCode Web must use the tag-selected VM and its derived FQDN"
@@ -721,10 +721,10 @@ run "ansible_inventory_ingress_route_table" {
 
   assert {
     condition = try(
-      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).port == local.pipeline_constants.service_ports.zcode_web
-      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).scheme == "http"
-      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).sso
-      && one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ui,
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).port == local.pipeline_constants.service_ports.zcode_web &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).scheme == "http" &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).sso &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "zcode"]).ui,
       false
     )
     error_message = "ZCode Web must use HTTP on its published port with the SSO gate"
@@ -1009,14 +1009,14 @@ run "ansible_inventory_ingress_apex_proxmox" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress : r
-      if r.name == "proxmox"
-      && try(r.apex, false)
-      && try(r.backends, []) == ["proxmox1.example.com", "proxmox2.example.com"]
-      && try(r.port, 0) == 8006
-      && try(r.scheme, "") == "https"
-      && try(r.insecure_tls, false)
-      && try(r.sticky, false)
-      && try(r.health_check, false)
+      if r.name == "proxmox" &&
+      try(r.apex, false) &&
+      try(r.backends, []) == ["proxmox1.example.com", "proxmox2.example.com"] &&
+      try(r.port, 0) == 8006 &&
+      try(r.scheme, "") == "https" &&
+      try(r.insecure_tls, false) &&
+      try(r.sticky, false) &&
+      try(r.health_check, false)
     ]) == 1
     error_message = "ingress must front the Proxmox UI apex (the subdomain apex) with an https sticky health-checked pool over the commissioned node role FQDNs, excluding un-commissioned nodes"
   }
@@ -1079,18 +1079,18 @@ run "ansible_inventory_ingress_openbao_ha_pool" {
   assert {
     condition = length([
       for r in output.ansible_inventory.ingress : r
-      if r.name == "openbao"
-      && try(r.backends, []) == [
+      if r.name == "openbao" &&
+      try(r.backends, []) == [
         "openbao-10.example.com",
         "openbao-20.example.com",
         "openbao-21.example.com",
         "openbao-30.example.com",
         "openbao-31.example.com",
-      ]
-      && try(r.port, 0) == 8200
-      && !try(r.sticky, true)
-      && try(r.health_check, false)
-      && try(r.health_check_path, "") == "/v1/sys/health"
+      ] &&
+      try(r.port, 0) == 8200 &&
+      !try(r.sticky, true) &&
+      try(r.health_check, false) &&
+      try(r.health_check_path, "") == "/v1/sys/health"
     ]) == 1
     error_message = "ingress must front OpenBao with a sorted, non-sticky, active-only 5-backend HA pool addressed by <hostname>.<domain> FQDN (never a bare/derived IP, which goes stale the moment a peer is rebuilt elsewhere) and a health check of /v1/sys/health with no standbyok — routes to the Raft leader; no sticky cookie, or clients get pinned to an evicted backend across elections"
   }

@@ -96,8 +96,8 @@ output "deployment_validated" {
         try(jsondecode(local.deployment_body).vms, {}),
       ) : guest_key
       if try(guest.ha_replication_target, null) != null && (
-        !contains(keys(try(jsondecode(local.deployment_body).nodes, {})), guest.ha_replication_target)
-        || guest.ha_replication_target == try(guest.node_name, "")
+        !contains(keys(try(jsondecode(local.deployment_body).nodes, {})), guest.ha_replication_target) ||
+        guest.ha_replication_target == try(guest.node_name, "")
       )
     ]) == 0
     error_message = format(
@@ -108,8 +108,8 @@ output "deployment_validated" {
           try(jsondecode(local.deployment_body).vms, {}),
         ) : format("%s -> %q (home %q)", guest_key, guest.ha_replication_target, try(guest.node_name, ""))
         if try(guest.ha_replication_target, null) != null && (
-          !contains(keys(try(jsondecode(local.deployment_body).nodes, {})), guest.ha_replication_target)
-          || guest.ha_replication_target == try(guest.node_name, "")
+          !contains(keys(try(jsondecode(local.deployment_body).nodes, {})), guest.ha_replication_target) ||
+          guest.ha_replication_target == try(guest.node_name, "")
         )
       ]),
       jsonencode(keys(try(jsondecode(local.deployment_body).nodes, {}))),
