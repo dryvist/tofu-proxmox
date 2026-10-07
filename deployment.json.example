@@ -38,7 +38,7 @@
     "proxmox-2": { "role": "node-2", "hardware": "standard-node", "services_enabled": false, "logical_id": 6 },
     "proxmox-3": { "role": "node-3", "hardware": "storage-node", "cluster_roles": ["storage"], "logical_id": 4 },
     "proxmox-4": { "role": "node-4", "hardware": "standard-node", "logical_id": 9 },
-    "proxmox-5": { "role": "node-5", "hardware": "cpu-inference-node", "logical_id": 5 }
+    "proxmox-5": { "role": "node-5", "hardware": "gpu-inference-node", "logical_id": 5, "tags": ["nvidia-gpu"] }
   },
   "proxmox_iso_debian": "debian-13.2.0-amd64-netinst.iso",
   "proxmox_ct_template_debian": "debian-13-standard_13.1-2_amd64.tar.zst",
@@ -788,7 +788,8 @@
       "tags": [
         "terraform",
         "container",
-        "vikunja"
+        "vikunja",
+        "ha-managed"
       ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
@@ -1232,7 +1233,8 @@
         "container",
         "ai",
         "llm-fast",
-        "llm-gpu"
+        "llm-gpu",
+        "nvidia-gpu"
       ],
       "pool_id": "ai",
       "unprivileged": false,
@@ -1390,7 +1392,9 @@
         "container",
         "ai",
         "open-webui",
-        "docker"
+        "docker",
+        "managed-secrets",
+        "container-nesting"
       ],
       "pool_id": "ai",
       "unprivileged": true,
@@ -1415,7 +1419,8 @@
         "container",
         "ai",
         "llm-router",
-        "docker"
+        "docker",
+        "managed-secrets"
       ],
       "pool_id": "ai",
       "unprivileged": true,

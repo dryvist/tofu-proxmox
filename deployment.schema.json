@@ -248,6 +248,12 @@
           },
           "description": "Cluster-wide roles this node plays, e.g. storage. Exactly one node must claim each role."
         },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Capability tags consumed by Ansible to derive node groups and select matching roles."
+        },
         "logical_id": {
           "type": "integer",
           "description": "The node's logical digit for the guest node-digit naming law (modules/proxmox-stack/checks-guest-naming.tf). Unset opts the node out of naming enforcement entirely — see the object description above for why that makes this the one key in this object that must never be allowed to typo silently."
