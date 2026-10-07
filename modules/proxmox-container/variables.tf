@@ -80,6 +80,9 @@ variable "containers" {
     unprivileged  = optional(bool, false)
     protection    = optional(bool, false)
     start_on_boot = optional(bool, true)
+    # Runtime lifecycle is managed only for the explicitly engine-identified GPU pair.
+    started                 = optional(bool, true)
+    llm_gpu_engine_identity = optional(string)
 
     # Boot ORDER override; lower starts first. Unset keeps the VMID-derived
     # order in modules/proxmox-container/main.tf, so this is a no-op until a

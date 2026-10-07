@@ -143,6 +143,7 @@ module "homelab" {
   domain                  = local.deployment.domain
   proxmox_ingress         = try(local.deployment.proxmox_ingress, null)
   environment             = try(local.deployment.environment, "homelab")
+  llm_gpu_engine          = try(local.deployment.llm_gpu_engine, "llama_cpp")
   # Install-media object prefix. Optional because most applies never touch a
   # template build; when the key is absent the module's placeholder default
   # fails at download time (unresolvable host) rather than fetching the wrong

@@ -43,6 +43,11 @@
 # adding voters elsewhere in the same change) — which is the plan this exists
 # to stop.
 locals {
+  llm_gpu_engine_running_count = length([
+    for container in values(local.llm_gpu_engine_members) : container
+    if container.started
+  ])
+
   # The node each OpenBao voter lands on. node_name is optional on a container
   # and falls back to the stack default, exactly as the container resource does.
   openbao_voter_nodes = [
@@ -58,6 +63,30 @@ locals {
     for node in distinct(local.openbao_voter_nodes) :
     length([for n in local.openbao_voter_nodes : n if n == node])
   ])...)
+}
+
+resource "terraform_data" "llm_gpu_engine_pair_guard" {
+  input = var.llm_gpu_engine
+
+  lifecycle {
+    precondition {
+      condition = length(local.llm_gpu_engine_members) == 0 || (
+        length(local.llm_gpu_engine_members) == 2 &&
+        contains([for container in values(local.llm_gpu_engine_members) : container.llm_gpu_engine_identity], "llama_cpp") &&
+        contains([for container in values(local.llm_gpu_engine_members) : container.llm_gpu_engine_identity], "vllm") &&
+        length(distinct([for container in values(local.llm_gpu_engine_members) : container.vm_id])) == 2 &&
+        length(distinct([for container in values(local.llm_gpu_engine_members) : container.node_name])) == 1 &&
+        length(local.llm_gpu_engine_legacy_members) <= 1 &&
+        alltrue([
+          for container in values(local.llm_gpu_engine_members) :
+          container.started == (container.llm_gpu_engine_identity == var.llm_gpu_engine) &&
+          container.start_on_boot == container.started
+        ]) &&
+        local.llm_gpu_engine_running_count == 1
+      )
+      error_message = "The GPU serving pair must contain one llama_cpp and one vllm guest on one node, with only the selected engine started and onboot."
+    }
+  }
 }
 
 # Deliberate degraded-window escape hatch: some maintenance plans legitimately
