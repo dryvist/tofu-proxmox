@@ -2225,10 +2225,10 @@ run "ansible_inventory_publishes_models_mount_path" {
           { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache" },
         ]
       }
-      "llm-4080" = {
+      "llm-ada-lovelace-6X-16" = {
         vm_id     = 610011
         node_name = "proxmox-1"
-        hostname  = "llm-4080"
+        hostname  = "llm-ada-lovelace-6X-16"
         vlan      = "ai"
         dhcp      = true
         tags      = ["llm-fast"]
@@ -2264,7 +2264,7 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-4080"].models_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_mount_path == null
     error_message = "a container with no mount at var.llm_models_mount_path must publish models_mount_path as null, so the consumer can tell 'no shared mount' from 'mount not yet known' — never a guessed path"
   }
 
@@ -2279,12 +2279,12 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-4080"].models_origin_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_origin_mount_path == null
     error_message = "a container without a model-origin mount must publish null instead of a guessed path"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-4080"].models_origin_mount_read_only == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_origin_mount_read_only == null
     error_message = "a container without a model-origin mount must publish null instead of a guessed read_only setting"
   }
 
@@ -2294,7 +2294,7 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-4080"].models_cache_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_cache_mount_path == null
     error_message = "a container without a model-cache mount must publish null instead of a guessed cache path"
   }
 
@@ -2331,10 +2331,10 @@ run "ansible_inventory_publishes_models_mount_allocation_spec" {
           { volume = "fast", size = "120G", path = "/var/lib/llm" },
         ]
       }
-      "llm-4080" = {
+      "llm-ada-lovelace-6X-16" = {
         vm_id     = 610013
         node_name = "proxmox-1"
-        hostname  = "llm-4080"
+        hostname  = "llm-ada-lovelace-6X-16"
         vlan      = "ai"
         dhcp      = true
         tags      = ["llm-fast"]
@@ -2367,9 +2367,9 @@ run "ansible_inventory_publishes_models_mount_allocation_spec" {
 
   assert {
     condition = alltrue([
-      output.ansible_inventory.containers["llm-4080"].models_mount_storage == null,
-      output.ansible_inventory.containers["llm-4080"].models_mount_size == null,
-      output.ansible_inventory.containers["llm-4080"].models_mount_read_only == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_mount_storage == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_mount_size == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16"].models_mount_read_only == null,
     ])
     error_message = "a container with no mount at var.llm_models_mount_path must publish null allocation fields too, matching models_mount_path"
   }
