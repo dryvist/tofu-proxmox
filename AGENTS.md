@@ -203,6 +203,7 @@ local.ansible_inventory = {
   nodes = { ... }
   node_storage = { ... }
   domain = var.domain
+  cache_proxy_urls = { apt_cache = ["http://<guest FQDN>:<service port>"] }
 }
 ```
 
