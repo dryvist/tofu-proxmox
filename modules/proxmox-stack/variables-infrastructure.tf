@@ -136,6 +136,12 @@ variable "nodes" {
     # nodes pull from).
     cluster_roles = optional(list(string), [])
 
+    # Capability tags are the single node-level selector input consumed by
+    # Ansible roles such as NVIDIA driver provisioning. Keep them alongside
+    # guest tags in the published inventory so consumers derive groups from
+    # desired state rather than maintaining host-name allowlists.
+    tags = optional(list(string), [])
+
     # Physical RAM minus the host reserve, declared privately in MiB.
     memory_budget_mb = optional(number)
 

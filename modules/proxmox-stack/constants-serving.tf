@@ -6,20 +6,13 @@
 # reason ai_log_ports and the syslog maps live beside it; locals merge across
 # files within the module.
 locals {
-  # Per-model serving concurrency ceiling for the LLM serving tier. THE
-  # single numeric definition of this value repo-wide — previously it was
-  # ALSO a bare literal in ansible-proxmox-ai's inventory/group_vars/all.yml
-  # (ai_llm_concurrency) and nix-darwin's lib/hosts/mac-studio.nix
-  # (serveConcurrency), "kept in sync by convention." ansible-proxmox-ai now
-  # derives ai_llm_concurrency from tofu_data.constants.serving.llm_concurrency
-  # via the existing tofu_data channel (dryvist.homelab.inventory_resolve) —
-  # the same mechanism every other pipeline_constants family already uses.
-  # nix-darwin's flake evaluation is hermetic (no network access), so it
-  # cannot derive this the same way; instead its CI runs a parity check
-  # (.github/workflows/_llm-concurrency-parity.yml in dryvist/nix-darwin)
-  # against this repo's `main` branch and fails the build on drift. Raising
-  # this value requires raising serveConcurrency in the SAME change (or the
-  # parity check fails) — mechanically enforced now, not by convention.
+  # Per-model concurrency for the active GPU serving profile. The model
+  # registry owns each profile's slot count; this published value mirrors the
+  # active eight-slot profile used by shared serving consumers.
+  #
+  # MLX has a separate measured admission limit, published below. nix-darwin's
+  # flake evaluation is hermetic, so its CI checks serveConcurrency against
+  # that matching field.
   #
   # host/ip identify the serving host itself. They are published here for the
   # same reason llm_concurrency is: both consuming Ansible repositories
@@ -42,15 +35,9 @@ locals {
   # lands in private object storage, not git, so publishing it there is not
   # what this design is protecting against; committing it is.
   serving = {
-    # 2 since 2026-08-16 revert (was briefly 4 the same day, was 2 since
-    # 2026-08-06, was 1 before that). The 4 raise was memory-safe but not
-    # compute-safe: MLX shares GPU compute across concurrent sequences, so
-    # more slots on a compute-bound dense model stretches per-request
-    # latency rather than adding throughput. Reverted once production
-    # duration data confirmed it. Reasoning: dryvist/nix-darwin
-    # lib/hosts/mac-studio.md "Serving concurrency".
-    llm_concurrency = 2
-    host            = var.llm_large_serving_host
-    ip              = nonsensitive(var.llm_large_serving_ip)
+    llm_concurrency     = 8
+    mlx_llm_concurrency = 2
+    host                = var.llm_large_serving_host
+    ip                  = nonsensitive(var.llm_large_serving_ip)
   }
 }

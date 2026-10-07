@@ -443,12 +443,15 @@ run "pipeline_constants_db_ports" {
 run "pipeline_constants_serving" {
   command = plan
 
-  # The single definition of LLM serving concurrency. ansible-proxmox-ai
-  # derives ai_llm_concurrency from this; nix-darwin's serveConcurrency is
-  # checked against it by CI. See the comment on serving in constants.tf.
+  # The active serving profile and MLX publish separate admission ceilings.
+  # Each consumer derives from the matching field.
   assert {
-    condition     = local.pipeline_constants.serving.llm_concurrency == 2
-    error_message = "serving.llm_concurrency should be 2"
+    condition     = local.pipeline_constants.serving.llm_concurrency == 8
+    error_message = "serving.llm_concurrency should follow the active eight-slot profile"
+  }
+  assert {
+    condition     = local.pipeline_constants.serving.mlx_llm_concurrency == 2
+    error_message = "serving.mlx_llm_concurrency should remain 2"
   }
 
   # The serving host publishes as EMPTY when the deployment object does not
@@ -769,6 +772,22 @@ run "inventory_publishes_one_address_authority_per_guest" {
         hostname  = "apt-cacher-ng"
         vlan      = "compute"
       }
+      "cache-a" = {
+        vm_id     = 613010
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "cache-a"
+        vlan      = "apps"
+        tags      = ["apt-cache"]
+      }
+      "cache-b" = {
+        vm_id     = 613030
+        node_name = "proxmox-2"
+        dhcp      = true
+        hostname  = "cache-b"
+        vlan      = "apps"
+        tags      = ["apt-cache"]
+      }
     }
   }
 
@@ -806,6 +825,16 @@ run "inventory_publishes_one_address_authority_per_guest" {
   assert {
     condition     = output.ansible_inventory.containers["apt-cacher-ng"].ip == cidrhost(var.network_cidrs["compute"], 108)
     error_message = "static guest must publish its derived address, got ${output.ansible_inventory.containers["apt-cacher-ng"].ip}"
+  }
+
+  # Consumers share the proxy list projected from the published guest FQDNs.
+  assert {
+    condition = (
+      length(output.ansible_inventory.cache_proxy_urls.apt_cache) == 2
+      && output.ansible_inventory.cache_proxy_urls.apt_cache[0] == "http://cache-a.example.com:3142"
+      && output.ansible_inventory.cache_proxy_urls.apt_cache[1] == "http://cache-b.example.com:3142"
+    )
+    error_message = "APT cache URLs must preserve both tagged guest FQDNs and the published service port, got ${jsonencode(output.ansible_inventory.cache_proxy_urls.apt_cache)}"
   }
 
   # The leased guest keeps its lease-stabilizing MAC.
