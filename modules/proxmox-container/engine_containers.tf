@@ -1,17 +1,7 @@
-terraform {
-  required_providers {
-    proxmox = {
-      source  = "bpg/proxmox"
-      version = "~> 0.114"
-    }
-  }
-}
-
-resource "proxmox_virtual_environment_container" "containers" {
-  for_each = {
-    for name, container in var.containers : name => container
-    if container.llm_gpu_engine_identity == null
-  }
+# Only the GPU engine pair opts into runtime start/stop reconciliation. The
+# ordinary fleet above keeps its established started ignore rule.
+resource "proxmox_virtual_environment_container" "engine_containers" {
+  for_each = { for name, container in var.containers : name => container if container.llm_gpu_engine_identity != null }
 
   vm_id       = each.value.vm_id
   node_name   = each.value.node_name
@@ -34,6 +24,7 @@ resource "proxmox_virtual_environment_container" "containers" {
 
   # Startup configuration
   start_on_boot = each.value.start_on_boot
+  started       = each.value.started
 
   # Startup order derives from the VMID itself: the 6-digit scheme's thousands
   # prefix already encodes dependency priority (e.g. 303000 postgres starts
@@ -208,10 +199,7 @@ resource "proxmox_virtual_environment_container" "containers" {
       initialization[0].user_account,
       operating_system[0].template_file_id,
       pool_id,
-      # Ignore the runtime started status - this is a computed field that reflects
-      # whether the container is currently running. We manage boot behavior via
-      # start_on_boot, not runtime state.
-      started,
+      # Engine guest runtime state is intentionally managed alongside start_on_boot.
       # Ignore features drift on existing containers — Proxmox returns HTTP 500
       # "no options specified" when an update sends no meaningful feature changes.
       # Features are only set at creation time (privileged containers require root@pam).

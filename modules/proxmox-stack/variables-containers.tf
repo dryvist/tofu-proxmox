@@ -103,9 +103,7 @@ variable "containers" {
     started                 = optional(bool, true)
     llm_gpu_engine_identity = optional(string)
 
-    # Boot ORDER override; lower starts first. Unset keeps the VMID-derived
-    # order in modules/proxmox-container/main.tf, so this is a no-op until a
-    # guest sets it. See docs/CONTAINER_SCHEMA.md.
+    # Boot order override; lower starts first. Unset uses the VMID-derived order.
     startup_order = optional(number)
 
     # Bare vztmpl filename on var.datastore_iso; null = the shared Debian
