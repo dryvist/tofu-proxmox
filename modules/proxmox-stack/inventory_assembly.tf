@@ -62,7 +62,7 @@ locals {
         vmid               = module.splunk_vm.vm_id
         hostname           = module.splunk_vm.name
         ip                 = module.splunk_vm.ip_address # CIDR already stripped in module output
-        node               = var.proxmox_node
+        node               = var.splunk_node_name
         ansible_connection = "ssh"
         # Sized from its own variables -- this guest is built by a dedicated
         # module, not from var.vms. disk_gb is the BOOT disk: the tiered data

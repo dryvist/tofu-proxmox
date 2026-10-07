@@ -328,6 +328,29 @@ run "ansible_inventory_splunk_vm_exists" {
   }
 }
 
+run "ansible_inventory_splunk_default_node" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.splunk_vm.splunk.node == var.splunk_node_name && var.splunk_node_name == var.proxmox_node
+    error_message = "The dedicated VM inventory must preserve the default node."
+  }
+}
+
+run "ansible_inventory_splunk_dedicated_node" {
+  command = plan
+
+  variables {
+    proxmox_node     = "compute-primary"
+    splunk_node_name = "compute-dedicated"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.splunk_vm.splunk.node == var.splunk_node_name
+    error_message = "The dedicated VM inventory must use its configured placement node."
+  }
+}
+
 run "ansible_inventory_containers_exists" {
   command = plan
 
