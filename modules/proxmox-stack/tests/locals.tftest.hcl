@@ -443,12 +443,15 @@ run "pipeline_constants_db_ports" {
 run "pipeline_constants_serving" {
   command = plan
 
-  # The single definition of LLM serving concurrency. ansible-proxmox-ai
-  # derives ai_llm_concurrency from this; nix-darwin's serveConcurrency is
-  # checked against it by CI. See the comment on serving in constants.tf.
+  # The active serving profile and MLX publish separate admission ceilings.
+  # Each consumer derives from the matching field.
   assert {
-    condition     = local.pipeline_constants.serving.llm_concurrency == 2
-    error_message = "serving.llm_concurrency should be 2"
+    condition     = local.pipeline_constants.serving.llm_concurrency == 8
+    error_message = "serving.llm_concurrency should follow the active eight-slot profile"
+  }
+  assert {
+    condition     = local.pipeline_constants.serving.mlx_llm_concurrency == 2
+    error_message = "serving.mlx_llm_concurrency should remain 2"
   }
 
   # The serving host publishes as EMPTY when the deployment object does not
