@@ -35,6 +35,7 @@ locals {
     desired_state = {
       etag = var.desired_state_etag
     }
+    llm_gpu_engine = var.llm_gpu_engine
     # LXC Containers - using proxmox_pct_remote connection
     containers = local.inventory_containers
     # Regular VMs - using SSH connection

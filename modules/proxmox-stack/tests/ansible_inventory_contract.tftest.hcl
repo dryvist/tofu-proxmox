@@ -2473,3 +2473,155 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
     error_message = "the single-GPU guest must publish an ungated ingress route to the serving port"
   }
 }
+
+run "gpu_engine_selector_drives_the_published_pair_state" {
+  command = plan
+
+  variables {
+    llm_gpu_engine = "llama_cpp"
+    containers = {
+      "engine-a" = {
+        vm_id                   = 610021
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "llama_cpp"
+      }
+      "engine-b" = {
+        vm_id                   = 610022
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "vllm"
+      }
+      "legacy-gpu" = {
+        vm_id         = 610023
+        node_name     = "proxmox-1"
+        vlan          = "ai"
+        dhcp          = true
+        tags          = ["llm-gpu"]
+        started       = true
+        start_on_boot = true
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.llm_gpu_engine == "llama_cpp"
+    error_message = "the inventory must publish the single selected GPU serving engine."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["engine-a"].llm_gpu_engine_identity == "llama_cpp" &&
+      output.ansible_inventory.containers["engine-b"].llm_gpu_engine_identity == "vllm"
+    )
+    error_message = "each GPU guest must publish its fixed engine identity."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["engine-a"].started == true &&
+      output.ansible_inventory.containers["engine-a"].start_on_boot == true &&
+      output.ansible_inventory.containers["engine-b"].started == false &&
+      output.ansible_inventory.containers["engine-b"].start_on_boot == false &&
+      output.ansible_inventory.containers["legacy-gpu"].started == false &&
+      output.ansible_inventory.containers["legacy-gpu"].start_on_boot == false &&
+      output.ansible_inventory.containers["legacy-gpu"].llm_gpu_engine_legacy_runtime_managed == true
+    )
+    error_message = "only the selector-matched engine may run; the legacy guest must be stopped and disabled at boot."
+  }
+}
+
+run "legacy_gpu_guest_runtime_is_untouched_until_the_pair_is_declared" {
+  command = plan
+
+  variables {
+    llm_gpu_engine = "llama_cpp"
+    containers = {
+      "legacy-gpu" = {
+        vm_id         = 610023
+        node_name     = "proxmox-1"
+        vlan          = "ai"
+        dhcp          = true
+        tags          = ["llm-gpu"]
+        started       = true
+        start_on_boot = true
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["legacy-gpu"].started == true &&
+      output.ansible_inventory.containers["legacy-gpu"].start_on_boot == true &&
+      output.ansible_inventory.containers["legacy-gpu"].llm_gpu_engine_legacy_runtime_managed == false
+    )
+    error_message = "the legacy GPU guest must keep serving until the replacement pair is declared."
+  }
+}
+
+run "gpu_engine_pair_rejects_duplicate_engine_identity" {
+  command = plan
+
+  variables {
+    llm_gpu_engine = "llama_cpp"
+    containers = {
+      "engine-a" = {
+        vm_id                   = 610021
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "llama_cpp"
+      }
+      "engine-b" = {
+        vm_id                   = 610022
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "llama_cpp"
+      }
+    }
+  }
+
+  expect_failures = [terraform_data.llm_gpu_engine_pair_guard]
+}
+
+run "gpu_engine_selector_enables_only_its_matching_guest" {
+  command = plan
+
+  variables {
+    llm_gpu_engine = "vllm"
+    containers = {
+      "engine-a" = {
+        vm_id                   = 610021
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "llama_cpp"
+      }
+      "engine-b" = {
+        vm_id                   = 610022
+        node_name               = "proxmox-1"
+        vlan                    = "ai"
+        dhcp                    = true
+        llm_gpu_engine_identity = "vllm"
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.llm_gpu_engine == "vllm"
+    error_message = "the selected engine must be published to inventory."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["engine-a"].started == false &&
+      output.ansible_inventory.containers["engine-a"].start_on_boot == false &&
+      output.ansible_inventory.containers["engine-b"].started == true &&
+      output.ansible_inventory.containers["engine-b"].start_on_boot == true
+    )
+    error_message = "only the selector-matched engine guest may be running."
+  }
+}

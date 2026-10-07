@@ -1,11 +1,11 @@
 output "container_ids" {
   description = "Map of container names to their IDs"
-  value       = { for k, v in proxmox_virtual_environment_container.containers : k => v.vm_id }
+  value       = merge({ for k, v in proxmox_virtual_environment_container.containers : k => v.vm_id }, { for k, v in proxmox_virtual_environment_container.engine_containers : k => v.vm_id })
 }
 
 output "container_details" {
   description = "Complete container information"
-  value = { for k, v in proxmox_virtual_environment_container.containers : k => {
+  value = merge({ for k, v in proxmox_virtual_environment_container.containers : k => {
     id          = v.vm_id
     node_name   = v.node_name
     description = v.description
@@ -20,21 +20,32 @@ output "container_details" {
     # builds lower-case: without this, publishing the computed value would flip
     # the case of every DHCP guest's MAC and churn the artifact for no reason.
     mac_address = try(lower(v.network_interface[0].mac_address), null)
-  } }
+    } }, { for k, v in proxmox_virtual_environment_container.engine_containers : k => {
+    id          = v.vm_id
+    node_name   = v.node_name
+    description = v.description
+    tags        = v.tags
+    pool_id     = v.pool_id
+    mac_address = try(lower(v.network_interface[0].mac_address), null)
+  } })
 }
 
 output "container_network_interfaces" {
   description = "Container network interface configuration (computed attributes not available in bpg/proxmox v0.90+)"
-  value = { for k, v in proxmox_virtual_environment_container.containers : k => {
+  value = merge({ for k, v in proxmox_virtual_environment_container.containers : k => {
     # Note: In bpg/proxmox v0.90+, network attributes (ipv4_addresses, mac_addresses, etc.)
     # are not exposed as computed attributes. Use 'tofu show' to view runtime network details.
     configured_interfaces = length(v.network_interface)
-  } }
+    } }, { for k, v in proxmox_virtual_environment_container.engine_containers : k => {
+    configured_interfaces = length(v.network_interface)
+  } })
 }
 
 output "container_mount_points" {
   description = "Per-container mount_point path => read_only, for verifying the read_only wiring without exposing full container state. Two mounts at one path report the later one, the mount the guest sees."
-  value = { for k, v in proxmox_virtual_environment_container.containers : k => merge([
+  value = merge({ for k, v in proxmox_virtual_environment_container.containers : k => merge([
     for mp in v.mount_point : { (mp.path) = mp.read_only }
-  ]...) }
+    ]...) }, { for k, v in proxmox_virtual_environment_container.engine_containers : k => merge([
+    for mp in v.mount_point : { (mp.path) = mp.read_only }
+  ]...) })
 }
