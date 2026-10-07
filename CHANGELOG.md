@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.34.0](https://github.com/dryvist/tofu-proxmox/compare/v3.33.0...v3.34.0) (2026-10-07)
+
+
+### Features
+
+* **inventory:** publish node capability tags ([3d9f953](https://github.com/dryvist/tofu-proxmox/commit/3d9f953a776ba22fd7a975afa725a64c3f018d9e))
+* **inventory:** publish shared cache endpoint URLs ([9eab0d2](https://github.com/dryvist/tofu-proxmox/commit/9eab0d2af40d8721e80f9f5484a4e25916d0d579))
+* **inventory:** publish shared cache endpoint URLs ([c1cd553](https://github.com/dryvist/tofu-proxmox/commit/c1cd553a52abb72888f1cb0d3401245feded1b54))
+* **placement:** enforce guest memory budgets ([#1251](https://github.com/dryvist/tofu-proxmox/issues/1251)) ([c1bd6e0](https://github.com/dryvist/tofu-proxmox/commit/c1bd6e08e6f71f014f769cb724d5a60cb61e6c13))
+* **serving:** publish active profile and MLX concurrency ([32bc75c](https://github.com/dryvist/tofu-proxmox/commit/32bc75c519be90efb0cc73c8636c54ec3a0112e0))
+* **serving:** publish active profile and MLX concurrency ([1ca5a60](https://github.com/dryvist/tofu-proxmox/commit/1ca5a60d795fd394e148c9d350505160bb83701a))
+* **tofu:** add selector-driven GPU engine guests ([eeda2e6](https://github.com/dryvist/tofu-proxmox/commit/eeda2e6207d315f4b9fe7072b8e4fad4cb45ea3c))
+* **tofu:** rename Ada Lovelace GPU guest references ([0ad6ceb](https://github.com/dryvist/tofu-proxmox/commit/0ad6cebc530c5137bd5f86cef3ac70bf9036895e))
+* **tofu:** rename Ada Lovelace GPU guest references ([d175962](https://github.com/dryvist/tofu-proxmox/commit/d1759623165ff20dde37a4a6e67a96a1d100f754))
+* **tofu:** rename Blackwell GPU guest references ([8dbef24](https://github.com/dryvist/tofu-proxmox/commit/8dbef2466ec8f7a8a9605a6a0e5c9394476648e0))
+* **tofu:** rename Blackwell GPU guest references ([3e7c687](https://github.com/dryvist/tofu-proxmox/commit/3e7c687cd6d05f86431d8f79c12f89428fa96df9))
+
 ## [3.33.0](https://github.com/dryvist/tofu-proxmox/compare/v3.32.0...v3.33.0) (2026-10-07)
 
 
