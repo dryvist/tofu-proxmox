@@ -1219,12 +1219,12 @@
       ]
     },
     "_llm_gpu_guest_comment": "Single-GPU serving guest (AI tier 5, ai VLAN). Privileged LXC; the NVIDIA device nodes are bound by ansible-proxmox lxc_gpu_features (map key = this hostname), so device_passthrough stays empty. Tag llm-gpu places it in the llm_gpu_group; a mount at var.llm_models_cache_mount_path (writable, node-local, excluded from vzdump) and a writable mount at var.llm_models_origin_mount_path (the NFS origin the node mounts, see node_storage.proxmox-5.nfs_mounts) are published to the serving role. The node NFS mount is declared hard, because a soft mount can short-write the writable origin under a transient outage. Host-path binds and privileged create are root@pam-only. VMID and node are illustrative.",
-    "llm-6000": {
+    "llm-blackwell-7-96": {
       "vm_id": 503060,
       "node_name": "proxmox-5",
       "dhcp": true,
       "vlan": "ai",
-      "hostname": "llm-6000",
+      "hostname": "llm-blackwell-7-96",
       "description": "Single-GPU model serving guest (vLLM and llama.cpp, OpenAI-compatible on llm_fast_api). Privileged LXC with NVIDIA passthrough.",
       "cpu_cores": 12,
       "memory_dedicated": 49152,
