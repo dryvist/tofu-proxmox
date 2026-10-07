@@ -1393,7 +1393,8 @@
         "ai",
         "open-webui",
         "docker",
-        "managed-secrets"
+        "managed-secrets",
+        "container-nesting"
       ],
       "pool_id": "ai",
       "unprivileged": true,
