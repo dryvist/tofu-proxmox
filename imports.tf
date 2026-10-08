@@ -26,9 +26,14 @@
 # Verify the declared node still matches reality immediately before an adopting
 # apply — HA can relocate a guest again between the edit and the run.
 locals {
-  # Guests whose live node and state node have diverged. Empty is the steady
-  # state; a name here is a claim that the guest is live and mis-tracked.
-  adopt_containers = []
+  # Containers whose live node and state node have diverged. A container is
+  # named by `adopt = true` on its entry in the desired-state object, so the flag
+  # sits beside the placement it corrects and is removed with it. Unset is the
+  # steady state. Only containers declared in that object can be adopted.
+  adopt_containers = [
+    for key, container in local.deployment.containers : key
+    if try(container.adopt, false)
+  ]
 
   # Same contract as adopt_containers, for VMs. A VM named in the container
   # list is silently ignored -- the list drives the container resource, and a
