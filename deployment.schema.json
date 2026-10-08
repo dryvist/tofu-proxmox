@@ -353,6 +353,10 @@
           "minLength": 1,
           "description": "Proxmox node this container is placed on. Must be a key of `nodes`."
         },
+        "adopt": {
+          "type": "boolean",
+          "description": "Marks a live container that state tracks under another node, or not at all. imports.tf adopts it in place instead of planning a create. Unset or false is the steady state; remove the flag after the adopting apply has landed."
+        },
         "llm_gpu_engine_identity": {
           "type": "string",
           "enum": ["llama_cpp", "vllm"],
