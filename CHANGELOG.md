@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.35.0](https://github.com/dryvist/tofu-proxmox/compare/v3.34.0...v3.35.0) (2026-10-09)
+
+
+### Features
+
+* **imports:** drive container adoption from a per-container flag ([#1257](https://github.com/dryvist/tofu-proxmox/issues/1257)) ([65e2fd4](https://github.com/dryvist/tofu-proxmox/commit/65e2fd4f541e32e62dc9f5251ec936ab4c06d765))
+
+
+### Bug Fixes
+
+* **ci:** grant actions: read to daily run limit callers ([d7d6c8a](https://github.com/dryvist/tofu-proxmox/commit/d7d6c8a4afe1fc1285514cd9540bc7d841b82465))
+* **ci:** grant actions: read to daily run limit reusables ([a7adb21](https://github.com/dryvist/tofu-proxmox/commit/a7adb21846c1a16a8eec77898b38fe6e80c686ae))
+
 ## [3.34.0](https://github.com/dryvist/tofu-proxmox/compare/v3.33.0...v3.34.0) (2026-10-07)
 
 
