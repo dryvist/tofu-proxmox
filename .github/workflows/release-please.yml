@@ -11,7 +11,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: dryvist/.github/.github/workflows/_release-please.yml@main
+    uses: dryvist/.github/.github/workflows/_release-please.yml@v1
     secrets:
       GH_ACTION_RELEASE_PLEASE_PRIVATE_KEY: ${{ secrets.GH_ACTION_RELEASE_PLEASE_PRIVATE_KEY }}
 
@@ -23,7 +23,7 @@ jobs:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
     permissions: {}
-    uses: dryvist/.github/.github/workflows/_dispatch-flake-consumers.yml@main
+    uses: dryvist/.github/.github/workflows/_dispatch-flake-consumers.yml@v1
     # source_input defaults to the calling repo name.
     with:
       event_type: upstream-released
