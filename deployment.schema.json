@@ -409,16 +409,34 @@
         },
         "placement": {
           "type": "object",
-          "description": "Map of Proxmox node name to OpenBao suffixes. Suffix drives name, VMID, and IP host octet.",
+          "description": "Map of Proxmox node name to OpenBao peers. An integer item is a suffix that drives name, VMID, and IP host octet. An object item names the peer by its vm_id: the host octet is vm_id minus vm_id_base, and the name is the given hostname or else <app>-<vm_id>.",
           "minProperties": 1,
           "additionalProperties": {
             "type": "array",
             "minItems": 1,
             "uniqueItems": true,
             "items": {
-              "type": "integer",
-              "minimum": 2,
-              "maximum": 254
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 2,
+                  "maximum": 254
+                },
+                {
+                  "type": "object",
+                  "required": ["vm_id"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "vm_id": {
+                      "type": "integer"
+                    },
+                    "hostname": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              ]
             }
           }
         },
