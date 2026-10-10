@@ -28,11 +28,9 @@ resource "aws_iam_group_policy" "acme" {
   policy = jsonencode(local.acme_dns01_policy)
 }
 
-# Fully manages membership of the group THIS module owns (not the user's
-# overall group list), so it can't clobber unrelated group memberships the
-# existing user may already have.
-resource "aws_iam_group_membership" "acme" {
-  name  = "${var.acme_iam_group_name}-members"
-  group = aws_iam_group.acme.name
-  users = [var.acme_iam_user_name]
+# Adds the existing user to the group THIS module owns, without touching any
+# other group memberships the user may already have.
+resource "aws_iam_user_group_membership" "acme" {
+  user   = var.acme_iam_user_name
+  groups = [aws_iam_group.acme.name]
 }
