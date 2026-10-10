@@ -79,8 +79,9 @@ jobs:
       # actions: write must be granted here or the run fails at graph
       # validation (startup_failure).
       actions: write
-    uses: dryvist/.github/.github/workflows/_ci-gate.yml@main
+    uses: dryvist/.github/.github/workflows/_ci-gate.yml@v1
     with:
+      profile: tofu
       osv_scan: true
       tofu_ci: true
       dependency_review: false
