@@ -25,7 +25,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: dryvist/ai-workflows/.github/workflows/cc-ci-fix.yml@main
+    uses: dryvist/ai-workflows/.github/workflows/cc-ci-fix.yml@d1d335bdb010b47108374e8a6152a7926477a32a # v0.48.1
     secrets: inherit
     with:
       repo_context: "Terraform/OpenTofu project managing Proxmox VE infrastructure."
