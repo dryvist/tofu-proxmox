@@ -50,31 +50,6 @@ variable "vms" {
     cpu_type         = optional(string, "x86-64-v2-AES")
     memory_dedicated = optional(number, 2048)
     memory_floating  = optional(number)
-
-    # Expected sustained and peak resource use; see docs/CONTAINER_SCHEMA.md.
-    expected_resources = optional(object({
-      avg = optional(object({
-        cpu_cores     = optional(number)
-        memory_mib    = optional(number)
-        io_read_mbps  = optional(number)
-        io_write_mbps = optional(number)
-        io_read_iops  = optional(number)
-        io_write_iops = optional(number)
-        net_in_mbps   = optional(number)
-        net_out_mbps  = optional(number)
-      }))
-      peak = optional(object({
-        cpu_cores     = optional(number)
-        memory_mib    = optional(number)
-        io_read_mbps  = optional(number)
-        io_write_mbps = optional(number)
-        io_read_iops  = optional(number)
-        io_write_iops = optional(number)
-        net_in_mbps   = optional(number)
-        net_out_mbps  = optional(number)
-      }))
-    }))
-
     # See the extended rationale on this field in the proxmox-vm module
     # variables: default false, opt in per-guest to make a later
     # memory_dedicated raise reboot-free.
@@ -268,27 +243,6 @@ variable "vms" {
       v.startup_order == null || (v.startup_order >= 1 && floor(v.startup_order) == v.startup_order)
     ])
     error_message = "vms.<name>.startup_order must be a positive whole number (lower starts first), or unset to keep the VMID-derived order."
-  }
-
-  validation {
-    condition = alltrue(flatten([
-      for _, guest in var.vms : [
-        for period in [try(guest.expected_resources.avg, null), try(guest.expected_resources.peak, null)] : [
-          for _, value in coalesce(period, {}) : value == null || try(value >= 0, false)
-        ]
-      ]
-    ]))
-    error_message = "VM expected_resources fields must be non-negative."
-  }
-
-  validation {
-    condition = alltrue(flatten([
-      for _, guest in var.vms : [
-        for field, peak in coalesce(try(guest.expected_resources.peak, null), {}) :
-        try(peak >= guest.expected_resources.avg[field], true)
-      ]
-    ]))
-    error_message = "VM expected_resources peak values must be greater than or equal to avg when both are set."
   }
 }
 
