@@ -684,6 +684,16 @@
       "description": "Example LXC container entry \u2014 replace with your own",
       "cpu_cores": 1,
       "memory_dedicated": 512,
+      "expected_resources": {
+        "avg": {
+          "cpu_cores": 0.4,
+          "memory_mib": 384
+        },
+        "peak": {
+          "cpu_cores": 1,
+          "memory_mib": 512
+        }
+      },
       "tags": [
         "terraform",
         "container"
