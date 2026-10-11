@@ -22,10 +22,17 @@ documentation.
 ## Generator paths are NOT covered by this rule
 
 The OpenBao cluster generator (root `main.tf`,
-`openbao_generated_containers`) and the per-node service generator (root
-`locals-node-services.tf`, `node_service_containers`) still build the map
-key with the ordinal `"<prefix><NN>"` formatting (e.g. `openbao-01`), not
-`<app>-<vm_id>`.
+`openbao_generated_containers`) builds each peer's map key and hostname from
+its placement item:
+
+- An integer item keeps the ordinal `"<prefix><NN>"` formatting (e.g.
+  `openbao-01`).
+- An object item `{"vm_id": N}` uses `<app>-<vm_id>` (e.g. `openbao-110050`).
+  An explicit `"hostname"` on the item replaces that name.
+
+The per-node service generator (root `locals-node-services.tf`,
+`node_service_containers`) has no object form and still uses the ordinal
+key.
 
 This is deliberate, not an oversight. For a `containers`/`vms` entry, the
 map key always comes from the desired state and is never touched by the
@@ -37,12 +44,10 @@ itself, and that key IS the resource address
 against the workspace proved that regenerating that key as `<app>-<vm_id>`
 plans a destroy-and-recreate of every live guest the generator already
 produced (OpenBao Raft voters `openbao-01`, `-02`, `-10`, `-20`, `-21`,
-`-31`, `-42` and the `traefik-*` per-node instances, as of this writing) —
-there is no per-peer "declared hostname" field in the private placement
-data to opt an existing peer out, the way a `containers`/`vms` entry can.
+`-31`, `-42` and the `traefik-*` per-node instances, as of this writing) — an
+integer placement item has no hostname field to opt an existing peer out,
+the way a `containers`/`vms` entry can.
 
-Closing this gap needs a schema change to the private `openbao_cluster`
-and `node_services` placement data (an optional per-peer hostname override,
-so an existing peer can declare its live key the same way a regular guest
-declares `hostname`) before the ordinal formatting can be removed from
-these two paths. Until then they keep `format("%s%02d", prefix, suffix)`.
+An object placement item does have one: its optional `"hostname"` names an
+existing peer's live key, so that peer keeps it. The per-node service
+generator has no such field and keeps `format("%s%02d", prefix, suffix)`.

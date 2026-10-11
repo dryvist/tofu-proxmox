@@ -53,8 +53,8 @@ run "scoped_policy_shape" {
   }
 
   assert {
-    condition     = aws_iam_group_membership.acme.users == toset(["acme-traefik-dns01"])
-    error_message = "group membership must contain exactly the configured ACME user"
+    condition     = aws_iam_user_group_membership.acme.user == "acme-traefik-dns01" && aws_iam_user_group_membership.acme.groups == toset([aws_iam_group.acme.name])
+    error_message = "the configured ACME user must be a member of exactly this module's group"
   }
 }
 

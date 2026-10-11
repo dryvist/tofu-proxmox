@@ -163,4 +163,15 @@ output "deployment_validated" {
       }),
     )
   }
+
+  precondition {
+    # Object-form OpenBao peers name a vm_id, not an ordinal suffix. The bound
+    # depends on vm_id_base, so the schema cannot state it.
+    condition = length(local.openbao_bad_vm_ids) == 0
+    error_message = format(
+      "OpenBao object placement items need vm_id above vm_id_base (%d), and vm_id - vm_id_base from 2 to 254. Offending vm_ids: %s.",
+      local.openbao_vm_id_base,
+      jsonencode(local.openbao_bad_vm_ids),
+    )
+  }
 }

@@ -75,33 +75,50 @@ locals {
 
   openbao_cluster         = try(local.deployment.openbao_cluster, {})
   openbao_cluster_enabled = try(local.openbao_cluster.enabled, false)
+  openbao_name_prefix     = try(local.openbao_cluster.name_prefix, "openbao-")
+  openbao_vm_id_base      = try(local.openbao_cluster.vm_id_base, 110000)
   openbao_cluster_peers = local.openbao_cluster_enabled ? flatten([
-    for node_name, suffixes in local.openbao_cluster.placement : [
-      for suffix in suffixes : {
+    for node_name, items in local.openbao_cluster.placement : [
+      for item in items : {
         node_name = node_name
-        suffix    = suffix
-        vm_id     = try(local.openbao_cluster.vm_id_base, 110000) + suffix
+        # Integer item: an ordinal suffix. Object item: vm_id is given, and the
+        # suffix is what remains above vm_id_base (the host octet). try() keeps
+        # both item shapes in one number-typed result.
+        suffix = try(item.vm_id - local.openbao_vm_id_base, item)
+        vm_id  = try(item.vm_id, local.openbao_vm_id_base + item)
+        name = (
+          try(item.vm_id, null) == null
+          ? format("%s%02d", local.openbao_name_prefix, item)
+          : try(item.hostname, format("%s-%d", trimsuffix(local.openbao_name_prefix, "-"), item.vm_id))
+        )
       }
     ]
   ]) : []
-  # NOT re-landed onto <app>-<vm_id>: the map key IS this container's resource
-  # address (module.containers[0]...containers[<key>]), and the live cluster
-  # already has voters running under the "<prefix><NN>" ordinal key (verified
-  # via a credentialed plan against the live workspace: openbao-01, -02, -10,
-  # -20, -21, -31, -42 all exist in state today). This generator has no
-  # per-peer "declared hostname" field a human could set to opt an existing
-  # peer out — the whole object is synthesized — so switching this key/hostname
-  # to <app>-<vm_id> is not a rename, it is a destroy-and-recreate of every
-  # live Raft voter. See docs/GUEST_NAMING.md for the conflict this is and
-  # the follow-up needed to close it properly.
+  # Object items whose vm_id is not a usable peer: at or below vm_id_base, or a
+  # host octet outside 2..254. The deployment_validated precondition fails on any.
+  openbao_bad_vm_ids = [
+    for item in flatten([
+      for node_name, items in try(local.openbao_cluster.placement, {}) : items
+    ]) : item.vm_id
+    if try(item.vm_id, null) == null ? false : (
+      item.vm_id <= local.openbao_vm_id_base ||
+      item.vm_id - local.openbao_vm_id_base < 2 ||
+      item.vm_id - local.openbao_vm_id_base > 254
+    )
+  ]
+  # Integer items keep the ordinal key. The live voters already run under
+  # "<prefix><NN>", and the map key IS the container's resource address
+  # (module.containers[0]...containers[<key>]), so re-keying one plans a
+  # destroy-and-recreate. Object items take <app>-<vm_id> unless they set a
+  # hostname. See docs/GUEST_NAMING.md.
   openbao_generated_containers = local.openbao_cluster_enabled ? {
     for peer in local.openbao_cluster_peers :
-    format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix) => merge(
+    peer.name => merge(
       try(local.openbao_cluster.container_defaults, {}),
       {
         vm_id     = peer.vm_id
         vlan      = local.openbao_cluster.vlan
-        hostname  = format("%s%02d", try(local.openbao_cluster.name_prefix, "openbao-"), peer.suffix)
+        hostname  = peer.name
         node_name = peer.node_name
         # Static and derived (cidrhost over the cluster's own VLAN + peer
         # suffix), not dhcp + a reserved octet — see docs/DR_HA.md W6 for why.

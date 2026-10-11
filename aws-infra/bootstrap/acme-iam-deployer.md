@@ -53,7 +53,7 @@ Create an IAM role named `tf-acme-iam` with:
 - **Permission policy**: the same Allow statement as the boundary in step
   (a), scoped to exactly the resources this module's three Terraform
   resources touch (`aws_iam_group`, `aws_iam_group_policy`,
-  `aws_iam_group_membership`), **plus** explicit denies closing off
+  `aws_iam_user_group_membership`), **plus** explicit denies closing off
   everything else IAM:
 
 ```json
@@ -154,7 +154,7 @@ escalation via role creation/assumption entirely.
 ## d. Set the import/adoption variables
 
 This module never creates the ACME IAM user — it only adds it as a member of
-a new, exclusively-managed group (`aws_iam_group_membership`), because
+a new group it owns (`aws_iam_user_group_membership`), because
 attaching a policy directly to a user fails the repo's checkov gate
 (`CKV_AWS_40`).
 
