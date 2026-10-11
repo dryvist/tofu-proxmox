@@ -25,6 +25,31 @@ Set dhcp = false ONLY for network and critical guests (resolvers, ingress,
 secrets) — they pin ip_config.ipv4_address so that relocating one of them
 never requires touching the guests that point at it.
 
+## Expected resources (SHOULD)
+
+Declare the expected sustained average and the maximum observed or expected
+peak for capacity planning and comparison with measured telemetry. Each field
+is optional, but when the same field appears in both periods, peak must be at
+least avg.
+
+| Field | Unit |
+| --- | --- |
+| `cpu_cores` | Fractional cores |
+| `memory_mib` | MiB |
+| `io_read_mbps`, `io_write_mbps` | Megabytes per second |
+| `io_read_iops`, `io_write_iops` | Operations per second |
+| `net_in_mbps`, `net_out_mbps` | Megabits per second |
+
+This declaration is warn-only today; every guest should have both `avg` and
+`peak`. It will become required in a later change.
+
+```hcl
+expected_resources = {
+  avg  = { cpu_cores = 0.5, memory_mib = 384 }
+  peak = { cpu_cores = 1.0, memory_mib = 512 }
+}
+```
+
 ## `mount_points` — additional volumes
 
 Mount points (additional volumes mounted into the container)

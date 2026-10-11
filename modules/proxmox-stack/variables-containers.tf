@@ -44,6 +44,30 @@ variable "containers" {
     memory_dedicated = optional(number, 512)
     memory_swap      = optional(number)
 
+    # Expected sustained and peak resource use; see docs/CONTAINER_SCHEMA.md.
+    expected_resources = optional(object({
+      avg = optional(object({
+        cpu_cores     = optional(number)
+        memory_mib    = optional(number)
+        io_read_mbps  = optional(number)
+        io_write_mbps = optional(number)
+        io_read_iops  = optional(number)
+        io_write_iops = optional(number)
+        net_in_mbps   = optional(number)
+        net_out_mbps  = optional(number)
+      }))
+      peak = optional(object({
+        cpu_cores     = optional(number)
+        memory_mib    = optional(number)
+        io_read_mbps  = optional(number)
+        io_write_mbps = optional(number)
+        io_read_iops  = optional(number)
+        io_write_iops = optional(number)
+        net_in_mbps   = optional(number)
+        net_out_mbps  = optional(number)
+      }))
+    }))
+
     # Storage
     root_disk = optional(object({
       datastore_id = optional(string)
@@ -252,5 +276,26 @@ variable "containers" {
       c.startup_order == null || (c.startup_order >= 1 && floor(c.startup_order) == c.startup_order)
     ])
     error_message = "containers.<name>.startup_order must be a positive whole number (lower starts first), or unset to keep the VMID-derived order."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for _, guest in var.containers : [
+        for period in [try(guest.expected_resources.avg, null), try(guest.expected_resources.peak, null)] : [
+          for _, value in coalesce(period, {}) : value == null || try(value >= 0, false)
+        ]
+      ]
+    ]))
+    error_message = "Container expected_resources fields must be non-negative."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for _, guest in var.containers : [
+        for field, peak in coalesce(try(guest.expected_resources.peak, null), {}) :
+        try(peak >= guest.expected_resources.avg[field], true)
+      ]
+    ]))
+    error_message = "Container expected_resources peak values must be greater than or equal to avg when both are set."
   }
 }

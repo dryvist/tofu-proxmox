@@ -79,6 +79,135 @@ run "valid_inputs_pass" {
   command = plan
 }
 
+run "expected_resources_valid_for_containers_and_vms" {
+  command = plan
+
+  variables {
+    containers = {
+      test = {
+        vm_id     = 100
+        node_name = "proxmox-1"
+        hostname  = "test"
+        vlan      = "apps"
+        expected_resources = {
+          avg  = { cpu_cores = 0.5, memory_mib = 384 }
+          peak = { cpu_cores = 1, memory_mib = 512 }
+        }
+      }
+    }
+    vms = {
+      test = {
+        vm_id     = 101
+        node_name = "proxmox-1"
+        name      = "test-vm"
+        vlan      = "apps"
+        expected_resources = {
+          avg  = { net_in_mbps = 10 }
+          peak = { net_in_mbps = 20 }
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = var.containers["test"].expected_resources.avg.cpu_cores == 0.5 && var.vms["test"].expected_resources.peak.net_in_mbps == 20
+    error_message = "Expected resource values must be available on containers and VMs."
+  }
+}
+
+run "expected_resources_missing_period_warns_only" {
+  command = plan
+
+  variables {
+    containers = {
+      test = {
+        vm_id     = 100
+        node_name = "proxmox-1"
+        hostname  = "test"
+        vlan      = "apps"
+        expected_resources = {
+          avg = { cpu_cores = 0.5 }
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = length(var.containers) == 1
+    error_message = "A missing avg or peak period must remain a warning."
+  }
+}
+
+run "negative_expected_resources_container_rejected" {
+  command = plan
+  variables {
+    containers = {
+      test = {
+        vm_id              = 100
+        node_name          = "proxmox-1"
+        hostname           = "test"
+        vlan               = "apps"
+        expected_resources = { avg = { cpu_cores = -0.1 } }
+      }
+    }
+  }
+  expect_failures = [var.containers]
+}
+
+run "peak_below_avg_container_rejected" {
+  command = plan
+  variables {
+    containers = {
+      test = {
+        vm_id     = 100
+        node_name = "proxmox-1"
+        hostname  = "test"
+        vlan      = "apps"
+        expected_resources = {
+          avg  = { cpu_cores = 1 }
+          peak = { cpu_cores = 0.5 }
+        }
+      }
+    }
+  }
+  expect_failures = [var.containers]
+}
+
+run "negative_expected_resources_vm_rejected" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        vm_id              = 100
+        node_name          = "proxmox-1"
+        name               = "test-vm"
+        vlan               = "apps"
+        expected_resources = { peak = { memory_mib = -1 } }
+      }
+    }
+  }
+  expect_failures = [var.vms]
+}
+
+run "peak_below_avg_vm_rejected" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        vm_id     = 100
+        node_name = "proxmox-1"
+        name      = "test-vm"
+        vlan      = "apps"
+        expected_resources = {
+          avg  = { io_read_iops = 100 }
+          peak = { io_read_iops = 50 }
+        }
+      }
+    }
+  }
+  expect_failures = [var.vms]
+}
+
 # --- Negative tests: invalid inputs rejected ---
 
 run "invalid_network_cidrs_rejected" {
