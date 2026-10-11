@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.36.0](https://github.com/dryvist/tofu-proxmox/compare/v3.35.0...v3.36.0) (2026-10-11)
+
+
+### Features
+
+* **openbao:** accept object-form placement peers with an explicit vm_id ([#1267](https://github.com/dryvist/tofu-proxmox/issues/1267)) ([6b57c05](https://github.com/dryvist/tofu-proxmox/commit/6b57c053ae64852c292ab86a74930c29f76fa011))
+* rename the Ada Lovelace GPU guest to llm-ada-lovelace-6X-16G ([280153f](https://github.com/dryvist/tofu-proxmox/commit/280153f0b4d939b4d2a56a40526e7e4a8561f39d))
+* rename the Ada Lovelace GPU guest to llm-ada-lovelace-6X-16G ([72029fa](https://github.com/dryvist/tofu-proxmox/commit/72029fa5fe289ece88151f9fd6d6b4e4c88962b8))
+
+
+### Bug Fixes
+
+* **aws-infra:** add the ACME user to its group with aws_iam_user_group_membership ([#1266](https://github.com/dryvist/tofu-proxmox/issues/1266)) ([3779242](https://github.com/dryvist/tofu-proxmox/commit/3779242136d56b6cd2ab3df6c6a92576478970e0))
+
 ## [3.35.0](https://github.com/dryvist/tofu-proxmox/compare/v3.34.0...v3.35.0) (2026-10-09)
 
 
