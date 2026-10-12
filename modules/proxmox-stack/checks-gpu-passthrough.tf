@@ -1,12 +1,18 @@
-# Only one container per node may hold GPU pass-through. It carries the
-# gpu-passthrough tag and the canonical GPU container name; no other guest gets
+# Each commissioned GPU node has one serving container and may also have one
+# pinned small-model container. Both carry gpu-passthrough; no other guest gets
 # any GPU device or a bind of /dev. Enforced at plan time, natively.
 locals {
   gpu_passthrough_tag = "gpu-passthrough"
+  gpu_small_role_tag  = "llm-gpu-small"
 
   gpu_passthrough_containers = {
     for name, container in var.containers : name => container
     if contains(coalesce(try(container.tags, null), []), local.gpu_passthrough_tag)
+  }
+
+  llm_gpu_small_role_containers = {
+    for name, container in var.containers : name => container
+    if contains(coalesce(try(container.tags, null), []), local.gpu_small_role_tag)
   }
 
   # llm-* serving containers; routers and caches share the prefix but do not serve.
@@ -14,7 +20,8 @@ locals {
     for name, container in var.containers : name => container
     if startswith(coalesce(try(container.hostname, null), name), "llm-") &&
     !startswith(coalesce(try(container.hostname, null), name), "llm-router-") &&
-    !startswith(coalesce(try(container.hostname, null), name), "llm-redis-")
+    !startswith(coalesce(try(container.hostname, null), name), "llm-redis-") &&
+    !contains(coalesce(try(container.tags, null), []), local.gpu_small_role_tag)
   }
 
   gpu_capable_nodes = [
@@ -47,9 +54,11 @@ resource "terraform_data" "gpu_passthrough_guard" {
         for node_name in keys(var.nodes) :
         length([
           for container in values(local.gpu_passthrough_containers) : container if container.node_name == node_name
-        ]) == (contains(local.gpu_capable_nodes, node_name) ? 1 : 0)
+          ]) == (contains(local.gpu_capable_nodes, node_name) ? 1 + length([
+            for container in values(local.llm_gpu_small_role_containers) : container if container.node_name == node_name
+        ]) : 0)
       ])
-      error_message = "Each commissioned nvidia-gpu node must have exactly one gpu-passthrough container; uncommissioned and non-GPU nodes must have none."
+      error_message = "Each commissioned nvidia-gpu node must have exactly one serving gpu-passthrough container plus at most one llm-gpu-small container; uncommissioned and non-GPU nodes must have none."
     }
 
     precondition {
@@ -67,9 +76,25 @@ resource "terraform_data" "gpu_passthrough_guard" {
     precondition {
       condition = alltrue([
         for container in values(local.gpu_passthrough_containers) :
-        can(regex(local.gpu_passthrough_container_name_regex, container.hostname)) && endswith(container.hostname, "-${container.vm_id}")
+        can(regex(local.gpu_passthrough_container_name_regex, container.hostname)) &&
+        (contains(coalesce(try(container.tags, null), []), local.gpu_small_role_tag) == endswith(container.hostname, "-small"))
       ])
-      error_message = "A gpu-passthrough container must have an Ada Lovelace or Blackwell hostname, GDDR 6 or 7 with optional uppercase X, integer VRAM followed by GB, and its vm_id as the final CTID."
+      error_message = "A gpu-passthrough container must have an Ada Lovelace or Blackwell hostname, GDDR 6 or 7 with optional uppercase X, integer VRAM followed by GB, and a role suffix; llm-gpu-small must end in -small."
+    }
+
+    precondition {
+      condition = alltrue([
+        for container in values(local.llm_gpu_small_role_containers) : contains(coalesce(try(container.tags, null), []), local.gpu_passthrough_tag)
+      ])
+      error_message = "The llm-gpu-small role requires gpu-passthrough."
+    }
+
+    precondition {
+      condition = alltrue([
+        for node_name in toset([for container in values(var.containers) : container.node_name]) :
+        length([for container in values(local.llm_gpu_small_role_containers) : container if container.node_name == node_name]) <= 1
+      ])
+      error_message = "At most one llm-gpu-small container may run on each node."
     }
 
     precondition {

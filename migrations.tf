@@ -51,35 +51,35 @@ removed {
   }
 }
 
-# GPU guests renamed to the llm-<generation>-<gddr>-<vram>GB-<CTID> pattern: the
+# GPU guests renamed to the llm-<generation>-<gddr>-<vram>GB-<role> pattern: the
 # state addresses follow the new map key, so no container is replaced.
 
 moved {
   from = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["llm-ada-lovelace-6X-16G"]
-  to   = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["llm-ada-lovelace-6X-16GB-503020"]
+  to   = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["llm-ada-lovelace-6X-16GB-embed"]
 }
 
 moved {
   from = module.homelab.module.firewall.proxmox_virtual_environment_firewall_options.llm_fast_container["llm-ada-lovelace-6X-16G"]
-  to   = module.homelab.module.firewall.proxmox_virtual_environment_firewall_options.llm_fast_container["llm-ada-lovelace-6X-16GB-503020"]
+  to   = module.homelab.module.firewall.proxmox_virtual_environment_firewall_options.llm_fast_container["llm-ada-lovelace-6X-16GB-embed"]
 }
 
 moved {
   from = module.homelab.module.firewall.proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-ada-lovelace-6X-16G"]
-  to   = module.homelab.module.firewall.proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-ada-lovelace-6X-16GB-503020"]
+  to   = module.homelab.module.firewall.proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-ada-lovelace-6X-16GB-embed"]
 }
 
 moved {
   from = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["llm-6000"]
-  to   = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["llm-blackwell-7-96GB-503030"]
+  to   = module.homelab.module.containers[0].proxmox_virtual_environment_container.containers["llm-blackwell-7-96GB-medium"]
 }
 
 moved {
   from = module.homelab.module.firewall.proxmox_virtual_environment_firewall_options.llm_fast_container["llm-6000"]
-  to   = module.homelab.module.firewall.proxmox_virtual_environment_firewall_options.llm_fast_container["llm-blackwell-7-96GB-503030"]
+  to   = module.homelab.module.firewall.proxmox_virtual_environment_firewall_options.llm_fast_container["llm-blackwell-7-96GB-medium"]
 }
 
 moved {
   from = module.homelab.module.firewall.proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-6000"]
-  to   = module.homelab.module.firewall.proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-blackwell-7-96GB-503030"]
+  to   = module.homelab.module.firewall.proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-blackwell-7-96GB-medium"]
 }

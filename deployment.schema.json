@@ -408,17 +408,18 @@
         "hostname": {
           "type": "string",
           "minLength": 1,
-          "description": "Guest hostname. A container tagged gpu-passthrough uses an Ada Lovelace or Blackwell generation, GDDR 6 or 7 with optional uppercase X, an integer VRAM value followed by GB, and its vm_id as the final CTID.",
+          "description": "Guest hostname. A container tagged gpu-passthrough uses an Ada Lovelace or Blackwell generation, GDDR 6 or 7 with optional uppercase X, an integer VRAM value followed by GB, and a role suffix.",
           "examples": [
-            "llm-ada-lovelace-6X-16GB-503020",
-            "llm-blackwell-7-96GB-503030"
+            "llm-ada-lovelace-6X-16GB-embed",
+            "llm-blackwell-7-96GB-medium",
+            "llm-blackwell-7-96GB-small"
           ]
         },
         "tags": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
-          "description": "Guest tags. The reserved GPU container carries gpu-passthrough; node capability is declared separately with the nvidia-gpu node tag."
+          "description": "Guest tags. GPU containers carry gpu-passthrough; the pinned small-model role also carries llm-gpu-small. Node capability is declared separately with the nvidia-gpu node tag."
         },
         "vlan": {
           "type": "string",
