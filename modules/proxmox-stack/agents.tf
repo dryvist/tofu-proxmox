@@ -1,8 +1,13 @@
 locals {
   agent_systems = ["splunk", "cribl"]
 
+  # Profile tags checked only by variable validations in
+  # variables-containers.tf, which cannot read locals.
+  agent_validation_profile_tags = ["ai-runner", "hermes-donna"]
+
   agent_firewall_profile_tags = setunion(
     toset(values(local.firewall_container_tags)),
+    toset(local.agent_validation_profile_tags),
     toset(local.pooled_backend_tags),
     toset(local.llm_cpu_scaler.pool_tags),
   )
