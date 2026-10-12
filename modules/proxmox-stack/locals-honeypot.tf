@@ -12,11 +12,11 @@ locals {
   # by two firewall_options resources.
   honeypot_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "honeypot")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.honeypot)
   }
   honeypot_notify_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "honeypot") && contains(coalesce(try(v.tags, null), []), "notify")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.honeypot) && contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.notify)
   }
 
   # T-Pot deep-sensor VM(s): tagged "tpot" (wide-net input, restricted egress).

@@ -10,6 +10,6 @@ locals {
   # estate can address all boards as a set.
   glance_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "glance")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.glance)
   }
 }

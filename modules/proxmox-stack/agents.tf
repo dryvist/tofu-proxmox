@@ -1,22 +1,15 @@
 locals {
-  agent_system_ports = {
-    splunk = ["splunk_mgmt", "splunk_web"]
-    cribl  = ["cribl_stream_api"]
-  }
+  agent_systems = ["splunk", "cribl"]
 
-  agent_firewall_profile_tags = [
-    "hermes-agent",
-    "hermes-donna",
-    "ai-runner",
-    "ai-github",
-    "ai-terrakube",
-    "ai-full-net",
-    "ai-proxied",
-  ]
+  agent_firewall_profile_tags = setunion(
+    toset(values(local.firewall_container_tags)),
+    toset(local.pooled_backend_tags),
+    toset(local.llm_cpu_scaler.pool_tags),
+  )
 
   agent_unknown_system_slugs = sort(tolist(setsubtract(
     toset(flatten([for agent in values(var.agents) : agent.owns])),
-    toset(keys(local.agent_system_ports)),
+    toset(local.agent_systems),
   )))
 
   agent_firewall_profile_conflicts = sort([

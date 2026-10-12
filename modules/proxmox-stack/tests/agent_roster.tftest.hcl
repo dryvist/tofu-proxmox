@@ -175,6 +175,42 @@ run "agent_container_must_not_have_a_firewall_profile_tag" {
   expect_failures = [output.agents]
 }
 
+run "agent_container_must_not_have_hindsight_tag" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["hindsight"]
+      }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search example records" }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_container_must_not_have_pooled_backend_tag" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["zammad"]
+      }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search example records" }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
 run "agent_with_cataloged_ownership_passes" {
   command = plan
 

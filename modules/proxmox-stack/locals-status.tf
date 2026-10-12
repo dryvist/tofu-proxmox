@@ -7,6 +7,6 @@ locals {
   # routes `gatus` / `uptime-kuma` both point at this backend hostname.
   status_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "status")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.status)
   }
 }
