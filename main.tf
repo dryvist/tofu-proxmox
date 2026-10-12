@@ -152,6 +152,7 @@ module "homelab" {
   ansible_cloud_init_file = "${path.root}/${try(local.deployment.ansible_cloud_init_file, "cloud-init/ansible-server-example.yml")}"
   bridge                  = try(local.deployment.bridge, "vmbr0")
   containers              = local.containers
+  agents                  = try(local.deployment.agents, {})
   datastore_default       = try(local.deployment.datastore_default, "local-zfs")
   datastore_id            = try(local.deployment.datastore_id, "local-zfs")
   datastore_iso           = try(local.deployment.datastore_iso, "local")

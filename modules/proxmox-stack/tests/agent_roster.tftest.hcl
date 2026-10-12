@@ -1,0 +1,237 @@
+# Tests for the optional agent roster projection.
+# All runs use mocked providers and plan only.
+
+mock_provider "proxmox" {
+  mock_data "proxmox_virtual_environment_datastores" {
+    defaults = {
+      datastores = [
+        { id = "local", type = "dir", content_types = ["iso", "vztmpl", "backup"] },
+        { id = "local-zfs", type = "zfspool", content_types = ["images", "rootdir"] },
+      ]
+    }
+  }
+}
+mock_provider "tls" {}
+mock_provider "random" {}
+mock_provider "aws" {}
+mock_provider "null" {}
+
+override_module {
+  target = module.storage
+  outputs = {
+    cloud_init_file_id   = null
+    datastores_available = {}
+    storage_validated    = true
+  }
+}
+
+override_module {
+  target = module.splunk_vm
+  outputs = {
+    vm_id       = 200
+    name        = "splunk-example"
+    ip_address  = "192.0.2.200"
+    mac_address = "BC:24:11:00:00:C8"
+    tiered_disks = {
+      fast = { datastore_id = "fast-example", interface = "virtio2", size = 1024, backup = true }
+      bulk = { datastore_id = "bulk-example", interface = "virtio3", size = 2048, backup = false }
+    }
+  }
+}
+
+override_module {
+  target = module.firewall
+  outputs = {
+    cluster_firewall_enabled            = true
+    vm_firewall_enabled                 = true
+    container_firewall_enabled          = true
+    pipeline_container_firewall_enabled = true
+  }
+}
+
+override_module {
+  target = module.acme_certificates
+  outputs = {
+    acme_accounts = {}
+    dns_plugins   = {}
+    certificates  = {}
+  }
+}
+
+variables {
+  vm_ssh_public_key       = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITestKeyData test@example.test"
+  proxmox_user            = "root"
+  proxmox_ssh_private_key = "-----BEGIN OPENSSH PRIVATE KEY-----\ntest\n-----END OPENSSH PRIVATE KEY-----"
+  network_cidrs           = { for name, id in var.vlan_ids : name => "192.168.${id}.0/24" }
+  domain                  = "example.test"
+  nodes                   = { node-example = { role = "node-1" } }
+}
+
+run "agent_roster_projects_two_agents" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+      "agent-example-2" = { vm_id = 241, hostname = "agent-two.example.test", node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name = "research-scout", display = "Scout", purpose = "Search example records"
+      }
+      "agent-example-2" = {
+        name             = "support-guide", display = "Guide", purpose = "Answer example requests"
+        owns             = ["customer-requests"]
+        router_key_class = "zdr"
+        slack = {
+          home_channel     = "agent-home-example"
+          requests_channel = "agent-requests-example"
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = sort(keys(output.ansible_inventory.agents)) == tolist(["research-scout", "support-guide"])
+    error_message = "The agents inventory map must be keyed by agent.name."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.agents["research-scout"].container == "agent-example-1" &&
+      output.ansible_inventory.agents["research-scout"].hostname == "agent-example-240" &&
+      output.ansible_inventory.agents["research-scout"].display == "Scout" &&
+      output.ansible_inventory.agents["research-scout"].purpose == "Search example records" &&
+      length(output.ansible_inventory.agents["research-scout"].owns) == 0 &&
+      output.ansible_inventory.agents["research-scout"].router_key_class == "standard" &&
+      sort(keys(output.ansible_inventory.agents["research-scout"])) == tolist(["container", "display", "hostname", "owns", "purpose", "router_key_class"])
+    )
+    error_message = "The roster entry must include its container, hostname, required fields, and defaults without Slack."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.agents["support-guide"].container == "agent-example-2" &&
+      output.ansible_inventory.agents["support-guide"].hostname == "agent-two.example.test" &&
+      output.ansible_inventory.agents["support-guide"].display == "Guide" &&
+      output.ansible_inventory.agents["support-guide"].purpose == "Answer example requests" &&
+      output.ansible_inventory.agents["support-guide"].owns == tolist(["customer-requests"]) &&
+      output.ansible_inventory.agents["support-guide"].router_key_class == "zdr" &&
+      sort(keys(output.ansible_inventory.agents["support-guide"])) == tolist(["container", "display", "hostname", "owns", "purpose", "router_key_class", "slack"]) &&
+      output.ansible_inventory.agents["support-guide"].slack.home_channel == "agent-home-example" &&
+      output.ansible_inventory.agents["support-guide"].slack.requests_channel == "agent-requests-example"
+    )
+    error_message = "The roster entry with Slack must preserve its source container, hostname, fields, and optional channels."
+  }
+}
+
+run "agent_roster_defaults_to_empty" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.agents == {} && output.agents == {}
+    error_message = "The agent roster defaults to an empty inventory map."
+  }
+}
+
+run "agent_names_must_be_unique" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+      "agent-example-2" = { vm_id = 241, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records" }
+      "agent-example-2" = { name = "research-scout", display = "Guide", purpose = "Answer requests" }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_displays_must_be_unique" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+      "agent-example-2" = { vm_id = 241, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records" }
+      "agent-example-2" = { name = "support-guide", display = "Scout", purpose = "Answer requests" }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_owns_values_must_be_unique_across_agents" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+      "agent-example-2" = { vm_id = 241, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records", owns = ["example-records"] }
+      "agent-example-2" = { name = "support-guide", display = "Guide", purpose = "Answer requests", owns = ["example-records"] }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_name_must_match_function_persona_pattern" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = { name = "Research-Scout", display = "Scout", purpose = "Search records" }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "agent_owns_values_must_match_slug_pattern" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records", owns = ["Example Records"] }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "agent_roster_keys_must_be_container_keys" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "unknown-example" = { name = "research-scout", display = "Scout", purpose = "Search records" }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
