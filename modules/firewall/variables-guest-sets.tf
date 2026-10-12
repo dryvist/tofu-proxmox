@@ -204,6 +204,33 @@ variable "ai_proxied_container_ids" {
   default     = {}
 }
 
+variable "agent_containers" {
+  description = "Roster agents keyed by agent name, with the guest VM ID and owned system slugs."
+  type = map(object({
+    vm_id = number
+    owns  = list(string)
+  }))
+  default = {}
+}
+
+variable "agent_system_ports" {
+  description = "Agent-owned system ports keyed by system slug, resolved from the Proxmox stack port constants."
+  type        = map(list(number))
+  default     = {}
+}
+
+variable "agent_system_hosts" {
+  description = "Agent-owned system host addresses keyed by system slug, derived from Proxmox guest addresses."
+  type        = map(list(string))
+  default     = {}
+}
+
+variable "agent_ingress_vip" {
+  description = "Derived ingress VIP used as the only direct HTTPS destination for roster agents."
+  type        = string
+  default     = ""
+}
+
 variable "squid_proxy_container_ids" {
   description = "Map of Squid forward-proxy LXC names to IDs (tag-driven: squid). The agent plane's audited egress chokepoint — inbound proxy port from the ai VLAN only, plus outbound 80/443 to any (narrowed by the in-guest domain allowlist)."
   type        = map(number)

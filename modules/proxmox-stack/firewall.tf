@@ -158,6 +158,13 @@ module "firewall" {
   ai_proxied_container_ids  = local.ai_proxied_container_ids
   squid_proxy_container_ids = local.squid_proxy_container_ids
 
+  # Per-agent firewall model: container IDs and owned system slugs come from
+  # the roster; service ports and the ingress VIP are derived above.
+  agent_containers   = local.agent_firewall_containers
+  agent_system_ports = local.agent_system_port_catalog
+  agent_system_hosts = local.agent_system_hosts
+  agent_ingress_vip  = local.ingress_vip
+
   # AI sandbox VM (agent-sandbox tag): untrusted-agent Docker host; HTTPS in
   # from the ingress Traefik instances only.
   ai_sandbox_vm_ids      = local.ai_sandbox_vm_ids

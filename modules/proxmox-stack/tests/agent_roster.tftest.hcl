@@ -98,6 +98,18 @@ run "agent_roster_projects_two_agents" {
 
   assert {
     condition = (
+      local.agent_firewall_containers["research-scout"].vm_id == 240 &&
+      length(local.agent_firewall_containers["research-scout"].owns) == 0 &&
+      local.agent_firewall_containers["support-guide"].vm_id == 241 &&
+      local.agent_firewall_containers["support-guide"].owns == tolist(["splunk"]) &&
+      toset(keys(local.agent_system_port_catalog)) == toset(local.agent_systems) &&
+      toset(keys(local.agent_system_hosts)) == toset(local.agent_systems)
+    )
+    error_message = "The firewall projection must carry roster vm_ids and owns, with aligned system port and host catalogs."
+  }
+
+  assert {
+    condition = (
       output.ansible_inventory.agents["research-scout"].container == "agent-example-1" &&
       output.ansible_inventory.agents["research-scout"].hostname == "agent-example-240" &&
       output.ansible_inventory.agents["research-scout"].display == "Scout" &&
@@ -135,8 +147,8 @@ run "agent_roster_defaults_to_empty" {
   }
 
   assert {
-    condition     = output.ansible_inventory.agents == {} && output.agents == {}
-    error_message = "The agent roster defaults to an empty inventory map."
+    condition     = output.ansible_inventory.agents == {} && output.agents == {} && local.agent_firewall_containers == {}
+    error_message = "The agent roster and its firewall projection default to empty maps."
   }
 }
 
@@ -173,6 +185,48 @@ run "agent_container_must_not_have_a_firewall_profile_tag" {
   }
 
   expect_failures = [output.agents]
+}
+
+run "agent_owned_system_rejects_a_dhcp_splunk_host" {
+  command = plan
+
+  variables {
+    network_cidrs = { for vlan in keys(var.vlan_ids) : vlan => "192.0.2.0/24" }
+    containers = {
+      "agent-example-1" = { vm_id = 241, node_name = "node-example", vlan = "apps" }
+      "splunk-dhcp-example" = {
+        vm_id = 242, node_name = "node-example", vlan = "apps", dhcp = true, tags = ["splunk"]
+      }
+    }
+    agents = {
+      "agent-example-1" = {
+        name = "research-scout", display = "Scout", purpose = "Search example records", owns = ["splunk"]
+      }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_system_hosts_cribl_contains_only_static_stream_guests" {
+  command = plan
+
+  variables {
+    network_cidrs = { for vlan in keys(var.vlan_ids) : vlan => "192.0.2.0/24" }
+    containers = {
+      "cribl-static-example" = {
+        vm_id = 241, node_name = "node-example", vlan = "apps", tags = ["cribl", "stream"]
+      }
+      "cribl-dhcp-example" = {
+        vm_id = 242, node_name = "node-example", vlan = "apps", dhcp = true, tags = ["cribl", "stream"]
+      }
+    }
+  }
+
+  assert {
+    condition     = local.agent_system_hosts["cribl"] == ["192.0.2.241"]
+    error_message = "Cribl host addresses must include only static Cribl Stream guests."
+  }
 }
 
 run "agent_container_must_not_have_hindsight_tag" {
