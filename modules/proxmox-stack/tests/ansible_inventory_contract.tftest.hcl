@@ -136,6 +136,15 @@ run "ansible_inventory_vikunja_web_constant" {
   }
 }
 
+run "ansible_inventory_clickhouse_metrics_port" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.clickhouse_metrics == 9363
+    error_message = "constants.service_ports.clickhouse_metrics must be 9363"
+  }
+}
+
 run "ansible_inventory_constants_exists" {
   command = plan
 

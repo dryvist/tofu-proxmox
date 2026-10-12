@@ -89,6 +89,28 @@ resource "terraform_data" "llm_gpu_engine_pair_guard" {
   }
 }
 
+resource "terraform_data" "langfuse_clickhouse_placement_guard" {
+  input = {
+    langfuse   = local.langfuse_container_ids
+    clickhouse = local.clickhouse_container_ids
+  }
+
+  lifecycle {
+    precondition {
+      condition = (
+        (length(local.langfuse_container_ids) == 0 && length(local.clickhouse_container_ids) == 0) ||
+        (
+          length(local.langfuse_container_ids) == 1 &&
+          length(local.clickhouse_container_ids) == 1 &&
+          try(var.containers[one(keys(local.langfuse_container_ids))].node_name, null) ==
+          try(var.containers[one(keys(local.clickhouse_container_ids))].node_name, null)
+        )
+      )
+      error_message = "Langfuse and ClickHouse must each have exactly one tagged container on the same Proxmox node; tagged containers: langfuse=[${length(local.langfuse_container_ids) == 0 ? "none" : join(", ", keys(local.langfuse_container_ids))}], clickhouse=[${length(local.clickhouse_container_ids) == 0 ? "none" : join(", ", keys(local.clickhouse_container_ids))}]."
+    }
+  }
+}
+
 # Deliberate degraded-window escape hatch: some maintenance plans legitimately
 # WANT a temporarily concentrated end state (e.g. evacuating a node's voters
 # before its rebuild, with the respread landing in a later apply). Setting this
