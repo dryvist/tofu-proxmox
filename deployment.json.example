@@ -53,6 +53,7 @@
   "splunk_node_name": "proxmox-1",
   "splunk_cpu_type": "host",
   "splunk_migrate": false,
+  "splunk_adopt": false,
   "pools": {
     "logging": {
       "comment": "Logging and observability infrastructure"
