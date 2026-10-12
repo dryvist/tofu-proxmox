@@ -93,22 +93,22 @@ locals {
   # splunk-mgmt), each at its own VLAN address.
   splunk_network_ips = nonsensitive(concat(
     [cidrhost(var.network_cidrs["siem"], var.splunk_vm_id)],
-    [for k, v in var.containers : cidrhost(var.network_cidrs[v.vlan], v.vm_id) if contains(coalesce(v.tags, []), "splunk")]
+    [for k, v in var.containers : cidrhost(var.network_cidrs[v.vlan], v.vm_id) if contains(coalesce(v.tags, []), local.firewall_container_tags.splunk)]
   ))
 
   # Pipeline containers: HAProxy (haproxy tag) and Cribl Edge (cribl + edge tags)
   # These receive syslog and NetFlow data from network devices
   pipeline_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "haproxy") || (
-      contains(coalesce(try(v.tags, null), []), "cribl") && contains(coalesce(try(v.tags, null), []), "edge")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.haproxy) || (
+      contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.cribl) && contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.edge)
     )
   }
 
   # Notification containers: Mailpit and ntfy (notifications tag)
   notification_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "notifications")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.notifications)
   }
 
   # Honeypot tag-filter locals (honeypot_container_ids,
@@ -118,31 +118,31 @@ locals {
   # Vector database containers: Qdrant (vectordb tag)
   vectordb_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "vectordb")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.vectordb)
   }
 
   # RAG engine containers: LlamaIndex (rag tag)
   rag_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "rag")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.rag)
   }
 
   # APT caching proxy containers: apt-cacher-ng (apt-cache tag)
   apt_cacher_ng_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "apt-cache")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.apt_cache)
   }
 
   # Object storage containers (object-storage tag) — RustFS.
   s3_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "object-storage")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.object_storage)
   }
 
   # OpenBao secrets-management containers (openbao tag)
   openbao_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "openbao")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.openbao)
   }
 
   # Ingress containers (ingress tag) — the Traefik HA instances. Guest-firewalled
@@ -152,7 +152,7 @@ locals {
   # enforcement flip never breaks the VIP.
   ingress_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "ingress")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ingress)
   }
 
   # HAProxy LXCs (haproxy tag) — receive delivered ACME certs for HTTPS frontends.
@@ -160,14 +160,14 @@ locals {
   # local is dedicated to cert-delivery targeting.
   haproxy_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "haproxy")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.haproxy)
   }
 
   # Cribl Stream containers: tagged cribl + stream (receives from Edge, routes to Splunk)
   # Distinct from pipeline_container_ids (HAProxy + Cribl Edge) as it doesn't receive external traffic
   cribl_stream_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "cribl") && contains(coalesce(try(v.tags, null), []), "stream")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.cribl) && contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.stream)
   }
 
   # Cribl Edge containers: tagged cribl + edge. Subset of pipeline_container_ids
@@ -175,13 +175,13 @@ locals {
   # without opening it for HAProxy in the same group.
   cribl_edge_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "cribl") && contains(coalesce(try(v.tags, null), []), "edge")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.cribl) && contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.edge)
   }
 
   # iDRAC KVM LXC: tagged "idrac" (domistyle/idrac6-based viewers, Docker-in-LXC)
   idrac_kvm_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "idrac")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.idrac)
   }
 
   # Network-quality monitoring LXC (smokeping tag "monitoring"): SmokePing web UI
@@ -189,7 +189,7 @@ locals {
   # fping/DNS/HTTPS probes can reach internal and external targets freely.
   monitoring_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "monitoring")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.monitoring)
   }
 
   # Hermes Agent LXC: tagged "hermes-agent". Autonomous agent that runs arbitrary
@@ -199,7 +199,7 @@ locals {
   # forward-proxy and replace outbound-internal with a microsegmented allowlist.)
   hermes_agent_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "hermes-agent")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.hermes_agent)
   }
 
   # postgres_container_ids + hindsight_container_ids live in
@@ -209,7 +209,7 @@ locals {
   # nautobot_web (8080). modules/firewall opens 8080 to it from internal.
   nautobot_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "nautobot")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.nautobot)
   }
 
   # RDP accessible VMs (rdp tag)

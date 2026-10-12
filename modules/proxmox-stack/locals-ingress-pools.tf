@@ -8,7 +8,13 @@ locals {
   # deterministic; skip-missing-peers falls out naturally (an undeclared or
   # gated-off instance simply isn't in var.containers). Adding the next pooled
   # app = add its tag here + one route entry below — nothing else.
-  pooled_backend_tags = ["hindsight", "zammad", "agentgateway", "firecrawl", "llm-router"]
+  pooled_backend_tags = [
+    local.firewall_container_tags.hindsight,
+    local.firewall_container_tags.zammad,
+    local.firewall_container_tags.agentgateway,
+    local.firewall_container_tags.firecrawl,
+    local.firewall_container_tags.llm_router,
+  ]
   tag_backend_pools = {
     for tag in local.pooled_backend_tags : tag => [
       for k in sort([
@@ -38,7 +44,7 @@ locals {
   openbao_backends = [
     for k in sort([
       for k, v in var.containers : k
-      if contains(coalesce(try(v.tags, null), []), "openbao")
+      if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.openbao)
     ]) : "${local.guest_hostname_containers[k]}.${var.domain}"
   ]
 
@@ -78,7 +84,7 @@ locals {
   cribl_stream_backends = [
     for k in sort([
       for k, v in var.containers : k
-      if contains(coalesce(try(v.tags, null), []), "cribl") && contains(coalesce(try(v.tags, null), []), "stream")
+      if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.cribl) && contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.stream)
     ]) : local.container_address[k]
   ]
 }

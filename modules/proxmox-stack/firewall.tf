@@ -31,7 +31,7 @@ module "firewall" {
   splunk_vm_ids = merge(
     {
       for k, v in var.vms : k => v.vm_id
-      if contains(try(v.tags, []), "splunk")
+      if contains(try(v.tags, []), local.firewall_container_tags.splunk)
     },
     {
       "splunk-vm" = module.splunk_vm.vm_id
@@ -40,7 +40,7 @@ module "firewall" {
 
   splunk_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(try(v.tags, []), "splunk")
+    if contains(try(v.tags, []), local.firewall_container_tags.splunk)
   }
 
   # Pipeline containers: HAProxy (haproxy tag) and Cribl Edge (cribl + edge tags)

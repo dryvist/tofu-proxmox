@@ -12,26 +12,26 @@ locals {
   # external APIs). agent-exec carries the tag too (egress-only; no UI rule fires).
   ai_orchestration_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "ai-orchestration")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ai_orchestration)
   }
 
   # Langfuse LLM-observability LXC (langfuse tag): web + OTLP ingest on 3000.
   langfuse_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "langfuse")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.langfuse)
   }
 
   # Arize Phoenix LLM-observability LXC (phoenix tag): the Langfuse sibling —
   # UI + OTLP/HTTP ingest (6006), OTLP/gRPC ingest (4317), metrics (9090).
   phoenix_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "phoenix")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.phoenix)
   }
 
   # ClickHouse OLAP store LXC (clickhouse tag): observability backing store.
   clickhouse_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "clickhouse")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.clickhouse)
   }
 
   # AI runner LXCs (ai-github tag): headless coding-agent guests in the
@@ -41,7 +41,7 @@ locals {
   # + rules file, this map stays scoped to ai-github.
   ai_github_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "ai-github")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ai_github)
   }
 
   # agentgateway MCP/LLM/A2A data-plane proxy (agentgateway tag). Inbound proxy
@@ -49,7 +49,7 @@ locals {
   # outbound internal (local LLM fabric) + HTTPS (external MCP servers, LLM APIs).
   agentgateway_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "agentgateway")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.agentgateway)
   }
 
   # AI runner LXCs (ai-terrakube tag): headless OpenTofu runners for the private
@@ -57,7 +57,7 @@ locals {
   # egress (DNS/NTP/OpenBao + Terrakube API/registry + RustFS S3), NO WAN.
   ai_terrakube_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "ai-terrakube")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ai_terrakube)
   }
 
   # AI agent-pool LXCs (ai-proxied tag): the long-lived pooled agent guests.
@@ -67,14 +67,14 @@ locals {
   # at L3/L4 those profiles are identical.
   ai_proxied_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "ai-proxied")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ai_proxied)
   }
 
   # Squid egress forward-proxy LXC (squid tag): the agent plane's WAN chokepoint.
   # See modules/firewall/squid_proxy_rules.tf.
   squid_proxy_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "squid")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.squid)
   }
 
   # AI runner LXCs (ai-full-net tag): coding-agent guests needing general web
@@ -82,6 +82,6 @@ locals {
   # + outbound HTTPS (443) to any; no blanket internal reach.
   ai_full_net_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "ai-full-net")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ai_full_net)
   }
 }
