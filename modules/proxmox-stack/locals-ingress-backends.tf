@@ -15,6 +15,12 @@ locals {
     if n.commissioned
   ]
 
+  # Traefik resolves this class to source networks from its non-committed config.
+  owned_route_source_class = "agent-owner"
+  splunk_route_source_class = anytrue([
+    for agent in values(var.agents) : contains(agent.owns, "splunk")
+  ]) ? local.owned_route_source_class : null
+
   # Assembled routes: one {name, ip, port} per fronted service whose backend
   # container is actually defined (others are skipped, so a partial deployment
   # never emits a dangling route). The backend address comes from
@@ -51,7 +57,7 @@ locals {
       if contains(keys(var.containers), svc.backend)
     ],
     [
-      {
+      merge({
         name  = "splunk"
         owner = "splunk"
         ip    = split("/", local.splunk_derived_ip)[0]
@@ -62,8 +68,10 @@ locals {
         scheme       = "https"
         insecure_tls = true
         sso          = true # browser UI — gated
-      },
-      {
+        }, local.splunk_route_source_class == null ? {} : {
+        source_class = local.splunk_route_source_class
+      }),
+      merge({
         # Splunk management / REST API (splunkd, 8089) fronted at
         # splunk-mgmt.<domain>. Single label deliberately: the *.<domain>
         # wildcard cert covers splunk-mgmt.<domain> but NOT a nested
@@ -76,7 +84,9 @@ locals {
         scheme       = "https"
         insecure_tls = true
         sso          = false # REST API clients (CLI, automation)
-      },
+        }, local.splunk_route_source_class == null ? {} : {
+        source_class = local.splunk_route_source_class
+      }),
       {
         # Splunk HEC (8088) fronted at splunk-hec.<domain> on the standard
         # TLS entrypoint. HEC senders (the Cribl edges) must use this name:
