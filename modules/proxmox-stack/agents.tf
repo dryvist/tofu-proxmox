@@ -1,6 +1,36 @@
 locals {
   agent_systems = ["splunk", "cribl"]
 
+  # System service ports agents may own. Values resolve from the shared
+  # pipeline constants; the keys stay aligned with agent_systems below.
+  agent_system_port_catalog = {
+    splunk = [
+      local.pipeline_constants.service_ports.splunk_mgmt,
+      local.pipeline_constants.service_ports.splunk_web,
+    ]
+    cribl = [local.pipeline_constants.service_ports.cribl_stream_api]
+  }
+
+  agent_system_hosts = {
+    splunk = local.splunk_network_ips
+    cribl = [
+      for container_key, vm_id in local.cribl_stream_container_ids : nonsensitive(
+        cidrhost(var.network_cidrs[var.containers[container_key].vlan], vm_id)
+      ) if !var.containers[container_key].dhcp
+    ]
+  }
+
+  agent_system_dhcp_members = {
+    splunk = [
+      for container_key, container in var.containers : container_key
+      if contains(coalesce(container.tags, []), local.firewall_container_tags.splunk) && container.dhcp
+    ]
+    cribl = [
+      for container_key in keys(local.cribl_stream_container_ids) : container_key
+      if var.containers[container_key].dhcp
+    ]
+  }
+
   # Profile tags checked only by variable validations in
   # variables-containers.tf, which cannot read locals.
   agent_validation_profile_tags = ["ai-runner", "hermes-donna"]
@@ -46,6 +76,15 @@ locals {
     )...
   }
   agents = { for name, entries in local._agents_grouped : name => entries[0] }
+
+  agent_firewall_containers = {
+    for name, agent in local.agents : name => {
+      # Keep invalid container references available to the roster output
+      # precondition instead of failing during local projection.
+      vm_id = try(var.containers[agent.container].vm_id, null)
+      owns  = agent.owns
+    }
+  }
 }
 
 output "agents" {
@@ -75,6 +114,26 @@ output "agents" {
   precondition {
     condition     = length(local.agent_unknown_system_slugs) == 0
     error_message = "Agent owns values must name cataloged systems; unknown slugs: ${jsonencode(local.agent_unknown_system_slugs)}."
+  }
+
+  precondition {
+    condition = (
+      toset(keys(local.agent_system_port_catalog)) == toset(local.agent_systems) &&
+      toset(keys(local.agent_system_hosts)) == toset(local.agent_systems)
+    )
+    error_message = "The agent system port and host catalog keys must match agent_systems."
+  }
+
+  precondition {
+    condition = alltrue(flatten([
+      for agent in values(var.agents) : [
+        for slug in agent.owns : (
+          length(try(local.agent_system_hosts[slug], [])) > 0 &&
+          length(try(local.agent_system_dhcp_members[slug], [])) == 0
+        )
+      ]
+    ]))
+    error_message = "owned systems need static host addresses for agent firewall rules."
   }
 
   precondition {

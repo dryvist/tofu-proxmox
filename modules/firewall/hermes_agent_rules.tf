@@ -87,6 +87,14 @@ resource "proxmox_virtual_environment_firewall_rules" "hermes_agent_container" {
   node_name    = var.node_name
   container_id = each.value
 
+  dynamic "rule" {
+    for_each = length(local.agent_owned_system_ports) > 0 ? ["deny-owned-systems"] : []
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.hermes_agent_deny_owned_systems["active"].name
+      comment        = "Deny legacy Hermes access to roster-owned systems"
+    }
+  }
+
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name
     comment        = "Internal access (SSH, ICMP)"
@@ -108,4 +116,30 @@ resource "proxmox_virtual_environment_firewall_rules" "hermes_agent_container" {
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.hermes_agent_container]
+}
+
+resource "proxmox_virtual_environment_cluster_firewall_security_group" "hermes_agent_deny_owned_systems" {
+  for_each = length(local.agent_owned_system_ports) > 0 ? { active = true } : {}
+
+  name    = "deny-owned-systems"
+  comment = "Prevent legacy Hermes agents from reaching roster-owned system hosts"
+
+  dynamic "rule" {
+    for_each = local.agent_owned_system_rules
+    content {
+      type    = "out"
+      action  = "DROP"
+      proto   = "tcp"
+      dport   = tostring(rule.value.port)
+      dest    = rule.value.dest
+      comment = "Deny ${rule.value.slug} service (TCP ${rule.value.port}) to its hosts"
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = alltrue([for rule in local.agent_owned_system_rules : rule.dest != ""])
+      error_message = "Owned system firewall rules require a configured system host destination."
+    }
+  }
 }

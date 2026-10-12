@@ -1224,3 +1224,174 @@ run "ai_sandbox_vm_denies_by_default_and_attaches_the_profile_groups" {
     error_message = "the ai_sandbox VM must attach exactly internal_access, ai_proxied_egress, outbound_https, outbound_http and ai_sandbox_ingress"
   }
 }
+
+# --- per-agent roster firewall ---
+
+run "agent_owned_system_access_is_scoped_to_owners_and_ingress_vip" {
+  command = plan
+
+  variables {
+    agent_ingress_vip = "192.0.2.9"
+    agent_system_ports = {
+      splunk = [8089, 8000]
+      cribl  = [9000]
+    }
+    agent_system_hosts = {
+      splunk = ["192.0.2.200", "192.0.2.201"]
+      cribl  = ["192.0.2.202"]
+    }
+    agent_containers = {
+      "research-scout" = { vm_id = 240, owns = ["splunk", "cribl"] }
+      "support-guide"  = { vm_id = 241, owns = [] }
+    }
+  }
+
+  assert {
+    condition = contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.agent_container["research-scout"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.agent_owned_system["splunk"].name,
+    )
+    error_message = "The Splunk owner must attach the owned-splunk group."
+  }
+
+  assert {
+    condition = !contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.agent_container["support-guide"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.agent_owned_system["splunk"].name,
+    )
+    error_message = "A non-owner must not attach the owned-splunk group."
+  }
+
+  assert {
+    condition = (
+      toset([for rule in proxmox_virtual_environment_cluster_firewall_security_group.agent_owned_system["splunk"].rule : rule.dport]) == toset([
+        tostring(var.pipeline_constants.service_ports.splunk_mgmt),
+        tostring(var.pipeline_constants.service_ports.splunk_web),
+      ]) &&
+      alltrue([for rule in proxmox_virtual_environment_cluster_firewall_security_group.agent_owned_system["splunk"].rule : (
+        rule.type == "out" && rule.action == "ACCEPT" && rule.proto == "tcp" &&
+        rule.dest == join(",", var.agent_system_hosts["splunk"]) && rule.dest != local.internal_src
+      )])
+    )
+    error_message = "owned-splunk must ACCEPT its cataloged TCP ports only to its joined host addresses."
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_cluster_firewall_security_group.agent_owned_system["cribl"].rule[0].dport == tostring(var.pipeline_constants.service_ports.cribl_stream_api) &&
+      proxmox_virtual_environment_cluster_firewall_security_group.agent_owned_system["cribl"].rule[0].dest == join(",", var.agent_system_hosts["cribl"]) &&
+      proxmox_virtual_environment_cluster_firewall_security_group.agent_owned_system["cribl"].rule[0].dest != local.internal_src
+    )
+    error_message = "owned-cribl must ACCEPT its cataloged port only to Cribl Stream hosts."
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_cluster_firewall_security_group.agent_ingress_https["agents"].rule[0].dport == "443" &&
+      proxmox_virtual_environment_cluster_firewall_security_group.agent_ingress_https["agents"].rule[0].dest == var.agent_ingress_vip &&
+      proxmox_virtual_environment_cluster_firewall_security_group.agent_ingress_https["agents"].rule[0].dest != "0.0.0.0/0" &&
+      !contains(
+        [for rule in proxmox_virtual_environment_firewall_rules.agent_container["research-scout"].rule : rule.security_group],
+        proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+      ) &&
+      !contains(
+        [for rule in proxmox_virtual_environment_firewall_rules.agent_container["support-guide"].rule : rule.security_group],
+        proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+      )
+    )
+    error_message = "Roster agents must use TCP 443 to the ingress VIP and must not attach 443-to-any."
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_firewall_options.agent_container["research-scout"].container_id == 240 &&
+      proxmox_virtual_environment_firewall_options.agent_container["research-scout"].dhcp
+    )
+    error_message = "Agent firewall options must use the roster vm_id and allow DHCP."
+  }
+}
+
+run "legacy_hermes_denies_owned_systems_first" {
+  command = plan
+
+  variables {
+    agent_ingress_vip          = "192.0.2.9"
+    hermes_agent_container_ids = { "hermes-agent" = 242 }
+    agent_system_ports = {
+      splunk = [8089, 8000]
+      cribl  = [9000]
+    }
+    agent_system_hosts = {
+      splunk = ["192.0.2.200", "192.0.2.201"]
+      cribl  = ["192.0.2.202"]
+    }
+    agent_containers = {
+      "research-scout" = { vm_id = 240, owns = ["splunk", "cribl"] }
+    }
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_firewall_rules.hermes_agent_container["hermes-agent"].rule[0].security_group ==
+      proxmox_virtual_environment_cluster_firewall_security_group.hermes_agent_deny_owned_systems["active"].name
+    )
+    error_message = "The legacy Hermes deny-owned-systems group must be its first firewall rule."
+  }
+
+  assert {
+    condition = (
+      toset([for rule in proxmox_virtual_environment_cluster_firewall_security_group.hermes_agent_deny_owned_systems["active"].rule : rule.dport]) == toset([
+        tostring(var.pipeline_constants.service_ports.splunk_mgmt),
+        tostring(var.pipeline_constants.service_ports.splunk_web),
+        tostring(var.pipeline_constants.service_ports.cribl_stream_api),
+      ]) &&
+      alltrue([for rule in proxmox_virtual_environment_cluster_firewall_security_group.hermes_agent_deny_owned_systems["active"].rule : (
+        rule.type == "out" && rule.action == "DROP" && rule.proto == "tcp" &&
+        rule.dest != local.internal_src && (
+          (contains([
+            tostring(var.pipeline_constants.service_ports.splunk_mgmt),
+            tostring(var.pipeline_constants.service_ports.splunk_web),
+          ], rule.dport) && rule.dest == join(",", var.agent_system_hosts["splunk"])) ||
+          (rule.dport == tostring(var.pipeline_constants.service_ports.cribl_stream_api) && rule.dest == join(",", var.agent_system_hosts["cribl"]))
+        )
+      )])
+    )
+    error_message = "The Hermes deny group must DROP each owned system port only to that system's joined host addresses."
+  }
+}
+
+run "empty_agent_roster_creates_no_agent_firewall_objects" {
+  command = plan
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_firewall_options.agent_container) == 0 &&
+      length(proxmox_virtual_environment_firewall_rules.agent_container) == 0 &&
+      length(proxmox_virtual_environment_cluster_firewall_security_group.agent_owned_system) == 0 &&
+      length(proxmox_virtual_environment_cluster_firewall_security_group.agent_ingress_https) == 0 &&
+      length(proxmox_virtual_environment_cluster_firewall_security_group.hermes_agent_deny_owned_systems) == 0
+    )
+    error_message = "An empty roster must create no agent-specific firewall objects."
+  }
+}
+
+run "legacy_hermes_rules_are_unchanged_without_owned_systems" {
+  command = plan
+
+  variables {
+    hermes_agent_container_ids = { "hermes-agent" = 242 }
+  }
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_cluster_firewall_security_group.hermes_agent_deny_owned_systems) == 0 &&
+      [for rule in proxmox_virtual_environment_firewall_rules.hermes_agent_container["hermes-agent"].rule : rule.security_group] == [
+        proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
+        proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name,
+        proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+        proxmox_virtual_environment_cluster_firewall_security_group.hermes_webhook_services.name,
+      ]
+    )
+    error_message = "Without an owned system, Hermes must keep its existing group list and order."
+  }
+}
