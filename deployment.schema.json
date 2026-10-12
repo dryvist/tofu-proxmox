@@ -407,7 +407,18 @@
         },
         "hostname": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "Guest hostname. A container tagged gpu-passthrough uses an Ada Lovelace or Blackwell generation, GDDR 6 or 7 with optional uppercase X, an integer VRAM value followed by GB, and its vm_id as the final CTID.",
+          "examples": [
+            "llm-ada-lovelace-6X-16GB-503020",
+            "llm-blackwell-7-96GB-503030"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Guest tags. The reserved GPU container carries gpu-passthrough; node capability is declared separately with the nvidia-gpu node tag."
         },
         "vlan": {
           "type": "string",

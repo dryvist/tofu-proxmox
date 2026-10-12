@@ -853,3 +853,276 @@ run "agent_dependency_tags_do_not_join_service_maps" {
     error_message = "a hindsight-client agent guest must not appear in the hindsight SERVER map"
   }
 }
+
+run "two_gpu_passthrough_containers_on_one_node_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"], commissioned = null }
+    }
+    containers = {
+      ada = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-503020"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+      blackwell = {
+        vm_id     = 503030
+        node_name = "gpu1"
+        hostname  = "llm-blackwell-7-96GB-503030"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "commissioned_gpu_node_without_gpu_container_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"], commissioned = null }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "gpu_passthrough_container_on_non_gpu_node_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      cpu1 = { role = "cpu1", tags = [] }
+    }
+    containers = {
+      ada = {
+        vm_id     = 503020
+        node_name = "cpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-503020"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "untagged_nvidia_kfd_device_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      gpu = {
+        vm_id              = 503020
+        node_name          = "cpu1"
+        hostname           = "gpu-503020"
+        vlan               = "ai"
+        dhcp               = true
+        device_passthrough = [{ path = "/dev/kfd" }]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "untagged_dri_bind_mount_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      gpu = {
+        vm_id        = 503020
+        node_name    = "cpu1"
+        hostname     = "gpu-503020"
+        vlan         = "ai"
+        dhcp         = true
+        mount_points = [{ volume = "/dev/dri", path = "/dev/dri" }]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "gpu_passthrough_bad_name_without_pattern_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      gpu = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-503020"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "gpu_passthrough_lowercase_x_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      gpu = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6x-16GB-503020"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "gpu_passthrough_wrong_ctid_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      gpu = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-blackwell-7-96GB-503030"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "two_llm_serving_containers_on_one_node_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      cpu1 = { role = "cpu1" }
+    }
+    containers = {
+      model_a = {
+        vm_id     = 503020
+        node_name = "cpu1"
+        hostname  = "llm-model-a-503020"
+        vlan      = "ai"
+        dhcp      = true
+      }
+      model_b = {
+        vm_id     = 503030
+        node_name = "cpu1"
+        hostname  = "llm-model-b-503030"
+        vlan      = "ai"
+        dhcp      = true
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "llm_router_redis_and_one_gpu_serving_container_on_one_node_pass" {
+  command = plan
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"], commissioned = null }
+    }
+    containers = {
+      "llm-router-1" = {
+        vm_id            = 512001
+        node_name        = "gpu1"
+        hostname         = "llm-router-1"
+        vlan             = "ai"
+        dhcp             = true
+        memory_dedicated = 4096
+        tags             = ["llm-router"]
+      }
+      "llm-redis-1" = {
+        vm_id     = 512002
+        node_name = "gpu1"
+        hostname  = "llm-redis-1"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-redis"]
+      }
+      gpu = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-503020"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+    }
+  }
+}
