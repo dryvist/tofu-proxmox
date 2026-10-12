@@ -351,6 +351,47 @@
           "type": "integer",
           "minimum": 100
         },
+        "agent": {
+          "type": "object",
+          "required": ["name", "display", "purpose"],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z]+-[a-z]+$"
+            },
+            "display": {
+              "type": "string",
+              "minLength": 1
+            },
+            "purpose": {
+              "type": "string",
+              "minLength": 1
+            },
+            "owns": {
+              "type": "array",
+              "default": [],
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              }
+            },
+            "router_key_class": {
+              "type": "string",
+              "enum": ["all", "standard", "zdr"],
+              "default": "standard"
+            },
+            "slack": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "home_channel": { "type": "string" },
+                "requests_channel": { "type": "string" }
+              }
+            }
+          }
+        },
         "expected_resources": {
           "type": "object",
           "description": "Expected guest resource use (SHOULD; a plan warns when avg or peak is missing). Reference for capacity planning and telemetry comparison.",

@@ -132,6 +132,19 @@ variable "containers" {
     # verified. Mirrors var.vms[k].ansible_connection (variables-vms.tf).
     ansible_connection = optional(string, "community.proxmox.proxmox_pct_remote")
 
+    # Optional roster metadata for a downstream agent identity.
+    agent = optional(object({
+      name             = string
+      display          = string
+      purpose          = string
+      owns             = optional(list(string), [])
+      router_key_class = optional(string, "standard")
+      slack = optional(object({
+        home_channel     = optional(string)
+        requests_channel = optional(string)
+      }))
+    }))
+
     # LXC features (set nesting=true for Docker-in-LXC on unprivileged containers;
     # privileged containers run Docker without features — requires root@pam to set any flag)
     features = optional(object({
@@ -142,6 +155,55 @@ variable "containers" {
     }), { nesting = false, keyctl = false, fuse = false, mount = [] })
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for container in values(var.containers) : (
+        can(regex("^[a-z]+-[a-z]+$", container.agent.name)) &&
+        length(container.agent.display) > 0 &&
+        length(container.agent.purpose) > 0 &&
+        contains(["all", "standard", "zdr"], container.agent.router_key_class) &&
+        alltrue([
+          for owned in container.agent.owns : can(regex("^[a-z][a-z0-9-]*$", owned))
+        ])
+      )
+      if container.agent != null
+    ])
+    error_message = "Each container agent requires a name matching <function>-<persona>, non-empty display and purpose, owns slugs matching [a-z][a-z0-9-]*, and router_key_class all, standard, or zdr."
+  }
+
+  validation {
+    condition = length([
+      for container in values(var.containers) : container.agent.name
+      if container.agent != null
+      ]) == length(distinct([
+        for container in values(var.containers) : container.agent.name
+        if container.agent != null
+    ]))
+    error_message = "Container agent.name values must be unique across containers."
+  }
+
+  validation {
+    condition = length([
+      for container in values(var.containers) : container.agent.display
+      if container.agent != null
+      ]) == length(distinct([
+        for container in values(var.containers) : container.agent.display
+        if container.agent != null
+    ]))
+    error_message = "Container agent.display values must be unique across containers."
+  }
+
+  validation {
+    condition = length(flatten([
+      for container in values(var.containers) : container.agent.owns
+      if container.agent != null
+      ])) == length(distinct(flatten([
+        for container in values(var.containers) : container.agent.owns
+        if container.agent != null
+    ])))
+    error_message = "Every containers[*].agent.owns value must be unique within and across agents."
+  }
 
   validation {
     condition = alltrue([
