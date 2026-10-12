@@ -337,6 +337,20 @@ run "ansible_inventory_splunk_vm_exists" {
   }
 }
 
+run "ansible_inventory_splunk_vm_node_follows_placement" {
+  command = plan
+
+  variables {
+    proxmox_node     = "proxmox-1"
+    splunk_node_name = "proxmox-2"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.splunk_vm.splunk.node == "proxmox-2"
+    error_message = "splunk_vm.splunk.node must be the node the Splunk VM is placed on (splunk_node_name), got ${output.ansible_inventory.splunk_vm.splunk.node}"
+  }
+}
+
 run "ansible_inventory_containers_exists" {
   command = plan
 
