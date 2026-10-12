@@ -881,7 +881,11 @@ run "two_gpu_passthrough_containers_on_one_node_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "commissioned_gpu_node_without_gpu_container_rejected" {
@@ -893,7 +897,11 @@ run "commissioned_gpu_node_without_gpu_container_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "gpu_passthrough_container_on_non_gpu_node_rejected" {
@@ -915,7 +923,11 @@ run "gpu_passthrough_container_on_non_gpu_node_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "untagged_nvidia_kfd_device_rejected" {
@@ -934,7 +946,11 @@ run "untagged_nvidia_kfd_device_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "untagged_dri_bind_mount_rejected" {
@@ -953,7 +969,11 @@ run "untagged_dri_bind_mount_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "gpu_passthrough_bad_name_without_pattern_rejected" {
@@ -975,7 +995,11 @@ run "gpu_passthrough_bad_name_without_pattern_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "gpu_passthrough_lowercase_x_rejected" {
@@ -997,7 +1021,11 @@ run "gpu_passthrough_lowercase_x_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "gpu_passthrough_wrong_ctid_rejected" {
@@ -1019,7 +1047,11 @@ run "gpu_passthrough_wrong_ctid_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "two_llm_serving_containers_on_one_node_rejected" {
@@ -1047,11 +1079,19 @@ run "two_llm_serving_containers_on_one_node_rejected" {
     }
   }
 
-  expect_failures = [var.containers]
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
 run "llm_router_redis_and_one_gpu_serving_container_on_one_node_pass" {
   command = plan
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
 
   variables {
     nodes = {
