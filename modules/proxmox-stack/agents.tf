@@ -12,11 +12,16 @@ locals {
   }
 
   agent_system_hosts = {
-    splunk = local.splunk_network_ips
+    splunk = concat(
+      [split("/", local.splunk_derived_ip)[0]],
+      [
+        for container_key, ipv4 in local.container_ipv4 : split("/", ipv4)[0]
+        if ipv4 != "dhcp" && contains(coalesce(var.containers[container_key].tags, []), local.firewall_container_tags.splunk)
+      ],
+    )
     cribl = [
-      for container_key, vm_id in local.cribl_stream_container_ids : nonsensitive(
-        cidrhost(var.network_cidrs[var.containers[container_key].vlan], vm_id)
-      ) if !var.containers[container_key].dhcp
+      for container_key in keys(local.cribl_stream_container_ids) : split("/", local.container_ipv4[container_key])[0]
+      if local.container_ipv4[container_key] != "dhcp"
     ]
   }
 
