@@ -1,4 +1,32 @@
 locals {
+  agent_system_ports = {
+    splunk = ["splunk_mgmt", "splunk_web"]
+    cribl  = ["cribl_stream_api"]
+  }
+
+  agent_firewall_profile_tags = [
+    "hermes-agent",
+    "hermes-donna",
+    "ai-runner",
+    "ai-github",
+    "ai-terrakube",
+    "ai-full-net",
+    "ai-proxied",
+  ]
+
+  agent_unknown_system_slugs = sort(tolist(setsubtract(
+    toset(flatten([for agent in values(var.agents) : agent.owns])),
+    toset(keys(local.agent_system_ports)),
+  )))
+
+  agent_firewall_profile_conflicts = sort([
+    for container_key, agent in var.agents : agent.name
+    if length(setintersection(
+      toset(coalesce(try(var.containers[container_key].tags, null), [])),
+      toset(local.agent_firewall_profile_tags),
+    )) > 0
+  ])
+
   # Grouping (`...`) keeps a duplicate name from erroring here, so the
   # precondition below reports it instead.
   _agents_grouped = {
@@ -44,5 +72,15 @@ output "agents" {
   precondition {
     condition     = length(setsubtract(keys(var.agents), keys(var.containers))) == 0
     error_message = "Agent roster keys must be container keys; unknown keys: ${jsonencode(setsubtract(keys(var.agents), keys(var.containers)))}."
+  }
+
+  precondition {
+    condition     = length(local.agent_unknown_system_slugs) == 0
+    error_message = "Agent owns values must name cataloged systems; unknown slugs: ${jsonencode(local.agent_unknown_system_slugs)}."
+  }
+
+  precondition {
+    condition     = length(local.agent_firewall_profile_conflicts) == 0
+    error_message = "Agent containers must not carry firewall-profile tags; offending agents: ${jsonencode(local.agent_firewall_profile_conflicts)}."
   }
 }

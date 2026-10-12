@@ -81,7 +81,7 @@ run "agent_roster_projects_two_agents" {
       }
       "agent-example-2" = {
         name             = "support-guide", display = "Guide", purpose = "Answer example requests"
-        owns             = ["customer-requests"]
+        owns             = ["splunk"]
         router_key_class = "zdr"
         slack = {
           home_channel     = "agent-home-example"
@@ -115,7 +115,7 @@ run "agent_roster_projects_two_agents" {
       output.ansible_inventory.agents["support-guide"].hostname == "agent-two.example.test" &&
       output.ansible_inventory.agents["support-guide"].display == "Guide" &&
       output.ansible_inventory.agents["support-guide"].purpose == "Answer example requests" &&
-      output.ansible_inventory.agents["support-guide"].owns == tolist(["customer-requests"]) &&
+      output.ansible_inventory.agents["support-guide"].owns == tolist(["splunk"]) &&
       output.ansible_inventory.agents["support-guide"].router_key_class == "zdr" &&
       sort(keys(output.ansible_inventory.agents["support-guide"])) == tolist(["container", "display", "hostname", "owns", "purpose", "router_key_class", "slack"]) &&
       output.ansible_inventory.agents["support-guide"].slack.home_channel == "agent-home-example" &&
@@ -137,6 +137,61 @@ run "agent_roster_defaults_to_empty" {
   assert {
     condition     = output.ansible_inventory.agents == {} && output.agents == {}
     error_message = "The agent roster defaults to an empty inventory map."
+  }
+}
+
+run "agent_owns_must_name_a_cataloged_system" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name = "research-scout", display = "Scout", purpose = "Search example records", owns = ["unknown-system"]
+      }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_container_must_not_have_a_firewall_profile_tag" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["hermes-agent", "chromium", "hindsight-client", "firecrawl-client"]
+      }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search example records" }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_with_cataloged_ownership_passes" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name = "research-scout", display = "Scout", purpose = "Search example records", owns = ["splunk"]
+      }
+    }
+  }
+
+  assert {
+    condition     = output.agents["research-scout"].owns == tolist(["splunk"])
+    error_message = "A roster entry can own a system present in the port catalog."
   }
 }
 
@@ -183,8 +238,8 @@ run "agent_owns_values_must_be_unique_across_agents" {
       "agent-example-2" = { vm_id = 241, node_name = "node-example", vlan = "apps" }
     }
     agents = {
-      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records", owns = ["example-records"] }
-      "agent-example-2" = { name = "support-guide", display = "Guide", purpose = "Answer requests", owns = ["example-records"] }
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records", owns = ["cribl"] }
+      "agent-example-2" = { name = "support-guide", display = "Guide", purpose = "Answer requests", owns = ["cribl"] }
     }
   }
 
