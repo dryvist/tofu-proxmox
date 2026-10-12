@@ -102,6 +102,51 @@
         "$ref": "#/definitions/container_input"
       }
     },
+    "agents": {
+      "type": "object",
+      "description": "Optional agent roster keyed by the container key each agent runs in.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name", "display", "purpose"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z]+-[a-z]+$"
+          },
+          "display": {
+            "type": "string",
+            "minLength": 1
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owns": {
+            "type": "array",
+            "default": [],
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "router_key_class": {
+            "type": "string",
+            "enum": ["all", "standard", "zdr"],
+            "default": "standard"
+          },
+          "slack": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "home_channel": { "type": "string" },
+              "requests_channel": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
     "vms": {
       "type": "object",
       "additionalProperties": true
@@ -350,47 +395,6 @@
         "vm_id": {
           "type": "integer",
           "minimum": 100
-        },
-        "agent": {
-          "type": "object",
-          "required": ["name", "display", "purpose"],
-          "additionalProperties": false,
-          "properties": {
-            "name": {
-              "type": "string",
-              "pattern": "^[a-z]+-[a-z]+$"
-            },
-            "display": {
-              "type": "string",
-              "minLength": 1
-            },
-            "purpose": {
-              "type": "string",
-              "minLength": 1
-            },
-            "owns": {
-              "type": "array",
-              "default": [],
-              "uniqueItems": true,
-              "items": {
-                "type": "string",
-                "pattern": "^[a-z][a-z0-9-]*$"
-              }
-            },
-            "router_key_class": {
-              "type": "string",
-              "enum": ["all", "standard", "zdr"],
-              "default": "standard"
-            },
-            "slack": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "home_channel": { "type": "string" },
-                "requests_channel": { "type": "string" }
-              }
-            }
-          }
         },
         "expected_resources": {
           "type": "object",
