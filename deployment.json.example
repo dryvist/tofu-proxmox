@@ -1664,6 +1664,38 @@
         "nesting": true
       }
     },
+    "clickhouse": {
+      "vm_id": 406000,
+      "node_name": "proxmox-3",
+      "dhcp": true,
+      "vlan": "siem",
+      "hostname": "clickhouse",
+      "description": "ClickHouse - dedicated OLAP store for Langfuse (Docker-in-LXC); always on the same node as the langfuse guest",
+      "cpu_cores": 4,
+      "memory_dedicated": 8192,
+      "tags": [
+        "terraform",
+        "container",
+        "observability",
+        "clickhouse",
+        "docker"
+      ],
+      "pool_id": "infrastructure",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "200G",
+          "path": "/var/lib/clickhouse"
+        }
+      ],
+      "features": {
+        "nesting": true
+      }
+    },
     "_ai_runner_comment": "Headless AI execution plane (AI/ML tier 5, ai VLAN). An ai-runner is a confined guest that runs a coding agent (Claude Code / Codex) in permission-skipping mode; the LXC boundary is the ONLY safety control, so the firewall profile is load-bearing. The `ai-github` tag selects the tightest egress profile (modules/firewall/ai_runner_rules.tf): outbound to internal DNS/NTP/OpenBao only + outbound HTTPS to any (github.com + Anthropic/OpenAI are CDN-fronted, no stable dest CIDR). The `ai-runner` tag is the inventory group the ansible-proxmox-ai `ai_runner` role converges. Native installs (Node + npm CLIs) \u2014 plain LXC, no Docker/nesting. VMID follows the 6-digit positional convention (docs vmid-network-tiers); the value here is illustrative. This example omits node_name and uses the default node (same as the sibling AI guests) \u2014 the live guest pins its node in the private deployment.json (the runner host is an idle-capacity node). Reconcile vm_id against your live deployment.json before applying. Other profiles (ai-terrakube, ai-full-net) are follow-ups: each is a new tag + rules file.",
     "ai-runner-01": {
       "vm_id": 515010,

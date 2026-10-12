@@ -267,6 +267,11 @@ run "pipeline_constants_service_ports" {
     condition     = local.pipeline_constants.service_ports.haproxy_stats == 8404
     error_message = "haproxy_stats port should be 8404"
   }
+
+  assert {
+    condition     = local.pipeline_constants.service_ports.clickhouse_metrics == 9363
+    error_message = "clickhouse_metrics port should be 9363"
+  }
 }
 
 run "pipeline_constants_monitoring_ports" {
@@ -1063,6 +1068,62 @@ run "openbao_concentration_acknowledgement_permits_degraded_window" {
     condition     = local.openbao_voters_after_worst_node_loss == local.openbao_quorum
     error_message = "fixture must still be at exactly quorum after worst-node loss, got ${local.openbao_voters_after_worst_node_loss} vs quorum ${local.openbao_quorum}"
   }
+}
+
+# The observability pair is optional as a group, but once either service is
+# declared it must contain one guest of each kind on the same node.
+run "langfuse_and_clickhouse_on_one_node_are_accepted" {
+  command = plan
+  plan_options { target = [terraform_data.langfuse_clickhouse_placement_guard] }
+
+  variables {
+    containers = {
+      langfuse-a   = { vm_id = 110, hostname = "langfuse-a", vlan = "mgmt", node_name = "node-a", tags = ["langfuse"] }
+      clickhouse-a = { vm_id = 111, hostname = "clickhouse-a", vlan = "mgmt", node_name = "node-a", tags = ["clickhouse"] }
+    }
+  }
+}
+
+run "langfuse_and_clickhouse_on_different_nodes_are_rejected" {
+  command = plan
+  plan_options { target = [terraform_data.langfuse_clickhouse_placement_guard] }
+
+  variables {
+    containers = {
+      langfuse-a   = { vm_id = 110, hostname = "langfuse-a", vlan = "mgmt", node_name = "node-a", tags = ["langfuse"] }
+      clickhouse-a = { vm_id = 111, hostname = "clickhouse-a", vlan = "mgmt", node_name = "node-b", tags = ["clickhouse"] }
+    }
+  }
+
+  expect_failures = [terraform_data.langfuse_clickhouse_placement_guard]
+}
+
+run "langfuse_without_clickhouse_tag_is_rejected" {
+  command = plan
+  plan_options { target = [terraform_data.langfuse_clickhouse_placement_guard] }
+
+  variables {
+    containers = {
+      langfuse-a = { vm_id = 110, hostname = "langfuse-a", vlan = "mgmt", node_name = "node-a", tags = ["langfuse"] }
+    }
+  }
+
+  expect_failures = [terraform_data.langfuse_clickhouse_placement_guard]
+}
+
+run "duplicate_langfuse_tags_are_rejected" {
+  command = plan
+  plan_options { target = [terraform_data.langfuse_clickhouse_placement_guard] }
+
+  variables {
+    containers = {
+      langfuse-a   = { vm_id = 110, hostname = "langfuse-a", vlan = "mgmt", node_name = "node-a", tags = ["langfuse"] }
+      langfuse-b   = { vm_id = 112, hostname = "langfuse-b", vlan = "mgmt", node_name = "node-a", tags = ["langfuse"] }
+      clickhouse-a = { vm_id = 111, hostname = "clickhouse-a", vlan = "mgmt", node_name = "node-a", tags = ["clickhouse"] }
+    }
+  }
+
+  expect_failures = [terraform_data.langfuse_clickhouse_placement_guard]
 }
 
 run "openbao_concentration_ignores_untagged_guests" {

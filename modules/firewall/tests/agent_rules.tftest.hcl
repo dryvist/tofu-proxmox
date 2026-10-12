@@ -30,7 +30,7 @@ variables {
       hermes_ui_mission_control = 3001, herdr_relay_ws = 8375, hermes_webui = 8787
       hermes_studio             = 8648, n8n_web = 5678, dify_web = 80, langflow_web = 7860
       langfuse_web              = 3000, phoenix_web = 6006, phoenix_grpc = 4317, phoenix_metrics = 9090
-      clickhouse_http           = 8123, clickhouse_native = 9000, langgraph_api = 8124
+      clickhouse_http           = 8123, clickhouse_native = 9000, clickhouse_metrics = 9363, langgraph_api = 8124
       agent_chat_ui_web         = 3000, docling_serve_api = 5001, otel_traces_grpc = 4317
       otel_traces_http          = 4318, otel_metrics_grpc = 4327, otel_metrics_http = 4328
       otel_logs_grpc            = 4337, otel_logs_http = 4338

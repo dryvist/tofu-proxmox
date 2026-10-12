@@ -169,7 +169,7 @@ variable "phoenix_container_ids" {
 }
 
 variable "clickhouse_container_ids" {
-  description = "Map of ClickHouse OLAP-store LXC names to IDs (tag-driven: clickhouse). Inbound HTTP (8123) + native protocol (9000) from internal + outbound internal/HTTPS. Not fronted by ingress."
+  description = "Map of ClickHouse OLAP-store LXC names to IDs (tag-driven: clickhouse). Inbound HTTP/native protocols from internal, Prometheus metrics from the scraper, and outbound internal/HTTPS. Not fronted by ingress."
   type        = map(number)
   default     = {}
 }

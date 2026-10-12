@@ -61,7 +61,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "phoenix_
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "clickhouse_services" {
   name    = "clickhouse-svc"
-  comment = "ClickHouse HTTP (8123) + native protocol (9000) from internal networks"
+  comment = "ClickHouse HTTP + native protocol from internal networks; Prometheus metrics from scraper"
 
   dynamic "rule" {
     for_each = local.clickhouse_services_rules

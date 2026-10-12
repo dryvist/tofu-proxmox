@@ -43,11 +43,12 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.phoenix_metrics), source = local.internal_src, comment = "Phoenix Prometheus metrics (TCP ${local.svc_ports.phoenix_metrics}) from internal" },
   ]
 
-  # ClickHouse — HTTP query interface + native TCP protocol. Internal only,
-  # never fronted by ingress (no Traefik route, no WAN source).
+  # ClickHouse query protocols are internal; Prometheus metrics use the
+  # inventory-derived scraper source.
   clickhouse_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.clickhouse_http), source = local.internal_src, comment = "ClickHouse HTTP (TCP ${local.svc_ports.clickhouse_http}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.clickhouse_native), source = local.internal_src, comment = "ClickHouse native protocol (TCP ${local.svc_ports.clickhouse_native}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.clickhouse_metrics), source = var.prometheus_scraper_trusted_src, comment = "ClickHouse Prometheus metrics (TCP ${local.svc_ports.clickhouse_metrics}) from the Prometheus scraper" },
   ]
 
   # OTEL ingest on Cribl Edge — native OTLP sources, one port per signal type

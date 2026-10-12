@@ -112,8 +112,9 @@ locals {
       # ClickHouse (clickhouse + observability tags) — dedicated OLAP store for
       # the observability stack. clickhouse_http = HTTP query interface;
       # clickhouse_native = the native TCP client/replication protocol.
-      clickhouse_http   = 8123
-      clickhouse_native = 9000
+      clickhouse_http    = 8123
+      clickhouse_native  = 9000
+      clickhouse_metrics = 9363
       # LangGraph, self-hosted zero-cloud: `langgraph dev` in-memory server API +
       # its self-hosted Agent Chat UI (Next.js). langgraph_api is deliberately 8124,
       # NOT the LangGraph default 8123, which collides with homeassistant_web above.
