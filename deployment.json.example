@@ -880,6 +880,34 @@
         "size": 8
       }
     },
+    "git-mirror": {
+      "vm_id": 605070,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "git-mirror",
+      "description": "Read-only Git mirror with separate public and authenticated listener roots.",
+      "cpu_cores": 2,
+      "memory_dedicated": 2048,
+      "tags": [
+        "terraform",
+        "container",
+        "git-mirror"
+      ],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-1",
+      "ha_replication_target": "proxmox-3",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 8
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "10G",
+          "path": "/srv/git-mirror"
+        }
+      ]
+    },
     "_status_comment": "Estate synthetics guest (`status` tag, apps VLAN, Docker-in-LXC). Hosts Gatus (catalog front-door + OIDC client probes every 60s) and Uptime Kuma (keystone status page). Both UIs are Traefik-fronted and Authelia-gated. Nesting/keyctl required for Docker.",
     "status": {
       "vm_id": 605060,

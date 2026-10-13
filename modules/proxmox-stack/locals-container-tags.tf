@@ -14,6 +14,7 @@ locals {
     cribl            = "cribl"
     edge             = "edge"
     firecrawl        = "firecrawl"
+    git_mirror       = "git-mirror"
     glance           = "glance"
     grafana          = "grafana"
     haproxy          = "haproxy"

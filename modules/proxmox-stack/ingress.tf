@@ -13,16 +13,18 @@ locals {
   #       clients authenticate natively (e.g. Plex apps).
   ingress_services = merge(local.hermes_agent_routes, local.homarr_routes, {
     # Authelia portal itself — never gated (it IS the login page).
-    authelia    = { backend = "authelia", port = local.pipeline_constants.service_ports.authelia_portal, sso = false }
-    plex        = { backend = "plex", port = local.pipeline_constants.media_ports.plex_web, sso = false } # Plex clients auth via plex.tv
-    seerr       = { backend = "seerr", port = local.pipeline_constants.media_ports.seerr_web }
-    sonarr      = { backend = "sonarr", port = local.pipeline_constants.media_ports.sonarr_web }
-    radarr      = { backend = "radarr", port = local.pipeline_constants.media_ports.radarr_web }
-    sortarr     = { backend = "sortarr", port = local.pipeline_constants.media_ports.sortarr_web }
-    qbittorrent = { backend = "download-vpn", port = local.pipeline_constants.media_ports.qbittorrent_web }
-    prowlarr    = { backend = "download-vpn", port = local.pipeline_constants.media_ports.prowlarr_web }
-    technitium  = { backend = "technitium-dns", port = local.pipeline_constants.service_ports.technitium_web }
-    phpipam     = { backend = "phpipam", port = local.pipeline_constants.service_ports.phpipam_web }
+    authelia            = { backend = "authelia", port = local.pipeline_constants.service_ports.authelia_portal, sso = false }
+    plex                = { backend = "plex", port = local.pipeline_constants.media_ports.plex_web, sso = false } # Plex clients auth via plex.tv
+    seerr               = { backend = "seerr", port = local.pipeline_constants.media_ports.seerr_web }
+    sonarr              = { backend = "sonarr", port = local.pipeline_constants.media_ports.sonarr_web }
+    radarr              = { backend = "radarr", port = local.pipeline_constants.media_ports.radarr_web }
+    sortarr             = { backend = "sortarr", port = local.pipeline_constants.media_ports.sortarr_web }
+    qbittorrent         = { backend = "download-vpn", port = local.pipeline_constants.media_ports.qbittorrent_web }
+    prowlarr            = { backend = "download-vpn", port = local.pipeline_constants.media_ports.prowlarr_web }
+    technitium          = { backend = "technitium-dns", port = local.pipeline_constants.service_ports.technitium_web }
+    "git-mirror-public" = { hostname = "git-mirror", path_prefix = "/public", priority = 100, backend = "git-mirror", port = local.pipeline_constants.service_ports.git_mirror_public, sso = false }
+    "git-mirror-all"    = { hostname = "git-mirror-all", path_prefix = "/all", priority = 100, backend = "git-mirror", port = local.pipeline_constants.service_ports.git_mirror_all, sso = false, source_ranges = local.git_mirror_trusted_source_ranges }
+    phpipam             = { backend = "phpipam", port = local.pipeline_constants.service_ports.phpipam_web }
     # Nautobot's browser UI is SSO-gated. Its native API and GraphQL inventory
     # clients retain their token-authenticated paths on the same hostname.
     nautobot           = { backend = "nautobot", port = local.pipeline_constants.service_ports.nautobot_web }

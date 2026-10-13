@@ -50,6 +50,10 @@ locals {
         if contains(container.tags, "apt-cache")
       ])
     }
+    git_mirror_urls = length(local.git_mirror_container_ids) == 0 ? {} : {
+      public = "https://git-mirror.${var.domain}/public"
+      all    = "https://git-mirror-all.${var.domain}/all"
+    }
     # Regular VMs - using SSH connection
     # DRY: static VMs advertise their vm_id-derived IP; DHCP-first VMs advertise
     # their FQDN (local.vm_address) with a lease-stabilizing deterministic MAC,

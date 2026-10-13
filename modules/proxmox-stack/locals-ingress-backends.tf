@@ -41,7 +41,8 @@ locals {
         owner = svc.backend
         # Authelia forwardAuth gate flag, consumed by the ansible traefik role.
         # Defaults true (gated) unless the table row opts out (sso = false).
-        sso = try(svc.sso, true)
+        sso           = try(svc.sso, true)
+        source_ranges = try(svc.source_ranges, null)
         # Dashboard grouping — see locals-ingress-groups.tf. Inherited from the
         # backend container's VLAN so no second tag list is maintained.
         group = try(svc.group, try(var.containers[svc.backend].vlan, "other"))
