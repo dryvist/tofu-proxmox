@@ -54,6 +54,24 @@ variable "apt_cacher_ng_container_ids" {
   default     = {}
 }
 
+variable "git_mirror_container_ids" {
+  description = "Map of Git mirror container names to their IDs (git-mirror tag)"
+  type        = map(number)
+  default     = {}
+}
+
+variable "git_mirror_ingress_src" {
+  description = "Comma-separated ingress proxy addresses allowed to reach the Git mirror listeners. Derived from the ingress inventory."
+  type        = string
+  default     = ""
+}
+
+variable "git_mirror_trusted_src" {
+  description = "Comma-separated trusted source networks allowed to reach the Git mirror guest for administration. Excludes the AI network."
+  type        = string
+  default     = ""
+}
+
 variable "cribl_stream_container_ids" {
   description = "Map of Cribl Stream container names to their IDs (receives from Edge, routes to Splunk)"
   type        = map(number)

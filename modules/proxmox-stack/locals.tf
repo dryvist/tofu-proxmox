@@ -133,6 +133,12 @@ locals {
     if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.apt_cache)
   }
 
+  # Git mirror containers (git-mirror tag)
+  git_mirror_container_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.git_mirror)
+  }
+
   # Object storage containers (object-storage tag) — RustFS.
   s3_container_ids = {
     for k, v in var.containers : k => v.vm_id

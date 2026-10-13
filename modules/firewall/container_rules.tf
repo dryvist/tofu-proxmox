@@ -150,6 +150,50 @@ resource "proxmox_virtual_environment_firewall_rules" "apt_cacher_ng_container" 
   depends_on = [proxmox_virtual_environment_firewall_options.apt_cacher_ng_container]
 }
 
+# Git mirror listeners accept requests only from the ingress proxies.
+resource "proxmox_virtual_environment_firewall_options" "git_mirror_container" {
+  for_each = var.git_mirror_container_ids
+
+  node_name     = var.node_name
+  container_id  = each.value
+  enabled       = local.firewall_defaults.enabled
+  input_policy  = local.firewall_defaults.input_policy
+  output_policy = local.firewall_defaults.output_policy
+  log_level_in  = local.firewall_defaults.log_level_in
+  log_level_out = local.firewall_defaults.log_level_out
+
+  depends_on = [proxmox_virtual_environment_cluster_firewall.main]
+}
+
+resource "proxmox_virtual_environment_firewall_rules" "git_mirror_container" {
+  for_each = var.git_mirror_container_ids
+
+  node_name    = var.node_name
+  container_id = each.value
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.git_mirror_access.name
+    comment        = "Trusted administration and monitoring access"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.git_mirror_services.name
+    comment        = "Git mirror listeners from ingress proxies"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
+    comment        = "Outbound internal access for OpenBao"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
+    comment        = "Outbound HTTPS for GitHub synchronization"
+  }
+
+  depends_on = [proxmox_virtual_environment_firewall_options.git_mirror_container]
+}
+
 # Vector database containers (Qdrant — HTTP 6333, gRPC 6334)
 
 resource "proxmox_virtual_environment_firewall_options" "vectordb_container" {

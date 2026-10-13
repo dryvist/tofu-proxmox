@@ -13,6 +13,8 @@ locals {
       cribl_edge_api    = 9420
       cribl_stream_api  = 9000
       apt_cacher_ng     = 3142
+      git_mirror_public = 8080
+      git_mirror_all    = 8081
       # Egress forward-proxy (Squid) for the confined AI agent plane. An
       # `ai-proxied` guest has NO 443-to-any of its own: its only WAN path is
       # CONNECT through this port, where the domain allowlist is enforced.

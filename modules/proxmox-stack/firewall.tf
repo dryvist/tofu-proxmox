@@ -67,6 +67,11 @@ module "firewall" {
   # APT caching proxy containers: apt-cacher-ng (apt-cache tag)
   apt_cacher_ng_container_ids = local.apt_cacher_ng_container_ids
 
+  # Git mirror containers: only ingress proxies reach either listener.
+  git_mirror_container_ids = local.git_mirror_container_ids
+  git_mirror_ingress_src   = local.git_mirror_ingress_src
+  git_mirror_trusted_src   = local.git_mirror_trusted_src
+
   # Cribl Stream containers: cribl + stream tags (receives from Edge, routes to Splunk)
   cribl_stream_container_ids = local.cribl_stream_container_ids
 

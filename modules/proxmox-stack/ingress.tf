@@ -11,7 +11,7 @@ locals {
   #       route (default true when omitted). false for machine/API endpoints
   #       (clients cannot do a browser login) and for apps whose non-browser
   #       clients authenticate natively (e.g. Plex apps).
-  ingress_services = merge(local.hermes_agent_routes, local.homarr_routes, {
+  ingress_services = merge(local.hermes_agent_routes, local.homarr_routes, local.git_mirror_routes, {
     # Authelia portal itself — never gated (it IS the login page).
     authelia    = { backend = "authelia", port = local.pipeline_constants.service_ports.authelia_portal, sso = false }
     plex        = { backend = "plex", port = local.pipeline_constants.media_ports.plex_web, sso = false } # Plex clients auth via plex.tv
