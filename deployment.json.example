@@ -891,7 +891,8 @@
       "tags": [
         "terraform",
         "container",
-        "git-mirror"
+        "git-mirror",
+        "managed-secrets"
       ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
