@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.38.0](https://github.com/dryvist/tofu-proxmox/compare/v3.37.0...v3.38.0) (2026-10-13)
+
+
+### Features
+
+* **git-mirror:** route mirror listeners and add guest example ([#1299](https://github.com/dryvist/tofu-proxmox/issues/1299)) ([9280741](https://github.com/dryvist/tofu-proxmox/commit/9280741d5a3769dad961a689411c4e7d941b1699))
+* **proxmox:** add source class attribute to owned Splunk ingress routes ([#1303](https://github.com/dryvist/tofu-proxmox/issues/1303)) ([0f04223](https://github.com/dryvist/tofu-proxmox/commit/0f042237f24c82517d486b3a8300be30eebfb6cb))
+
+
+### Bug Fixes
+
+* **git-mirror:** tag the example guest managed-secrets ([#1304](https://github.com/dryvist/tofu-proxmox/issues/1304)) ([4ccdff1](https://github.com/dryvist/tofu-proxmox/commit/4ccdff1135993d9335e460d8fffb81f74ee8ab72))
+
 ## [3.37.0](https://github.com/dryvist/tofu-proxmox/compare/v3.36.0...v3.37.0) (2026-10-13)
 
 
