@@ -2,9 +2,6 @@
 # reverse proxy fronts. The ansible-proxmox-apps `traefik` and `technitium_dns`
 # roles consume `ansible_inventory.ingress` instead of each hand-listing hosts
 # (the previous DRY violation). Add/remove a fronted service in ONE place here.
-#
-# Extracted from locals.tf into its own file so locals.tf stays under the shared
-# _file-size workflow's 12 KB limit; both files declare locals in the same module.
 locals {
   # name = stable router/service identifier. hostname defaults to name, but a
   # service may share a hostname with another path-specific route.
@@ -47,10 +44,10 @@ locals {
     chat   = { backend = "open-webui", port = local.pipeline_constants.service_ports.open_webui_web, title = "Open WebUI (all agents)" }
     qdrant = { backend = "qdrant", port = local.pipeline_constants.vector_db_ports.qdrant_http, sso = false } # vector API for agents/MCP
     # llama-server web UI on the fast-tier serving guest (same port the router dials).
-    llama = { backend = "llm-ada-lovelace-6X-16GB-503020", port = local.pipeline_constants.service_ports.llm_fast_api }
-    # Single-GPU serving guest: its own HTTPS name (443, no port in the origin)
-    # for the benchmark client. A machine API client, so no browser login gate.
-    "llm-blackwell-7-96GB-503030" = { backend = "llm-blackwell-7-96GB-503030", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
+    llama = { backend = "llm-ada-lovelace-6X-16GB-embed", port = local.pipeline_constants.service_ports.llm_fast_api }
+    # GPU serving guests: own HTTPS names for machine API clients (no SSO gate).
+    "llm-blackwell-7-96GB-medium" = { backend = "llm-blackwell-7-96GB-medium", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
+    "llm-blackwell-7-96GB-small"  = { backend = "llm-blackwell-7-96GB-small", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
     # AI orchestration stack UIs (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
     n8n      = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
     dify     = { backend = "dify", port = local.pipeline_constants.service_ports.dify_web }
