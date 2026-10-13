@@ -8,7 +8,7 @@ locals {
     for k, v in var.containers : k => v.vm_id
     if length(setintersection(
       try(v.tags, []),
-      concat(["llm-fast"], local.llm_cpu_scaler.pool_tags)
+      concat([local.firewall_container_tags.llm_fast], local.llm_cpu_scaler.pool_tags)
     )) > 0
   }
 
@@ -16,7 +16,7 @@ locals {
   # (llm_router_api). Inbound llm_router_api from internal.
   llm_router_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(try(v.tags, []), "llm-router")
+    if contains(try(v.tags, []), local.firewall_container_tags.llm_router)
   }
 
   # llm-redis LXCs (llm-redis tag): the shared store the router pool counts
@@ -26,7 +26,7 @@ locals {
   # dishonest. See roles/redis in ansible-proxmox-ai.
   llm_redis_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(try(v.tags, []), "llm-redis")
+    if contains(try(v.tags, []), local.firewall_container_tags.llm_redis)
   }
 
   # Every container's mount_points with read_only resolved once. Fed to

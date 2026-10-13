@@ -9,7 +9,7 @@ locals {
   # would). See docs/ARCHITECTURE.md (media pool firewall boundary).
   media_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "media")
-    && !contains(coalesce(try(v.tags, null), []), "vpn")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.media)
+    && !contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.vpn)
   }
 }

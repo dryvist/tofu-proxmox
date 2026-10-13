@@ -99,6 +99,21 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.apt_cacher_ng), source = local.internal_src, comment = "apt-cacher-ng from internal" },
   ]
 
+  git_mirror_services_rules = var.git_mirror_ingress_src == "" ? [] : [
+    { proto = "tcp", dport = tostring(local.svc_ports.git_mirror_public), source = var.git_mirror_ingress_src, comment = "Git mirror public listener from ingress" },
+    { proto = "tcp", dport = tostring(local.svc_ports.git_mirror_all), source = var.git_mirror_ingress_src, comment = "Git mirror authenticated listener from ingress" },
+  ]
+
+  git_mirror_access_rules = concat(
+    var.git_mirror_trusted_src == "" ? [] : [
+      { proto = "tcp", dport = "22", source = var.git_mirror_trusted_src, comment = "SSH to Git mirror from trusted networks" },
+      { proto = "icmp", dport = null, source = var.git_mirror_trusted_src, comment = "ICMP to Git mirror from trusted networks" },
+    ],
+    var.prometheus_scraper_trusted_src == "" ? [] : [
+      { proto = "tcp", dport = tostring(local.svc_ports.node_exporter), source = var.prometheus_scraper_trusted_src, comment = "node_exporter scrape from Prometheus" },
+    ]
+  )
+
   # cribl_stream_services_rules is defined in cribl_rules.tf — same 12 KB
   # file-size split as pipeline_services_rules above.
 

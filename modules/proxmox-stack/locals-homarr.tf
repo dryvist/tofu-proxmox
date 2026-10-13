@@ -14,7 +14,7 @@ locals {
   # all still ours, which is the point the pilot is measuring.
   homarr_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "homarr")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.homarr)
   }
 
   # One SSO-gated route per Homarr guest, named by its container key, merged

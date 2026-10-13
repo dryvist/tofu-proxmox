@@ -26,7 +26,7 @@ variable "llm_router_trusted_src" {
 }
 
 variable "prometheus_scraper_trusted_src" {
-  description = "The Prometheus scraper's own address (the prometheus-tagged container), for services scraped directly rather than through Traefik/ingress: Hindsight /metrics (API port) and agentgateway's stats server. Empty when no such container exists, which renders an inert (empty-source) rule rather than a plan error. Derived from the inventory in root locals."
+  description = "The Prometheus scraper's own address (the prometheus-tagged container), for services scraped directly rather than through Traefik/ingress: Hindsight /metrics (API port), agentgateway's stats server, and ClickHouse metrics. Empty when no such container exists, which renders an empty-source rule rather than a plan error. Derived from the inventory in root locals."
   type        = string
   default     = ""
 }

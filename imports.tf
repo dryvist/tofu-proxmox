@@ -135,6 +135,18 @@ import {
   id = "${local.deployment.vms[each.value].node_name}/${local.deployment.vms[each.value].vm_id}"
 }
 
+# Adoption of the Splunk VM onto the node named by splunk_node_name. The VM is
+# not in the vms map, so `splunk_adopt = true` in the desired-state object names
+# it, the same way `adopt = true` names a container. Same order as above: set
+# splunk_node_name first, remove the stale state entry, apply with the flag on,
+# then remove the flag.
+import {
+  for_each = try(local.deployment.splunk_adopt, false) ? toset(["splunk"]) : toset([])
+
+  to = module.homelab.module.splunk_vm.proxmox_virtual_environment_vm.splunk_vm
+  id = "${try(local.deployment.splunk_node_name, local.deployment.proxmox_node)}/${try(local.deployment.splunk_vm_id, 99)}"
+}
+
 # Adoption of the Windows VM install ISOs. They were downloaded to the node's
 # local datastore by hand, ahead of the proxmox_download_file resources that
 # now declare them, so the resource's default overwrite_unmanaged=false makes

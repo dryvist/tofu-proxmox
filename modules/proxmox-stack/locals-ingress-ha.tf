@@ -26,7 +26,7 @@ locals {
   ingress_vip_host = 9
   ingress_container_keys = sort([
     for k, v in var.containers : k
-    if contains(coalesce(try(v.tags, null), []), "ingress")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ingress)
   ])
   # VLAN taken from the ingress containers themselves, so the VIP follows a VLAN
   # move automatically instead of pinning a hardcoded key. Falls back to "mgmt"

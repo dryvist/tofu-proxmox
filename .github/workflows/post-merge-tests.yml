@@ -41,7 +41,7 @@ jobs:
 
   review:
     if: github.event_name == 'workflow_dispatch'
-    uses: dryvist/ai-workflows/.github/workflows/cc-post-merge-tests.yml@2456bca533a27c71009b03097c6e03f2971f508a # v0.48.5
+    uses: dryvist/ai-workflows/.github/workflows/cc-post-merge-tests.yml@70d7a6ad0d566017d6c063c5786b997084f3f5c4 # v0.48.7
     with:
       commit_sha: ${{ inputs.commit_sha || github.sha }}
     secrets: inherit

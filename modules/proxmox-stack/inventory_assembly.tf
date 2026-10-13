@@ -15,8 +15,8 @@ locals {
   # resource below (a resource cannot reference an output, so this lives here).
   ansible_inventory = {
     # Contract version of this published artifact. Consumers read this to
-    # confirm they understand the emitted shape. Bump only on a breaking
-    # key-set change; an added key is additive.
+    # confirm they understand the emitted shape. Additive keys bump the minor
+    # version; breaking key-set changes bump the major version.
     #
     # This comment used to say the homelab-contracts JSON schema "gates the
     # publish". It does not, and believing so is dangerous. That repo's CI runs
@@ -30,7 +30,7 @@ locals {
     # The schema that DOES run against real output is consumer-side
     # (ansible-proxmox-apps tests/inventory_load/tofu_inventory.schema.json) and
     # is additionalProperties:true, which is why an added key is safe here.
-    schema_version = "2.3.0"
+    schema_version = "2.4.0"
     # Which desired state this came from — see the variables' own descriptions.
     desired_state = {
       etag = var.desired_state_etag
@@ -38,6 +38,8 @@ locals {
     llm_gpu_engine = var.llm_gpu_engine
     # LXC Containers - using proxmox_pct_remote connection
     containers = local.inventory_containers
+    # Per-container agent roster (agents.tf).
+    agents = local.agents
     # Shared APT cache URLs, derived once from capability-tagged guest FQDNs.
     # Every Ansible consumer reads this list; cache membership and preference
     # order stay owned by the published inventory.
@@ -47,6 +49,10 @@ locals {
         "http://${container.fqdn}:${local.pipeline_constants.service_ports.apt_cacher_ng}"
         if contains(container.tags, "apt-cache")
       ])
+    }
+    git_mirror_urls = length(local.git_mirror_container_ids) == 0 ? {} : {
+      public = "https://git-mirror.${var.domain}/public"
+      all    = "https://git-mirror-all.${var.domain}/all"
     }
     # Regular VMs - using SSH connection
     # DRY: static VMs advertise their vm_id-derived IP; DHCP-first VMs advertise
@@ -62,7 +68,7 @@ locals {
         vmid               = module.splunk_vm.vm_id
         hostname           = module.splunk_vm.name
         ip                 = module.splunk_vm.ip_address # CIDR already stripped in module output
-        node               = var.proxmox_node
+        node               = var.splunk_node_name
         ansible_connection = "ssh"
         # Sized from its own variables -- this guest is built by a dedicated
         # module, not from var.vms. disk_gb is the BOOT disk: the tiered data

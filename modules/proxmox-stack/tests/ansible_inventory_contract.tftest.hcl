@@ -80,8 +80,8 @@ run "ansible_inventory_schema_version" {
   command = plan
 
   assert {
-    condition     = output.ansible_inventory.schema_version == "2.3.0"
-    error_message = "ansible_inventory must carry schema_version \"2.3.0\" so the homelab-contracts schema gate can confirm the emitted shape"
+    condition     = output.ansible_inventory.schema_version == "2.4.0"
+    error_message = "ansible_inventory must carry schema_version \"2.4.0\" for the additive agent roster contract"
   }
 }
 
@@ -133,6 +133,15 @@ run "ansible_inventory_vikunja_web_constant" {
   assert {
     condition     = output.ansible_inventory.constants.service_ports.vikunja_web == 3456
     error_message = "constants.service_ports.vikunja_web must be 3456 (Vikunja web/API)"
+  }
+}
+
+run "ansible_inventory_clickhouse_metrics_port" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.clickhouse_metrics == 9363
+    error_message = "constants.service_ports.clickhouse_metrics must be 9363"
   }
 }
 
@@ -325,6 +334,20 @@ run "ansible_inventory_splunk_vm_exists" {
   assert {
     condition     = can(output.ansible_inventory.splunk_vm)
     error_message = "ansible_inventory must contain 'splunk_vm' key at root level"
+  }
+}
+
+run "ansible_inventory_splunk_vm_node_follows_placement" {
+  command = plan
+
+  variables {
+    proxmox_node     = "proxmox-1"
+    splunk_node_name = "proxmox-2"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.splunk_vm.splunk.node == "proxmox-2"
+    error_message = "splunk_vm.splunk.node must be the node the Splunk VM is placed on (splunk_node_name), got ${output.ansible_inventory.splunk_vm.splunk.node}"
   }
 }
 
@@ -1249,7 +1272,17 @@ run "ansible_inventory_node_capability_tags_propagated" {
 
   variables {
     nodes = {
-      example-node = { role = "example-node", tags = ["nvidia-gpu"] }
+      example-node = { role = "example-node", tags = ["nvidia-gpu"], commissioned = null }
+    }
+    containers = {
+      gpu = {
+        vm_id     = 503020
+        node_name = "example-node"
+        hostname  = "llm-ada-lovelace-6X-16GB-embed"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
     }
   }
 
@@ -2211,6 +2244,9 @@ run "ansible_inventory_publishes_models_mount_path" {
   command = plan
 
   variables {
+    nodes = {
+      "proxmox-2" = { role = "node-2", tags = ["nvidia-gpu"], commissioned = null }
+    }
     containers = {
       "llm-fast" = {
         vm_id     = 610010
@@ -2225,13 +2261,13 @@ run "ansible_inventory_publishes_models_mount_path" {
           { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache" },
         ]
       }
-      "llm-ada-lovelace-6X-16G" = {
-        vm_id     = 610011
-        node_name = "proxmox-1"
-        hostname  = "llm-ada-lovelace-6X-16G"
+      "llm-ada-lovelace-6X-16GB-embed" = {
+        vm_id     = 503020
+        node_name = "proxmox-2"
+        hostname  = "llm-ada-lovelace-6X-16GB-embed"
         vlan      = "ai"
         dhcp      = true
-        tags      = ["llm-fast"]
+        tags      = ["llm-fast", "gpu-passthrough"]
       }
     }
     node_storage = {
@@ -2264,7 +2300,7 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16G"].models_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16GB-embed"].models_mount_path == null
     error_message = "a container with no mount at var.llm_models_mount_path must publish models_mount_path as null, so the consumer can tell 'no shared mount' from 'mount not yet known' — never a guessed path"
   }
 
@@ -2279,12 +2315,12 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16G"].models_origin_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16GB-embed"].models_origin_mount_path == null
     error_message = "a container without a model-origin mount must publish null instead of a guessed path"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16G"].models_origin_mount_read_only == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16GB-embed"].models_origin_mount_read_only == null
     error_message = "a container without a model-origin mount must publish null instead of a guessed read_only setting"
   }
 
@@ -2294,7 +2330,7 @@ run "ansible_inventory_publishes_models_mount_path" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16G"].models_cache_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-ada-lovelace-6X-16GB-embed"].models_cache_mount_path == null
     error_message = "a container without a model-cache mount must publish null instead of a guessed cache path"
   }
 
@@ -2319,6 +2355,9 @@ run "ansible_inventory_publishes_models_mount_allocation_spec" {
   command = plan
 
   variables {
+    nodes = {
+      "proxmox-2" = { role = "node-2", tags = ["nvidia-gpu"], commissioned = null }
+    }
     containers = {
       "llm-fast" = {
         vm_id     = 610012
@@ -2331,13 +2370,13 @@ run "ansible_inventory_publishes_models_mount_allocation_spec" {
           { volume = "fast", size = "120G", path = "/var/lib/llm" },
         ]
       }
-      "llm-ada-lovelace-6X-16G" = {
-        vm_id     = 610013
-        node_name = "proxmox-1"
-        hostname  = "llm-ada-lovelace-6X-16G"
+      "llm-ada-lovelace-6X-16GB-embed" = {
+        vm_id     = 503020
+        node_name = "proxmox-2"
+        hostname  = "llm-ada-lovelace-6X-16GB-embed"
         vlan      = "ai"
         dhcp      = true
-        tags      = ["llm-fast"]
+        tags      = ["llm-fast", "gpu-passthrough"]
       }
     }
   }
@@ -2367,9 +2406,9 @@ run "ansible_inventory_publishes_models_mount_allocation_spec" {
 
   assert {
     condition = alltrue([
-      output.ansible_inventory.containers["llm-ada-lovelace-6X-16G"].models_mount_storage == null,
-      output.ansible_inventory.containers["llm-ada-lovelace-6X-16G"].models_mount_size == null,
-      output.ansible_inventory.containers["llm-ada-lovelace-6X-16G"].models_mount_read_only == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16GB-embed"].models_mount_storage == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16GB-embed"].models_mount_size == null,
+      output.ansible_inventory.containers["llm-ada-lovelace-6X-16GB-embed"].models_mount_read_only == null,
     ])
     error_message = "a container with no mount at var.llm_models_mount_path must publish null allocation fields too, matching models_mount_path"
   }
@@ -2430,29 +2469,41 @@ run "ansible_inventory_publishes_primary_node" {
   }
 }
 
-# --- single-GPU serving guest: mount contract, hard NFS, fronted name -------
+# --- GPU serving and pinned-small guests: inventory, mounts, fronted names --
 
-run "single_gpu_guest_publishes_mounts_and_ingress" {
+run "gpu_medium_and_small_guests_publish_inventory_and_ingress" {
   command = plan
 
   variables {
     containers = {
-      "llm-blackwell-7-96" = {
-        vm_id            = 610020
+      "llm-blackwell-7-96GB-medium" = {
+        vm_id            = 503030
         node_name        = "proxmox-1"
-        hostname         = "llm-blackwell-7-96"
+        hostname         = "llm-blackwell-7-96GB-medium"
         vlan             = "ai"
         dhcp             = true
         unprivileged     = false
         cpu_cores        = 12
         memory_dedicated = 49152
         root_disk        = { size = 64 }
-        tags             = ["terraform", "container", "ai", "llm-fast", "llm-gpu"]
+        tags             = ["terraform", "container", "ai", "llm-fast", "llm-gpu", "gpu-passthrough"]
         mount_points = [
           { volume = "/var/lib/llm-cache", path = "/var/lib/llm-cache", backup = false },
           { volume = "/var/lib/llm-origin", path = "/var/lib/llm-origin", read_only = false, backup = false },
         ]
       }
+      "llm-blackwell-7-96GB-small" = {
+        vm_id            = 503040
+        node_name        = "proxmox-1"
+        hostname         = "llm-blackwell-7-96GB-small"
+        vlan             = "ai"
+        dhcp             = true
+        memory_dedicated = 4096
+        tags             = ["terraform", "container", "ai", "llm-fast", "llm-gpu-small", "gpu-passthrough"]
+      }
+    }
+    nodes = {
+      "proxmox-1" = { role = "node-1", tags = ["nvidia-gpu"], commissioned = null }
     }
     node_storage = {
       "proxmox-1" = {
@@ -2465,18 +2516,23 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_cache_mount_path == "/var/lib/llm-cache"
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96GB-medium"].models_cache_mount_path == "/var/lib/llm-cache"
     error_message = "the single-GPU guest must publish its node-local cache mount path"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_origin_mount_path == "/var/lib/llm-origin" && output.ansible_inventory.containers["llm-blackwell-7-96"].models_origin_mount_read_only == false
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96GB-medium"].models_origin_mount_path == "/var/lib/llm-origin" && output.ansible_inventory.containers["llm-blackwell-7-96GB-medium"].models_origin_mount_read_only == false
     error_message = "the single-GPU guest must publish a writable origin mount (explicit read_only = false)"
   }
 
   assert {
-    condition     = output.ansible_inventory.containers["llm-blackwell-7-96"].models_mount_path == null
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96GB-medium"].models_mount_path == null
     error_message = "the single-GPU guest declares no shared serving mount and must publish null for it"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.containers["llm-blackwell-7-96GB-small"].memory_mb == 4096 && contains(output.ansible_inventory.containers["llm-blackwell-7-96GB-small"].tags, "llm-gpu-small") && !contains(output.ansible_inventory.containers["llm-blackwell-7-96GB-small"].tags, "llm-gpu")
+    error_message = "the pinned small guest must publish its memory and small-role tag without engine selection"
   }
 
   assert {
@@ -2485,8 +2541,13 @@ run "single_gpu_guest_publishes_mounts_and_ingress" {
   }
 
   assert {
-    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96"]).sso
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96GB-medium"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96GB-medium"]).sso
     error_message = "the single-GPU guest must publish an ungated ingress route to the serving port"
+  }
+
+  assert {
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96GB-small"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96GB-small"]).sso
+    error_message = "the pinned small guest must publish an ungated ingress route to the serving port"
   }
 }
 

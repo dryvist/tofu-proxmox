@@ -53,6 +53,7 @@
   "splunk_node_name": "proxmox-1",
   "splunk_cpu_type": "host",
   "splunk_migrate": false,
+  "splunk_adopt": false,
   "pools": {
     "logging": {
       "comment": "Logging and observability infrastructure"
@@ -684,6 +685,16 @@
       "description": "Example LXC container entry \u2014 replace with your own",
       "cpu_cores": 1,
       "memory_dedicated": 512,
+      "expected_resources": {
+        "avg": {
+          "cpu_cores": 0.4,
+          "memory_mib": 384
+        },
+        "peak": {
+          "cpu_cores": 1,
+          "memory_mib": 512
+        }
+      },
       "tags": [
         "terraform",
         "container"
@@ -868,6 +879,35 @@
       "root_disk": {
         "size": 8
       }
+    },
+    "git-mirror": {
+      "vm_id": 605070,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "git-mirror",
+      "description": "Read-only Git mirror with separate public and authenticated listener roots.",
+      "cpu_cores": 2,
+      "memory_dedicated": 2048,
+      "tags": [
+        "terraform",
+        "container",
+        "git-mirror",
+        "managed-secrets"
+      ],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-1",
+      "ha_replication_target": "proxmox-3",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 8
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "10G",
+          "path": "/srv/git-mirror"
+        }
+      ]
     },
     "_status_comment": "Estate synthetics guest (`status` tag, apps VLAN, Docker-in-LXC). Hosts Gatus (catalog front-door + OIDC client probes every 60s) and Uptime Kuma (keystone status page). Both UIs are Traefik-fronted and Authelia-gated. Nesting/keyctl required for Docker.",
     "status": {
@@ -1181,51 +1221,15 @@
         "nesting": true
       }
     },
-    "_llm_fabric_comment": "Local LLM fabric (AI tier 5, ai VLAN). llm-fast is a PRIVILEGED LXC with GPU passthrough (/dev/kfd + a /dev/dri render node) running the fast/small-model server (llama-swap, OpenAI-compatible on llm_fast_api). llm-router-* front the fabric with a LiteLLM proxy (llm_router_api) that routes to llm-fast plus the larger off-box model endpoints. open-webui is the chat UI (open_webui_web). VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); values here are illustrative. GPU passthrough requires a privileged container (unprivileged:false), so the API token cannot create it \u2014 root@pam does (ansible-proxmox / hands-on), the same constraint as the media guests' keyctl/fuse. Tag llm-fast opens llm_fast_api from internal; tag llm-router opens llm_router_api. Node placement is set in the live (private) deployment input; the example omits node_name and uses the default.",
-    "llm-fast": {
-      "vm_id": 503000,
-      "node_name": "proxmox-1",
-      "dhcp": true,
-      "vlan": "ai",
-      "hostname": "llm-fast",
-      "description": "GPU fast/small-model server (llama-swap, OpenAI-compatible on llm_fast_api). Privileged LXC with AMD ROCm passthrough.",
-      "cpu_cores": 4,
-      "memory_dedicated": 16384,
-      "tags": [
-        "terraform",
-        "container",
-        "ai",
-        "llm-fast"
-      ],
-      "pool_id": "ai",
-      "unprivileged": false,
-      "root_disk": {
-        "size": 24
-      },
-      "mount_points": [
-        {
-          "volume": "local-zfs",
-          "size": "120G",
-          "path": "/var/lib/llm"
-        }
-      ],
-      "device_passthrough": [
-        {
-          "path": "/dev/kfd"
-        },
-        {
-          "path": "/dev/dri/renderD128"
-        }
-      ]
-    },
-    "_llm_gpu_guest_comment": "Single-GPU serving guest (AI tier 5, ai VLAN). Privileged LXC; the NVIDIA device nodes are bound by ansible-proxmox lxc_gpu_features (map key = this hostname), so device_passthrough stays empty. Tag llm-gpu places it in the llm_gpu_group; a mount at var.llm_models_cache_mount_path (writable, node-local, excluded from vzdump) and a writable mount at var.llm_models_origin_mount_path (the NFS origin the node mounts, see node_storage.proxmox-5.nfs_mounts) are published to the serving role. The node NFS mount is declared hard, because a soft mount can short-write the writable origin under a transient outage. Host-path binds and privileged create are root@pam-only. VMID and node are illustrative.",
-    "llm-blackwell-7-96": {
-      "vm_id": 503060,
+    "_llm_fabric_comment": "Local LLM fabric (AI tier 5, ai VLAN). The GPU serving guest is llm-blackwell-7-96GB-medium with the pinned llm-blackwell-7-96GB-small companion; llm-router-* front the fabric with a LiteLLM proxy (llm_router_api) that routes to the serving guest and larger off-box model endpoints. open-webui is the chat UI (open_webui_web). VMIDs follow the 6-digit positional convention (docs vmid-network-tiers); values here are illustrative. GPU passthrough requires a privileged container (unprivileged:false), so the API token cannot create it \u2014 root@pam does (ansible-proxmox / hands-on), the same constraint as the media guests' keyctl/fuse. Tag llm-fast opens llm_fast_api from internal; tag llm-router opens llm_router_api.",
+    "_llm_gpu_guest_comment": "GPU inference guests (AI tier 5, ai VLAN). Privileged LXCs; the NVIDIA device nodes are bound by ansible-proxmox lxc_gpu_features (map key = each hostname), so device_passthrough stays empty. Tag llm-gpu selects the serving guest; llm-gpu-small marks the pinned small-model role. The node-local cache mount and writable NFS origin mount are published to the serving role. The node NFS mount is declared hard, because a soft mount can short-write the writable origin under a transient outage. Host-path binds and privileged create are root@pam-only. VMIDs and node are illustrative.",
+    "llm-blackwell-7-96GB-medium": {
+      "vm_id": 503030,
       "node_name": "proxmox-5",
       "dhcp": true,
       "vlan": "ai",
-      "hostname": "llm-blackwell-7-96",
-      "description": "Single-GPU model serving guest (vLLM and llama.cpp, OpenAI-compatible on llm_fast_api). Privileged LXC with NVIDIA passthrough.",
+      "hostname": "llm-blackwell-7-96GB-medium",
+      "description": "GPU model serving guest (vLLM and llama.cpp, OpenAI-compatible on llm_fast_api). Privileged LXC with NVIDIA passthrough.",
       "cpu_cores": 12,
       "memory_dedicated": 49152,
       "tags": [
@@ -1234,7 +1238,46 @@
         "ai",
         "llm-fast",
         "llm-gpu",
-        "nvidia-gpu"
+        "nvidia-gpu",
+        "gpu-passthrough"
+      ],
+      "pool_id": "ai",
+      "unprivileged": false,
+      "start_on_boot": true,
+      "root_disk": {
+        "size": 64
+      },
+      "mount_points": [
+        {
+          "volume": "/var/lib/llm-cache",
+          "path": "/var/lib/llm-cache",
+          "backup": false
+        },
+        {
+          "volume": "/var/lib/llm-origin",
+          "path": "/var/lib/llm-origin",
+          "read_only": false,
+          "backup": false
+        }
+      ]
+    },
+    "llm-blackwell-7-96GB-small": {
+      "vm_id": 503040,
+      "node_name": "proxmox-5",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "llm-blackwell-7-96GB-small",
+      "description": "Pinned always-on small-model inference guest. Privileged LXC with NVIDIA passthrough.",
+      "cpu_cores": 2,
+      "memory_dedicated": 4096,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "llm-fast",
+        "llm-gpu-small",
+        "nvidia-gpu",
+        "gpu-passthrough"
       ],
       "pool_id": "ai",
       "unprivileged": false,
@@ -1289,7 +1332,7 @@
       ]
     },
     "llm-moe-51": {
-      "vm_id": 503030,
+      "vm_id": 503070,
       "node_name": "proxmox-5",
       "dhcp": true,
       "vlan": "ai",
@@ -1319,7 +1362,7 @@
       ]
     },
     "llm-9b-50": {
-      "vm_id": 503040,
+      "vm_id": 503060,
       "node_name": "proxmox-5",
       "dhcp": true,
       "vlan": "ai",
@@ -1411,7 +1454,7 @@
       "dhcp": true,
       "vlan": "ai",
       "hostname": "llm-router-1",
-      "description": "LiteLLM proxy fronting the fabric (llm_router_api) \u2014 routes to llm-fast and off-box model endpoints (native Python venv)",
+      "description": "LiteLLM proxy fronting the fabric (llm_router_api) \u2014 routes to the Blackwell GPU guest and off-box model endpoints (native Python venv)",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
       "tags": [
@@ -1683,6 +1726,38 @@
           "volume": "local-zfs",
           "size": "80G",
           "path": "/opt/langfuse"
+        }
+      ],
+      "features": {
+        "nesting": true
+      }
+    },
+    "clickhouse": {
+      "vm_id": 406000,
+      "node_name": "proxmox-3",
+      "dhcp": true,
+      "vlan": "siem",
+      "hostname": "clickhouse",
+      "description": "ClickHouse - dedicated OLAP store for Langfuse (Docker-in-LXC); always on the same node as the langfuse guest",
+      "cpu_cores": 4,
+      "memory_dedicated": 8192,
+      "tags": [
+        "terraform",
+        "container",
+        "observability",
+        "clickhouse",
+        "docker"
+      ],
+      "pool_id": "infrastructure",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "200G",
+          "path": "/var/lib/clickhouse"
         }
       ],
       "features": {

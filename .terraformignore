@@ -1,5 +1,4 @@
 .direnv/
-.entire/
 .docs
 .git/
 .terraform/

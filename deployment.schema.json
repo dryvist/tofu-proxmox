@@ -102,6 +102,51 @@
         "$ref": "#/definitions/container_input"
       }
     },
+    "agents": {
+      "type": "object",
+      "description": "Optional agent roster keyed by the container key each agent runs in.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name", "display", "purpose"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z]+-[a-z]+$"
+          },
+          "display": {
+            "type": "string",
+            "minLength": 1
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owns": {
+            "type": "array",
+            "default": [],
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "router_key_class": {
+            "type": "string",
+            "enum": ["all", "standard", "zdr"],
+            "default": "standard"
+          },
+          "slack": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "home_channel": { "type": "string" },
+              "requests_channel": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
     "vms": {
       "type": "object",
       "additionalProperties": true
@@ -206,6 +251,21 @@
     }
   },
   "definitions": {
+    "resource_profile": {
+      "type": "object",
+      "description": "One set of resource figures; used for both expected_resources.avg and .peak.",
+      "additionalProperties": false,
+      "properties": {
+        "cpu_cores": { "type": "number", "minimum": 0, "description": "Fractional CPU cores." },
+        "memory_mib": { "type": "number", "minimum": 0, "description": "Memory in MiB." },
+        "io_read_mbps": { "type": "number", "minimum": 0, "description": "Storage read throughput in megabytes per second." },
+        "io_write_mbps": { "type": "number", "minimum": 0, "description": "Storage write throughput in megabytes per second." },
+        "io_read_iops": { "type": "number", "minimum": 0, "description": "Storage read operations per second." },
+        "io_write_iops": { "type": "number", "minimum": 0, "description": "Storage write operations per second." },
+        "net_in_mbps": { "type": "number", "minimum": 0, "description": "Inbound network throughput in megabits per second." },
+        "net_out_mbps": { "type": "number", "minimum": 0, "description": "Outbound network throughput in megabits per second." }
+      }
+    },
     "node_input": {
       "type": "object",
       "description": "A single node's identity, matching modules/proxmox-stack/variables-infrastructure.tf's `nodes` object type exactly. additionalProperties is false HERE (unlike most of this schema) precisely because of logical_id: with additionalProperties true, a misspelled or mistyped logical_id key is not a validation error, it is silently accepted as an unknown extra property, and the node it belongs to silently opts OUT of the guest node-digit naming law — every one of its guests stops being judged, with no error anywhere. Closing this object converts that failure from silent to loud. If a new node attribute is ever needed, add it here rather than reopening additionalProperties.",
@@ -336,9 +396,30 @@
           "type": "integer",
           "minimum": 100
         },
+        "expected_resources": {
+          "type": "object",
+          "description": "Expected guest resource use (SHOULD; a plan warns when avg or peak is missing). Reference for capacity planning and telemetry comparison.",
+          "additionalProperties": false,
+          "properties": {
+            "avg": { "$ref": "#/definitions/resource_profile", "description": "Average sustained resource use." },
+            "peak": { "$ref": "#/definitions/resource_profile", "description": "Maximum observed or expected peak resource use." }
+          }
+        },
         "hostname": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "Guest hostname. A container tagged gpu-passthrough uses an Ada Lovelace or Blackwell generation, GDDR 6 or 7 with optional uppercase X, an integer VRAM value followed by GB, and a role suffix.",
+          "examples": [
+            "llm-ada-lovelace-6X-16GB-embed",
+            "llm-blackwell-7-96GB-medium",
+            "llm-blackwell-7-96GB-small"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "description": "Guest tags. GPU containers carry gpu-passthrough; the pinned small-model role also carries llm-gpu-small. Node capability is declared separately with the nvidia-gpu node tag."
         },
         "vlan": {
           "type": "string",

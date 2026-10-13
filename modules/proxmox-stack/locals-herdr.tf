@@ -15,12 +15,12 @@
 locals {
   herdr_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "herdr")
-    && !contains(coalesce(try(v.tags, null), []), "herdr-ui")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.herdr)
+    && !contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.herdr_ui)
   }
 
   herdr_client_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), "herdr-ui")
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.herdr_ui)
   }
 }

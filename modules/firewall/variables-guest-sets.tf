@@ -54,6 +54,24 @@ variable "apt_cacher_ng_container_ids" {
   default     = {}
 }
 
+variable "git_mirror_container_ids" {
+  description = "Map of Git mirror container names to their IDs (git-mirror tag)"
+  type        = map(number)
+  default     = {}
+}
+
+variable "git_mirror_ingress_src" {
+  description = "Comma-separated ingress proxy addresses allowed to reach the Git mirror listeners. Derived from the ingress inventory."
+  type        = string
+  default     = ""
+}
+
+variable "git_mirror_trusted_src" {
+  description = "Comma-separated trusted source networks allowed to reach the Git mirror guest for administration. Excludes the AI network."
+  type        = string
+  default     = ""
+}
+
 variable "cribl_stream_container_ids" {
   description = "Map of Cribl Stream container names to their IDs (receives from Edge, routes to Splunk)"
   type        = map(number)
@@ -169,7 +187,7 @@ variable "phoenix_container_ids" {
 }
 
 variable "clickhouse_container_ids" {
-  description = "Map of ClickHouse OLAP-store LXC names to IDs (tag-driven: clickhouse). Inbound HTTP (8123) + native protocol (9000) from internal + outbound internal/HTTPS. Not fronted by ingress."
+  description = "Map of ClickHouse OLAP-store LXC names to IDs (tag-driven: clickhouse). Inbound HTTP/native protocols from internal, Prometheus metrics from the scraper, and outbound internal/HTTPS. Not fronted by ingress."
   type        = map(number)
   default     = {}
 }
@@ -202,6 +220,33 @@ variable "ai_proxied_container_ids" {
   description = "Map of AI agent-pool LXC names to IDs (tag-driven: ai-proxied). Long-lived pooled agent guest — inbound SSH/ICMP from internal (Ansible converge); egress to internal DNS/NTP/OpenBao, the Squid forward proxy, and the Cribl AI log-ingest frontends only. NO direct WAN: every outbound web request goes through Squid, where the domain allowlist is enforced."
   type        = map(number)
   default     = {}
+}
+
+variable "agent_containers" {
+  description = "Roster agents keyed by agent name, with the guest VM ID and owned system slugs."
+  type = map(object({
+    vm_id = number
+    owns  = list(string)
+  }))
+  default = {}
+}
+
+variable "agent_system_ports" {
+  description = "Agent-owned system ports keyed by system slug, resolved from the Proxmox stack port constants."
+  type        = map(list(number))
+  default     = {}
+}
+
+variable "agent_system_hosts" {
+  description = "Agent-owned system host addresses keyed by system slug, derived from Proxmox guest addresses."
+  type        = map(list(string))
+  default     = {}
+}
+
+variable "agent_ingress_vip" {
+  description = "Derived ingress VIP used as the only direct HTTPS destination for roster agents."
+  type        = string
+  default     = ""
 }
 
 variable "squid_proxy_container_ids" {

@@ -13,6 +13,8 @@ locals {
       cribl_edge_api    = 9420
       cribl_stream_api  = 9000
       apt_cacher_ng     = 3142
+      git_mirror_public = 8080
+      git_mirror_all    = 8081
       # Egress forward-proxy (Squid) for the confined AI agent plane. An
       # `ai-proxied` guest has NO 443-to-any of its own: its only WAN path is
       # CONNECT through this port, where the domain allowlist is enforced.
@@ -112,8 +114,9 @@ locals {
       # ClickHouse (clickhouse + observability tags) — dedicated OLAP store for
       # the observability stack. clickhouse_http = HTTP query interface;
       # clickhouse_native = the native TCP client/replication protocol.
-      clickhouse_http   = 8123
-      clickhouse_native = 9000
+      clickhouse_http    = 8123
+      clickhouse_native  = 9000
+      clickhouse_metrics = 9363
       # LangGraph, self-hosted zero-cloud: `langgraph dev` in-memory server API +
       # its self-hosted Agent Chat UI (Next.js). langgraph_api is deliberately 8124,
       # NOT the LangGraph default 8123, which collides with homeassistant_web above.

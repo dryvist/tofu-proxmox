@@ -267,6 +267,40 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "apt_cach
   }
 }
 
+resource "proxmox_virtual_environment_cluster_firewall_security_group" "git_mirror_services" {
+  name    = "git-mirror-svc"
+  comment = "Git mirror listeners from ingress proxies"
+
+  dynamic "rule" {
+    for_each = local.git_mirror_services_rules
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = rule.value.proto
+      dport   = rule.value.dport
+      source  = rule.value.source
+      comment = rule.value.comment
+    }
+  }
+}
+
+resource "proxmox_virtual_environment_cluster_firewall_security_group" "git_mirror_access" {
+  name    = "git-mirror-access"
+  comment = "Git mirror administration and monitoring from trusted sources"
+
+  dynamic "rule" {
+    for_each = local.git_mirror_access_rules
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = rule.value.proto
+      dport   = rule.value.dport
+      source  = rule.value.source
+      comment = rule.value.comment
+    }
+  }
+}
+
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "s3_services" {
   name    = "object-storage-svc"
   comment = "Object storage (RustFS): S3 API (${local.svc_ports.object_storage_s3}) and Console (${local.svc_ports.object_storage_console}) from internal networks"

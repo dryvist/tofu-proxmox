@@ -15,6 +15,8 @@
 # so a key like "openbao-110001" (already "<app>-<vm_id>") round-trips to the
 # same string, and a key like "llm-router-1" generates "llm-router-<vm_id>".
 locals {
+  gpu_passthrough_container_name_regex = "^llm-(ada-lovelace|blackwell)-(6|7)X?-[0-9]+GB-[a-z][a-z0-9-]*$"
+
   guest_hostname_containers = {
     for k, v in var.containers : k => coalesce(v.hostname, "${replace(k, "/-[0-9]+$/", "")}-${v.vm_id}")
   }
