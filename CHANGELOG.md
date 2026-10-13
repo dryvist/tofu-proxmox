@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.37.0](https://github.com/dryvist/tofu-proxmox/compare/v3.36.0...v3.37.0) (2026-10-13)
+
+
+### Features
+
+* **firewall:** scope roster agent access to owned system hosts ([#1290](https://github.com/dryvist/tofu-proxmox/issues/1290)) ([f3bbf11](https://github.com/dryvist/tofu-proxmox/commit/f3bbf114f4ef376ac684c410f8d2bc08cb9a58b1))
+* **guests:** declare expected average and peak resources per guest ([#1280](https://github.com/dryvist/tofu-proxmox/issues/1280)) ([f163ba0](https://github.com/dryvist/tofu-proxmox/commit/f163ba0ce14b645237af66d54e606313ed0f9601))
+* **imports:** adopt the Splunk VM from a desired-state flag ([#1294](https://github.com/dryvist/tofu-proxmox/issues/1294)) ([d6260f5](https://github.com/dryvist/tofu-proxmox/commit/d6260f581bff3d68d14352baff17c35d04c88f7c))
+* **proxmox-stack:** add a source class to owned Splunk ingress routes ([#1291](https://github.com/dryvist/tofu-proxmox/issues/1291)) ([4d3edda](https://github.com/dryvist/tofu-proxmox/commit/4d3edda11ecc1f0b72f9a341b07e4c9184c1549e))
+* **proxmox-stack:** add the optional container agent roster and publish agents ([#1288](https://github.com/dryvist/tofu-proxmox/issues/1288)) ([1209dbd](https://github.com/dryvist/tofu-proxmox/commit/1209dbd934fa56cda207278c20e76be76714a4a7))
+* **proxmox-stack:** enforce one GPU passthrough container per node ([#1292](https://github.com/dryvist/tofu-proxmox/issues/1292)) ([6c5bb5a](https://github.com/dryvist/tofu-proxmox/commit/6c5bb5ade71a9943c8665bfb3d1ae6f821319b32))
+* **proxmox-stack:** name GPU guests by role and add a pinned small GPU guest ([#1296](https://github.com/dryvist/tofu-proxmox/issues/1296)) ([e9d381c](https://github.com/dryvist/tofu-proxmox/commit/e9d381ce64ee8495e4262a35fcfbd706ce712e73))
+* **proxmox-stack:** require langfuse and clickhouse on one node ([#1293](https://github.com/dryvist/tofu-proxmox/issues/1293)) ([fcd9eb0](https://github.com/dryvist/tofu-proxmox/commit/fcd9eb054f8c7cf6a4510e1eeaf3a801c1cfbeda))
+* **proxmox-stack:** validate agent owned systems and roster container tags ([#1289](https://github.com/dryvist/tofu-proxmox/issues/1289)) ([38667bf](https://github.com/dryvist/tofu-proxmox/commit/38667bfbc857cf2f8179a437a8909f725dc49b13))
+
+
+### Bug Fixes
+
+* **inventory:** publish the Splunk node from splunk_node_name ([c928071](https://github.com/dryvist/tofu-proxmox/commit/c9280711e5f36a91dcfa6a7828fa2d58121f60f2))
+* **inventory:** publish the Splunk node from splunk_node_name ([#1295](https://github.com/dryvist/tofu-proxmox/issues/1295)) ([3b74a45](https://github.com/dryvist/tofu-proxmox/commit/3b74a45e6710a5c5ae85412349e12e328b09df02))
+
 ## [3.36.0](https://github.com/dryvist/tofu-proxmox/compare/v3.35.0...v3.36.0) (2026-10-11)
 
 
