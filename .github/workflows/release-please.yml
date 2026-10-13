@@ -27,4 +27,5 @@ jobs:
     # source_input defaults to the calling repo name.
     with:
       event_type: upstream-released
-    secrets: inherit
+    secrets:
+      GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
