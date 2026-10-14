@@ -136,10 +136,11 @@ module "firewall" {
   # ClickHouse OLAP store LXC: tagged "clickhouse"
   clickhouse_container_ids = local.clickhouse_container_ids
 
-  # LLM fabric LXCs: llm-router (LiteLLM proxy) + llm-fast (GPU llama-swap server)
-  llm_router_container_ids = local.llm_router_container_ids
-  llm_fast_container_ids   = local.llm_fast_container_ids
-  llm_router_trusted_src   = local.llm_router_trusted_src
+  # LLM fabric LXCs: router, fast-server, and classifier roles.
+  llm_router_container_ids   = local.llm_router_container_ids
+  llm_fast_container_ids     = local.llm_fast_container_ids
+  llm_classify_container_ids = local.llm_classify_container_ids
+  llm_router_trusted_src     = local.llm_router_trusted_src
 
   # Shared spend store for the router pool (llm-redis tag). Reachable from the
   # ai VLAN only — one client population, and an unauthenticated Redis is an RCE
