@@ -172,6 +172,7 @@ locals {
     ingress_ports = {
       keepalived_vrid = 51
     }
+    llm_router_probe_paths = local.llm_router_probe_paths
     notification_ports = {
       mailpit_smtp = 1025
       mailpit_web  = 8025
