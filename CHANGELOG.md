@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.40.0](https://github.com/dryvist/tofu-proxmox/compare/v3.39.0...v3.40.0) (2026-10-14)
+
+
+### Features
+
+* **firewall:** allow router to classifier service port ([#1313](https://github.com/dryvist/tofu-proxmox/issues/1313)) ([bcd29e6](https://github.com/dryvist/tofu-proxmox/commit/bcd29e6b42d84b434fe3d0addb770e33e5e7341f))
+
 ## [3.39.0](https://github.com/dryvist/tofu-proxmox/compare/v3.38.0...v3.39.0) (2026-10-14)
 
 
