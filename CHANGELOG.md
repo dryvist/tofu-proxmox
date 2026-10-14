@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.39.0](https://github.com/dryvist/tofu-proxmox/compare/v3.38.0...v3.39.0) (2026-10-14)
+
+
+### Features
+
+* **proxmox-stack:** allow one llm-gpu-classify guest per GPU node ([#1309](https://github.com/dryvist/tofu-proxmox/issues/1309)) ([1999976](https://github.com/dryvist/tofu-proxmox/commit/19999765ae73c6aaf69219fd23a172f4089bb87e))
+
 ## [3.38.0](https://github.com/dryvist/tofu-proxmox/compare/v3.37.0...v3.38.0) (2026-10-13)
 
 
