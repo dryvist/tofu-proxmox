@@ -111,6 +111,8 @@ locals {
       phoenix_web     = 6006
       phoenix_grpc    = 4317
       phoenix_metrics = 9090
+
+      phoenix_postgres_exporter = 9187
       # ClickHouse (clickhouse + observability tags) — dedicated OLAP store for
       # the observability stack. clickhouse_http = HTTP query interface;
       # clickhouse_native = the native TCP client/replication protocol.
