@@ -19,6 +19,12 @@ locals {
   llm_fast_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.llm_fast_api), source = local.internal_src, comment = "LLM fast / llama-swap server (TCP ${local.svc_ports.llm_fast_api}) from internal" },
   ]
+
+  # llm-classify — the Laya System One classifier. Inbound llm_classify_api
+  # from internal, matching the llm-fast service rule's source scope.
+  llm_classify_services_rules = [
+    { proto = "tcp", dport = tostring(local.svc_ports.llm_classify_api), source = local.internal_src, comment = "LLM classifier (TCP ${local.svc_ports.llm_classify_api}) from internal" },
+  ]
 }
 
 # Security groups (kept here, not security_groups.tf, to stay under its size gate)
@@ -46,6 +52,23 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "llm_fast
 
   dynamic "rule" {
     for_each = local.llm_fast_services_rules
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = rule.value.proto
+      dport   = rule.value.dport
+      source  = rule.value.source
+      comment = rule.value.comment
+    }
+  }
+}
+
+resource "proxmox_virtual_environment_cluster_firewall_security_group" "llm_classify_services" {
+  name    = "llm-classify-svc"
+  comment = "LLM classifier API (${local.svc_ports.llm_classify_api}) from internal networks"
+
+  dynamic "rule" {
+    for_each = local.llm_classify_services_rules
     content {
       type    = "in"
       action  = "ACCEPT"
@@ -176,6 +199,53 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_fast_container" {
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.llm_fast_container]
+}
+
+# llm-classify containers (Laya System One classifier)
+
+resource "proxmox_virtual_environment_firewall_options" "llm_classify_container" {
+  for_each = var.llm_classify_container_ids
+
+  node_name     = var.node_name
+  container_id  = each.value
+  enabled       = local.firewall_defaults.enabled
+  input_policy  = local.firewall_defaults.input_policy
+  output_policy = local.firewall_defaults.output_policy
+  log_level_in  = local.firewall_defaults.log_level_in
+  log_level_out = local.firewall_defaults.log_level_out
+
+  dhcp = true
+
+  depends_on = [proxmox_virtual_environment_cluster_firewall.main]
+}
+
+resource "proxmox_virtual_environment_firewall_rules" "llm_classify_container" {
+  for_each = var.llm_classify_container_ids
+
+  node_name    = var.node_name
+  container_id = each.value
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name
+    comment        = "Internal access (SSH, ICMP)"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.llm_classify_services.name
+    comment        = "LLM classifier API from internal"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
+    comment        = "Outbound to internal (DNS, service dependencies)"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
+    comment        = "Outbound HTTPS (model downloads, package installs)"
+  }
+
+  depends_on = [proxmox_virtual_environment_firewall_options.llm_classify_container]
 }
 
 # llm-redis — the shared store the LiteLLM router pool counts spend in.
