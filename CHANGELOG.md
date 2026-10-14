@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.42.0](https://github.com/dryvist/tofu-proxmox/compare/v3.41.0...v3.42.0) (2026-10-14)
+
+
+### Features
+
+* **proxmox-stack:** declare the Phoenix database exporter service port ([#1321](https://github.com/dryvist/tofu-proxmox/issues/1321)) ([6bd8999](https://github.com/dryvist/tofu-proxmox/commit/6bd89998337a933e154a901764243aca0d817dd8))
+
 ## [3.41.0](https://github.com/dryvist/tofu-proxmox/compare/v3.40.0...v3.41.0) (2026-10-14)
 
 
