@@ -30,6 +30,7 @@ locals {
     ingress          = "ingress"
     langfuse         = "langfuse"
     llm_fast         = "llm-fast"
+    llm_classify     = local.gpu_classify_role_tag
     llm_redis        = "llm-redis"
     llm_router       = "llm-router"
     mcp_gateway      = "mcp-gateway"

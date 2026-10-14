@@ -145,6 +145,15 @@ run "ansible_inventory_clickhouse_metrics_port" {
   }
 }
 
+run "ansible_inventory_llm_classify_api_port" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.llm_classify_api == 8000
+    error_message = "constants.service_ports.llm_classify_api must be 8000"
+  }
+}
+
 run "ansible_inventory_constants_exists" {
   command = plan
 
@@ -2469,7 +2478,7 @@ run "ansible_inventory_publishes_primary_node" {
   }
 }
 
-# --- GPU serving and pinned-small guests: inventory, mounts, fronted names --
+# --- GPU serving, pinned-small, and classifier guests: inventory, mounts, fronted names --
 
 run "gpu_medium_and_small_guests_publish_inventory_and_ingress" {
   command = plan
@@ -2500,6 +2509,15 @@ run "gpu_medium_and_small_guests_publish_inventory_and_ingress" {
         dhcp             = true
         memory_dedicated = 4096
         tags             = ["terraform", "container", "ai", "llm-fast", "llm-gpu-small", "gpu-passthrough"]
+      }
+      "llm-blackwell-7-96GB-classify" = {
+        vm_id            = 503050
+        node_name        = "proxmox-1"
+        hostname         = "llm-blackwell-7-96GB-classify"
+        vlan             = "ai"
+        dhcp             = true
+        memory_dedicated = 8192
+        tags             = ["terraform", "container", "ai", "llm-gpu-classify", "gpu-passthrough"]
       }
     }
     nodes = {
@@ -2548,6 +2566,16 @@ run "gpu_medium_and_small_guests_publish_inventory_and_ingress" {
   assert {
     condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96GB-small"]).port == local.pipeline_constants.service_ports.llm_fast_api && !one([for r in output.ansible_inventory.ingress : r if r.name == "llm-blackwell-7-96GB-small"]).sso
     error_message = "the pinned small guest must publish an ungated ingress route to the serving port"
+  }
+
+  assert {
+    condition     = keys(local.llm_classify_container_ids) == ["llm-blackwell-7-96GB-classify"]
+    error_message = "only guests tagged llm-gpu-classify must receive classifier firewall rules"
+  }
+
+  assert {
+    condition     = length([for route in output.ansible_inventory.ingress : route if route.name == "llm-blackwell-7-96GB-classify"]) == 0
+    error_message = "the classifier guest must not receive a public ingress route"
   }
 }
 

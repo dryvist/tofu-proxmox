@@ -72,6 +72,7 @@ variables {
       node_exporter      = 9100
       # LLM fabric + agentgateway (referenced by llm_fabric/agentgateway rules)
       llm_fast_api         = 10434
+      llm_classify_api     = 8000
       llm_router_api       = 4000
       agentgateway_proxy   = 8080
       agentgateway_admin   = 15000
@@ -882,6 +883,56 @@ run "llm_router_rule_tracks_constant_and_trusted_src" {
   assert {
     condition     = local.llm_router_services_rules[0].source != join(",", var.internal_networks)
     error_message = "llm_router rule source must NOT be the comma-joined internal networks — it is scoped to ingress + Prometheus, not every internal network"
+  }
+}
+
+run "llm_classify_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  variables {
+    internal_networks          = ["192.168.10.0/24", "192.168.20.0/24"]
+    llm_classify_container_ids = { "classify" = 601 }
+  }
+
+  assert {
+    condition     = length(local.llm_classify_services_rules) == 1
+    error_message = "llm_classify_services_rules must be exactly 1 (TCP 8000), got ${length(local.llm_classify_services_rules)}"
+  }
+
+  assert {
+    condition     = local.llm_classify_services_rules[0].proto == "tcp" && local.llm_classify_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.llm_classify_api)
+    error_message = "llm_classify rule must be TCP tracking service_ports.llm_classify_api, got proto='${local.llm_classify_services_rules[0].proto}' dport='${local.llm_classify_services_rules[0].dport}'"
+  }
+
+  assert {
+    condition     = local.llm_classify_services_rules[0].source == local.internal_src
+    error_message = "llm_classify rule source must match the internal source used by llm-fast, got '${local.llm_classify_services_rules[0].source}'"
+  }
+
+  assert {
+    condition = [for rule in proxmox_virtual_environment_firewall_rules.llm_classify_container["classify"].rule : rule.security_group] == [
+      proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.llm_classify_services.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+    ]
+    error_message = "the classifier guest must receive only the shared baseline groups and its classifier service rule"
+  }
+}
+
+run "non_classify_guest_gets_no_classifier_firewall_objects" {
+  command = plan
+
+  variables {
+    llm_classify_container_ids = {}
+  }
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_firewall_options.llm_classify_container) == 0 &&
+      length(proxmox_virtual_environment_firewall_rules.llm_classify_container) == 0
+    )
+    error_message = "guests without the llm-gpu-classify selector must get no classifier firewall objects"
   }
 }
 

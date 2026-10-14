@@ -15,6 +15,12 @@ variable "llm_fast_container_ids" {
   default     = {}
 }
 
+variable "llm_classify_container_ids" {
+  description = "Map of LLM classifier LXC names to IDs (tag-driven: llm-gpu-classify). Laya System One classifier — inbound llm_classify_api from internal."
+  type        = map(number)
+  default     = {}
+}
+
 variable "llm_redis_container_ids" {
   description = "Map of LLM spend-store LXC names to IDs (tag-driven: llm-redis). Shared Redis backing the LiteLLM router pool's cross-instance spend accounting — inbound redis_default from the ai VLAN only, outbound internal only (no WAN)."
   type        = map(number)

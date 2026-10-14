@@ -12,6 +12,13 @@ locals {
     )) > 0
   }
 
+  # llm-classify LXCs (llm-gpu-classify tag): the Laya System One classifier.
+  # Inbound llm_classify_api from internal.
+  llm_classify_container_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(try(v.tags, []), local.firewall_container_tags.llm_classify)
+  }
+
   # llm-router LXCs (llm-router tag): the LiteLLM proxy fronting the fabric
   # (llm_router_api). Inbound llm_router_api from internal.
   llm_router_container_ids = {
