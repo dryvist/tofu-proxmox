@@ -58,11 +58,11 @@ locals {
     # calls to the API land on the same origin. root_redirect sends the UI
     # host's bare root to its own /ui/ path (rendered as a redirectRegex
     # middleware scoped to that one router in the traefik role).
-    # health_check_path reads /health/readiness on both rows: it fails when
-    # the database is unreachable, unlike /health/liveliness, and makes no
-    # model call. strategy = "hrw" (Rendezvous hashing, Traefik's non-cookie
-    # sticky-by-source-IP option) pins a caller to one router without a
-    # cookie, which a machine-API client never carries.
+    # health_check_path reads the router readiness endpoint: it fails when the
+    # database is unreachable and makes no model call. strategy = "hrw"
+    # (Rendezvous hashing, Traefik's non-cookie sticky-by-source-IP option)
+    # pins a caller to one router without a cookie, which a machine-API client
+    # never carries.
     length(local.llm_router_backends) > 0 ? [
       {
         name              = "llm-ui"
@@ -71,7 +71,7 @@ locals {
         root_redirect     = "/ui/"
         strategy          = "hrw"
         health_check      = true
-        health_check_path = "/health/readiness"
+        health_check_path = local.llm_router_probe_paths.readiness
         sso               = true # browser admin UI — gated
       }
     ] : [],
@@ -90,7 +90,7 @@ locals {
         path_prefix       = "/ui"
         priority          = 100 # must win the match before the catch-all "llm" row
         health_check      = true
-        health_check_path = "/health/readiness"
+        health_check_path = local.llm_router_probe_paths.readiness
         sso               = true # browser admin UI — gated
         dashboard         = false
       }
@@ -111,7 +111,7 @@ locals {
         port              = local.pipeline_constants.service_ports.llm_router_api
         strategy          = "hrw"
         health_check      = true
-        health_check_path = "/health/readiness"
+        health_check_path = local.llm_router_probe_paths.readiness
         sso               = false # OpenAI-compatible API clients
         # The router bounds every request itself (its per-attempt timeout and
         # fallback ladder); a non-streaming completion sends no byte until the

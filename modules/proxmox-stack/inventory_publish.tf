@@ -130,6 +130,18 @@ resource "aws_s3_object" "ansible_inventory" {
       error_message = "pipeline_constants is missing one or more required keys (service_ports, syslog_ports, syslog_port_map, netflow_ports, notification_ports, vector_db_ports, memory_ports, extract_ports, media_ports, ai_log_ports, ai_log_routing, serving). Inspect constants.tf."
     }
     precondition {
+      condition = try(
+        toset(keys(local.ansible_inventory.constants.llm_router_probe_paths)) == toset([
+          "liveliness", "readiness"
+          ]) && alltrue([
+          for path in values(local.ansible_inventory.constants.llm_router_probe_paths) :
+          startswith(path, "/")
+        ]),
+        false
+      )
+      error_message = "constants.llm_router_probe_paths must contain liveliness and readiness strings starting with '/'."
+    }
+    precondition {
       condition = alltrue([
         for e in local.ansible_inventory.ingress :
         try(e.name, "") != "" && try(e.port, 0) > 0 && (
