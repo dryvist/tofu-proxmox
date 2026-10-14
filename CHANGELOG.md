@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.41.0](https://github.com/dryvist/tofu-proxmox/compare/v3.40.0...v3.41.0) (2026-10-14)
+
+
+### Features
+
+* **proxmox-stack:** publish the LLM router probe paths as pipeline constants ([#1318](https://github.com/dryvist/tofu-proxmox/issues/1318)) ([3450ff5](https://github.com/dryvist/tofu-proxmox/commit/3450ff55a36376b8b503d21879fb300597f522fd))
+
 ## [3.40.0](https://github.com/dryvist/tofu-proxmox/compare/v3.39.0...v3.40.0) (2026-10-14)
 
 
