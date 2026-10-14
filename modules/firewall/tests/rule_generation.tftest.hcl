@@ -91,25 +91,26 @@ variables {
       hermes_webui  = 8787
       hermes_studio = 8648
       # AI orchestration + observability (referenced by ai_orchestration rules)
-      n8n_web            = 5678
-      dify_web           = 80
-      langflow_web       = 7860
-      langfuse_web       = 3000
-      phoenix_web        = 6006
-      phoenix_grpc       = 4317
-      phoenix_metrics    = 9090
-      clickhouse_http    = 8123
-      clickhouse_native  = 9000
-      clickhouse_metrics = 9363
-      langgraph_api      = 8124
-      agent_chat_ui_web  = 3000
-      docling_serve_api  = 5001
-      otel_traces_grpc   = 4317
-      otel_traces_http   = 4318
-      otel_metrics_grpc  = 4327
-      otel_metrics_http  = 4328
-      otel_logs_grpc     = 4337
-      otel_logs_http     = 4338
+      n8n_web                   = 5678
+      dify_web                  = 80
+      langflow_web              = 7860
+      langfuse_web              = 3000
+      phoenix_web               = 6006
+      phoenix_grpc              = 4317
+      phoenix_metrics           = 9090
+      phoenix_postgres_exporter = 9187
+      clickhouse_http           = 8123
+      clickhouse_native         = 9000
+      clickhouse_metrics        = 9363
+      langgraph_api             = 8124
+      agent_chat_ui_web         = 3000
+      docling_serve_api         = 5001
+      otel_traces_grpc          = 4317
+      otel_traces_http          = 4318
+      otel_metrics_grpc         = 4327
+      otel_metrics_http         = 4328
+      otel_logs_grpc            = 4337
+      otel_logs_http            = 4338
     }
     syslog_ports = {
       default   = 514
@@ -1217,6 +1218,25 @@ run "clickhouse_metrics_rule_has_empty_source_when_scraper_is_unset" {
   assert {
     condition     = local.clickhouse_services_rules[2].source == ""
     error_message = "ClickHouse metrics must use the empty-source form when no scraper is configured"
+  }
+}
+
+run "phoenix_postgres_exporter_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  assert {
+    condition     = length(local.phoenix_services_rules) == 4
+    error_message = "phoenix_services_rules must be exactly 4 (web, OTLP/gRPC, Phoenix metrics, and database exporter metrics)"
+  }
+
+  assert {
+    condition     = local.phoenix_services_rules[3].proto == "tcp" && local.phoenix_services_rules[3].dport == tostring(var.pipeline_constants.service_ports.phoenix_postgres_exporter)
+    error_message = "Phoenix database exporter rule must be TCP and track service_ports.phoenix_postgres_exporter"
+  }
+
+  assert {
+    condition     = local.phoenix_services_rules[3].source == local.internal_src
+    error_message = "Phoenix database exporter rule must be scoped to internal networks"
   }
 }
 

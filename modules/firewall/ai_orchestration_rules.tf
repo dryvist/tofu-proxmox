@@ -41,6 +41,7 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.phoenix_web), source = local.internal_src, comment = "Phoenix web + OTLP/HTTP ingest (TCP ${local.svc_ports.phoenix_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.phoenix_grpc), source = local.internal_src, comment = "Phoenix OTLP/gRPC ingest (TCP ${local.svc_ports.phoenix_grpc}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.phoenix_metrics), source = local.internal_src, comment = "Phoenix Prometheus metrics (TCP ${local.svc_ports.phoenix_metrics}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.phoenix_postgres_exporter), source = local.internal_src, comment = "Phoenix database exporter metrics (TCP ${local.svc_ports.phoenix_postgres_exporter}) from internal" },
   ]
 
   # ClickHouse query protocols are internal; Prometheus metrics use the
