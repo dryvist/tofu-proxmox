@@ -1088,6 +1088,214 @@ run "two_small_gpu_roles_on_one_node_rejected" {
   expect_failures = [terraform_data.gpu_passthrough_guard]
 }
 
+run "gpu_serving_and_classify_roles_on_one_node_pass" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      serving = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-embed"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+      classify = {
+        vm_id     = 503030
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-classify"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-classify"]
+      }
+    }
+  }
+
+}
+
+run "gpu_serving_small_and_classify_roles_on_one_node_pass" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      serving = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-embed"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+      small = {
+        vm_id     = 503030
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-small"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-small"]
+      }
+      classify = {
+        vm_id     = 503040
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-classify"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-classify"]
+      }
+    }
+  }
+
+}
+
+run "two_classify_gpu_roles_on_one_node_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      classify_a = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-classify"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-classify"]
+      }
+      classify_b = {
+        vm_id     = 503030
+        node_name = "gpu1"
+        hostname  = "llm-blackwell-7-96GB-classify"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-classify"]
+      }
+      serving = {
+        vm_id     = 503040
+        node_name = "gpu1"
+        hostname  = "llm-blackwell-7-96GB-medium"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+    }
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "classify_gpu_hostname_without_role_tag_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      serving = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-blackwell-7-96GB-medium"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+      classify = {
+        vm_id     = 503030
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-classify"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+    }
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "classify_gpu_role_tag_without_hostname_suffix_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      serving = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-blackwell-7-96GB-medium"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+      classify = {
+        vm_id     = 503030
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-embed"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-classify"]
+      }
+    }
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "classify_gpu_role_without_serving_guest_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      classify = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-classify"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-classify"]
+      }
+    }
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
+run "small_gpu_role_without_serving_guest_rejected" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      small = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-small"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-small"]
+      }
+    }
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
 run "two_llm_serving_containers_on_one_node_rejected" {
   command = plan
 
