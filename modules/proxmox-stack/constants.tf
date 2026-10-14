@@ -111,8 +111,7 @@ locals {
       phoenix_web     = 6006
       phoenix_grpc    = 4317
       phoenix_metrics = 9090
-      # phoenix_postgres_exporter serves the database exporter's Prometheus
-      # /metrics endpoint, scraped directly and internal only.
+
       phoenix_postgres_exporter = 9187
       # ClickHouse (clickhouse + observability tags) — dedicated OLAP store for
       # the observability stack. clickhouse_http = HTTP query interface;
