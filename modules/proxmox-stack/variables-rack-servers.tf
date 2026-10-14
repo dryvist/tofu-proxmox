@@ -13,8 +13,8 @@ variable "rack_servers" {
     succeed cleanly before any nodes are populated.
 
     Fields:
-      chassis     - Free-form model identifier ("r410", "r710", "dl360-g6",
-                    "x10sdv", etc.). Not validated against a vendor list so
+      chassis     - Free-form model identifier ("r410", "r710",
+                    "dl360-g6", etc.). Not validated against a vendor list so
                     HPE/Supermicro/etc. fit alongside Dell.
       bmc_ip      - Out-of-band management IP (iDRAC on Dell, iLO on HPE,
                     IMM on Lenovo, etc.).
