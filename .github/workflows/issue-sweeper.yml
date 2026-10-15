@@ -15,5 +15,5 @@ permissions:
 
 jobs:
   sweep:
-    uses: dryvist/ai-workflows/.github/workflows/issue-sweeper.yml@70d7a6ad0d566017d6c063c5786b997084f3f5c4 # v0.48.7
+    uses: dryvist/ai-workflows/.github/workflows/issue-sweeper.yml@22d262fbeca2f783851dc0c2934d74edd9809893 # v0.49.1
     secrets: inherit
