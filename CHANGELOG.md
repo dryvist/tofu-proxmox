@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.43.0](https://github.com/dryvist/tofu-proxmox/compare/v3.42.0...v3.43.0) (2026-10-16)
+
+
+### Features
+
+* add opt-in container migration ([#1330](https://github.com/dryvist/tofu-proxmox/issues/1330)) ([b0bb9f0](https://github.com/dryvist/tofu-proxmox/commit/b0bb9f0debaf6a8de00ffb05b562dcd3e6ff5fbb))
+
 ## [3.42.0](https://github.com/dryvist/tofu-proxmox/compare/v3.41.0...v3.42.0) (2026-10-14)
 
 
