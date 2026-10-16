@@ -38,6 +38,7 @@ variable "containers" {
     # tier of the log pipeline, without anyone choosing to put them there.
     # Placement is now an explicit declaration; there is no default to inherit.
     node_name = string
+    migrate   = optional(bool, false)
 
     # Resource configuration
     cpu_cores        = optional(number, 2)

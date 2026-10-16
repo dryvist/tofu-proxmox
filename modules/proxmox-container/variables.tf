@@ -3,6 +3,7 @@ variable "containers" {
   type = map(object({
     vm_id       = number
     node_name   = string
+    migrate     = optional(bool, false)
     description = optional(string)
     tags        = optional(list(string), ["terraform", "container"])
     pool_id     = optional(string)
