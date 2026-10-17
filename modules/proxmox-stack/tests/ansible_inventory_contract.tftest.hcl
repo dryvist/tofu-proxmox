@@ -2584,27 +2584,35 @@ run "gpu_engine_selector_drives_the_published_pair_state" {
 
   variables {
     llm_gpu_engine = "llama_cpp"
+    nodes = {
+      compute-a = { role = "compute", tags = ["nvidia-gpu"] }
+    }
     containers = {
       "engine-a" = {
+        hostname                = "llm-ada-lovelace-6-24GB-engine-a"
         vm_id                   = 610021
-        node_name               = "proxmox-1"
+        node_name               = "compute-a"
         vlan                    = "ai"
         dhcp                    = true
+        tags                    = ["gpu-passthrough"]
         llm_gpu_engine_identity = "llama_cpp"
       }
       "engine-b" = {
+        hostname                = "llm-ada-lovelace-6-24GB-engine-b"
         vm_id                   = 610022
-        node_name               = "proxmox-1"
+        node_name               = "compute-a"
         vlan                    = "ai"
         dhcp                    = true
+        tags                    = ["gpu-passthrough"]
         llm_gpu_engine_identity = "vllm"
       }
       "legacy-gpu" = {
+        hostname      = "llm-ada-lovelace-6-24GB-legacy"
         vm_id         = 610023
-        node_name     = "proxmox-1"
+        node_name     = "compute-a"
         vlan          = "ai"
         dhcp          = true
-        tags          = ["llm-gpu"]
+        tags          = ["llm-gpu", "gpu-passthrough"]
         started       = true
         start_on_boot = true
       }
@@ -2670,21 +2678,38 @@ run "gpu_engine_pair_rejects_duplicate_engine_identity" {
   command = plan
 
   variables {
-    llm_gpu_engine = "llama_cpp"
+    llm_gpu_engine = "vllm"
+    nodes = {
+      compute-a = { role = "compute", tags = ["nvidia-gpu"] }
+    }
     containers = {
       "engine-a" = {
+        hostname                = "llm-ada-lovelace-6-24GB-engine-a"
         vm_id                   = 610021
-        node_name               = "proxmox-1"
+        node_name               = "compute-a"
         vlan                    = "ai"
         dhcp                    = true
+        tags                    = ["gpu-passthrough"]
         llm_gpu_engine_identity = "llama_cpp"
       }
       "engine-b" = {
+        hostname                = "llm-ada-lovelace-6-24GB-engine-b"
         vm_id                   = 610022
-        node_name               = "proxmox-1"
+        node_name               = "compute-a"
         vlan                    = "ai"
         dhcp                    = true
+        tags                    = ["gpu-passthrough"]
         llm_gpu_engine_identity = "llama_cpp"
+      }
+      "legacy-gpu" = {
+        hostname      = "llm-ada-lovelace-6-24GB-legacy"
+        vm_id         = 610023
+        node_name     = "compute-a"
+        vlan          = "ai"
+        dhcp          = true
+        tags          = ["llm-gpu", "gpu-passthrough"]
+        started       = true
+        start_on_boot = true
       }
     }
   }
@@ -2697,20 +2722,37 @@ run "gpu_engine_selector_enables_only_its_matching_guest" {
 
   variables {
     llm_gpu_engine = "vllm"
+    nodes = {
+      compute-a = { role = "compute", tags = ["nvidia-gpu"] }
+    }
     containers = {
       "engine-a" = {
+        hostname                = "llm-ada-lovelace-6-24GB-engine-a"
         vm_id                   = 610021
-        node_name               = "proxmox-1"
+        node_name               = "compute-a"
         vlan                    = "ai"
         dhcp                    = true
+        tags                    = ["gpu-passthrough"]
         llm_gpu_engine_identity = "llama_cpp"
       }
       "engine-b" = {
+        hostname                = "llm-ada-lovelace-6-24GB-engine-b"
         vm_id                   = 610022
-        node_name               = "proxmox-1"
+        node_name               = "compute-a"
         vlan                    = "ai"
         dhcp                    = true
+        tags                    = ["gpu-passthrough"]
         llm_gpu_engine_identity = "vllm"
+      }
+      "legacy-gpu" = {
+        hostname      = "llm-ada-lovelace-6-24GB-legacy"
+        vm_id         = 610023
+        node_name     = "compute-a"
+        vlan          = "ai"
+        dhcp          = true
+        tags          = ["llm-gpu", "gpu-passthrough"]
+        started       = true
+        start_on_boot = true
       }
     }
   }

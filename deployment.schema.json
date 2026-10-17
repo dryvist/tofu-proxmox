@@ -63,8 +63,8 @@
     },
     "llm_gpu_engine": {
       "type": "string",
-      "enum": ["llama_cpp", "vllm"],
-      "description": "Single serving-engine selector for the GPU LXC pair; defaults to llama_cpp when absent."
+      "enum": ["llama_cpp", "vllm", "strata"],
+      "description": "Single serving-engine selector for the GPU LXC set; defaults to llama_cpp when absent."
     },
     "llm_cpu_scaler": {
       "type": "object",
@@ -444,8 +444,8 @@
         },
         "llm_gpu_engine_identity": {
           "type": "string",
-          "enum": ["llama_cpp", "vllm"],
-          "description": "Immutable engine identity for one member of the GPU serving LXC pair."
+          "enum": ["llama_cpp", "vllm", "strata"],
+          "description": "Immutable engine identity for one member of the GPU serving LXC set."
         },
         "ct_template": {
           "type": "string",
