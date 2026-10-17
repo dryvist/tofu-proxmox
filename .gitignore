@@ -95,7 +95,7 @@ scripts/timing-results.txt
 # direnv cache (nix-direnv)
 .direnv/
 
-# ai-workflows runtime checkout (checked out by CI into .ai-workflows/ at runtime)
+# Shared AI workflow runtime checkout (checked out by CI into .ai-workflows/ at runtime)
 .ai-workflows/
 
 # Claude Code repo-scoped MCP server config. NOT committed because it
@@ -112,7 +112,7 @@ deployment.json
 
 # ---------------------------------------------------------------------
 # dryvist org-default: secrets, credentials & AI-assistant local state
-# Source of truth: dryvist/.github -> configs/gitignore (PR #43).
+# Source of truth: JacobPEvans/.github -> configs/gitignore (PR #43).
 # Carve-outs intentionally absent (committed by convention): .envrc,
 # *.sops.*, .terraform.lock.hcl
 # ---------------------------------------------------------------------
