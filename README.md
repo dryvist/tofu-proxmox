@@ -5,15 +5,15 @@
 [![Release Please][badge-rp]][workflow-rp]
 [![Release][badge-release]][release-url]
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-2F7E78?style=flat-square)](LICENSE)
-[![Renovate](https://img.shields.io/badge/renovate-enabled-2F7E78?style=flat-square&logo=renovatebot&logoColor=white)](https://github.com/dryvist/.github)
+[![Renovate](https://img.shields.io/badge/renovate-enabled-2F7E78?style=flat-square&logo=renovatebot&logoColor=white)](https://github.com/JacobPEvans/.github)
 [![Docs](https://img.shields.io/badge/docs-jacobpevans.com-4FB3A9?style=flat-square)](https://docs.jacobpevans.com)
 
 [badge-ci]: https://github.com/dryvist/tofu-proxmox/actions/workflows/ci-gate.yml/badge.svg?branch=main
 [workflow-ci]: https://github.com/dryvist/tofu-proxmox/actions/workflows/ci-gate.yml?query=branch%3Amain
 [badge-pm]: https://github.com/dryvist/tofu-proxmox/actions/workflows/post-merge-tests.yml/badge.svg?branch=main
 [workflow-pm]: https://github.com/dryvist/tofu-proxmox/actions/workflows/post-merge-tests.yml?query=branch%3Amain
-[badge-rp]: https://github.com/dryvist/tofu-proxmox/actions/workflows/release-please.yml/badge.svg?branch=main
-[workflow-rp]: https://github.com/dryvist/tofu-proxmox/actions/workflows/release-please.yml?query=branch%3Amain
+[badge-rp]: https://github.com/dryvist/tofu-proxmox/actions/workflows/release.yml/badge.svg?branch=develop
+[workflow-rp]: https://github.com/dryvist/tofu-proxmox/actions/workflows/release.yml?query=branch%3Adevelop
 [badge-release]: https://img.shields.io/github/v/release/dryvist/tofu-proxmox?sort=semver&style=flat-square&color=2F7E78
 [release-url]: https://github.com/dryvist/tofu-proxmox/releases
 

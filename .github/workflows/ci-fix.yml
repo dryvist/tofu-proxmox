@@ -1,6 +1,6 @@
 name: CI Fix (Claude)
 
-# Thin caller for dryvist/ai-workflows cc-ci-fix. When CI Gate fails on a PR
+# Thin caller for JacobPEvans/.github-ai cc-ci-fix. When CI Gate fails on a PR
 # branch, Claude analyzes the failure and pushes a verified fix commit to that
 # branch (max 2 attempts/PR). The reusable handles gating, attempt-capping,
 # daily limits, and concurrency — so this wrapper stays minimal.
@@ -25,7 +25,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: dryvist/ai-workflows/.github/workflows/cc-ci-fix.yml@22d262fbeca2f783851dc0c2934d74edd9809893 # v0.49.1
+    uses: JacobPEvans/.github-ai/.github/workflows/cc-ci-fix.yml@v1
     secrets: inherit
     with:
       repo_context: "Terraform/OpenTofu project managing Proxmox VE infrastructure."

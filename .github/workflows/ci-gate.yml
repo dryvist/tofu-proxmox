@@ -1,7 +1,7 @@
 # CI Gate — local Merge Gate over the org reusable gate + repo-local jobs.
 #
 # The standard doc checks (Markdown Lint, File Size) and their aggregation are
-# delegated to dryvist/.github/.github/workflows/_ci-gate.yml, pinned by commit SHA. The OpenTofu
+# delegated to JacobPEvans/.github/.github/workflows/_ci-gate.yml, pinned by commit SHA. The OpenTofu
 # suite (fmt/init/validate/test for the root, proxmox-stack, and firewall
 # modules) and the gitleaks secret scan stay repo-local — the shared gate cannot
 # dispatch a consumer-local job — and this workflow's own "Merge Gate"
@@ -16,7 +16,7 @@
 # structural (this repo has never run them); enabling them is a fast-follow.
 #
 # Future end-state: `gate / Merge Gate` (pure thin-caller) after an org-admin
-# ruleset retarget — parked in dryvist/.github#115.
+# ruleset retarget — parked in JacobPEvans/.github#115.
 
 name: CI Gate
 
@@ -79,7 +79,7 @@ jobs:
       # actions: write must be granted here or the run fails at graph
       # validation (startup_failure).
       actions: write
-    uses: dryvist/.github/.github/workflows/_ci-gate.yml@41ca3a7c0f8853acbfa38ef905a6231cdddf968d # v1.19.0
+    uses: JacobPEvans/.github/.github/workflows/_ci-gate.yml@v1
     with:
       profile: tofu
       osv_scan: true
