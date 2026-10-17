@@ -71,10 +71,14 @@ resource "terraform_data" "llm_gpu_engine_pair_guard" {
   lifecycle {
     precondition {
       condition = length(local.llm_gpu_engine_members) == 0 || (
-        length(local.llm_gpu_engine_members) == 2 &&
+        length(local.llm_gpu_engine_members) >= 2 &&
+        length(local.llm_gpu_engine_members) <= 3 &&
+        length(distinct([for container in values(local.llm_gpu_engine_members) : container.llm_gpu_engine_identity])) == length(local.llm_gpu_engine_members) &&
         contains([for container in values(local.llm_gpu_engine_members) : container.llm_gpu_engine_identity], "llama_cpp") &&
         contains([for container in values(local.llm_gpu_engine_members) : container.llm_gpu_engine_identity], "vllm") &&
-        length(distinct([for container in values(local.llm_gpu_engine_members) : container.vm_id])) == 2 &&
+        (length(local.llm_gpu_engine_members) == 2 || contains([for container in values(local.llm_gpu_engine_members) : container.llm_gpu_engine_identity], "strata")) &&
+        contains([for container in values(local.llm_gpu_engine_members) : container.llm_gpu_engine_identity], var.llm_gpu_engine) &&
+        length(distinct([for container in values(local.llm_gpu_engine_members) : container.vm_id])) == length(local.llm_gpu_engine_members) &&
         length(distinct([for container in values(local.llm_gpu_engine_members) : container.node_name])) == 1 &&
         length(local.llm_gpu_engine_legacy_members) <= 1 &&
         alltrue([
@@ -84,7 +88,29 @@ resource "terraform_data" "llm_gpu_engine_pair_guard" {
         ]) &&
         local.llm_gpu_engine_running_count == 1
       )
-      error_message = "The GPU serving pair must contain one llama_cpp and one vllm guest on one node, with only the selected engine started and onboot."
+      error_message = "The GPU serving set must contain one llama_cpp and one vllm guest, with at most one strata guest, on one node; only the selected engine may start and boot."
+    }
+  }
+}
+
+resource "terraform_data" "llm_gpu_strata_exclusive_guard" {
+  input = var.llm_gpu_engine
+
+  lifecycle {
+    precondition {
+      condition = var.llm_gpu_engine != "strata" || (
+        local.llm_gpu_engine_pair_present &&
+        length([
+          for container in values(local.containers_with_engine_runtime) : container
+          if coalesce(container.node_name, var.proxmox_node) == local.llm_gpu_engine_pair_node && container.started
+        ]) == 1 &&
+        length([
+          for container in values(local.containers_with_engine_runtime) : container
+          if coalesce(container.node_name, var.proxmox_node) == local.llm_gpu_engine_pair_node &&
+          container.started && container.llm_gpu_engine_identity == "strata"
+        ]) == 1
+      )
+      error_message = "Selecting strata requires exactly one started container on its node, and it must be the selected strata guest."
     }
   }
 }

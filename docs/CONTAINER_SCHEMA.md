@@ -122,3 +122,18 @@ ordering: a guest on one node and a service it depends on on another start
 concurrently, and no value of `startup_order` on either changes that. Ordering
 is therefore only a guarantee for a dependant colocated with its dependency;
 across nodes, the dependant must tolerate the service being absent and retry.
+
+## GPU engine set and Strata isolation
+
+`llm_gpu_engine_identity` assigns each replacement GPU serving guest one of
+`llama_cpp`, `vllm`, or `strata`. Declare one guest per identity on the same
+node. The shared `llm_gpu_engine` selector chooses the only guest that starts
+and starts on boot; its default remains `llama_cpp`, so a declared Strata guest
+stays stopped by default. Every engine candidate must carry `gpu-passthrough`.
+
+The Strata guest is a separate, disposable LXC. Keep secrets and secret mounts
+out of it. Before a Strata run, select `strata` and set every other container on
+that node to `started = false` and `start_on_boot = false` in the desired
+configuration. The plan guard rejects a Strata selection if any other
+container would remain running. After the run, restore the previous selector
+and container states, then remove the disposable guest from desired state.

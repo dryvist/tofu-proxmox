@@ -4,7 +4,7 @@ locals {
     if container.llm_gpu_engine_identity != null
   }
 
-  llm_gpu_engine_pair_present = length(local.llm_gpu_engine_declared_members) == 2
+  llm_gpu_engine_pair_present = length(local.llm_gpu_engine_declared_members) >= 2
 
   llm_gpu_engine_pair_node = local.llm_gpu_engine_pair_present ? try(one(distinct([
     for container in values(local.llm_gpu_engine_declared_members) : container.node_name
@@ -23,7 +23,7 @@ locals {
     container.node_name == local.llm_gpu_engine_pair_node
   }
 
-  # Runtime ownership for the GPU guest pair is derived from the one engine
+  # Runtime ownership for the GPU guest set is derived from the one engine
   # selector. Container declarations carry engine identity, never a second
   # per-guest engine switch.
   containers_with_engine_runtime = {
