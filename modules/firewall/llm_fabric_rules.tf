@@ -14,12 +14,6 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.llm_router_api), source = var.llm_router_trusted_src, comment = "LLM router / LiteLLM proxy (TCP ${local.svc_ports.llm_router_api}) from ingress + Prometheus" },
   ]
 
-  # llm-fast — the llama-swap GPU server. Inbound llm_fast_api from internal
-  # (the router and direct callers reach the OpenAI-compatible fast endpoint).
-  llm_fast_services_rules = [
-    { proto = "tcp", dport = tostring(local.svc_ports.llm_fast_api), source = local.internal_src, comment = "LLM fast / llama-swap server (TCP ${local.svc_ports.llm_fast_api}) from internal" },
-  ]
-
   # llm-classify — the Laya System One classifier. Inbound llm_classify_api
   # from internal, matching the llm-fast service rule's source scope.
   llm_classify_services_rules = [
