@@ -18,6 +18,8 @@ locals {
   # (the router and direct callers reach the OpenAI-compatible fast endpoint).
   llm_fast_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.llm_fast_api), source = local.internal_src, comment = "LLM fast / llama-swap server (TCP ${local.svc_ports.llm_fast_api}) from internal" },
+    # The co-resident small engine listens on the next port (see the serving role's co-resident API port).
+    { proto = "tcp", dport = tostring(local.svc_ports.llm_fast_api + 1), source = local.internal_src, comment = "LLM fast co-resident small engine (TCP ${local.svc_ports.llm_fast_api + 1}) from internal" },
   ]
 
   # llm-classify — the Laya System One classifier. Inbound llm_classify_api
