@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.44.0](https://github.com/dryvist/tofu-proxmox/compare/v3.43.0...v3.44.0) (2026-10-19)
+
+
+### Features
+
+* add Strata to GPU engine selector ([#1332](https://github.com/dryvist/tofu-proxmox/issues/1332)) ([97d4471](https://github.com/dryvist/tofu-proxmox/commit/97d4471bfc8e636c5fda1fb0224c17e6b93df021))
+
+
+### Bug Fixes
+
+* allow mocked CIDR test fixture in gitleaks ([#1338](https://github.com/dryvist/tofu-proxmox/issues/1338)) ([94ce02e](https://github.com/dryvist/tofu-proxmox/commit/94ce02ea3b06a13a76e2914d6528f44e46c957df))
+* allow synthetic CIDR fixture in gitleaks ([94ce02e](https://github.com/dryvist/tofu-proxmox/commit/94ce02ea3b06a13a76e2914d6528f44e46c957df))
+* use documentation CIDRs in placement migration test ([#1339](https://github.com/dryvist/tofu-proxmox/issues/1339)) ([024fbfd](https://github.com/dryvist/tofu-proxmox/commit/024fbfdc6f4193a69a4255963332cde2472c842f))
+
 ## [3.43.0](https://github.com/dryvist/tofu-proxmox/compare/v3.42.0...v3.43.0) (2026-10-16)
 
 
