@@ -84,8 +84,9 @@ locals {
         # Integer item: an ordinal suffix. Object item: vm_id is given, and the
         # suffix is what remains above vm_id_base (the host octet). try() keeps
         # both item shapes in one number-typed result.
-        suffix = try(item.vm_id - local.openbao_vm_id_base, item)
-        vm_id  = try(item.vm_id, local.openbao_vm_id_base + item)
+        suffix  = try(item.vm_id - local.openbao_vm_id_base, item)
+        vm_id   = try(item.vm_id, local.openbao_vm_id_base + item)
+        migrate = try(item.migrate, false)
         name = (
           try(item.vm_id, null) == null
           ? format("%s%02d", local.openbao_name_prefix, item)
@@ -120,6 +121,7 @@ locals {
         vlan      = local.openbao_cluster.vlan
         hostname  = peer.name
         node_name = peer.node_name
+        migrate   = peer.migrate
         # Static and derived (cidrhost over the cluster's own VLAN + peer
         # suffix), not dhcp + a reserved octet — see docs/DR_HA.md W6 for why.
         ip_config = {

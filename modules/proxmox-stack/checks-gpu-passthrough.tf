@@ -1,13 +1,14 @@
-# Each commissioned GPU node has one serving container and may also carry one
-# small-model and one classifier container. All carry gpu-passthrough; no other
-# guest gets any GPU device or a bind of /dev. Enforced at plan time, natively.
+# Each commissioned GPU node has one legacy serving container and may also
+# carry the declared engine candidates, one small-model container, and one
+# classifier container. All carry gpu-passthrough; no other guest gets any GPU
+# device or a bind of /dev. Enforced at plan time, natively.
 locals {
   gpu_passthrough_tag   = "gpu-passthrough"
   gpu_small_role_tag    = "llm-gpu-small"
   gpu_classify_role_tag = "llm-gpu-classify"
 
   gpu_passthrough_containers = {
-    for name, container in var.containers : name => container
+    for name, container in local.containers_with_engine_runtime : name => container
     if contains(coalesce(try(container.tags, null), []), local.gpu_passthrough_tag)
   }
 
@@ -22,13 +23,15 @@ locals {
   }
 
   # llm-* serving containers; routers and caches share the prefix but do not serve.
+  # Stopped engine candidates are not running servers.
   llm_serving_containers = {
-    for name, container in var.containers : name => container
+    for name, container in local.containers_with_engine_runtime : name => container
     if startswith(coalesce(try(container.hostname, null), name), "llm-") &&
     !startswith(coalesce(try(container.hostname, null), name), "llm-router-") &&
     !startswith(coalesce(try(container.hostname, null), name), "llm-redis-") &&
     !contains(coalesce(try(container.tags, null), []), local.gpu_small_role_tag) &&
-    !contains(coalesce(try(container.tags, null), []), local.gpu_classify_role_tag)
+    !contains(coalesce(try(container.tags, null), []), local.gpu_classify_role_tag) &&
+    container.started
   }
 
   gpu_capable_nodes = [
@@ -60,14 +63,24 @@ resource "terraform_data" "gpu_passthrough_guard" {
       condition = alltrue([
         for node_name in keys(var.nodes) :
         length([
-          for container in values(local.gpu_passthrough_containers) : container if container.node_name == node_name
+          for container in values(local.gpu_passthrough_containers) : container if coalesce(container.node_name, var.proxmox_node) == node_name
           ]) == (contains(local.gpu_capable_nodes, node_name) ? 1 + length([
-            for container in values(local.llm_gpu_small_role_containers) : container if container.node_name == node_name
+            for container in values(local.llm_gpu_engine_members) : container if coalesce(container.node_name, var.proxmox_node) == node_name
             ]) + length([
-            for container in values(local.llm_gpu_classify_role_containers) : container if container.node_name == node_name
+            for container in values(local.llm_gpu_small_role_containers) : container if coalesce(container.node_name, var.proxmox_node) == node_name
+            ]) + length([
+            for container in values(local.llm_gpu_classify_role_containers) : container if coalesce(container.node_name, var.proxmox_node) == node_name
         ]) : 0)
       ])
-      error_message = "Each commissioned nvidia-gpu node must have exactly one serving gpu-passthrough container, plus at most one each of llm-gpu-small and llm-gpu-classify; uncommissioned and non-GPU nodes must have none."
+      error_message = "Each commissioned nvidia-gpu node must have one legacy serving guest and each declared engine candidate, plus at most one each of llm-gpu-small and llm-gpu-classify; uncommissioned and non-GPU nodes must have none."
+    }
+
+    precondition {
+      condition = alltrue([
+        for container in values(local.llm_gpu_engine_members) :
+        contains(coalesce(try(container.tags, null), []), local.gpu_passthrough_tag)
+      ])
+      error_message = "Every GPU engine candidate must carry gpu-passthrough."
     }
 
     precondition {

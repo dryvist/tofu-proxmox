@@ -63,8 +63,8 @@
     },
     "llm_gpu_engine": {
       "type": "string",
-      "enum": ["llama_cpp", "vllm"],
-      "description": "Single serving-engine selector for the GPU LXC pair; defaults to llama_cpp when absent."
+      "enum": ["llama_cpp", "vllm", "strata"],
+      "description": "Single serving-engine selector for the GPU LXC set; defaults to llama_cpp when absent."
     },
     "llm_cpu_scaler": {
       "type": "object",
@@ -434,14 +434,18 @@
           "minLength": 1,
           "description": "Proxmox node this container is placed on. Must be a key of `nodes`."
         },
+        "migrate": {
+          "type": "boolean",
+          "description": "When true, migrate this container instead of replacing it when node_name changes. Defaults to false."
+        },
         "adopt": {
           "type": "boolean",
           "description": "Marks a live container that state tracks under another node, or not at all. imports.tf adopts it in place instead of planning a create. Unset or false is the steady state; remove the flag after the adopting apply has landed."
         },
         "llm_gpu_engine_identity": {
           "type": "string",
-          "enum": ["llama_cpp", "vllm"],
-          "description": "Immutable engine identity for one member of the GPU serving LXC pair."
+          "enum": ["llama_cpp", "vllm", "strata"],
+          "description": "Immutable engine identity for one member of the GPU serving LXC set."
         },
         "ct_template": {
           "type": "string",
@@ -490,7 +494,7 @@
         },
         "placement": {
           "type": "object",
-          "description": "Map of Proxmox node name to OpenBao peers. An integer item is a suffix that drives name, VMID, and IP host octet. An object item names the peer by its vm_id: the host octet is vm_id minus vm_id_base, and the name is the given hostname or else <app>-<vm_id>.",
+          "description": "Map of Proxmox node name to OpenBao peers. An integer item is a suffix that drives name, VMID, and IP host octet. An object item names the peer by its vm_id: the host octet is vm_id minus vm_id_base, and the name is the given hostname or else <app>-<vm_id>. An object item may set migrate for a node change.",
           "minProperties": 1,
           "additionalProperties": {
             "type": "array",
@@ -514,6 +518,10 @@
                     "hostname": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "migrate": {
+                      "type": "boolean",
+                      "description": "When true, migrate this peer instead of replacing it when its node changes. Defaults to false."
                     }
                   }
                 }

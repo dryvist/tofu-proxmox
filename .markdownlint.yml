@@ -1,5 +1,5 @@
 # Markdownlint configuration for terraform-proxmox repository
-# Canonical source: dryvist/.github root .markdownlint-cli2.yaml (config block).
+# Canonical source: JacobPEvans/.github root .markdownlint-cli2.yaml (config block).
 # Delta from canon: MD013 tables:false (canon: tables:true, strict:true) and
 # MD024 siblings_only:true (canon leaves MD024 strict-by-default).
 # See https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
