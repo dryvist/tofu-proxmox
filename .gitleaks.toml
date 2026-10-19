@@ -39,4 +39,5 @@ paths = [
   '''(^|/)CHANGELOG\.md$''',                         # release-please generated
   '''\.direnv/''',                                   # gitignored nix-direnv cache (not in CI checkout)
   '''modules/proxmox-stack/tests/.*\.tftest\.hcl$''', # test fixtures — placeholder PEM keys, validated by variable constraints
+  '''^tests/openbao_placement_migrate\.tftest\.hcl$''', # mocked fixture uses synthetic CIDR placeholders
 ]
