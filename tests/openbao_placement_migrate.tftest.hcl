@@ -27,7 +27,7 @@ run "per_peer_migration_is_opt_in" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "placement.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24", "mgmt": "10.0.10.0/24"},
+          "network_cidrs": {"lan_main": "192.0.2.0/24", "mgmt": "198.51.100.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture",
           "openbao_cluster": {
             "enabled": true,
