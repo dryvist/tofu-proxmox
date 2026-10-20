@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.45.1](https://github.com/dryvist/tofu-proxmox/compare/v3.45.0...v3.45.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **proxmox-stack:** default migration for HA-replicated guests ([#1347](https://github.com/dryvist/tofu-proxmox/issues/1347)) ([bbc6c6b](https://github.com/dryvist/tofu-proxmox/commit/bbc6c6bad83b3419bdcbce237c711ccbf3a9fbb4))
+
 ## [3.45.0](https://github.com/dryvist/tofu-proxmox/compare/v3.44.0...v3.45.0) (2026-10-20)
 
 
