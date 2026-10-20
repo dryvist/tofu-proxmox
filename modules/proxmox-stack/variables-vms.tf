@@ -21,14 +21,9 @@ variable "vms" {
     # silent fallback to var.proxmox_node was removed.
     node_name = string
 
-    # Whether a change to node_name migrates the VM or rebuilds it. The provider
-    # decides this in CustomizeDiff, not in the schema: a node_name change forces
-    # replacement UNLESS migrate is true. So moving a VM between nodes without
-    # this set destroys its disks and reclones from the template — measured on a
-    # 150 GB guest, which planned "must be replaced" until migrate was declared.
-    # Left false by default: replacement is the safe outcome for a guest whose
-    # disks are disposable, and an accidental migration of a large VM is not.
-    migrate = optional(bool, false)
+    # A node_name change forces replacement unless migrate is true. When omitted,
+    # it defaults true with ha_replication_target and false otherwise; explicit values win.
+    migrate = optional(bool)
 
     # The node holding this VM's storage-replication (pvesr) copy, and so the
     # only node a cluster HA manager may relocate it to on node loss. Unset

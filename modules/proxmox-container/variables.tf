@@ -1,12 +1,14 @@
 variable "containers" {
   description = "Map of containers to create"
   type = map(object({
-    vm_id       = number
-    node_name   = string
-    migrate     = optional(bool, false)
-    description = optional(string)
-    tags        = optional(list(string), ["terraform", "container"])
-    pool_id     = optional(string)
+    vm_id     = number
+    node_name = string
+    # Null lets the target-aware default resolve in locals.tf.
+    migrate               = optional(bool)
+    ha_replication_target = optional(string)
+    description           = optional(string)
+    tags                  = optional(list(string), ["terraform", "container"])
+    pool_id               = optional(string)
 
     # Container specific
     hostname         = string

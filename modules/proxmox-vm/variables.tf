@@ -10,10 +10,9 @@ variable "vms" {
     # Node configuration
     node_name = string
 
-    # See the extended rationale on this field in the proxmox-stack VM schema.
-    # Short version: the provider forces replacement on a node_name change
-    # unless this is true, so a move without it destroys the VM's disks.
-    migrate = optional(bool, false)
+    # Null lets ha_replication_target select the default at the resource.
+    migrate               = optional(bool)
+    ha_replication_target = optional(string)
 
     # Resource configuration
     cpu_cores = optional(number, 2)

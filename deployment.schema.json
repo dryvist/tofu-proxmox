@@ -436,7 +436,7 @@
         },
         "migrate": {
           "type": "boolean",
-          "description": "When true, migrate this container instead of replacing it when node_name changes. Defaults to false."
+          "description": "When true, migrate this container instead of replacing it when node_name changes. If unset, defaults to true when ha_replication_target is set and false otherwise; explicit values win."
         },
         "adopt": {
           "type": "boolean",
@@ -460,6 +460,11 @@
           "type": "string",
           "minLength": 1,
           "description": "Negative-affinity group name. Guests sharing a value are kept on separate nodes by a proxmox_harule. Only meaningful with ha=true, and only takes effect with two or more members."
+        },
+        "ha_replication_target": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Node holding this guest's pvesr copy and the only node HA may relocate it to on node loss."
         }
       }
     },
@@ -521,7 +526,7 @@
                     },
                     "migrate": {
                       "type": "boolean",
-                      "description": "When true, migrate this peer instead of replacing it when its node changes. Defaults to false."
+                      "description": "For each peer, an explicit value overrides container_defaults.migrate; if both are unset, defaults to true when container_defaults.ha_replication_target is set and false otherwise."
                     }
                   }
                 }
@@ -546,6 +551,15 @@
             "pool_id": {
               "type": "string",
               "minLength": 1
+            },
+            "migrate": {
+              "type": "boolean",
+              "description": "Migration value for generated peers unless a peer overrides it; when unset, peers default to true if ha_replication_target is set and false otherwise."
+            },
+            "ha_replication_target": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Node holding each generated peer's pvesr copy and its only HA relocation target."
             }
           }
         },
