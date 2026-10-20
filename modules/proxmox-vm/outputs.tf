@@ -52,13 +52,3 @@ output "vm_details" {
     }]
   } }
 }
-
-output "vm_network_interfaces" {
-  description = "VM network interface information"
-  value = { for k, v in proxmox_virtual_environment_vm.vms : k => {
-    ipv4_addresses          = v.ipv4_addresses
-    ipv6_addresses          = v.ipv6_addresses
-    mac_addresses           = v.mac_addresses
-    network_interface_names = v.network_interface_names
-  } }
-}

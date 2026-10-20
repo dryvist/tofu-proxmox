@@ -32,11 +32,6 @@ output "vms" {
   value       = module.vms.vm_details
 }
 
-output "vm_network_info" {
-  description = "VM network interface information"
-  value       = module.vms.vm_network_interfaces
-}
-
 # Container outputs (when enabled)
 output "containers" {
   description = "Created containers information"
