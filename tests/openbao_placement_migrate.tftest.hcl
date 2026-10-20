@@ -1,8 +1,8 @@
-# A per-peer migration flag reaches the generated container while the default
-# remains false for ordinal placement entries.
+# Peer migration overrides the default; replica targets reach the generated
+# container for target-aware migration resolution.
 mock_provider "aws" {}
 
-run "per_peer_migration_is_opt_in" {
+run "generated_peer_migration_preserves_explicit_values_and_target" {
   command = plan
 
   plan_options {
@@ -36,10 +36,10 @@ run "per_peer_migration_is_opt_in" {
             "vlan": "mgmt",
             "placement": {
               "n1": [10],
-              "n2": [{"vm_id": 110020, "hostname": "openbao-20", "migrate": true}],
-              "n3": [30], "n4": [40], "n5": [50]
+              "n3": [{"vm_id": 110020, "hostname": "openbao-20", "migrate": true}, 30],
+              "n4": [40], "n5": [50]
             },
-            "container_defaults": {"tags": ["openbao"], "pool_id": "p1", "unprivileged": true},
+            "container_defaults": {"tags": ["openbao"], "pool_id": "p1", "unprivileged": true, "ha_replication_target": "n2"},
             "root_disk": {"size": 8}
           }
         }
@@ -49,12 +49,15 @@ run "per_peer_migration_is_opt_in" {
   }
 
   assert {
-    condition     = local.openbao_generated_containers["openbao-20"].migrate && local.openbao_generated_containers["openbao-20"].node_name == "n2" && local.openbao_generated_containers["openbao-20"].vm_id == 110020
+    condition     = local.openbao_generated_containers["openbao-20"].migrate && local.openbao_generated_containers["openbao-20"].node_name == "n3" && local.openbao_generated_containers["openbao-20"].vm_id == 110020
     error_message = "The object-form peer must retain its identity and node while passing migrate=true."
   }
 
   assert {
-    condition     = local.openbao_generated_containers["openbao-10"].migrate == false
-    error_message = "An integer placement item must keep migration disabled by default."
+    condition = (
+      local.openbao_generated_containers["openbao-10"].migrate == null &&
+      local.openbao_generated_containers["openbao-10"].ha_replication_target == "n2"
+    )
+    error_message = "A generated peer must pass its HA target and leave an omitted migrate value for target-aware resolution."
   }
 }

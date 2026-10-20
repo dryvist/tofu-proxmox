@@ -86,7 +86,7 @@ locals {
         # both item shapes in one number-typed result.
         suffix  = try(item.vm_id - local.openbao_vm_id_base, item)
         vm_id   = try(item.vm_id, local.openbao_vm_id_base + item)
-        migrate = try(item.migrate, false)
+        migrate = try(item.migrate, try(local.openbao_cluster.container_defaults.migrate, null))
         name = (
           try(item.vm_id, null) == null
           ? format("%s%02d", local.openbao_name_prefix, item)

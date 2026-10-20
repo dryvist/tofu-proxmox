@@ -82,6 +82,10 @@ Consumers must treat a missing value as "not replicated", never as a
 default node: relocating a guest onto a node with no copy of its data
 fails the start and latches the service in an error state.
 
+## `migrate` — node-change behavior
+
+If omitted, `migrate` defaults to `true` when `ha_replication_target` is set and `false` otherwise; an explicit value always wins.
+
 ## `startup_order` — boot ordering
 
 Unset, boot order is derived from the VMID in

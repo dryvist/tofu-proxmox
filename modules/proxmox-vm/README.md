@@ -113,6 +113,8 @@ module "vms" {
 
 ### VM Object Schema
 
+If omitted, `migrate` defaults to `true` when `ha_replication_target` is set and `false` otherwise; an explicit value always wins.
+
 ```hcl
 {
   vm_id       = number           # VM ID (100-999999999)
@@ -123,6 +125,8 @@ module "vms" {
 
   # Node configuration
   node_name = string             # Proxmox node name
+  migrate               = optional(bool)
+  ha_replication_target = optional(string)
 
   # Resource configuration
   cpu_cores        = optional(number, 2)    # CPU cores (1-32)
