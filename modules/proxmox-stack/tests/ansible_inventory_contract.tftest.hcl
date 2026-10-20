@@ -2794,3 +2794,34 @@ run "node_memory_budgets_are_optional_in_published_inventory" {
     error_message = "Budget omission must preserve the existing node contract."
   }
 }
+
+run "ansible_inventory_publishes_storage_mounts_and_excludes_bind_mounts" {
+  command = plan
+
+  variables {
+    containers = {
+      "storage-test" = {
+        vm_id     = 610030
+        node_name = "proxmox-1"
+        hostname  = "storage-test"
+        vlan      = "data"
+        dhcp      = true
+        mount_points = [
+          { volume = "/bulk/data", path = "/data" },
+          { volume = "bulk", size = "500G", path = "/srv/object-storage" },
+          { volume = "fast", size = "20G", path = "/var/cache" },
+        ]
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["storage-test"].storage_mount_points == [
+        { mp_index = 1, path = "/srv/object-storage", size = "500G", volume = "bulk" },
+        { mp_index = 2, path = "/var/cache", size = "20G", volume = "fast" },
+      ]
+    )
+    error_message = "only size-backed storage mounts must be published, with their creation-time mp indexes, path, size, and storage id"
+  }
+}

@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.46.0](https://github.com/dryvist/tofu-proxmox/compare/v3.45.1...v3.46.0) (2026-10-20)
+
+
+### Features
+
+* **inventory:** publish storage-backed LXC mount sizes ([#1350](https://github.com/dryvist/tofu-proxmox/issues/1350)) ([25cbc7c](https://github.com/dryvist/tofu-proxmox/commit/25cbc7c7b15d988f87321f5deab180ad898dd1d7))
+
 ## [3.45.1](https://github.com/dryvist/tofu-proxmox/compare/v3.45.0...v3.45.1) (2026-10-20)
 
 
