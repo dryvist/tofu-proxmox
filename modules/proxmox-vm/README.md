@@ -11,6 +11,11 @@ This module creates and manages virtual machines on Proxmox VE.
 - ✅ Resource pool integration
 - ✅ Agent configuration and protection settings
 
+## Installation
+
+Nothing to install. Reference the module by its local path, as the Usage
+examples show. The provider versions it needs are listed under Requirements.
+
 ## Usage
 
 ### Basic VM
@@ -179,7 +184,6 @@ If omitted, `migrate` defaults to `true` when `ha_replication_target` is set and
 | `vm_details` | Complete VM configuration details |
 | `vm_ipv4_addresses` | Map of VM names to IPv4 addresses |
 | `vm_ipv6_addresses` | Map of VM names to IPv6 addresses |
-| `vm_network_interfaces` | VM network interface configurations |
 
 ## Examples
 

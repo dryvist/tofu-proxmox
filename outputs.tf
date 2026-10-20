@@ -24,10 +24,6 @@ output "vms" {
   description = "Created VMs information"
   value       = module.homelab.vms
 }
-output "vm_network_info" {
-  description = "VM network interface information"
-  value       = module.homelab.vm_network_info
-}
 output "containers" {
   description = "Created containers information"
   value       = module.homelab.containers
