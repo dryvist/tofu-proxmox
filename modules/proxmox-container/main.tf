@@ -16,7 +16,7 @@ resource "proxmox_virtual_environment_container" "containers" {
 
   vm_id       = each.value.vm_id
   node_name   = each.value.node_name
-  migrate     = each.value.migrate
+  migrate     = local.container_migrate[each.key]
   description = each.value.description != null ? each.value.description : "TF CT ${each.value.hostname} - ${var.environment}"
 
   # Tags with environment, in the deduped+sorted form Proxmox stores

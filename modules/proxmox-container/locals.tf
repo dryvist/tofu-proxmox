@@ -18,6 +18,10 @@
 # The tag only ever ADDS `nesting`: any explicitly-declared feature still applies
 # (logical OR), so a non-docker container is unaffected.
 locals {
+  container_migrate = {
+    for k, c in var.containers : k => coalesce(c.migrate, c.ha_replication_target != null)
+  }
+
   effective_features = {
     for k, c in var.containers : k => {
       nesting = c.features.nesting || contains(c.tags, "docker")

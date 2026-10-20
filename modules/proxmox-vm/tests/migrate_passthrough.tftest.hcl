@@ -43,6 +43,29 @@ variables {
         keys     = []
       }
     }
+    replicated = {
+      vm_id                 = 252
+      name                  = "replicated"
+      node_name             = "node-a"
+      ha_replication_target = "node-b"
+      user_account = {
+        username = "test"
+        password = "test"
+        keys     = []
+      }
+    }
+    pinned = {
+      vm_id                 = 253
+      name                  = "pinned"
+      node_name             = "node-a"
+      ha_replication_target = "node-b"
+      migrate               = false
+      user_account = {
+        username = "test"
+        password = "test"
+        keys     = []
+      }
+    }
   }
 }
 
@@ -55,14 +78,31 @@ run "migrate_reaches_the_resource_when_declared" {
   }
 }
 
-# The negative control. Without this, the test above would still pass if the
-# module hard-coded `migrate = true`, which would silently turn every node
-# reassignment into a migration — the opposite and more dangerous default.
+# The negative control: a VM without a replica target stays on the replacement
+# default, while HA-replicated VMs migrate unless an explicit value says otherwise.
 run "migrate_defaults_off_when_not_declared" {
   command = plan
 
   assert {
     condition     = proxmox_virtual_environment_vm.vms["stayer"].migrate == false
-    error_message = "migrate defaulted to something other than false — node reassignment must not migrate a guest unless the deployment object explicitly asks for it."
+    error_message = "A VM without a replica target must default to migrate=false."
+  }
+}
+
+run "replica_target_enables_migration_by_default" {
+  command = plan
+
+  assert {
+    condition     = proxmox_virtual_environment_vm.vms["replicated"].migrate == true
+    error_message = "A VM with a replica target must default to migrate=true."
+  }
+}
+
+run "explicit_false_overrides_replica_target" {
+  command = plan
+
+  assert {
+    condition     = proxmox_virtual_environment_vm.vms["pinned"].migrate == false
+    error_message = "An explicit migrate=false must override the replica-target default."
   }
 }

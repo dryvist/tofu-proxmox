@@ -5,7 +5,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
   node_name = each.value.node_name
   # Governs what a node_name change means: migrate the guest, or destroy and
   # recreate it. The provider forces replacement unless this is true.
-  migrate     = each.value.migrate
+  migrate     = coalesce(each.value.migrate, each.value.ha_replication_target != null)
   name        = each.value.name
   description = each.value.description != null ? each.value.description : "TF VM ${each.value.name} - ${var.environment}"
 
