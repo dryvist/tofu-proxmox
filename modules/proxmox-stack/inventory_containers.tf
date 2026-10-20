@@ -90,6 +90,18 @@ locals {
       # A VM's equivalent in the vms block is a PLAIN read, because
       # boot_disk.datastore_id carries a default and is therefore never null.
       datastore = coalesce(var.containers[k].root_disk.datastore_id, var.datastore_default)
+      # Generic, storage-backed mount allocations for Ansible reconciliation.
+      # A mount with no size is a host bind mount (its volume is a host path),
+      # so it is deliberately excluded. mp_index preserves the provider's
+      # ordered mpN assignment from the same resolved list used at creation.
+      storage_mount_points = [
+        for mp_index, mp in local.container_mount_points[k] : {
+          mp_index = mp_index
+          path     = mp.path
+          size     = mp.size
+          volume   = mp.volume
+        } if mp.size != null
+      ]
       # The shared models mount's spec for THIS guest, if it declares one at
       # var.llm_models_mount_path — null on every field when it doesn't (e.g.
       # a node with no fast/bulk pool, which serves models from its root disk
