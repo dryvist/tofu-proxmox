@@ -55,12 +55,14 @@ ephemeral "vault_aws_access_credentials" "acme_iam" {
   ttl    = var.openbao_aws_ttl
 }
 
+# OpenTofu configures this provider even while the module has no instances, so
+# with the flag off it reuses the Route53 session; nothing is managed through it.
 provider "aws" {
   alias      = "acme_iam"
   region     = var.aws_region
-  access_key = one(ephemeral.vault_aws_access_credentials.acme_iam[*].access_key)
-  secret_key = one(ephemeral.vault_aws_access_credentials.acme_iam[*].secret_key)
-  token      = one(ephemeral.vault_aws_access_credentials.acme_iam[*].security_token)
+  access_key = var.enable_acme_iam ? one(ephemeral.vault_aws_access_credentials.acme_iam[*].access_key) : ephemeral.vault_aws_access_credentials.route53.access_key
+  secret_key = var.enable_acme_iam ? one(ephemeral.vault_aws_access_credentials.acme_iam[*].secret_key) : ephemeral.vault_aws_access_credentials.route53.secret_key
+  token      = var.enable_acme_iam ? one(ephemeral.vault_aws_access_credentials.acme_iam[*].security_token) : ephemeral.vault_aws_access_credentials.route53.security_token
 }
 
 # Route53 DNS Records module - manages A record for Proxmox VE UI
