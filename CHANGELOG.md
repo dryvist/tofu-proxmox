@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.46.1](https://github.com/dryvist/tofu-proxmox/compare/v3.46.0...v3.46.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **outputs:** remove the vm_network_info output ([#1353](https://github.com/dryvist/tofu-proxmox/issues/1353)) ([59376d2](https://github.com/dryvist/tofu-proxmox/commit/59376d2de41e1177d80cabfb37018096cc737243))
+
 ## [3.46.0](https://github.com/dryvist/tofu-proxmox/compare/v3.45.1...v3.46.0) (2026-10-20)
 
 
