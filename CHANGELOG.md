@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.45.0](https://github.com/dryvist/tofu-proxmox/compare/v3.44.0...v3.45.0) (2026-10-20)
+
+
+### Features
+
+* **firewall:** add an inbound rule for the next API port ([#1342](https://github.com/dryvist/tofu-proxmox/issues/1342)) ([9f7fe79](https://github.com/dryvist/tofu-proxmox/commit/9f7fe79cad71a33242954496872a755a2f906d53))
+
+
+### Bug Fixes
+
+* **aws-infra:** give the ACME provider credentials while the flag is off ([#1344](https://github.com/dryvist/tofu-proxmox/issues/1344)) ([31d8165](https://github.com/dryvist/tofu-proxmox/commit/31d8165643bad513f13c282b2fa14436b1e2f240))
+
 ## [3.44.0](https://github.com/dryvist/tofu-proxmox/compare/v3.43.0...v3.44.0) (2026-10-19)
 
 
