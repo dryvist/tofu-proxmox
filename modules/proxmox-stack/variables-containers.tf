@@ -38,7 +38,7 @@ variable "containers" {
     # tier of the log pipeline, without anyone choosing to put them there.
     # Placement is now an explicit declaration; there is no default to inherit.
     node_name = string
-    # Defaults true with ha_replication_target and false otherwise; explicit values win.
+    # Defaults to ha_replication_target != null; explicit values win.
     migrate = optional(bool)
 
     # Resource configuration
