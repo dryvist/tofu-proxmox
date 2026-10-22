@@ -272,6 +272,11 @@ run "pipeline_constants_service_ports" {
     condition     = local.pipeline_constants.service_ports.clickhouse_metrics == 9363
     error_message = "clickhouse_metrics port should be 9363"
   }
+
+  assert {
+    condition     = local.pipeline_constants.service_ports.llm_fast_trial_api == 10436
+    error_message = "llm_fast_trial_api port should be 10436"
+  }
 }
 
 run "pipeline_constants_monitoring_ports" {
