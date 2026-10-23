@@ -4,7 +4,8 @@ locals {
   pipeline_constants = {
     # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
     # cribl_metrics_ports: see constants-cribl-metrics.tf (same gate).
-    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, local.zcode_ports, local.llm_fabric_ports, {
+    # web_ui_ports: see constants-web-ui.tf (same gate).
+    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, local.zcode_ports, local.llm_fabric_ports, local.web_ui_ports, {
       haproxy_stats     = 8404
       splunk_web        = 8000
       splunk_hec        = 8088
@@ -30,18 +31,6 @@ locals {
       ntp                    = 123
       idrac_kvm_r410         = 5410
       idrac_kvm_r710         = 5710
-      # Web UIs fronted by Traefik that have no other constant home. Kept here so
-      # every port lives in one place and the ingress table (below) references
-      # constants, never literals.
-      technitium_web    = 5380
-      authelia_portal   = 9091
-      phpipam_web       = 80
-      nautobot_web      = 8080
-      vikunja_web       = 3456
-      zammad_web        = 8080 # nginx in-guest, own container IP (independent of nautobot's 8080); Traefik-fronted
-      homeassistant_web = 8123
-      openproject_web   = 80
-      prometheus_web    = 9090
       # MCP gateway (mcp-gateway tag): single HTTP/SSE endpoint every MCP
       # client (Claude Code, Codex, Cursor, OpenCode) connects to.
       mcp_gateway_web = 4444
