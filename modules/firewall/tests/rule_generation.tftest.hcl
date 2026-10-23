@@ -72,6 +72,7 @@ variables {
       node_exporter      = 9100
       # LLM fabric + agentgateway (referenced by llm_fabric/agentgateway rules)
       llm_fast_api         = 10434
+      llm_fast_trial_api   = 10436
       llm_classify_api     = 8000
       llm_router_api       = 4000
       agentgateway_proxy   = 8080
@@ -345,6 +346,19 @@ run "object_storage_rules_track_constants_port" {
   assert {
     condition     = local.s3_services_rules[1].dport == tostring(var.pipeline_constants.service_ports.object_storage_console)
     error_message = "s3_services_rules[1].dport must be tostring(pipeline_constants.service_ports.object_storage_console), got '${local.s3_services_rules[1].dport}'"
+  }
+}
+
+run "llm_fast_trial_rule_tracks_service_port" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.0.0/16"]
+  }
+
+  assert {
+    condition     = local.llm_fast_services_rules[2].dport == tostring(var.pipeline_constants.service_ports.llm_fast_trial_api)
+    error_message = "llm_fast_services_rules[2].dport must track the trial service port"
   }
 }
 

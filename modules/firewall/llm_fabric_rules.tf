@@ -42,7 +42,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "llm_rout
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "llm_fast_services" {
   name    = "llm-fast-svc"
-  comment = "LLM fast / llama-swap server API (${local.svc_ports.llm_fast_api}) from internal networks"
+  comment = "LLM fast server and trial APIs from internal networks"
 
   dynamic "rule" {
     for_each = local.llm_fast_services_rules
@@ -190,6 +190,16 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_fast_container" {
     dport   = tostring(local.svc_ports.llm_fast_api)
     source  = local.zt_src["ai"]
     comment = "ZT: llm-fast intra-ai"
+  }
+
+  rule {
+    enabled = local.zt_enabled
+    type    = "in"
+    action  = "ACCEPT"
+    proto   = "tcp"
+    dport   = tostring(local.svc_ports.llm_fast_trial_api)
+    source  = local.zt_src["ai"]
+    comment = "ZT: llm-fast trial intra-ai"
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.llm_fast_container]

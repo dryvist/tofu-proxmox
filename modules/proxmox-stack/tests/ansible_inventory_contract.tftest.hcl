@@ -170,6 +170,11 @@ run "ansible_inventory_constants_service_ports_exists" {
     condition     = can(output.ansible_inventory.constants.service_ports)
     error_message = "ansible_inventory.constants must contain 'service_ports' key"
   }
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.llm_fast_trial_api == 10436
+    error_message = "ansible_inventory must publish the llm_fast_trial_api service port"
+  }
 }
 
 run "ansible_inventory_constants_syslog_ports_exists" {
