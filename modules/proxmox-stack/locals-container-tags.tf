@@ -24,6 +24,7 @@ locals {
     hermes_ui        = "hermes-ui"
     hindsight        = "hindsight"
     homarr           = "homarr"
+    homebox          = "homebox"
     homepage         = "homepage"
     honeypot         = "honeypot"
     idrac            = "idrac"
