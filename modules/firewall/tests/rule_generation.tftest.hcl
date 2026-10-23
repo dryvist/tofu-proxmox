@@ -43,6 +43,7 @@ variables {
       redis_default          = 6379
       nautobot_web           = 8080
       vikunja_web            = 3456
+      homebox_web            = 7745
       homarr_web             = 7575
       # Estate dashboards alongside Homarr (referenced by homepage/glance rules)
       homepage_web = 3000
@@ -1019,6 +1020,25 @@ run "vikunja_rule_tracks_constant_and_internal_scope" {
   assert {
     condition     = local.vikunja_services_rules[0].source == "192.168.10.0/24,192.168.20.0/24"
     error_message = "vikunja rule source must be the comma-joined internal networks, got '${local.vikunja_services_rules[0].source}'"
+  }
+}
+
+run "homebox_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  assert {
+    condition     = length(local.homebox_services_rules) == 1
+    error_message = "homebox_services_rules must contain exactly one service rule"
+  }
+
+  assert {
+    condition     = local.homebox_services_rules[0].proto == "tcp" && local.homebox_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.homebox_web)
+    error_message = "Homebox must track service_ports.homebox_web"
+  }
+
+  assert {
+    condition     = local.homebox_services_rules[0].source == local.internal_src
+    error_message = "Homebox must use the configured service source"
   }
 }
 

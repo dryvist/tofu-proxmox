@@ -38,6 +38,7 @@ locals {
       phpipam_web       = 80
       nautobot_web      = 8080
       vikunja_web       = 3456
+      homebox_web       = 7745
       zammad_web        = 8080 # nginx in-guest, own container IP (independent of nautobot's 8080); Traefik-fronted
       homeassistant_web = 8123
       openproject_web   = 80
