@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.48.0](https://github.com/dryvist/tofu-proxmox/compare/v3.47.0...v3.48.0) (2026-10-24)
+
+
+### Features
+
+* **firewall:** allow Hatchet web and engine ports ([#1370](https://github.com/dryvist/tofu-proxmox/issues/1370)) ([0c20056](https://github.com/dryvist/tofu-proxmox/commit/0c20056e395ed595641708ad148599cddda043bf))
+* **ingress:** add homebox web route and firewall rules ([#1357](https://github.com/dryvist/tofu-proxmox/issues/1357)) ([d8dc4ac](https://github.com/dryvist/tofu-proxmox/commit/d8dc4ac8df450992f2e1a6be076244e8ff84a8e3))
+* **ingress:** add remote-write route and otel route health probe ([#1366](https://github.com/dryvist/tofu-proxmox/issues/1366)) ([f70364f](https://github.com/dryvist/tofu-proxmox/commit/f70364f64beb7f363192ddde1253dfcf854dc817))
+* **proxmox-stack:** add a per-agent trust_tier to the agent roster ([#1368](https://github.com/dryvist/tofu-proxmox/issues/1368)) ([94e6985](https://github.com/dryvist/tofu-proxmox/commit/94e6985027bcce7af72db0b55f37e50710418883))
+* **proxmox-stack:** add Hatchet service ports and web route ([#1363](https://github.com/dryvist/tofu-proxmox/issues/1363)) ([04294fd](https://github.com/dryvist/tofu-proxmox/commit/04294fd7d683de80ef797a9ce4568079b214c60a))
+
+
+### Bug Fixes
+
+* **firewall:** allow DCGM exporter scrape on GPU guests ([#1365](https://github.com/dryvist/tofu-proxmox/issues/1365)) ([2545a2b](https://github.com/dryvist/tofu-proxmox/commit/2545a2b10262b0691c401653ed9c426aeacf3c79))
+* **firewall:** allow outbound HTTPS from Homebox ([#1364](https://github.com/dryvist/tofu-proxmox/issues/1364)) ([3f0dd25](https://github.com/dryvist/tofu-proxmox/commit/3f0dd252362692cb16dad591f8f302810d9c2c8f))
+* **renovate:** pin Terraform providers to locked versions ([#1359](https://github.com/dryvist/tofu-proxmox/issues/1359)) ([43ba4a4](https://github.com/dryvist/tofu-proxmox/commit/43ba4a4fa6ba3c9fcd382c5add6aa7c7abfdf54e))
+* update default Proxmox Debian CT template ([#1360](https://github.com/dryvist/tofu-proxmox/issues/1360)) ([f8f9558](https://github.com/dryvist/tofu-proxmox/commit/f8f95585ffd7a5820e34a06e67db19f20d854877))
+
 ## [3.47.0](https://github.com/dryvist/tofu-proxmox/compare/v3.46.1...v3.47.0) (2026-10-23)
 
 
