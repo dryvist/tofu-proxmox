@@ -169,7 +169,7 @@ variable "media_container_ids" {
 }
 
 variable "ai_orchestration_container_ids" {
-  description = "Map of AI orchestration LXC names to IDs (tag-driven: n8n, Dify, LangFlow, LangGraph, agent-exec). Inbound UI ports from internal + outbound internal/HTTPS (model endpoints, external APIs)."
+  description = "Map of AI orchestration LXC names to IDs (tag-driven: n8n, Hatchet, Dify, LangFlow, LangGraph, agent-exec). Inbound service ports from internal + outbound internal/HTTPS (model endpoints, external APIs)."
   type        = map(number)
   default     = {}
 }

@@ -95,6 +95,8 @@ variables {
       hermes_studio = 8648
       # AI orchestration + observability (referenced by ai_orchestration rules)
       n8n_web                   = 5678
+      hatchet_web               = 8090
+      hatchet_grpc              = 7072
       dify_web                  = 80
       langflow_web              = 7860
       langfuse_web              = 3000
