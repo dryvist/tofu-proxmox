@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.47.0](https://github.com/dryvist/tofu-proxmox/compare/v3.46.1...v3.47.0) (2026-10-23)
+
+
+### Features
+
+* expose small-model trial service port ([#1356](https://github.com/dryvist/tofu-proxmox/issues/1356)) ([b51e9d8](https://github.com/dryvist/tofu-proxmox/commit/b51e9d89b53b44897ab09538a7a763cddd7d586a))
+
 ## [3.46.1](https://github.com/dryvist/tofu-proxmox/compare/v3.46.0...v3.46.1) (2026-10-20)
 
 

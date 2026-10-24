@@ -12,6 +12,10 @@ locals {
     if contains(coalesce(try(container.tags, null), []), local.gpu_passthrough_tag)
   }
 
+  gpu_telemetry_container_ids = {
+    for name, container in local.gpu_passthrough_containers : name => container.vm_id
+  }
+
   llm_gpu_small_role_containers = {
     for name, container in var.containers : name => container
     if contains(coalesce(try(container.tags, null), []), local.gpu_small_role_tag)

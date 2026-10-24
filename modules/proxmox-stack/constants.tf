@@ -4,7 +4,8 @@ locals {
   pipeline_constants = {
     # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
     # cribl_metrics_ports: see constants-cribl-metrics.tf (same gate).
-    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, local.zcode_ports, {
+    # web_ui_ports: see constants-web-ui.tf (same gate).
+    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, local.zcode_ports, local.llm_fabric_ports, local.web_ui_ports, {
       haproxy_stats     = 8404
       splunk_web        = 8000
       splunk_hec        = 8088
@@ -30,18 +31,6 @@ locals {
       ntp                    = 123
       idrac_kvm_r410         = 5410
       idrac_kvm_r710         = 5710
-      # Web UIs fronted by Traefik that have no other constant home. Kept here so
-      # every port lives in one place and the ingress table (below) references
-      # constants, never literals.
-      technitium_web    = 5380
-      authelia_portal   = 9091
-      phpipam_web       = 80
-      nautobot_web      = 8080
-      vikunja_web       = 3456
-      zammad_web        = 8080 # nginx in-guest, own container IP (independent of nautobot's 8080); Traefik-fronted
-      homeassistant_web = 8123
-      openproject_web   = 80
-      prometheus_web    = 9090
       # MCP gateway (mcp-gateway tag): single HTTP/SSE endpoint every MCP
       # client (Claude Code, Codex, Cursor, OpenCode) connects to.
       mcp_gateway_web = 4444
@@ -55,20 +44,6 @@ locals {
       # Proxmox cluster web UI (:8006) — fronted by Traefik at the ingress
       # subdomain apex, load-balanced across every commissioned node's UI.
       proxmox_web = 8006
-      # Local LLM fabric. llm_fast_api is the llama-swap endpoint, llm_classify_api
-      # is the classifier API, llm_router_api is the LiteLLM proxy, and
-      # open_webui_web is the chat UI. ollama_api is retained through the
-      # retirement phase (superseded by llama-swap on llm_fast_api).
-      llm_fast_api     = 10434
-      llm_classify_api = 8000
-      llm_router_api   = 4000
-      ollama_api       = 11434
-      # llm_cluster_api = the serving host's gated Cluster Mode endpoint (the
-      # two-Mac distributed brain); mirrors the loopback cluster port the same
-      # way ollama_api mirrors the standalone proxy.
-      llm_cluster_api   = 11440
-      open_webui_web    = 8080
-      docling_serve_api = 5001
       # agentgateway — Rust-written AI-first data plane that unifies MCP
       # (Model Context Protocol), LLM, and A2A (agent-to-agent) traffic into a
       # single proxy. agentgateway_proxy = the MCP/LLM/A2A traffic port callers
@@ -124,6 +99,11 @@ locals {
       # NOT the LangGraph default 8123, which collides with homeassistant_web above.
       langgraph_api     = 8124
       agent_chat_ui_web = 3000
+      # Hatchet (hatchet-lite batch-job scheduler). Host ports. The container
+      # ports are 8888 (web) and 7070 (gRPC), set in ansible-proxmox-apps
+      # roles/hatchet_docker/defaults/main.yml.
+      hatchet_web  = 8090
+      hatchet_grpc = 7072
       # OpenTelemetry ingest on Cribl Edge — native OTLP sources, one port per
       # signal type (gRPC/HTTP) so Cribl routes by type without inspecting payload.
       # AI orchestration apps (OpenLLMetry) emit here; Cribl forks to Langfuse +
@@ -146,6 +126,7 @@ locals {
       smokeping_prober   = 9374
       blackbox_exporter  = 9115
       atlas_exporter     = 9400
+      dcgm_exporter      = 9400
       irtt               = 2112
       # node_exporter on the Proxmox hosts (host metrics -> siem Cribl Edge scrape)
       node_exporter = 9100

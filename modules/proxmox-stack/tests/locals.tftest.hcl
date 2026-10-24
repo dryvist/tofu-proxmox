@@ -272,6 +272,11 @@ run "pipeline_constants_service_ports" {
     condition     = local.pipeline_constants.service_ports.clickhouse_metrics == 9363
     error_message = "clickhouse_metrics port should be 9363"
   }
+
+  assert {
+    condition     = local.pipeline_constants.service_ports.llm_fast_trial_api == 10436
+    error_message = "llm_fast_trial_api port should be 10436"
+  }
 }
 
 run "pipeline_constants_monitoring_ports" {
@@ -301,6 +306,11 @@ run "pipeline_constants_monitoring_ports" {
   assert {
     condition     = local.pipeline_constants.service_ports.atlas_exporter == 9400
     error_message = "atlas_exporter port should be 9400"
+  }
+
+  assert {
+    condition     = local.pipeline_constants.service_ports.dcgm_exporter == 9400
+    error_message = "dcgm_exporter port should be 9400"
   }
 
   assert {
@@ -1364,5 +1374,74 @@ run "openbao_route_carries_a_failover_fallback_pool" {
       if r.name == "openbao"
     ]) == "/v1/sys/health"
     error_message = "adding a failover fallback must not change the primary openbao route's own (active-only) health_check_path"
+  }
+}
+
+# --- cribl stream otel + remote-write ingress routes ---
+
+run "cribl_otel_and_remote_write_routes_share_backends_with_api_health_probe" {
+  command = plan
+
+  variables {
+    containers = {
+      "cribl-01" = { vm_id = 241, node_name = "proxmox-1", vlan = "apps", tags = ["cribl", "stream"] }
+      "cribl-02" = { vm_id = 242, node_name = "proxmox-2", vlan = "apps", tags = ["cribl", "stream"] }
+    }
+  }
+
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.health_check && r.health_check_path == "/api/v1/health" && r.health_check_port == local.pipeline_constants.service_ports.cribl_stream_api
+      if r.name == "otel"
+    ])
+    error_message = "the otel route must enable its health check on /api/v1/health, probed on the cribl_stream_api port"
+  }
+
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.port
+      if r.name == "otel"
+    ]) == local.pipeline_constants.service_ports.otel_traces_http
+    error_message = "the otel route must serve the otel_traces_http listener port"
+  }
+
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.backends
+      if r.name == "otel"
+    ]) == local.cribl_stream_backends && length(local.cribl_stream_backends) == 2
+    error_message = "the otel route must load-balance the cribl+stream guests"
+  }
+
+  assert {
+    condition     = length([for r in local.ingress_lb_routes : r if r.name == "remote-write"]) == 1
+    error_message = "exactly one remote-write route must be emitted for the cribl+stream pool"
+  }
+
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.backends
+      if r.name == "remote-write"
+      ]) == one([
+      for r in local.ingress_lb_routes : r.backends
+      if r.name == "otel"
+    ])
+    error_message = "the remote-write route must use the same backends as the otel route"
+  }
+
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.port
+      if r.name == "remote-write"
+    ]) == local.pipeline_constants.service_ports.cribl_prometheus_rw
+    error_message = "the remote-write route must serve the cribl_prometheus_rw listener port"
+  }
+
+  assert {
+    condition = one([
+      for r in local.ingress_lb_routes : r.health_check && r.health_check_path == "/api/v1/health" && r.health_check_port == local.pipeline_constants.service_ports.cribl_stream_api
+      if r.name == "remote-write"
+    ])
+    error_message = "the remote-write route must probe the same /api/v1/health endpoint on the cribl_stream_api port as the otel route"
   }
 }

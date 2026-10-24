@@ -43,6 +43,7 @@ variables {
       redis_default          = 6379
       nautobot_web           = 8080
       vikunja_web            = 3456
+      homebox_web            = 7745
       homarr_web             = 7575
       # Estate dashboards alongside Homarr (referenced by homepage/glance rules)
       homepage_web = 3000
@@ -68,10 +69,12 @@ variables {
       smokeping_prober   = 9374
       blackbox_exporter  = 9115
       atlas_exporter     = 9400
+      dcgm_exporter      = 9400
       irtt               = 2112
       node_exporter      = 9100
       # LLM fabric + agentgateway (referenced by llm_fabric/agentgateway rules)
       llm_fast_api         = 10434
+      llm_fast_trial_api   = 10436
       llm_classify_api     = 8000
       llm_router_api       = 4000
       agentgateway_proxy   = 8080
@@ -345,6 +348,19 @@ run "object_storage_rules_track_constants_port" {
   assert {
     condition     = local.s3_services_rules[1].dport == tostring(var.pipeline_constants.service_ports.object_storage_console)
     error_message = "s3_services_rules[1].dport must be tostring(pipeline_constants.service_ports.object_storage_console), got '${local.s3_services_rules[1].dport}'"
+  }
+}
+
+run "llm_fast_trial_rule_tracks_service_port" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.0.0/16"]
+  }
+
+  assert {
+    condition     = local.llm_fast_services_rules[2].dport == tostring(var.pipeline_constants.service_ports.llm_fast_trial_api)
+    error_message = "llm_fast_services_rules[2].dport must track the trial service port"
   }
 }
 
@@ -1008,6 +1024,25 @@ run "vikunja_rule_tracks_constant_and_internal_scope" {
   }
 }
 
+run "homebox_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  assert {
+    condition     = length(local.homebox_services_rules) == 1
+    error_message = "homebox_services_rules must contain exactly one service rule"
+  }
+
+  assert {
+    condition     = local.homebox_services_rules[0].proto == "tcp" && local.homebox_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.homebox_web)
+    error_message = "Homebox must track service_ports.homebox_web"
+  }
+
+  assert {
+    condition     = local.homebox_services_rules[0].source == local.internal_src
+    error_message = "Homebox must use the configured service source"
+  }
+}
+
 # --- homarr service rules (community-scripts install-layer pilot) ---
 
 run "homarr_rule_tracks_constant_and_internal_scope" {
@@ -1182,6 +1217,66 @@ run "agentgateway_metrics_rule_tracks_constant_and_scraper_src" {
   assert {
     condition     = local.agentgateway_services_rules[3].source == var.prometheus_scraper_trusted_src
     error_message = "agentgateway metrics rule source must be var.prometheus_scraper_trusted_src, got '${local.agentgateway_services_rules[3].source}'"
+  }
+}
+
+run "gpu_telemetry_group_tracks_dcgm_constant_and_scraper_source" {
+  command = plan
+
+  variables {
+    gpu_telemetry_container_ids = {
+      "llm-fast"     = 600
+      "llm-classify" = 601
+    }
+    llm_fast_container_ids     = { "llm-fast" = 600 }
+    llm_classify_container_ids = { "llm-classify" = 601 }
+  }
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry) == 1 &&
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].rule[0].proto == "tcp" &&
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].rule[0].dport == tostring(var.pipeline_constants.service_ports.dcgm_exporter) &&
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].rule[0].source == var.prometheus_scraper_trusted_src
+    )
+    error_message = "GPU telemetry must open DCGM TCP only from the configured Prometheus scraper source."
+  }
+
+  assert {
+    condition = contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-fast"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].name
+    )
+    error_message = "A GPU fast guest must attach the GPU telemetry group in its existing firewall rule resource."
+  }
+
+  assert {
+    condition = contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.llm_classify_container["llm-classify"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].name
+    )
+    error_message = "A GPU classifier guest must attach the GPU telemetry group in its existing firewall rule resource."
+  }
+}
+
+run "gpu_telemetry_group_and_attachment_are_omitted_without_scraper" {
+  command = plan
+
+  variables {
+    prometheus_scraper_trusted_src = ""
+    gpu_telemetry_container_ids    = { "gpu-candidate" = 603 }
+    llm_fast_container_ids         = { "llm-cpu-moe" = 604 }
+  }
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry) == 0 &&
+      alltrue([
+        for rule in proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-cpu-moe"].rule :
+        rule.security_group != "gpu-telemetry"
+      ])
+    )
+    error_message = "Without a Prometheus scraper source, the GPU telemetry group and all guest attachments must be omitted."
   }
 }
 

@@ -110,3 +110,37 @@ run "unconfigured_profile_is_absent" {
     error_message = "No workstation profile should be guessed without private configuration."
   }
 }
+
+run "homebox_ingress_uses_service_port_and_default_sso" {
+  command = plan
+
+  variables {
+    containers = {
+      homebox = {
+        vm_id     = 999
+        node_name = "test"
+        vlan      = keys(var.vlan_ids)[0]
+        dhcp      = true
+        tags      = ["homebox"]
+      }
+    }
+    nodes = {
+      test = { role = "test" }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.homebox_web == 7745
+    error_message = "Homebox service port must be published as 7745"
+  }
+
+  assert {
+    condition     = length([for r in output.ansible_inventory.ingress : r if r.name == "homebox" && r.owner == "homebox" && r.port == 7745 && r.sso]) == 1
+    error_message = "Homebox must publish one SSO-gated ingress row on its service port"
+  }
+
+  assert {
+    condition     = local.homebox_container_ids == { homebox = 999 }
+    error_message = "Homebox firewall selection must follow the homebox tag"
+  }
+}

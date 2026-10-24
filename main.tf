@@ -12,11 +12,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0"
+      version = "= 6.69.1"
     }
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.116"
+      version = "= 0.116.1"
     }
     vault = {
       source  = "hashicorp/vault"
@@ -186,7 +186,7 @@ module "homelab" {
   # per-run via TF_VAR_openbao_accept_quorum_loss_on_node_failure, default off.
   openbao_accept_quorum_loss_on_node_failure = var.openbao_accept_quorum_loss_on_node_failure
   pools                                      = local.deployment.pools
-  proxmox_ct_template_debian                 = try(local.deployment.proxmox_ct_template_debian, "debian-13-standard_13.1-2_amd64.tar.zst")
+  proxmox_ct_template_debian                 = try(local.deployment.proxmox_ct_template_debian, "debian-13-standard_13.6-1_amd64.tar.zst")
   nixos_ct_template_file_name                = try(local.deployment.nixos_ct_template_file_name, "nixos-herdr-lxc.tar.xz")
   nixos_ct_template_sha256                   = try(local.deployment.nixos_ct_template_sha256, "")
   nixos_ct_template_url                      = try(local.deployment.nixos_ct_template_url, "")

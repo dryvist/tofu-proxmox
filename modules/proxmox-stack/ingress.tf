@@ -11,7 +11,7 @@ locals {
   #       route (default true when omitted). false for machine/API endpoints
   #       (clients cannot do a browser login) and for apps whose non-browser
   #       clients authenticate natively (e.g. Plex apps).
-  ingress_services = merge(local.hermes_agent_routes, local.homarr_routes, local.git_mirror_routes, {
+  ingress_services = merge(local.hermes_agent_routes, local.homarr_routes, local.git_mirror_routes, local.ai_stack_routes, {
     # Authelia portal itself — never gated (it IS the login page).
     authelia    = { backend = "authelia", port = local.pipeline_constants.service_ports.authelia_portal, sso = false }
     plex        = { backend = "plex", port = local.pipeline_constants.media_ports.plex_web, sso = false } # Plex clients auth via plex.tv
@@ -28,7 +28,8 @@ locals {
     nautobot           = { backend = "nautobot", port = local.pipeline_constants.service_ports.nautobot_web }
     "nautobot-api"     = { hostname = "nautobot", path_prefix = "/api/", priority = 100, backend = "nautobot", port = local.pipeline_constants.service_ports.nautobot_web, sso = false }
     "nautobot-graphql" = { hostname = "nautobot", path_prefix = "/graphql/", priority = 100, backend = "nautobot", port = local.pipeline_constants.service_ports.nautobot_web, sso = false }
-    vikunja            = { backend = "vikunja", port = local.pipeline_constants.service_ports.vikunja_web, sso = false }         # MCP API tokens hit /api/v1 on this host
+    vikunja            = { backend = "vikunja", port = local.pipeline_constants.service_ports.vikunja_web, sso = false } # MCP API tokens hit /api/v1 on this host
+    homebox            = { backend = "homebox", port = local.pipeline_constants.service_ports.homebox_web }
     "mcp-gateway"      = { backend = "mcp-gateway", port = local.pipeline_constants.service_ports.mcp_gateway_web, sso = false } # every MCP client authenticates natively, not via browser
     "object-storage"   = { backend = "s3", port = local.pipeline_constants.service_ports.object_storage_console }
     # RustFS S3 API fronted by a valid-TLS hostname. Path-style S3 format.
@@ -48,21 +49,9 @@ locals {
     # GPU serving guests: own HTTPS names for machine API clients (no SSO gate).
     "llm-blackwell-7-96GB-medium" = { backend = "llm-blackwell-7-96GB-medium", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
     "llm-blackwell-7-96GB-small"  = { backend = "llm-blackwell-7-96GB-small", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
-    # AI orchestration stack UIs (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
-    n8n      = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
-    dify     = { backend = "dify", port = local.pipeline_constants.service_ports.dify_web }
-    langflow = { backend = "langflow", port = local.pipeline_constants.service_ports.langflow_web }
-    langfuse = { backend = "langfuse", port = local.pipeline_constants.service_ports.langfuse_web }
-    # phoenix's OTLP/HTTP ingest path (/v1/traces) is exempted from the Authelia
-    # forwardAuth middleware on the Ansible side (a resource regex in
-    # ansible-proxmox-apps), the same way Langfuse's ingest path is — this row
-    # stays a single sso-gated route, never a second sso = false row, or the
-    # whole UI would be exposed unauthenticated.
-    phoenix = { backend = "phoenix", port = local.pipeline_constants.service_ports.phoenix_web }
-    # docling-serve — Open WebUI's content-extraction (OCR/layout) backend. The
-    # only caller is Open WebUI's server-side loader posting to /v1/convert/file,
-    # so sso = false: an SSO redirect would break a machine-to-machine POST.
-    "docling-serve" = { backend = "docling-serve", port = local.pipeline_constants.service_ports.docling_serve_api, sso = false }
+    # AI orchestration stack UIs and Langfuse/Phoenix/docling-serve routes (n8n
+    # through docling-serve) are defined in locals-ingress-ai-routes.tf and
+    # merged into ingress_services above.
     # agentgateway + mcp are fronted as load-balanced pools (agentgateway_backends
     # in locals-ingress-backends.tf), same as llm/openbao — not single rows here.
     # LangGraph (self-hosted): the `langgraph dev` server API + its Agent Chat UI,

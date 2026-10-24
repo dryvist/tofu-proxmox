@@ -18,13 +18,13 @@ variables {
       cribl_prometheus_rw       = 9201, apt_cacher_ng = 3142, squid_proxy = 3128
       object_storage_s3         = 9000, object_storage_console = 9001, openbao_api = 8200
       openbao_cluster           = 8201, postgres_default = 5432, redis_default = 6379
-      nautobot_web              = 8080, vikunja_web = 3456, homarr_web = 7575, homepage_web = 3000
+      nautobot_web              = 8080, vikunja_web = 3456, homebox_web = 7745, homarr_web = 7575, homepage_web = 3000
       glance_web                = 8080, wall_web = 8080, gatus_web = 8080, uptime_kuma_web = 3001
       grafana_web               = 3000, victoriametrics = 8428, authelia_portal = 9091, zammad_web = 8080
       mcp_gateway_web           = 4444, ntp = 123, idrac_kvm_r410 = 5410, idrac_kvm_r710 = 5710
       smokeping_web             = 80, speedtest_exporter = 9798, smokeping_prober = 9374
-      blackbox_exporter         = 9115, atlas_exporter = 9400, irtt = 2112, node_exporter = 9100
-      llm_fast_api              = 10434, llm_classify_api = 8000, llm_router_api = 4000, agentgateway_proxy = 8080
+      blackbox_exporter         = 9115, atlas_exporter = 9400, dcgm_exporter = 9400, irtt = 2112, node_exporter = 9100
+      llm_fast_api              = 10434, llm_fast_trial_api = 10436, llm_classify_api = 8000, llm_router_api = 4000, agentgateway_proxy = 8080
       agentgateway_admin        = 15000, agentgateway_metrics = 15020, hermes_webhook = 8644
       hermes_api                = 8642, hermes_dashboard = 8080, hermes_ui_workspace = 3000
       hermes_ui_mission_control = 3001, herdr_relay_ws = 8375, hermes_webui = 8787

@@ -26,3 +26,9 @@ variable "llm_redis_container_ids" {
   type        = map(number)
   default     = {}
 }
+
+variable "gpu_telemetry_container_ids" {
+  description = "Map of GPU passthrough LXC names to IDs. NVIDIA DCGM exporter scrape access is attached only to these guests."
+  type        = map(number)
+  default     = {}
+}

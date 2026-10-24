@@ -22,7 +22,7 @@ repos:
 
   # Checkov - Terraform IaC security scanner
   - repo: https://github.com/bridgecrewio/checkov.git
-    rev: 3.3.28
+    rev: 3.3.29
     hooks:
       - id: checkov
         args: ['-d', '.', '--framework', 'terraform', '--quiet']

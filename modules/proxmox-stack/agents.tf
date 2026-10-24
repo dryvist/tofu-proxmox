@@ -71,6 +71,7 @@ locals {
         purpose          = agent.purpose
         owns             = agent.owns
         router_key_class = agent.router_key_class
+        trust_tier       = agent.trust_tier
       },
       agent.slack == null ? {} : {
         slack = {
