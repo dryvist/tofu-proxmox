@@ -99,6 +99,11 @@ locals {
       # NOT the LangGraph default 8123, which collides with homeassistant_web above.
       langgraph_api     = 8124
       agent_chat_ui_web = 3000
+      # Hatchet (hatchet-lite batch-job scheduler). Host ports. The container
+      # ports are 8888 (web) and 7070 (gRPC), set in ansible-proxmox-apps
+      # roles/hatchet_docker/defaults/main.yml.
+      hatchet_web  = 8090
+      hatchet_grpc = 7072
       # OpenTelemetry ingest on Cribl Edge — native OTLP sources, one port per
       # signal type (gRPC/HTTP) so Cribl routes by type without inspecting payload.
       # AI orchestration apps (OpenLLMetry) emit here; Cribl forks to Langfuse +

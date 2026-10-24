@@ -51,6 +51,7 @@ locals {
     "llm-blackwell-7-96GB-small"  = { backend = "llm-blackwell-7-96GB-small", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
     # AI orchestration stack UIs (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
     n8n      = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
+    hatchet  = { backend = "hatchet", port = local.pipeline_constants.service_ports.hatchet_web }
     dify     = { backend = "dify", port = local.pipeline_constants.service_ports.dify_web }
     langflow = { backend = "langflow", port = local.pipeline_constants.service_ports.langflow_web }
     langfuse = { backend = "langfuse", port = local.pipeline_constants.service_ports.langfuse_web }
