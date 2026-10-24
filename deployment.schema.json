@@ -136,6 +136,12 @@
             "enum": ["all", "standard", "zdr"],
             "default": "standard"
           },
+          "trust_tier": {
+            "type": "string",
+            "enum": ["trusted", "untrusted"],
+            "default": "untrusted",
+            "description": "Memory trust tier. Agents share recall only with agents of the same tier."
+          },
           "slack": {
             "type": "object",
             "additionalProperties": false,
