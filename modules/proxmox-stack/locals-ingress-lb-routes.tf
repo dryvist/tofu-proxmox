@@ -207,5 +207,19 @@ locals {
         sso               = false # OTLP trace-span producers (Claude Code, machines)
       }
     ] : [],
+    # Cribl Stream Prometheus remote_write ingest: one remote-write.<domain> route
+    # load-balancing the same cribl+stream LXCs' in_prometheus_rw listener. Health
+    # is probed on the Cribl Stream API port, as for the otel route above.
+    length(local.cribl_stream_backends) > 0 ? [
+      {
+        name              = "remote-write"
+        backends          = local.cribl_stream_backends
+        port              = local.pipeline_constants.service_ports.cribl_prometheus_rw
+        health_check      = true
+        health_check_path = "/api/v1/health"
+        health_check_port = local.pipeline_constants.service_ports.cribl_stream_api
+        sso               = false # machine clients (Prometheus remote_write)
+      }
+    ] : [],
   )
 }
