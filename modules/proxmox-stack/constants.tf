@@ -126,6 +126,7 @@ locals {
       smokeping_prober   = 9374
       blackbox_exporter  = 9115
       atlas_exporter     = 9400
+      dcgm_exporter      = 9400
       irtt               = 2112
       # node_exporter on the Proxmox hosts (host metrics -> siem Cribl Edge scrape)
       node_exporter = 9100

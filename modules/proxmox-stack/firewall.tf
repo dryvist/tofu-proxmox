@@ -143,6 +143,10 @@ module "firewall" {
   llm_classify_container_ids = local.llm_classify_container_ids
   llm_router_trusted_src     = local.llm_router_trusted_src
 
+  # NVIDIA DCGM metrics: exactly the containers selected by the
+  # gpu-passthrough guard, excluding CPU-pool guests.
+  gpu_telemetry_container_ids = local.gpu_telemetry_container_ids
+
   # Shared spend store for the router pool (llm-redis tag). Reachable from the
   # ai VLAN only — one client population, and an unauthenticated Redis is an RCE
   # primitive, so it does not get the estate-wide internal scope its neighbours

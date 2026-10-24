@@ -69,6 +69,7 @@ variables {
       smokeping_prober   = 9374
       blackbox_exporter  = 9115
       atlas_exporter     = 9400
+      dcgm_exporter      = 9400
       irtt               = 2112
       node_exporter      = 9100
       # LLM fabric + agentgateway (referenced by llm_fabric/agentgateway rules)
@@ -1216,6 +1217,66 @@ run "agentgateway_metrics_rule_tracks_constant_and_scraper_src" {
   assert {
     condition     = local.agentgateway_services_rules[3].source == var.prometheus_scraper_trusted_src
     error_message = "agentgateway metrics rule source must be var.prometheus_scraper_trusted_src, got '${local.agentgateway_services_rules[3].source}'"
+  }
+}
+
+run "gpu_telemetry_group_tracks_dcgm_constant_and_scraper_source" {
+  command = plan
+
+  variables {
+    gpu_telemetry_container_ids = {
+      "llm-fast"     = 600
+      "llm-classify" = 601
+    }
+    llm_fast_container_ids     = { "llm-fast" = 600 }
+    llm_classify_container_ids = { "llm-classify" = 601 }
+  }
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry) == 1 &&
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].rule[0].proto == "tcp" &&
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].rule[0].dport == tostring(var.pipeline_constants.service_ports.dcgm_exporter) &&
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].rule[0].source == var.prometheus_scraper_trusted_src
+    )
+    error_message = "GPU telemetry must open DCGM TCP only from the configured Prometheus scraper source."
+  }
+
+  assert {
+    condition = contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-fast"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].name
+    )
+    error_message = "A GPU fast guest must attach the GPU telemetry group in its existing firewall rule resource."
+  }
+
+  assert {
+    condition = contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.llm_classify_container["llm-classify"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].name
+    )
+    error_message = "A GPU classifier guest must attach the GPU telemetry group in its existing firewall rule resource."
+  }
+}
+
+run "gpu_telemetry_group_and_attachment_are_omitted_without_scraper" {
+  command = plan
+
+  variables {
+    prometheus_scraper_trusted_src = ""
+    gpu_telemetry_container_ids    = { "gpu-candidate" = 603 }
+    llm_fast_container_ids         = { "llm-cpu-moe" = 604 }
+  }
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry) == 0 &&
+      alltrue([
+        for rule in proxmox_virtual_environment_firewall_rules.llm_fast_container["llm-cpu-moe"].rule :
+        rule.security_group != "gpu-telemetry"
+      ])
+    )
+    error_message = "Without a Prometheus scraper source, the GPU telemetry group and all guest attachments must be omitted."
   }
 }
 
