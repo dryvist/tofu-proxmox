@@ -60,7 +60,8 @@ variable "datastores" {
 variable "proxmox_ct_template_debian" {
   description = "The name of the Debian container template to use for containers"
   type        = string
-  default     = "debian-13-standard_13.1-2_amd64.tar.zst"
+  # renovate: datasource=custom.proxmox-ct-template depName=debian-13-standard
+  default = "debian-13-standard_13.6-1_amd64.tar.zst"
 }
 
 variable "proxmox_iso_debian" {

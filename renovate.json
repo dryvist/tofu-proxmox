@@ -10,13 +10,17 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
       ],
-      "extractVersionTemplate": "^proxmox-backup-server_(?<version>\\d+\\.\\d+-\\d+)\\.iso$",
+      "extractVersionTemplate": "^(?:proxmox-backup-server_|debian-13-standard_)(?<version>\\d+\\.\\d+-\\d+)(?:\\.iso|_amd64\\.tar\\.zst)$",
       "versioningTemplate": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)-(?<build>\\d+)$"
     }
   ],
   "customDatasources": {
     "proxmox-iso": {
       "defaultRegistryUrlTemplate": "http://download.proxmox.com/iso/",
+      "format": "html"
+    },
+    "proxmox-ct-template": {
+      "defaultRegistryUrlTemplate": "http://download.proxmox.com/images/system/",
       "format": "html"
     }
   },
