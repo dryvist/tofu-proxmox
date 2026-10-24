@@ -170,6 +170,51 @@ run "strata_selector_requires_only_its_guest_to_be_running" {
   }
 }
 
+run "gpu_telemetry_selects_gpu_passthrough_not_cpu_pool" {
+  command = plan
+
+  variables {
+    nodes = {
+      compute-a = { role = "compute", tags = ["nvidia-gpu"] }
+      compute-b = { role = "compute", tags = [] }
+    }
+    containers = {
+      gpu = {
+        vm_id     = 610031
+        node_name = "compute-a"
+        hostname  = "llm-ada-lovelace-6X-16GB-embed"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+      "llm-cpu-moe" = {
+        vm_id     = 610032
+        node_name = "compute-b"
+        hostname  = "llm-cpu-moe"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["llm-cpu-moe"]
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      keys(local.gpu_telemetry_container_ids) == ["gpu"] &&
+      local.gpu_telemetry_container_ids["gpu"] == 610031
+    )
+    error_message = "Only gpu-passthrough guests may enter the DCGM telemetry firewall input map."
+  }
+
+  assert {
+    condition = (
+      contains(keys(local.llm_fast_container_ids), "llm-cpu-moe") &&
+      !contains(keys(local.gpu_telemetry_container_ids), "llm-cpu-moe")
+    )
+    error_message = "The CPU-pool guest must keep the shared LLM firewall role and stay out of the GPU telemetry map."
+  }
+}
+
 run "strata_selector_rejects_another_running_container" {
   command = plan
 

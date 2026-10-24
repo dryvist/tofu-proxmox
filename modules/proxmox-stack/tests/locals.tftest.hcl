@@ -309,6 +309,11 @@ run "pipeline_constants_monitoring_ports" {
   }
 
   assert {
+    condition     = local.pipeline_constants.service_ports.dcgm_exporter == 9400
+    error_message = "dcgm_exporter port should be 9400"
+  }
+
+  assert {
     condition     = local.pipeline_constants.service_ports.irtt == 2112
     error_message = "irtt port should be 2112"
   }

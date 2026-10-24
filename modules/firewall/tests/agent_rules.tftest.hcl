@@ -23,7 +23,7 @@ variables {
       grafana_web               = 3000, victoriametrics = 8428, authelia_portal = 9091, zammad_web = 8080
       mcp_gateway_web           = 4444, ntp = 123, idrac_kvm_r410 = 5410, idrac_kvm_r710 = 5710
       smokeping_web             = 80, speedtest_exporter = 9798, smokeping_prober = 9374
-      blackbox_exporter         = 9115, atlas_exporter = 9400, irtt = 2112, node_exporter = 9100
+      blackbox_exporter         = 9115, atlas_exporter = 9400, dcgm_exporter = 9400, irtt = 2112, node_exporter = 9100
       llm_fast_api              = 10434, llm_fast_trial_api = 10436, llm_classify_api = 8000, llm_router_api = 4000, agentgateway_proxy = 8080
       agentgateway_admin        = 15000, agentgateway_metrics = 15020, hermes_webhook = 8644
       hermes_api                = 8642, hermes_dashboard = 8080, hermes_ui_workspace = 3000

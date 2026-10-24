@@ -181,6 +181,14 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_fast_container" {
     comment        = "Outbound HTTPS (model/weight downloads, package installs)"
   }
 
+  dynamic "rule" {
+    for_each = var.prometheus_scraper_trusted_src != "" && contains(keys(var.gpu_telemetry_container_ids), each.key) ? [1] : []
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].name
+      comment        = "NVIDIA DCGM metrics from the Prometheus scraper"
+    }
+  }
+
   # --- zero-trust (staged disabled): intra-fabric only, not a fan-in like the router.
   rule {
     enabled = local.zt_enabled
@@ -247,6 +255,14 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_classify_container" {
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
     comment        = "Outbound HTTPS (model downloads, package installs)"
+  }
+
+  dynamic "rule" {
+    for_each = var.prometheus_scraper_trusted_src != "" && contains(keys(var.gpu_telemetry_container_ids), each.key) ? [1] : []
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.gpu_telemetry[0].name
+      comment        = "NVIDIA DCGM metrics from the Prometheus scraper"
+    }
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.llm_classify_container]
