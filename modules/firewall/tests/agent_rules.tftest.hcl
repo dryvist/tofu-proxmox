@@ -28,7 +28,8 @@ variables {
       agentgateway_admin        = 15000, agentgateway_metrics = 15020, hermes_webhook = 8644
       hermes_api                = 8642, hermes_dashboard = 8080, hermes_ui_workspace = 3000
       hermes_ui_mission_control = 3001, herdr_relay_ws = 8375, hermes_webui = 8787
-      hermes_studio             = 8648, n8n_web = 5678, dify_web = 80, langflow_web = 7860
+      hermes_studio             = 8648, n8n_web = 5678, hatchet_web = 8090, hatchet_grpc = 7072
+      dify_web                  = 80, langflow_web = 7860
       langfuse_web              = 3000, phoenix_web = 6006, phoenix_grpc = 4317, phoenix_metrics = 9090
       phoenix_postgres_exporter = 9187
       clickhouse_http           = 8123, clickhouse_native = 9000, clickhouse_metrics = 9363, langgraph_api = 8124

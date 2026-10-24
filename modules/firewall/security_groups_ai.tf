@@ -10,7 +10,7 @@
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "ai_orchestration_services" {
   name    = "ai-orch-svc" # Proxmox security-group names max 18 chars
-  comment = "AI orchestration UIs (n8n 5678, LangFlow 7860, Dify 80, LangGraph 8124, Agent Chat UI 3000) from internal networks"
+  comment = "AI orchestration services (n8n 5678, Hatchet UI 8090 + engine gRPC 7072, LangFlow 7860, Dify 80, LangGraph 8124, Agent Chat UI 3000) from internal networks"
 
   dynamic "rule" {
     for_each = local.ai_orchestration_services_rules
