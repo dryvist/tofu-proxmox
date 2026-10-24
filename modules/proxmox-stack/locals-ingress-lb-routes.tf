@@ -193,16 +193,32 @@ locals {
     # Cribl Stream OTLP trace-span ingest: one otel.<domain> route load-balancing
     # the cribl+stream LXCs' in_otel OTLP/HTTP listener. Backend is plain HTTP
     # (default scheme) — Traefik terminates TLS at websecure and forwards http.
-    # No health check: the OTLP listener has no GET-able health path on its own
-    # port, and OTLP/HTTP producers retry, so a false-negative eviction would do
-    # more harm than a rare span drop to a down node.
+    # Health is probed on the Cribl Stream API port (health_check_port), which
+    # serves GET /api/v1/health, so a down node is evicted rather than left in
+    # the pool to drop spans.
     length(local.cribl_stream_backends) > 0 ? [
       {
-        name         = "otel"
-        backends     = local.cribl_stream_backends
-        port         = local.pipeline_constants.service_ports.otel_traces_http
-        health_check = false
-        sso          = false # OTLP trace-span producers (Claude Code, machines)
+        name              = "otel"
+        backends          = local.cribl_stream_backends
+        port              = local.pipeline_constants.service_ports.otel_traces_http
+        health_check      = true
+        health_check_path = "/api/v1/health"
+        health_check_port = local.pipeline_constants.service_ports.cribl_stream_api
+        sso               = false # OTLP trace-span producers (Claude Code, machines)
+      }
+    ] : [],
+    # Cribl Stream Prometheus remote_write ingest: one remote-write.<domain> route
+    # load-balancing the same cribl+stream LXCs' in_prometheus_rw listener. Health
+    # is probed on the Cribl Stream API port, as for the otel route above.
+    length(local.cribl_stream_backends) > 0 ? [
+      {
+        name              = "remote-write"
+        backends          = local.cribl_stream_backends
+        port              = local.pipeline_constants.service_ports.cribl_prometheus_rw
+        health_check      = true
+        health_check_path = "/api/v1/health"
+        health_check_port = local.pipeline_constants.service_ports.cribl_stream_api
+        sso               = false # machine clients (Prometheus remote_write)
       }
     ] : [],
   )
