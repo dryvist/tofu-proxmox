@@ -57,5 +57,10 @@ resource "proxmox_virtual_environment_firewall_rules" "homebox_container" {
     comment        = "Outbound to internal only"
   }
 
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
+    comment        = "Outbound HTTPS (offsite backup repository)"
+  }
+
   depends_on = [proxmox_virtual_environment_firewall_options.homebox_container]
 }
