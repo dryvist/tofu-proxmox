@@ -83,6 +83,7 @@ run "agent_roster_projects_two_agents" {
         name             = "support-guide", display = "Guide", purpose = "Answer example requests"
         owns             = ["splunk"]
         router_key_class = "zdr"
+        trust_tier       = "trusted"
         slack = {
           home_channel     = "agent-home-example"
           requests_channel = "agent-requests-example"
@@ -116,7 +117,8 @@ run "agent_roster_projects_two_agents" {
       output.ansible_inventory.agents["research-scout"].purpose == "Search example records" &&
       length(output.ansible_inventory.agents["research-scout"].owns) == 0 &&
       output.ansible_inventory.agents["research-scout"].router_key_class == "standard" &&
-      sort(keys(output.ansible_inventory.agents["research-scout"])) == tolist(["container", "display", "hostname", "owns", "purpose", "router_key_class"])
+      output.ansible_inventory.agents["research-scout"].trust_tier == "untrusted" &&
+      sort(keys(output.ansible_inventory.agents["research-scout"])) == tolist(["container", "display", "hostname", "owns", "purpose", "router_key_class", "trust_tier"])
     )
     error_message = "The roster entry must include its container, hostname, required fields, and defaults without Slack."
   }
@@ -129,7 +131,8 @@ run "agent_roster_projects_two_agents" {
       output.ansible_inventory.agents["support-guide"].purpose == "Answer example requests" &&
       output.ansible_inventory.agents["support-guide"].owns == tolist(["splunk"]) &&
       output.ansible_inventory.agents["support-guide"].router_key_class == "zdr" &&
-      sort(keys(output.ansible_inventory.agents["support-guide"])) == tolist(["container", "display", "hostname", "owns", "purpose", "router_key_class", "slack"]) &&
+      output.ansible_inventory.agents["support-guide"].trust_tier == "trusted" &&
+      sort(keys(output.ansible_inventory.agents["support-guide"])) == tolist(["container", "display", "hostname", "owns", "purpose", "router_key_class", "slack", "trust_tier"]) &&
       output.ansible_inventory.agents["support-guide"].slack.home_channel == "agent-home-example" &&
       output.ansible_inventory.agents["support-guide"].slack.requests_channel == "agent-requests-example"
     )
@@ -363,6 +366,18 @@ run "agent_name_must_match_function_persona_pattern" {
     }
     agents = {
       "agent-example-1" = { name = "Research-Scout", display = "Scout", purpose = "Search records" }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "agent_trust_tier_must_be_valid" {
+  command = plan
+
+  variables {
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records", trust_tier = "bogus" }
     }
   }
 
