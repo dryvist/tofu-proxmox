@@ -606,6 +606,14 @@ run "ansible_inventory_ingress_route_table" {
         memory_dedicated = 4096
         tags             = ["terraform", "container", "llm-router"]
       }
+      "hatchet" = {
+        vm_id     = 603000
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "hatchet"
+        vlan      = "ai"
+        tags      = ["terraform", "container", "ai-orchestration", "hatchet", "docker"]
+      }
       # s3 renders the machine S3 API row: sso = false in ingress_services and
       # NOT in ingress_human_unauthed_routes, so it must keep deriving
       # ui = false — the legacy behavior the llm ui exception must not leak
@@ -689,6 +697,14 @@ run "ansible_inventory_ingress_route_table" {
       r if r.name == "seerr" && r.ip == "192.168.70.211" && r.port == 5055
     ]) == 1
     error_message = "ingress must front seerr at 192.168.70.211:5055"
+  }
+
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "hatchet" && r.owner == "hatchet" && r.port == local.pipeline_constants.service_ports.hatchet_web && r.sso
+    ]) == 1
+    error_message = "Hatchet web ingress must publish its service port with browser SSO"
   }
 
   # Every published ingress row carries an explicit sso flag (the forwardAuth
