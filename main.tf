@@ -12,11 +12,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0"
+      version = "= 6.69.1"
     }
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.116"
+      version = "= 0.116.1"
     }
     vault = {
       source  = "hashicorp/vault"
