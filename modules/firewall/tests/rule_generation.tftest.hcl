@@ -83,6 +83,7 @@ variables {
       # Hermes inbound webhook receiver + job API (referenced by hermes_webhook_services_rules)
       hermes_webhook   = 8644
       hermes_api       = 8642
+      hermes_a2a       = 9901
       hermes_dashboard = 8080
       # hermes-ui companion web apps (referenced by hermes_ui_services_rules)
       hermes_ui_workspace       = 3000

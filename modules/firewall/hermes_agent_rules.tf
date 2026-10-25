@@ -38,6 +38,7 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_webhook), source = local.internal_src, comment = "Hermes webhook receiver (TCP ${local.svc_ports.hermes_webhook}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_dashboard), source = local.internal_src, comment = "Hermes Dashboard (TCP ${local.svc_ports.hermes_dashboard}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_api), source = local.internal_src, comment = "Hermes job-submission API (TCP ${local.svc_ports.hermes_api}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.hermes_a2a), source = local.internal_src, comment = "Hermes A2A listener (TCP ${local.svc_ports.hermes_a2a}) from internal; bearer-authenticated, agentgateway-fronted" },
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_webui), source = local.internal_src, comment = "hermes-webui (TCP ${local.svc_ports.hermes_webui}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_studio), source = local.internal_src, comment = "hermes-studio (TCP ${local.svc_ports.hermes_studio}) from internal" },
   ]
@@ -45,7 +46,7 @@ locals {
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "hermes_webhook_services" {
   name    = "hermes-webhook-svc"
-  comment = "Hermes agent services (dashboard ${local.svc_ports.hermes_dashboard}, webhook ${local.svc_ports.hermes_webhook}, job API ${local.svc_ports.hermes_api}, webui ${local.svc_ports.hermes_webui}, studio ${local.svc_ports.hermes_studio}) from internal networks — Traefik-fronted"
+  comment = "Hermes agent services (dashboard ${local.svc_ports.hermes_dashboard}, webhook ${local.svc_ports.hermes_webhook}, job API ${local.svc_ports.hermes_api}, A2A ${local.svc_ports.hermes_a2a}, webui ${local.svc_ports.hermes_webui}, studio ${local.svc_ports.hermes_studio}) from internal networks — Traefik-fronted"
 
   dynamic "rule" {
     for_each = local.hermes_webhook_services_rules
