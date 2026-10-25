@@ -68,6 +68,9 @@ locals {
       # bearer-authenticated). Traefik-fronted as https://hermes-api.<sub>;
       # the sanctioned non-exec path to submit work to the agent.
       hermes_api = 8642
+      # hermes_a2a — the Hermes inbound A2A listener; agentgateway fronts it and
+      # holds the bearer token the listener requires.
+      hermes_a2a = 9901
       # hermes-donna is a second, independently-identified Hermes agent
       # instance (own container) running the SAME software as hermes-agent,
       # so it resolves the same hermes_webhook/hermes_dashboard/hermes_api
