@@ -153,6 +153,29 @@
         }
       }
     },
+    "workstations": {
+      "type": "object",
+      "description": "Optional non-secret workstation identities keyed by workstation name.",
+      "default": {},
+      "additionalProperties": {
+        "type": "object",
+        "required": ["host", "roles"],
+        "additionalProperties": false,
+        "properties": {
+          "host": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$",
+            "description": "DNS name used to reach the workstation."
+          },
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
     "vms": {
       "type": "object",
       "additionalProperties": true

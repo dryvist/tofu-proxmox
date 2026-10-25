@@ -30,7 +30,7 @@ locals {
     # The schema that DOES run against real output is consumer-side
     # (ansible-proxmox-apps tests/inventory_load/tofu_inventory.schema.json) and
     # is additionalProperties:true, which is why an added key is safe here.
-    schema_version = "2.4.0"
+    schema_version = "2.5.0"
     # Which desired state this came from — see the variables' own descriptions.
     desired_state = {
       etag = var.desired_state_etag
@@ -40,6 +40,8 @@ locals {
     containers = local.inventory_containers
     # Per-container agent roster (agents.tf).
     agents = local.agents
+    # Non-secret workstation identities supplied by deployment.json.
+    workstations = var.workstations
     # Shared APT cache URLs, derived once from capability-tagged guest FQDNs.
     # Every Ansible consumer reads this list; cache membership and preference
     # order stay owned by the published inventory.

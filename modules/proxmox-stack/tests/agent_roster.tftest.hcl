@@ -140,7 +140,7 @@ run "agent_roster_projects_two_agents" {
   }
 }
 
-run "agent_roster_defaults_to_empty" {
+run "agent_and_workstation_maps_default_to_empty" {
   command = plan
 
   variables {
@@ -150,8 +150,30 @@ run "agent_roster_defaults_to_empty" {
   }
 
   assert {
-    condition     = output.ansible_inventory.agents == {} && output.agents == {} && local.agent_firewall_containers == {}
-    error_message = "The agent roster and its firewall projection default to empty maps."
+    condition     = output.ansible_inventory.agents == {} && output.agents == {} && local.agent_firewall_containers == {} && length(output.ansible_inventory.workstations) == 0
+    error_message = "The optional agent roster and workstation inventory default to empty maps."
+  }
+}
+
+run "workstations_are_published" {
+  command = plan
+
+  variables {
+    workstations = {
+      "mac-primary" = {
+        host  = "mac-primary.example.com"
+        roles = ["mac-primary-serving"]
+      }
+      "mac-secondary" = {
+        host  = "mac-secondary.example.com"
+        roles = ["mac-secondary-serving"]
+      }
+    }
+  }
+
+  assert {
+    condition     = jsonencode(output.ansible_inventory.workstations) == jsonencode(var.workstations)
+    error_message = "The published inventory must preserve each deployment workstation host and role list."
   }
 }
 

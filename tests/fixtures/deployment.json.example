@@ -4,6 +4,10 @@
     "technitium-30": {"vm_id": 130, "hostname": "technitium-30", "vlan": "dns", "node_name": "n1"},
     "traefik-30": {"vm_id": 131, "hostname": "traefik-30", "vlan": "apps", "node_name": "n1"}
   },
+  "workstations": {
+    "mac-primary": {"host": "mac-primary.example.com", "roles": ["mac-primary-serving"]},
+    "mac-secondary": {"host": "mac-secondary.example.com", "roles": ["mac-secondary-serving"]}
+  },
   "nodes": {"n1": {"role": "node-1", "cluster_roles": ["storage"]}},
   "pools": {"p1": {}},
   "proxmox_node": "n1",
