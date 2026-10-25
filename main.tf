@@ -155,6 +155,7 @@ module "homelab" {
   bridge                  = try(local.deployment.bridge, "vmbr0")
   containers              = local.containers
   agents                  = try(local.deployment.agents, {})
+  workstations            = try(local.deployment.workstations, {})
   datastore_default       = try(local.deployment.datastore_default, "local-zfs")
   datastore_id            = try(local.deployment.datastore_id, "local-zfs")
   datastore_iso           = try(local.deployment.datastore_iso, "local")
