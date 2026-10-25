@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.49.0](https://github.com/dryvist/tofu-proxmox/compare/v3.48.0...v3.49.0) (2026-10-25)
+
+
+### Features
+
+* **inventory:** publish workstation identities from the deployment ([#1373](https://github.com/dryvist/tofu-proxmox/issues/1373)) ([95fa2f6](https://github.com/dryvist/tofu-proxmox/commit/95fa2f611162c743e644bc9e883fd9d062340c22))
+
 ## [3.48.0](https://github.com/dryvist/tofu-proxmox/compare/v3.47.0...v3.48.0) (2026-10-24)
 
 
