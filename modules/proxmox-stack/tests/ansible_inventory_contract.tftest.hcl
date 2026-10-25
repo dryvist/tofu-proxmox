@@ -80,8 +80,8 @@ run "ansible_inventory_schema_version" {
   command = plan
 
   assert {
-    condition     = output.ansible_inventory.schema_version == "2.4.0"
-    error_message = "ansible_inventory must carry schema_version \"2.4.0\" for the additive agent roster contract"
+    condition     = output.ansible_inventory.schema_version == "2.5.0"
+    error_message = "ansible_inventory must carry schema_version \"2.5.0\" for the additive workstation identity contract"
   }
 }
 
