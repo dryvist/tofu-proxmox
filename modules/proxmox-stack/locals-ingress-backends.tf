@@ -126,12 +126,13 @@ locals {
           tls_domains  = distinct(concat([try(var.proxmox_ingress.fqdn, "")], try(var.proxmox_ingress.aliases, [])))
       } : key => value if var.proxmox_ingress != null })
     ] : [],
-    # Proxmox Backup Server VM appliance (clean https://pbs.<domain> on port 443)
-    contains(keys(var.vms), "pbs") ? [
+    # Proxmox Backup Server appliance: prefer its container during migration,
+    # then retain the VM backend until the VM leaves desired state.
+    (contains(keys(var.containers), "pbs") || contains(keys(var.vms), "pbs")) ? [
       {
         name         = "pbs"
         owner        = "pbs"
-        ip           = local.vm_address["pbs"]
+        ip           = contains(keys(var.containers), "pbs") ? local.container_address["pbs"] : local.vm_address["pbs"]
         port         = local.pipeline_constants.service_ports.pbs_web
         scheme       = "https"
         insecure_tls = true
