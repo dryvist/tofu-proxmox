@@ -12,6 +12,12 @@ locals {
     )) > 0
   }
 
+  # GPU small-router profile guests receive the separate 10440 inbound rule.
+  llm_gpu_router_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(try(v.tags, []), local.firewall_container_tags.llm_gpu_router)
+  }
+
   # llm-classify LXCs (llm-gpu-classify tag): the Laya System One classifier.
   # Inbound llm_classify_api from internal.
   llm_classify_container_ids = {

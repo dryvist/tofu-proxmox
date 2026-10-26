@@ -138,11 +138,12 @@ module "firewall" {
   # ClickHouse OLAP store LXC: tagged "clickhouse"
   clickhouse_container_ids = local.clickhouse_container_ids
 
-  # LLM fabric LXCs: router, fast-server, and classifier roles.
-  llm_router_container_ids   = local.llm_router_container_ids
-  llm_fast_container_ids     = local.llm_fast_container_ids
-  llm_classify_container_ids = local.llm_classify_container_ids
-  llm_router_trusted_src     = local.llm_router_trusted_src
+  # LLM fabric LXCs: router, fast-server, small-router, and classifier roles.
+  llm_router_container_ids           = local.llm_router_container_ids
+  llm_fast_container_ids             = local.llm_fast_container_ids
+  llm_gpu_small_router_container_ids = local.llm_gpu_router_ids
+  llm_classify_container_ids         = local.llm_classify_container_ids
+  llm_router_trusted_src             = local.llm_router_trusted_src
 
   # NVIDIA DCGM metrics: exactly the containers selected by the
   # gpu-passthrough guard, excluding CPU-pool guests.
