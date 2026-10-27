@@ -76,9 +76,9 @@ variables {
   node_storage            = {}
 }
 
-# --- Positive control: quotas that fit a six-wide raidz2 are accepted ---
+# --- Positive control: quotas within a raidz pool's capacity are accepted ---
 #
-# 4 data devices x 5.46T x 31/32 = 21.15 TiB usable; 17 TiB declared.
+# Test pool capacity: 4 data devices x 5.46T x 31/32 = 21.15 TiB usable; 17 TiB declared.
 
 run "six_wide_pool_accepted" {
   command = plan
@@ -102,7 +102,7 @@ run "six_wide_pool_accepted" {
 
   assert {
     condition     = length(local.overcommitted_storage_pools) == 0
-    error_message = "A six-wide raidz2 of 5.46T devices holds 21.15 TiB usable; 17 TiB of quota must be accepted."
+    error_message = "A raidz pool with 21.15 TiB usable must accept 17 TiB of quota."
   }
 }
 

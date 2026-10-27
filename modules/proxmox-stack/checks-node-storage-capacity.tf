@@ -88,8 +88,8 @@ locals {
         # Only quotas with no quota'd ANCESTOR in the same pool. A child
         # dataset's usage already counts against every quota above it, so
         # summing both double-counts the child and would reject a declaration
-        # the pool can actually hold. `bulk/data` at 15T with `bulk/data/seed`
-        # capped at 1T underneath consumes 15T, not 16T.
+        # the pool can actually hold. `bulk-nobackup/data` at 15T with
+        # `bulk-nobackup/data/seed` capped at 1T underneath consumes 15T, not 16T.
         #
         # An unquota'd dataset between two quota'd ones changes nothing: the
         # test is whether ANY ancestor caps this path, not the nearest one.
