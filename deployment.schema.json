@@ -448,7 +448,7 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true,
-          "description": "Guest tags. GPU containers carry gpu-passthrough; the pinned small-model role also carries llm-gpu-small. Node capability is declared separately with the nvidia-gpu node tag."
+          "description": "Guest tags. GPU containers carry gpu-passthrough; llm-gpu-small selects the pinned small-model role, while llm-gpu-small-router selects the extra GPU-serving endpoint and also requires gpu-passthrough. The router tag does not select llm-gpu-small. Node capability is declared separately with the nvidia-gpu node tag."
         },
         "vlan": {
           "type": "string",

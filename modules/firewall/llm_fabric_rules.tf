@@ -1,5 +1,6 @@
-# Local LLM fabric firewall resources. The GPU fast/small-model server (llm-fast)
-# and the LiteLLM router (llm-router) live on the ai VLAN behind DROP in/out
+# Local LLM fabric firewall resources. The GPU fast/small-model server (llm-fast),
+# the GPU small-router profile, and the LiteLLM router (llm-router) live on
+# the ai VLAN behind DROP in/out
 # policies, so each gets `dhcp = true` (same reason as ai_orchestration_rules.tf).
 #
 # Rule data lives here (not in locals.tf) so that file stays under the shared
@@ -120,10 +121,10 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_router_container" {
   depends_on = [proxmox_virtual_environment_firewall_options.llm_router_container]
 }
 
-# llm-fast containers (GPU llama-swap server)
+# LLM serving containers (llm-fast and GPU small-router profiles)
 
 resource "proxmox_virtual_environment_firewall_options" "llm_fast_container" {
-  for_each = var.llm_fast_container_ids
+  for_each = local.llm_gpu_serving_container_ids
 
   node_name     = var.node_name
   container_id  = each.value
@@ -139,7 +140,7 @@ resource "proxmox_virtual_environment_firewall_options" "llm_fast_container" {
 }
 
 resource "proxmox_virtual_environment_firewall_rules" "llm_fast_container" {
-  for_each = var.llm_fast_container_ids
+  for_each = local.llm_gpu_serving_container_ids
 
   node_name    = var.node_name
   container_id = each.value
@@ -149,9 +150,20 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_fast_container" {
     comment        = "Internal access (SSH, ICMP)"
   }
 
-  rule {
-    security_group = proxmox_virtual_environment_cluster_firewall_security_group.llm_fast_services.name
-    comment        = "LLM fast / llama-swap server API from internal"
+  dynamic "rule" {
+    for_each = contains(keys(var.llm_fast_container_ids), each.key) ? [1] : []
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.llm_fast_services.name
+      comment        = "LLM fast / llama-swap server API from internal"
+    }
+  }
+
+  dynamic "rule" {
+    for_each = contains(keys(var.llm_gpu_small_router_container_ids), each.key) ? [1] : []
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.llm_gpu_small_router_services.name
+      comment        = "LLM GPU small-router serving API from internal"
+    }
   }
 
   rule {
@@ -173,24 +185,30 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_fast_container" {
   }
 
   # --- zero-trust (staged disabled): intra-fabric only, not a fan-in like the router.
-  rule {
-    enabled = local.zt_enabled
-    type    = "in"
-    action  = "ACCEPT"
-    proto   = "tcp"
-    dport   = tostring(local.svc_ports.llm_fast_api)
-    source  = local.zt_src["ai"]
-    comment = "ZT: llm-fast intra-ai"
+  dynamic "rule" {
+    for_each = contains(keys(var.llm_fast_container_ids), each.key) ? [1] : []
+    content {
+      enabled = local.zt_enabled
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = "tcp"
+      dport   = tostring(local.svc_ports.llm_fast_api)
+      source  = local.zt_src["ai"]
+      comment = "ZT: llm-fast intra-ai"
+    }
   }
 
-  rule {
-    enabled = local.zt_enabled
-    type    = "in"
-    action  = "ACCEPT"
-    proto   = "tcp"
-    dport   = tostring(local.svc_ports.llm_fast_trial_api)
-    source  = local.zt_src["ai"]
-    comment = "ZT: llm-fast trial intra-ai"
+  dynamic "rule" {
+    for_each = contains(keys(var.llm_fast_container_ids), each.key) ? [1] : []
+    content {
+      enabled = local.zt_enabled
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = "tcp"
+      dport   = tostring(local.svc_ports.llm_fast_trial_api)
+      source  = local.zt_src["ai"]
+      comment = "ZT: llm-fast trial intra-ai"
+    }
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.llm_fast_container]
