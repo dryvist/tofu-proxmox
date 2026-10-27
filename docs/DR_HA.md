@@ -181,7 +181,7 @@ the irreplaceable per-app state instead:
   bulk-storage node. Shrinking it means raising how often the DR leg *pulls*
   (the syncoid schedule on the DR node); adding sanoid frequency on the
   source does nothing for it.
-- The `bulk/data` library itself is deliberately **unsnapshotted and
+- The `bulk-nobackup/data` library itself is deliberately **unsnapshotted and
   unreplicated** (`com.sun:auto-snapshot=false`): torrent churn makes snapshots
   expensive and the payload is re-acquirable, so a loss is a re-download, not a
   disaster.
