@@ -43,7 +43,8 @@ locals {
   node_usable_datastores = {
     for node, cfg in var.node_storage : node => concat(
       local.builtin_node_datastores,
-      [for pool_name, pool in cfg.pools : pool_name if pool.register]
+      [for pool_name, pool in cfg.pools : pool_name if pool.register],
+      flatten([for pool in values(cfg.pools) : [for ds in values(pool.datasets) : ds.pvesm_id if ds.pvesm_id != null]])
     )
   }
 
