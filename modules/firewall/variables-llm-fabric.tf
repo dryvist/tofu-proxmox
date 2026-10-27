@@ -15,6 +15,12 @@ variable "llm_fast_container_ids" {
   default     = {}
 }
 
+variable "llm_gpu_small_router_container_ids" {
+  description = "Map of GPU small-router LXC names to IDs (tag-driven: llm-gpu-small-router). GPU serving API — inbound llm_gpu_serving_api from internal."
+  type        = map(number)
+  default     = {}
+}
+
 variable "llm_classify_container_ids" {
   description = "Map of LLM classifier LXC names to IDs (tag-driven: llm-gpu-classify). Laya System One classifier — inbound llm_classify_api from internal."
   type        = map(number)

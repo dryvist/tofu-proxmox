@@ -1117,6 +1117,74 @@ run "gpu_serving_and_classify_roles_on_one_node_pass" {
 
 }
 
+run "gpu_small_router_embed_guest_passes_without_small_role_count" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      embed = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-ada-lovelace-6X-16GB-embed"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough", "llm-gpu-small-router"]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  assert {
+    condition = (
+      keys(local.llm_gpu_router_role_containers) == ["embed"] &&
+      length(local.llm_gpu_small_role_containers) == 0
+    )
+    error_message = "The embed guest must select the small-router firewall role without becoming an llm-gpu-small role."
+  }
+}
+
+run "gpu_small_router_role_requires_gpu_passthrough" {
+  command = plan
+
+  variables {
+    nodes = {
+      gpu1 = { role = "gpu1", tags = ["nvidia-gpu"] }
+    }
+    containers = {
+      serving = {
+        vm_id     = 503020
+        node_name = "gpu1"
+        hostname  = "llm-blackwell-7-96GB-medium"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["gpu-passthrough"]
+      }
+      embed = {
+        vm_id         = 503030
+        node_name     = "gpu1"
+        hostname      = "llm-ada-lovelace-6X-16GB-embed"
+        vlan          = "ai"
+        dhcp          = true
+        started       = false
+        start_on_boot = false
+        tags          = ["llm-gpu-small-router"]
+      }
+    }
+  }
+
+  plan_options {
+    target = [terraform_data.gpu_passthrough_guard]
+  }
+
+  expect_failures = [terraform_data.gpu_passthrough_guard]
+}
+
 run "gpu_serving_small_and_classify_roles_on_one_node_pass" {
   command = plan
 
