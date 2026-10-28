@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.50.0](https://github.com/dryvist/tofu-proxmox/compare/v3.49.0...v3.50.0) (2026-10-25)
+
+
+### Features
+
+* **firewall:** admit the Hermes A2A listener port from internal networks ([#1376](https://github.com/dryvist/tofu-proxmox/issues/1376)) ([6e96db8](https://github.com/dryvist/tofu-proxmox/commit/6e96db883fbd07a66795492d36686c1f86bd77fe))
+
 ## [3.49.0](https://github.com/dryvist/tofu-proxmox/compare/v3.48.0...v3.49.0) (2026-10-25)
 
 

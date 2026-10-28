@@ -24,9 +24,9 @@ variables {
       mcp_gateway_web           = 4444, ntp = 123, idrac_kvm_r410 = 5410, idrac_kvm_r710 = 5710
       smokeping_web             = 80, speedtest_exporter = 9798, smokeping_prober = 9374
       blackbox_exporter         = 9115, atlas_exporter = 9400, dcgm_exporter = 9400, irtt = 2112, node_exporter = 9100
-      llm_fast_api              = 10434, llm_fast_trial_api = 10436, llm_classify_api = 8000, llm_router_api = 4000, agentgateway_proxy = 8080
+      llm_fast_api              = 10434, llm_gpu_serving_api = 10440, llm_fast_trial_api = 10436, llm_classify_api = 8000, llm_router_api = 4000, agentgateway_proxy = 8080
       agentgateway_admin        = 15000, agentgateway_metrics = 15020, hermes_webhook = 8644
-      hermes_api                = 8642, hermes_dashboard = 8080, hermes_ui_workspace = 3000
+      hermes_api                = 8642, hermes_a2a = 9901, hermes_dashboard = 8080, hermes_ui_workspace = 3000
       hermes_ui_mission_control = 3001, herdr_relay_ws = 8375, hermes_webui = 8787
       hermes_studio             = 8648, n8n_web = 5678, hatchet_web = 8090, hatchet_grpc = 7072
       dify_web                  = 80, langflow_web = 7860

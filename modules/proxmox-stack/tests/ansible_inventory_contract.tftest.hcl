@@ -1500,7 +1500,6 @@ run "vm_iso_appliance_plans" {
     vms = {
       pbs = {
         vm_id            = 240
-        node_name        = "proxmox-1"
         name             = "pbs"
         vlan             = "compute"
         node_name        = "proxmox-2"
@@ -1516,6 +1515,55 @@ run "vm_iso_appliance_plans" {
   assert {
     condition     = output.ansible_inventory.vms["pbs"].node == "proxmox-2"
     error_message = "ISO-appliance VM (cdrom_file_id, extra disk, no clone_template) must plan and land on its node"
+  }
+
+  assert {
+    condition = (
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).ip == local.vm_address["pbs"] &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).group == "mgmt" &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).port == local.pipeline_constants.service_ports.pbs_web &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).scheme == "https" &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).insecure_tls &&
+      !one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).sso
+    )
+    error_message = "The VM fallback must keep the PBS ingress address, group, HTTPS port, TLS handling, and SSO setting."
+  }
+}
+
+run "pbs_ingress_prefers_container_during_migration" {
+  command = plan
+
+  variables {
+    containers = {
+      pbs = {
+        vm_id     = 301
+        hostname  = "pbs"
+        node_name = "proxmox-1"
+        vlan      = "mgmt"
+        dhcp      = true
+      }
+    }
+    vms = {
+      pbs = {
+        vm_id     = 240
+        name      = "pbs"
+        node_name = "proxmox-2"
+        vlan      = "compute"
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      length([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]) == 1 &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).ip == local.container_address["pbs"] &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).group == "mgmt" &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).port == local.pipeline_constants.service_ports.pbs_web &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).scheme == "https" &&
+      one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).insecure_tls &&
+      !one([for route in output.ansible_inventory.ingress : route if route.name == "pbs"]).sso
+    )
+    error_message = "A configured PBS container must take precedence over the VM while preserving the route contract."
   }
 }
 

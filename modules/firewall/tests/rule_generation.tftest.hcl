@@ -74,6 +74,7 @@ variables {
       node_exporter      = 9100
       # LLM fabric + agentgateway (referenced by llm_fabric/agentgateway rules)
       llm_fast_api         = 10434
+      llm_gpu_serving_api  = 10440
       llm_fast_trial_api   = 10436
       llm_classify_api     = 8000
       llm_router_api       = 4000
@@ -83,6 +84,7 @@ variables {
       # Hermes inbound webhook receiver + job API (referenced by hermes_webhook_services_rules)
       hermes_webhook   = 8644
       hermes_api       = 8642
+      hermes_a2a       = 9901
       hermes_dashboard = 8080
       # hermes-ui companion web apps (referenced by hermes_ui_services_rules)
       hermes_ui_workspace       = 3000
@@ -936,6 +938,57 @@ run "llm_classify_rule_tracks_constant_and_internal_scope" {
       proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
     ]
     error_message = "the classifier guest must receive only the shared baseline groups and its classifier service rule"
+  }
+}
+
+run "llm_gpu_small_router_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  variables {
+    internal_networks                  = ["198.51.100.0/24", "203.0.113.0/24"]
+    llm_fast_container_ids             = { "embed" = 602 }
+    llm_gpu_small_router_container_ids = { "embed" = 602 }
+  }
+
+  assert {
+    condition = (
+      length(local.llm_gpu_small_router_services_rules) == 1 &&
+      local.llm_gpu_small_router_services_rules[0].proto == "tcp" &&
+      local.llm_gpu_small_router_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.llm_gpu_serving_api) &&
+      local.llm_gpu_small_router_services_rules[0].source == local.internal_src
+    )
+    error_message = "The GPU small-router service must allow only TCP llm_gpu_serving_api from the llm-fast internal source scope."
+  }
+
+  assert {
+    condition = (
+      contains(
+        [for rule in proxmox_virtual_environment_firewall_rules.llm_fast_container["embed"].rule : rule.security_group],
+        proxmox_virtual_environment_cluster_firewall_security_group.llm_fast_services.name
+      ) &&
+      contains(
+        [for rule in proxmox_virtual_environment_firewall_rules.llm_fast_container["embed"].rule : rule.security_group],
+        proxmox_virtual_environment_cluster_firewall_security_group.llm_gpu_small_router_services.name
+      )
+    )
+    error_message = "A guest carrying both selectors must keep its llm-fast group and receive the separate GPU small-router group."
+  }
+}
+
+run "untagged_fast_guest_gets_no_gpu_small_router_rule" {
+  command = plan
+
+  variables {
+    llm_fast_container_ids             = { "untagged" = 600 }
+    llm_gpu_small_router_container_ids = {}
+  }
+
+  assert {
+    condition = !contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.llm_fast_container["untagged"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.llm_gpu_small_router_services.name
+    )
+    error_message = "A guest without llm-gpu-small-router must not receive its 10440 service group."
   }
 }
 

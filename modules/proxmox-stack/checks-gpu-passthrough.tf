@@ -1,7 +1,8 @@
 # Each commissioned GPU node has one legacy serving container and may also
 # carry the declared engine candidates, one small-model container, and one
 # classifier container. All carry gpu-passthrough; no other guest gets any GPU
-# device or a bind of /dev. Enforced at plan time, natively.
+# device or a bind of /dev. llm-gpu-small-router is an extra service selector,
+# not another guest in the per-node role count. Enforced at plan time, natively.
 locals {
   gpu_passthrough_tag   = "gpu-passthrough"
   gpu_small_role_tag    = "llm-gpu-small"
@@ -24,6 +25,11 @@ locals {
   llm_gpu_classify_role_containers = {
     for name, container in var.containers : name => container
     if contains(coalesce(try(container.tags, null), []), local.gpu_classify_role_tag)
+  }
+
+  llm_gpu_router_role_containers = {
+    for name, container in var.containers : name => container
+    if contains(coalesce(try(container.tags, null), []), local.firewall_container_tags.llm_gpu_router)
   }
 
   # llm-* serving containers; routers and caches share the prefix but do not serve.
@@ -114,6 +120,13 @@ resource "terraform_data" "gpu_passthrough_guard" {
         for container in values(local.llm_gpu_small_role_containers) : contains(coalesce(try(container.tags, null), []), local.gpu_passthrough_tag)
       ])
       error_message = "The llm-gpu-small role requires gpu-passthrough."
+    }
+
+    precondition {
+      condition = alltrue([
+        for container in values(local.llm_gpu_router_role_containers) : contains(coalesce(try(container.tags, null), []), local.gpu_passthrough_tag)
+      ])
+      error_message = "The llm-gpu-small-router role requires gpu-passthrough."
     }
 
     precondition {

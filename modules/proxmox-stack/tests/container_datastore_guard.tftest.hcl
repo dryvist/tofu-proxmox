@@ -73,7 +73,10 @@ variables {
     }
     node-without-fast = {
       pools = {
-        bulk = { register = true }
+        bulk = {
+          register = true
+          datasets = { example = { pvesm_id = "bulk-example" } }
+        }
         # Declared so its properties are managed, but never exposed to PVE as a
         # datastore — so it must NOT count as a usable target.
         rpool = { register = false }
@@ -103,6 +106,28 @@ run "mount_on_a_pool_registered_on_that_node_is_accepted" {
   assert {
     condition     = length(local.invalid_container_datastore_refs) == 0
     error_message = "a mount on a pool registered on its own node must pass, got: ${join("; ", local.invalid_container_datastore_messages)}"
+  }
+}
+
+run "mount_on_a_dataset_storage_id_on_that_node_is_accepted" {
+  command = plan
+
+  variables {
+    containers = {
+      store = {
+        node_name    = "node-without-fast"
+        vm_id        = 519100
+        hostname     = "store"
+        vlan         = "data"
+        dhcp         = true
+        mount_points = [{ volume = "bulk-example", size = "100G", path = "/srv/data" }]
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.invalid_container_datastore_refs) == 0
+    error_message = "a mount on a dataset storage id registered on its own node must pass, got: ${join("; ", local.invalid_container_datastore_messages)}"
   }
 }
 
@@ -201,6 +226,27 @@ run "mount_on_a_pool_registered_on_another_node_is_rejected" {
         vlan         = "data"
         dhcp         = true
         mount_points = [{ volume = "fast", size = "40G", path = "/var/lib/postgresql" }]
+      }
+    }
+  }
+
+  expect_failures = [
+    terraform_data.container_datastore_guard,
+  ]
+}
+
+run "mount_on_a_dataset_storage_id_on_another_node_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      store = {
+        node_name    = "node-with-fast"
+        vm_id        = 519100
+        hostname     = "store"
+        vlan         = "data"
+        dhcp         = true
+        mount_points = [{ volume = "bulk-example", size = "100G", path = "/srv/data" }]
       }
     }
   }
