@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.51.0](https://github.com/dryvist/tofu-proxmox/compare/v3.50.0...v3.51.0) (2026-10-29)
+
+
+### Features
+
+* **firecrawl:** declare the page-extraction server container in the example deployment ([#1385](https://github.com/dryvist/tofu-proxmox/issues/1385)) ([104c216](https://github.com/dryvist/tofu-proxmox/commit/104c2165e637ef22baf7cc13090d8ff3b8441286))
+* **ingress:** route pbs to its container when one is declared ([#1378](https://github.com/dryvist/tofu-proxmox/issues/1378)) ([6be3294](https://github.com/dryvist/tofu-proxmox/commit/6be3294857c3b96d6f12de9afeb18f69b213c450))
+* **llm-fabric:** add the GPU serving port and llm-gpu-small-router tag ([#1380](https://github.com/dryvist/tofu-proxmox/issues/1380)) ([ab6e93a](https://github.com/dryvist/tofu-proxmox/commit/ab6e93ad156a1d4e59cdbbe1fbc1d70256333477))
+
+
+### Bug Fixes
+
+* **storage:** count dataset storage IDs as usable datastores ([#1382](https://github.com/dryvist/tofu-proxmox/issues/1382)) ([51266db](https://github.com/dryvist/tofu-proxmox/commit/51266db74e7d46e98123354ae83e3bdddac8031f))
+
 ## [3.50.0](https://github.com/dryvist/tofu-proxmox/compare/v3.49.0...v3.50.0) (2026-10-25)
 
 
