@@ -1633,6 +1633,38 @@
         "nesting": true
       }
     },
+    "firecrawl": {
+      "vm_id": 505060,
+      "node_name": "proxmox-3",
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "firecrawl",
+      "description": "Firecrawl page-extraction service, the web_extract backend for the Hermes agents (Docker-in-LXC)",
+      "cpu_cores": 4,
+      "memory_dedicated": 8192,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "firecrawl",
+        "docker"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 24
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "30G",
+          "path": "/opt/firecrawl"
+        }
+      ],
+      "features": {
+        "nesting": true
+      }
+    },
     "agent-exec": {
       "vm_id": 515000,
       "node_name": "proxmox-1",
