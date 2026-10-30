@@ -2,6 +2,10 @@
 # Referenced by ansible_inventory output for downstream consumption
 locals {
   pipeline_constants = {
+    # Shared desired state for the service and its alert consumers.
+    service_state = {
+      hindsight_enabled = false
+    }
     # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
     # cribl_metrics_ports: see constants-cribl-metrics.tf (same gate).
     # web_ui_ports: see constants-web-ui.tf (same gate).
