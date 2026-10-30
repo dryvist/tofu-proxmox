@@ -80,8 +80,13 @@ run "ansible_inventory_schema_version" {
   command = plan
 
   assert {
-    condition     = output.ansible_inventory.schema_version == "2.5.0"
-    error_message = "ansible_inventory must carry schema_version \"2.5.0\" for the additive workstation identity contract"
+    condition     = output.ansible_inventory.schema_version == "2.6.0"
+    error_message = "ansible_inventory must carry schema_version \"2.6.0\" for the additive service state contract"
+  }
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_state.hindsight_enabled == false
+    error_message = "Hindsight desired state must be published as a boolean false"
   }
 }
 
