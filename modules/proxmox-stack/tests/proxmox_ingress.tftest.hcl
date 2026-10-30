@@ -73,6 +73,15 @@ variables {
   proxmox_user            = "root"
   proxmox_ssh_private_key = "-----BEGIN OPENSSH PRIVATE KEY-----\ntest\n-----END OPENSSH PRIVATE KEY-----"
   domain                  = "example.com"
+  containers = {
+    authelia = {
+      vm_id     = 998
+      node_name = "test"
+      vlan      = keys(var.vlan_ids)[0]
+      dhcp      = true
+      tags      = ["authelia"]
+    }
+  }
 }
 
 run "cluster_identity_and_profile_share_canonical_hostname" {
@@ -143,4 +152,109 @@ run "homebox_ingress_uses_service_port_and_default_sso" {
     condition     = local.homebox_container_ids == { homebox = 999 }
     error_message = "Homebox firewall selection must follow the homebox tag"
   }
+}
+
+run "external_ingress_is_optional_and_sso_gated" {
+  command = plan
+  variables {
+    external_ingress = {
+      example-service = { address = "host.example.com", port = 8787 }
+    }
+  }
+  assert {
+    condition     = length([for route in output.ansible_inventory.ingress : route if route.name == "authelia"]) == 1
+    error_message = "SSO-gated external routes require an assembled Authelia route."
+  }
+  assert {
+    condition     = one([for route in output.ansible_inventory.ingress : route if route.name == "example-service"]).ip == "host.example.com" && one([for route in output.ansible_inventory.ingress : route if route.name == "example-service"]).port == 8787 && one([for route in output.ansible_inventory.ingress : route if route.name == "example-service"]).sso && one([for route in output.ansible_inventory.ingress : route if route.name == "example-service"]).scheme == "http"
+    error_message = "An external service must publish the declared HTTP backend behind SSO."
+  }
+  assert {
+    condition     = jsonencode([for route in output.ansible_inventory.ingress : { for key, value in route : key => value if key != "section" } if route.name != "example-service"]) == jsonencode(local.ingress_base)
+    error_message = "An external route must not change existing routes."
+  }
+}
+
+run "external_ingress_requires_authelia" {
+  command = plan
+  variables {
+    containers = {}
+    external_ingress = {
+      example-service = { address = "host.example.com", port = 8787 }
+    }
+  }
+  expect_failures = [var.external_ingress]
+}
+
+run "external_ingress_cannot_replace_existing_route" {
+  command = plan
+  variables {
+    external_ingress = {
+      splunk = { address = "host.example.com", port = 8787 }
+    }
+  }
+  expect_failures = [var.external_ingress]
+}
+
+run "external_ingress_cannot_claim_inactive_service_name" {
+  command = plan
+  variables {
+    external_ingress = {
+      herdr = { address = "host.example.com", port = 8787 }
+    }
+  }
+  expect_failures = [var.external_ingress]
+}
+
+run "external_ingress_cannot_claim_inactive_generated_homarr_route" {
+  command = plan
+  variables {
+    external_ingress = {
+      homarr-v2 = { address = "host.example.com", port = 8787 }
+    }
+  }
+  expect_failures = [var.external_ingress]
+}
+
+run "external_ingress_cannot_claim_explicit_fqdn_label" {
+  command = plan
+  variables {
+    nodes = { test = { role = "test" } }
+    proxmox_ingress = {
+      fqdn             = "example-service.other.example.com"
+      credential_mount = "secret"
+      credential_path  = "apps/cluster-client"
+    }
+    external_ingress = {
+      example-service = { address = "host.example.com", port = 8787 }
+    }
+  }
+  expect_failures = [var.external_ingress]
+}
+
+run "external_ingress_cannot_claim_alias_label" {
+  command = plan
+  variables {
+    nodes = { test = { role = "test" } }
+    proxmox_ingress = {
+      fqdn             = "cluster.other.example.com"
+      aliases          = ["example-service.other.example.com"]
+      credential_mount = "secret"
+      credential_path  = "apps/cluster-client"
+    }
+    external_ingress = {
+      example-service = { address = "host.example.com", port = 8787 }
+    }
+  }
+  expect_failures = [var.external_ingress]
+}
+
+run "external_ingress_rejects_invalid_port" {
+  command = plan
+  variables {
+    external_ingress = {
+      example-service = { address = "host.example.com", port = 65536 }
+    }
+  }
+  expect_failures = [var.external_ingress]
 }

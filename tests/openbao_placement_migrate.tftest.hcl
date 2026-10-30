@@ -27,7 +27,7 @@ run "generated_peer_migration_preserves_explicit_values_and_target" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "placement.example",
-          "network_cidrs": {"lan_main": "192.0.2.0/24", "mgmt": "198.51.100.0/24"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24", "mgmt": "198.51.100.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture",
           "openbao_cluster": {
             "enabled": true,

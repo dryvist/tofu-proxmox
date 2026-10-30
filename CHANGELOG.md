@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.52.0](https://github.com/dryvist/tofu-proxmox/compare/v3.51.1...v3.52.0) (2026-10-30)
+
+
+### Features
+
+* **ingress:** support authenticated external backends ([#1391](https://github.com/dryvist/tofu-proxmox/issues/1391)) ([d1119d1](https://github.com/dryvist/tofu-proxmox/commit/d1119d1f8ff66dadeac4cd5c84fa1f03f6d9e29d))
+
 ## [3.51.1](https://github.com/dryvist/tofu-proxmox/compare/v3.51.0...v3.51.1) (2026-10-30)
 
 

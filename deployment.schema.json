@@ -15,6 +15,20 @@
   ],
   "additionalProperties": true,
   "properties": {
+    "external_ingress": {
+      "type": "object",
+      "description": "Optional SSO-gated HTTP routes to external hosts, keyed by ingress hostname label.",
+      "propertyNames": { "maxLength": 63, "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["address", "port"],
+        "additionalProperties": false,
+        "properties": {
+          "address": { "type": "string", "maxLength": 253, "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$" },
+          "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+        }
+      }
+    },
     "proxmox_ingress": {
       "type": "object",
       "required": ["fqdn", "credential_mount", "credential_path"],

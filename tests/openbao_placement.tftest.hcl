@@ -26,7 +26,7 @@ run "integer_peers_keep_ordinal_identity" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "placement.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24", "mgmt": "10.0.10.0/24"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24", "mgmt": "198.51.100.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture",
           "openbao_cluster": {
             "enabled": true,
@@ -44,12 +44,12 @@ run "integer_peers_keep_ordinal_identity" {
   }
 
   assert {
-    condition     = local.openbao_generated_containers["openbao-10"].vm_id == 110010 && local.openbao_generated_containers["openbao-10"].hostname == "openbao-10" && local.openbao_generated_containers["openbao-10"].ip_config.ipv4_address == "10.0.10.10/24"
+    condition     = local.openbao_generated_containers["openbao-10"].vm_id == 110010 && local.openbao_generated_containers["openbao-10"].hostname == "openbao-10" && local.openbao_generated_containers["openbao-10"].ip_config.ipv4_address == "198.51.100.10/24"
     error_message = "Integer suffix 10 must keep the ordinal key openbao-10, vm_id 110010 and host octet .10."
   }
 
   assert {
-    condition     = local.openbao_generated_containers["openbao-20"].vm_id == 110020 && local.openbao_generated_containers["openbao-20"].hostname == "openbao-20" && local.openbao_generated_containers["openbao-20"].ip_config.ipv4_address == "10.0.10.20/24"
+    condition     = local.openbao_generated_containers["openbao-20"].vm_id == 110020 && local.openbao_generated_containers["openbao-20"].hostname == "openbao-20" && local.openbao_generated_containers["openbao-20"].ip_config.ipv4_address == "198.51.100.20/24"
     error_message = "Integer suffix 20 must keep the ordinal key openbao-20, vm_id 110020 and host octet .20."
   }
 
@@ -80,7 +80,7 @@ run "object_peer_takes_app_vm_id_name" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "placement.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24", "mgmt": "10.0.10.0/24"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24", "mgmt": "198.51.100.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture",
           "openbao_cluster": {
             "enabled": true,
@@ -103,7 +103,7 @@ run "object_peer_takes_app_vm_id_name" {
   }
 
   assert {
-    condition     = local.openbao_generated_containers["openbao-110050"].vm_id == 110050 && local.openbao_generated_containers["openbao-110050"].hostname == "openbao-110050" && local.openbao_generated_containers["openbao-110050"].ip_config.ipv4_address == "10.0.10.50/24"
+    condition     = local.openbao_generated_containers["openbao-110050"].vm_id == 110050 && local.openbao_generated_containers["openbao-110050"].hostname == "openbao-110050" && local.openbao_generated_containers["openbao-110050"].ip_config.ipv4_address == "198.51.100.50/24"
     error_message = "Object peer {vm_id = 110050} must have vm_id 110050, hostname openbao-110050, and host octet .50 (vm_id minus vm_id_base)."
   }
 }
@@ -129,7 +129,7 @@ run "object_peer_explicit_hostname_wins" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "placement.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24", "mgmt": "10.0.10.0/24"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24", "mgmt": "198.51.100.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture",
           "openbao_cluster": {
             "enabled": true,
@@ -152,7 +152,7 @@ run "object_peer_explicit_hostname_wins" {
   }
 
   assert {
-    condition     = local.openbao_generated_containers["openbao-60"].hostname == "openbao-60" && local.openbao_generated_containers["openbao-60"].vm_id == 110060 && local.openbao_generated_containers["openbao-60"].ip_config.ipv4_address == "10.0.10.60/24"
+    condition     = local.openbao_generated_containers["openbao-60"].hostname == "openbao-60" && local.openbao_generated_containers["openbao-60"].vm_id == 110060 && local.openbao_generated_containers["openbao-60"].ip_config.ipv4_address == "198.51.100.60/24"
     error_message = "Explicit hostname must be the container hostname; vm_id stays 110060 and the host octet stays .60."
   }
 }
@@ -179,7 +179,7 @@ run "object_peer_at_vm_id_base_fails" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "placement.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24", "mgmt": "10.0.10.0/24"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24", "mgmt": "198.51.100.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture",
           "openbao_cluster": {
             "enabled": true,
@@ -221,7 +221,7 @@ run "object_peer_octet_below_2_fails" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "placement.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24", "mgmt": "10.0.10.0/24"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24", "mgmt": "198.51.100.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture",
           "openbao_cluster": {
             "enabled": true,
@@ -264,7 +264,7 @@ run "object_peer_octet_above_254_fails" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "placement.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24", "mgmt": "10.0.0.0/16"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24", "mgmt": "198.19.0.0/16"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture",
           "openbao_cluster": {
             "enabled": true,

@@ -28,7 +28,7 @@ run "file_absent_falls_back_to_s3" {
           "proxmox_node": "n1",
           "proxmox_user": "terraform@pve",
           "domain": "file-source.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture"
         }
       JSON
@@ -117,7 +117,7 @@ run "generated_services_join_budgeted_containers" {
           "proxmox_node": "n1",
           "proxmox_user": "root",
           "domain": "file-source.example",
-          "network_cidrs": {"lan_main": "10.0.0.0/24"},
+          "network_cidrs": {"ai": "198.18.0.0/24", "siem": "203.0.113.0/24", "lan_main": "192.0.2.0/24"},
           "vm_ssh_public_key": "ssh-ed25519 AAAAtest fixture"
         }
       JSON
