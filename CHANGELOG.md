@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.51.1](https://github.com/dryvist/tofu-proxmox/compare/v3.51.0...v3.51.1) (2026-10-30)
+
+
+### Bug Fixes
+
+* **inventory:** publish shared Hindsight desired state ([4259a8e](https://github.com/dryvist/tofu-proxmox/commit/4259a8e34b0bf7a8dd92fced29ce028880315435))
+
 ## [3.51.0](https://github.com/dryvist/tofu-proxmox/compare/v3.50.0...v3.51.0) (2026-10-29)
 
 
