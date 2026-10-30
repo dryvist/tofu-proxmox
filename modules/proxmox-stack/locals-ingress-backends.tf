@@ -28,7 +28,7 @@ locals {
   # (dhcp = true) guest's FQDN — same hostname-not-IP shape as proxmox_ui_backends.
   # The Splunk VM is appended separately: it is a VM (not in var.containers), so
   # its IP comes from splunk_derived_ip (siem VLAN) rather than container_address.
-  ingress_pre = [for route in concat(
+  ingress_base = [for route in concat(
     [
       for name, svc in local.ingress_services : merge({
         name        = name
@@ -180,6 +180,22 @@ locals {
       # route's (see locals-hermes-routes.tf).
       title = route.name
   }, route)]
+
+  ingress_pre = concat(local.ingress_base, [
+    for name, route in var.external_ingress : {
+      name     = name
+      hostname = name
+      ip       = route.address
+      port     = route.port
+      scheme   = "http"
+      sso      = true
+      ui       = true
+      owner    = null
+      group    = "other"
+      desc     = ""
+      title    = name
+    }
+  ])
 
   # Routes per guest — from the assembled list, so pools/VMs count too.
   ingress_owner_route_count = {

@@ -162,6 +162,7 @@ module "homelab" {
   datastores              = try(local.deployment.datastores, {})
   dns_plugins             = try(local.deployment.dns_plugins, {})
   domain                  = local.deployment.domain
+  external_ingress        = try(local.deployment.external_ingress, {})
   proxmox_ingress         = try(local.deployment.proxmox_ingress, null)
   environment             = try(local.deployment.environment, "homelab")
   llm_gpu_engine          = try(local.deployment.llm_gpu_engine, "llama_cpp")

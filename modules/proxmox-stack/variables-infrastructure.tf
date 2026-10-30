@@ -6,6 +6,37 @@ variable "domain" {
   default     = ""
 }
 
+variable "external_ingress" {
+  description = "Optional SSO-gated HTTP routes to non-Proxmox backends, keyed by ingress hostname. Existing explicit FQDN and alias first labels and the generated homarr route namespace are reserved."
+  type = map(object({
+    address = string
+    port    = number
+  }))
+  default = {}
+
+  validation {
+    condition     = length(var.external_ingress) == 0 ? true : contains([for route in local.ingress_base : route.name], "authelia")
+    error_message = "External ingress requires an assembled Authelia ingress route."
+  }
+
+  validation {
+    condition = alltrue([
+      for name, route in var.external_ingress :
+      length(name) <= 63 && can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", name)) &&
+      length(route.address) <= 253 && can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$", route.address)) &&
+      route.port >= 1 && route.port <= 65535 && floor(route.port) == route.port &&
+      name != "homarr" && !startswith(name, "homarr-") &&
+      !contains(keys(local.ingress_services), name) &&
+      !contains([for existing in local.ingress_base : existing.name], name) &&
+      !contains([for existing in local.ingress_base : existing.hostname], name) &&
+      !contains(flatten([for existing in local.ingress_base : [
+        for host in concat([try(existing.fqdn, "")], try(existing.host_aliases, [])) : lower(split(".", host)[0])
+      ]]), name)
+    ])
+    error_message = "External routes require unique DNS labels, a backend address, and an integer port from 1 to 65535."
+  }
+}
+
 variable "proxmox_ingress" {
   description = "Optional private cluster ingress identity and workstation credential reference. The FQDN is independent of the node DNS domain."
   type = object({
