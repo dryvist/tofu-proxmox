@@ -90,10 +90,9 @@ locals {
       }),
       {
         # Splunk HEC (8088) fronted at splunk-hec.<domain> on the standard
-        # TLS entrypoint. HEC senders (the Cribl edges) must use this name:
-        # splunk.<domain> resolves to Traefik, which serves nothing on a raw
-        # 8088, so a sender dialing <name>:8088 black-holes. Same HTTPS
-        # self-signed backend treatment as the other Splunk routes above.
+        # TLS entrypoint. HEC senders (the Cribl edges) must use this name.
+        # Same HTTPS self-signed backend treatment as the other Splunk routes
+        # above.
         name         = "splunk-hec"
         owner        = "splunk"
         ip           = split("/", local.splunk_derived_ip)[0]
