@@ -25,7 +25,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: JacobPEvans/.github-ai/.github/workflows/cc-ci-fix.yml@v1
+    uses: JacobPEvans/.github-ai/.github/workflows/cc-ci-fix.yml@v2
     secrets: inherit
     with:
       repo_context: "Terraform/OpenTofu project managing Proxmox VE infrastructure."
