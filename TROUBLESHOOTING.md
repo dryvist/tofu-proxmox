@@ -61,3 +61,30 @@ needs to import or re-apply the abandoned state.
 Terrakube executors use the homelab provider/module mirror configured by the
 platform. If initialization attempts public registry access, stop the run and
 repair the mirror configuration; do not grant temporary egress.
+
+## Moving a guest
+
+Before stopping or migrating any guest:
+
+1. Read its HA rules. Strict node-affinity rules limit its allowed nodes.
+2. Call `GET /nodes/<node>/qemu/<vmid>/migrate?target=<node>` to check
+   allowed nodes and migration blockers for a VM.
+3. Check target storage for a stale volume with the same VMID. An orphaned
+   `vm-<vmid>-cloudinit` volume aborts storage migration with "volume already
+   exists". Remove it only after confirming the VM's config is not on the
+   target node.
+4. Confirm the target node has enough memory.
+
+A live migration between AMD and Intel nodes can hang a running VM, even with
+a generic CPU model such as `x86-64-v2`. The provider live-migrates a running
+HA VM on any `node_name` change. Move the VM cold: stop it, migrate it offline,
+and start it. Then set `node_name` and `cpu_vendor` together and confirm the
+plan shows no move. The `cpu_vendor` placement guard refuses a mismatch at
+plan time. HA failover may cross vendors because it cold-restarts from a
+replica.
+
+Never let an apply move the VM that hosts its Terrakube runner. The run kills
+its own executor, the local CLI may exit 0, and the job remains orphaned. Move
+the runner VM cold by hand first, then apply. See
+[apply verification](docs/INVENTORY_PUBLISHING.md#verify-an-apply) for the
+completion checks.
