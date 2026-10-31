@@ -50,3 +50,11 @@ A publish precondition rejects a guest tagged `vdi` that has no gateway, so a
 guest whose VLAN does not resolve fails the plan rather than publishing
 destinations with nothing to point them at. `ansible-proxmox-apps` consumes both keys in its
 `vdi_local_routes` role, applied to every guest carrying the `vdi` tag.
+
+## Verify an apply
+
+Confirm the Terrakube job completed and the published inventory object's
+`LastModified` and `VersionId` are new. The local CLI exit code is not proof
+of completion. A cancelled job is not proof that nothing changed: check the
+hypervisor after one scrape interval. Before moving a guest, follow the
+[pre-move checklist](../TROUBLESHOOTING.md#moving-a-guest).
