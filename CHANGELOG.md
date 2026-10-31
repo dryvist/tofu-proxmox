@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.52.1](https://github.com/dryvist/tofu-proxmox/compare/v3.52.0...v3.52.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **inventory:** publish Hindsight as enabled ([#1395](https://github.com/dryvist/tofu-proxmox/issues/1395)) ([2868e43](https://github.com/dryvist/tofu-proxmox/commit/2868e430bf63127383ec2e611f30a94c2d949a0c))
+
 ## [3.52.0](https://github.com/dryvist/tofu-proxmox/compare/v3.51.1...v3.52.0) (2026-10-30)
 
 
