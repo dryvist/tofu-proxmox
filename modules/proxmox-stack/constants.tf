@@ -4,7 +4,7 @@ locals {
   pipeline_constants = {
     # Shared desired state for the service and its alert consumers.
     service_state = {
-      hindsight_enabled = false
+      hindsight_enabled = true
     }
     # dashboard_ports: see constants-dashboards.tf (12 KB file-size gate).
     # cribl_metrics_ports: see constants-cribl-metrics.tf (same gate).

@@ -85,8 +85,8 @@ run "ansible_inventory_schema_version" {
   }
 
   assert {
-    condition     = output.ansible_inventory.constants.service_state.hindsight_enabled == false
-    error_message = "Hindsight desired state must be published as a boolean false"
+    condition     = output.ansible_inventory.constants.service_state.hindsight_enabled == true
+    error_message = "Hindsight desired state must be published as a boolean true"
   }
 }
 
