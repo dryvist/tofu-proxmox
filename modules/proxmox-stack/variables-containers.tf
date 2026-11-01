@@ -251,4 +251,14 @@ variable "containers" {
     ])
     error_message = "containers.<name>.startup_order must be a positive whole number (lower starts first), or unset to keep the VMID-derived order."
   }
+
+  validation {
+    condition = !anytrue([
+      for c in values(var.containers) : try(contains(c.tags, "agentgateway"), false)
+      ]) || alltrue([
+      for k in ["agentgateway", "agentgateway-2"] :
+      try(contains(var.containers[k].tags, "agentgateway"), false)
+    ])
+    error_message = "Tagged ingress requires both selected keys tagged 'agentgateway'."
+  }
 }
