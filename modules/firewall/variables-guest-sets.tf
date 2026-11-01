@@ -66,12 +66,6 @@ variable "git_mirror_ingress_src" {
   default     = ""
 }
 
-variable "hatchet_health_ingress_src" {
-  description = "Comma-separated ingress proxy addresses allowed to probe the Hatchet engine health listener. Derived from the ingress inventory."
-  type        = string
-  default     = ""
-}
-
 variable "git_mirror_trusted_src" {
   description = "Comma-separated trusted source networks allowed to reach the Git mirror guest for administration. Excludes the AI network."
   type        = string
