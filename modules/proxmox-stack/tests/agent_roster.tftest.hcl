@@ -519,13 +519,65 @@ run "agent_trust_tier_must_be_valid" {
   expect_failures = [var.agents]
 }
 
-run "logical_owner_requires_explicit_trust_tier_and_native_binding_ref" {
+run "logical_owner_requires_explicit_trust_tier" {
   command = plan
 
   variables {
     agents = {
       "example-owner" = {
-        display = "Example Owner", purpose = "Exercise the logical owner guard"
+        display            = "Example Owner"
+        purpose            = "Exercise the trust-tier guard"
+        native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_requires_explicit_native_binding_ref" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display    = "Example Owner"
+        purpose    = "Exercise the binding-reference guard"
+        trust_tier = "trusted"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_trust_tier_must_not_be_blank" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the trust-tier guard"
+        trust_tier         = ""
+        native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_native_binding_ref_must_not_be_blank" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the binding-reference guard"
+        trust_tier         = "trusted"
+        native_binding_ref = "  "
       }
     }
   }
