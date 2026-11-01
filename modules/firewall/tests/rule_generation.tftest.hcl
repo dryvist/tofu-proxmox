@@ -99,6 +99,7 @@ variables {
       n8n_web                   = 5678
       hatchet_web               = 8090
       hatchet_grpc              = 7072
+      hatchet_health            = 8733
       dify_web                  = 80
       langflow_web              = 7860
       langfuse_web              = 3000
@@ -217,6 +218,32 @@ run "single_network_no_comma_in_src" {
   assert {
     condition     = local.internal_src == "192.168.0.0/16"
     error_message = "Single network should be the source as-is, got '${local.internal_src}'"
+  }
+}
+
+run "hatchet_health_inbound_rule_tracks_port_and_internal_source" {
+  command = plan
+
+  assert {
+    condition = (
+      length([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
+      ]) == 1 &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
+      ]).proto == "tcp" &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
+      ]).source == local.internal_src &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
+      ]).dport == "8733"
+    )
+    error_message = "The ai-orch-svc group must allow Hatchet health on hatchet_health from the same internal source as its web and gRPC ports."
   }
 }
 

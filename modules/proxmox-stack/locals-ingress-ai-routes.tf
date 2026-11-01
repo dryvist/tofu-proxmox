@@ -1,9 +1,8 @@
 # AI orchestration stack route rows, merged into ingress_services in ingress.tf.
 locals {
-  ai_stack_routes = {
+  ai_stack_routes = merge({
     # AI orchestration stack UIs (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
     n8n      = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
-    hatchet  = { backend = "hatchet", port = local.pipeline_constants.service_ports.hatchet_web }
     dify     = { backend = "dify", port = local.pipeline_constants.service_ports.dify_web }
     langflow = { backend = "langflow", port = local.pipeline_constants.service_ports.langflow_web }
     langfuse = { backend = "langfuse", port = local.pipeline_constants.service_ports.langfuse_web }
@@ -17,5 +16,8 @@ locals {
     # only caller is Open WebUI's server-side loader posting to /v1/convert/file,
     # so sso = false: an SSO redirect would break a machine-to-machine POST.
     "docling-serve" = { backend = "docling-serve", port = local.pipeline_constants.service_ports.docling_serve_api, sso = false }
-  }
+    }, length(local.docker_ai_backends) == 0 ? {
+    # Keep the legacy single guest until a docker-ai-tagged pool is declared.
+    hatchet = { backend = "hatchet", port = local.pipeline_constants.service_ports.hatchet_web }
+  } : {})
 }

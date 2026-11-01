@@ -123,6 +123,32 @@ locals {
     ] : [],
     local.agentgateway_ingress_routes,
     local.firecrawl_routes,
+    # Docker AI's dashboard/API route replaces the legacy single Hatchet route
+    # only when at least one docker-ai guest exists. The engine is a separate
+    # machine gRPC route and probes its HTTP health listener on 8733.
+    length(local.docker_ai_backends) > 0 ? [
+      {
+        name              = "hatchet"
+        backends          = local.docker_ai_backends
+        port              = local.pipeline_constants.service_ports.hatchet_web
+        sso               = true
+        health_check      = true
+        health_check_path = "/api/ready"
+      }
+    ] : [],
+    length(local.docker_ai_backends) > 0 ? [
+      {
+        name                = "hatchet-engine"
+        backends            = local.docker_ai_backends
+        port                = local.pipeline_constants.service_ports.hatchet_grpc
+        scheme              = "h2c"
+        sso                 = false
+        health_check        = true
+        health_check_path   = "/ready"
+        health_check_scheme = "http"
+        health_check_port   = local.pipeline_constants.service_ports.hatchet_health
+      }
+    ] : [],
     # Hindsight agent memory: one hindsight.<domain> route load-balancing the
     # stateless API replicas. No sticky — every replica serves every bank from
     # the same Postgres. /health is the upstream readiness endpoint.
