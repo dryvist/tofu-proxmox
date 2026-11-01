@@ -28,10 +28,9 @@ override_module {
 override_module {
   target = module.splunk_vm
   outputs = {
-    vm_id       = 200
-    name        = "splunk-example"
-    ip_address  = "192.0.2.200"
-    mac_address = "BC:24:11:00:00:C8"
+    vm_id      = 200
+    name       = "splunk-example"
+    ip_address = "192.0.2.200"
     tiered_disks = {
       fast = { datastore_id = "fast-example", interface = "virtio2", size = 1024, backup = true }
       bulk = { datastore_id = "bulk-example", interface = "virtio3", size = 2048, backup = false }
@@ -211,5 +210,33 @@ run "selected_key_without_tag_fails_closed" {
       agentgateway   = { vm_id = 141, node_name = "node-example", vlan = "ai", tags = ["terraform"] }
       agentgateway-2 = { vm_id = 142, node_name = "node-example", vlan = "ai", tags = ["agentgateway"] }
     }
+  }
+}
+
+run "blank_selected_address_fails_inventory_publication_guard" {
+  command         = plan
+  expect_failures = [aws_s3_object.ansible_inventory]
+
+  variables {
+    containers = {
+      agentgateway = {
+        vm_id     = 141
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["agentgateway"]
+      }
+      agentgateway-2 = {
+        vm_id     = 142
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["agentgateway"]
+        ip_config = { ipv4_address = "" }
+      }
+    }
+  }
+
+  assert {
+    condition     = local.container_address["agentgateway-2"] == ""
+    error_message = "The blank static address must exercise the inventory publication precondition."
   }
 }

@@ -38,4 +38,4 @@ locals {
   ] : []
 }
 
-# shortcut: /metrics proves stats-listener liveness, not proxy or sidecar readiness.
+# shortcut: /metrics confirms only stats-listener liveness, upgrade when gateway readiness covers proxy and sidecar health.
