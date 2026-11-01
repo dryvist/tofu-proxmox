@@ -11,7 +11,6 @@ locals {
   pooled_backend_tags = [
     local.firewall_container_tags.hindsight,
     local.firewall_container_tags.zammad,
-    local.firewall_container_tags.agentgateway,
     local.firewall_container_tags.firecrawl,
     local.firewall_container_tags.llm_router,
   ]
@@ -70,12 +69,21 @@ locals {
   # Zammad HA pool (sticky sessions at the route).
   zammad_backends = local.tag_backend_pools["zammad"]
 
-  # agentgateway MCP-fabric pool: the only path agents (Hermes) have to the
-  # splunk/context7/qdrant/memory MCP targets, so it is the one pool whose loss
-  # blacks out the whole tool plane (2026-07-24 node incident). Instances are
-  # stateless (identical config from the agentgateway_docker role; targets are
-  # themselves pooled or external), so no sticky.
-  agentgateway_backends = local.tag_backend_pools["agentgateway"]
+  # The route's active membership is selected by logical deployment key.
+  # Other tagged instances remain deployed but do not join either ingress alias.
+  agentgateway_primary_key  = "agentgateway"
+  agentgateway_fallback_key = "agentgateway-2"
+  agentgateway_tagged_keys = [
+    for key, container in var.containers : key
+    if contains(coalesce(try(container.tags, null), []), local.firewall_container_tags.agentgateway)
+  ]
+  agentgateway_ingress_enabled = length(local.agentgateway_tagged_keys) > 0
+  agentgateway_backends = local.agentgateway_ingress_enabled ? compact([
+    try(local.container_address[local.agentgateway_primary_key], null)
+  ]) : []
+  agentgateway_fallback_backends = local.agentgateway_ingress_enabled ? compact([
+    try(local.container_address[local.agentgateway_fallback_key], null)
+  ]) : []
 
   # Cribl Stream OTLP pool: LXCs tagged cribl + stream, fronting the in_otel
   # OTLP/HTTP trace-span listener at otel.<domain>. Two-tag identity (matches
