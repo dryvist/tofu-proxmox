@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.54.0](https://github.com/dryvist/tofu-proxmox/compare/v3.53.0...v3.54.0) (2026-11-01)
+
+
+### Features
+
+* add logical owners to the agent inventory ([#1401](https://github.com/dryvist/tofu-proxmox/issues/1401)) ([e955942](https://github.com/dryvist/tofu-proxmox/commit/e955942fe9411d1daffd05c1de41dbeb9dabce4a))
+
+
+### Bug Fixes
+
+* **ingress:** select named gateway failover members ([#1404](https://github.com/dryvist/tofu-proxmox/issues/1404)) ([d6e3a9c](https://github.com/dryvist/tofu-proxmox/commit/d6e3a9c7784f34112b9a9003cd7f25c804fe1746))
+
 ## [3.53.0](https://github.com/dryvist/tofu-proxmox/compare/v3.52.1...v3.53.0) (2026-11-01)
 
 
