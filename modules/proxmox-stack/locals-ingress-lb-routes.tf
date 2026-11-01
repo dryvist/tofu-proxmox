@@ -121,31 +121,7 @@ locals {
         response_header_timeout = "0s"
       }
     ] : [],
-    # agentgateway MCP fabric: mcp.<domain> (proxy plane) + agentgateway.<domain>
-    # (admin UI) each load-balance every tagged instance. Health = the stats
-    # server's /metrics on its own port (health_check_port): the proxy port
-    # answers 404/406 to plain GETs, which a same-port health check would read
-    # as "down" and eject every healthy server.
-    length(local.agentgateway_backends) > 0 ? [
-      {
-        name              = "mcp"
-        backends          = local.agentgateway_backends
-        port              = local.pipeline_constants.service_ports.agentgateway_proxy
-        health_check      = true
-        health_check_path = "/metrics"
-        health_check_port = local.pipeline_constants.service_ports.agentgateway_metrics
-        sso               = false # MCP tool clients (machines)
-      },
-      {
-        name              = "agentgateway"
-        backends          = local.agentgateway_backends
-        port              = local.pipeline_constants.service_ports.agentgateway_admin
-        health_check      = true
-        health_check_path = "/metrics"
-        health_check_port = local.pipeline_constants.service_ports.agentgateway_metrics
-        sso               = true # browser admin UI — gated
-      }
-    ] : [],
+    local.agentgateway_ingress_routes,
     local.firecrawl_routes,
     # Hindsight agent memory: one hindsight.<domain> route load-balancing the
     # stateless API replicas. No sticky — every replica serves every bank from
