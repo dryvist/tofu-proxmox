@@ -118,11 +118,17 @@
     },
     "agents": {
       "type": "object",
-      "description": "Optional agent roster keyed by the container key each agent runs in.",
+      "description": "Optional owner roster: legacy physical agents remain keyed by container key and include name; logical owners use an owner slug key and omit name.",
       "additionalProperties": {
         "type": "object",
-        "required": ["name", "display", "purpose"],
+        "required": ["display", "purpose"],
         "additionalProperties": false,
+        "allOf": [
+          {
+            "if": { "not": { "required": ["name"] } },
+            "then": { "required": ["trust_tier", "native_binding_ref"] }
+          }
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -154,7 +160,26 @@
             "type": "string",
             "enum": ["trusted", "untrusted"],
             "default": "untrusted",
-            "description": "Memory trust tier. Agents share recall only with agents of the same tier."
+            "description": "Memory trust tier. Legacy physical owners may omit it; logical owners must supply it explicitly."
+          },
+          "native_binding_ref": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "not": { "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://" },
+            "description": "Opaque reference to an existing runtime configuration. Required for logical owners; not a prompt URI or wire protocol."
+          },
+          "specializations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "description"],
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+                "description": { "type": "string", "minLength": 1 }
+              }
+            }
           },
           "slack": {
             "type": "object",

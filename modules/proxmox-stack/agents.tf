@@ -1,4 +1,22 @@
 locals {
+  # Existing physical agents keep their container-key input and legacy name.
+  # Logical owners use the input map key as their stable owner key.
+  agent_owner_keys = {
+    for input_key, agent in var.agents : input_key => agent.name == null ? input_key : agent.name
+  }
+
+  agent_physical_container_keys = [
+    for input_key, agent in var.agents : input_key
+    if agent.name != null
+  ]
+
+  agent_unknown_physical_container_keys = sort(tolist(setsubtract(
+    toset(local.agent_physical_container_keys),
+    toset(keys(var.containers)),
+  )))
+
+  # Firewall ownership remains limited to the services with configured ports
+  # and destination hosts below. The published `owns` roster remains open-ended.
   agent_systems = ["splunk", "cribl"]
 
   # System service ports agents may own. Values resolve from the shared
@@ -47,32 +65,35 @@ locals {
     toset(local.llm_cpu_scaler.pool_tags),
   )
 
-  agent_unknown_system_slugs = sort(tolist(setsubtract(
-    toset(flatten([for agent in values(var.agents) : agent.owns])),
-    toset(local.agent_systems),
-  )))
-
   agent_firewall_profile_conflicts = sort([
     for container_key, agent in var.agents : agent.name
-    if length(setintersection(
+    if agent.name != null && length(setintersection(
       toset(coalesce(try(var.containers[container_key].tags, null), [])),
       toset(local.agent_firewall_profile_tags),
     )) > 0
   ])
 
-  # Grouping (`...`) keeps a duplicate name from erroring here, so the
-  # precondition below reports it instead.
+  # Grouping (`...`) keeps a logical key that collides with a physical name
+  # from erroring here, so the precondition below reports it instead.
   _agents_grouped = {
-    for container_key, agent in var.agents : agent.name => merge(
+    for input_key, agent in var.agents : local.agent_owner_keys[input_key] => merge(
       {
-        container        = container_key
-        hostname         = try(local.guest_hostname_containers[container_key], "")
         display          = agent.display
         purpose          = agent.purpose
         owns             = agent.owns
         router_key_class = agent.router_key_class
-        trust_tier       = agent.trust_tier
+        trust_tier       = agent.trust_tier == null ? "untrusted" : agent.trust_tier
       },
+      agent.name == null ? {} : {
+        container = input_key
+        hostname  = try(local.guest_hostname_containers[input_key], "")
+      },
+      agent.native_binding_ref == null ? {} : {
+        native_binding_ref = agent.native_binding_ref
+      },
+      agent.name == null || agent.specializations != null ? {
+        specializations = agent.specializations == null ? [] : agent.specializations
+      } : {},
       agent.slack == null ? {} : {
         slack = {
           for key, value in agent.slack : key => value
@@ -85,11 +106,13 @@ locals {
 
   agent_firewall_containers = {
     for name, agent in local.agents : name => {
-      # Keep invalid container references available to the roster output
-      # precondition instead of failing during local projection.
       vm_id = try(var.containers[agent.container].vm_id, null)
-      owns  = agent.owns
+      owns = tolist([
+        for slug in agent.owns : slug
+        if contains(keys(local.agent_system_port_catalog), slug)
+      ])
     }
+    if try(agent.container, null) != null && contains(keys(var.containers), try(agent.container, ""))
   }
 }
 
@@ -98,8 +121,8 @@ output "agents" {
   value       = local.agents
 
   precondition {
-    condition     = length(values(var.agents)) == length(distinct([for agent in values(var.agents) : agent.name]))
-    error_message = "Agent names must be unique across the roster."
+    condition     = length(values(var.agents)) == length(distinct(values(local.agent_owner_keys)))
+    error_message = "Agent owner keys must be unique across physical and logical owners."
   }
 
   precondition {
@@ -113,13 +136,8 @@ output "agents" {
   }
 
   precondition {
-    condition     = length(setsubtract(keys(var.agents), keys(var.containers))) == 0
-    error_message = "Agent roster keys must be container keys; unknown keys: ${jsonencode(setsubtract(keys(var.agents), keys(var.containers)))}."
-  }
-
-  precondition {
-    condition     = length(local.agent_unknown_system_slugs) == 0
-    error_message = "Agent owns values must name cataloged systems; unknown slugs: ${jsonencode(local.agent_unknown_system_slugs)}."
+    condition     = length(local.agent_unknown_physical_container_keys) == 0
+    error_message = "Physical agent roster keys must be existing container keys; unknown keys: ${jsonencode(local.agent_unknown_physical_container_keys)}."
   }
 
   precondition {
@@ -136,8 +154,8 @@ output "agents" {
         for slug in agent.owns : (
           length(try(local.agent_system_hosts[slug], [])) > 0 &&
           length(try(local.agent_system_dhcp_members[slug], [])) == 0
-        )
-      ]
+        ) if contains(local.agent_systems, slug)
+      ] if agent.name != null
     ]))
     error_message = "owned systems need static host addresses for agent firewall rules."
   }
