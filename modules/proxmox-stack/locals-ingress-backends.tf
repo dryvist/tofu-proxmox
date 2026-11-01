@@ -18,7 +18,7 @@ locals {
   # Traefik resolves this class to source networks from its non-committed config.
   owned_route_source_class = "agent-owner"
   splunk_route_source_class = anytrue([
-    for agent in values(var.agents) : contains(agent.owns, "splunk")
+    for agent in values(local.agent_firewall_containers) : contains(agent.owns, "splunk")
   ]) ? local.owned_route_source_class : null
 
   # Assembled routes: one {name, ip, port} per fronted service whose backend

@@ -19,7 +19,8 @@ variable "vms" {
 
     # Node placement. REQUIRED — see the same field on var.containers for why the
     # silent fallback to var.proxmox_node was removed.
-    node_name = string
+    node_name  = string
+    cpu_vendor = optional(string)
 
     # A node_name change forces replacement unless migrate is true. When omitted,
     # it defaults true with ha_replication_target and false otherwise; explicit values win.

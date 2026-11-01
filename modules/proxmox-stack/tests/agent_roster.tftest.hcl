@@ -140,6 +140,69 @@ run "agent_roster_projects_two_agents" {
   }
 }
 
+run "logical_owner_is_published_without_physical_identity" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the logical owner projection"
+        owns               = ["example-domain"]
+        router_key_class   = "standard"
+        trust_tier         = "untrusted"
+        native_binding_ref = "tests/runtime/example-owner"
+        specializations = [
+          { name = "example-search", description = "Synthetic fixture specialization" }
+        ]
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.schema_version == "2.8.0" &&
+      sort(keys(output.ansible_inventory.agents)) == tolist(["example-owner"]) &&
+      output.ansible_inventory.agents["example-owner"].display == "Example Owner" &&
+      output.ansible_inventory.agents["example-owner"].owns == tolist(["example-domain"]) &&
+      output.ansible_inventory.agents["example-owner"].trust_tier == "untrusted" &&
+      output.ansible_inventory.agents["example-owner"].native_binding_ref == "tests/runtime/example-owner" &&
+      length(output.ansible_inventory.agents["example-owner"].specializations) == 1 &&
+      !contains(keys(output.ansible_inventory.agents["example-owner"]), "container") &&
+      !contains(keys(output.ansible_inventory.agents["example-owner"]), "hostname") &&
+      local.agent_firewall_containers == {} &&
+      output.ansible_inventory.hermes_agents == {}
+    )
+    error_message = "A logical owner must publish its owner metadata and specializations without becoming a guest or Hermes endpoint."
+  }
+}
+
+run "logical_owner_without_specializations_publishes_an_empty_array" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the logical owner default"
+        owns               = ["example-domain"]
+        trust_tier         = "trusted"
+        native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      length(output.ansible_inventory.agents["example-owner"].specializations) == 0 &&
+      sort(keys(output.ansible_inventory.agents["example-owner"])) == tolist([
+        "display", "native_binding_ref", "owns", "purpose", "router_key_class", "specializations", "trust_tier"
+      ])
+    )
+    error_message = "Logical owners must always publish a specializations array, using an empty list when none is supplied."
+  }
+}
+
 run "agent_and_workstation_maps_default_to_empty" {
   command = plan
 
@@ -177,7 +240,7 @@ run "workstations_are_published" {
   }
 }
 
-run "agent_owns_must_name_a_cataloged_system" {
+run "agent_owns_may_use_an_open_slug_outside_the_firewall_catalog" {
   command = plan
 
   variables {
@@ -186,12 +249,18 @@ run "agent_owns_must_name_a_cataloged_system" {
     }
     agents = {
       "agent-example-1" = {
-        name = "research-scout", display = "Scout", purpose = "Search example records", owns = ["unknown-system"]
+        name = "research-scout", display = "Scout", purpose = "Search example records", owns = ["example-domain"]
       }
     }
   }
 
-  expect_failures = [output.agents]
+  assert {
+    condition = (
+      output.agents["research-scout"].owns == tolist(["example-domain"]) &&
+      length(local.agent_firewall_containers["research-scout"].owns) == 0
+    )
+    error_message = "Open ownership slugs must publish as metadata without generating uncataloged firewall rules."
+  }
 }
 
 run "agent_container_must_not_have_a_firewall_profile_tag" {
@@ -351,11 +420,13 @@ run "agent_displays_must_be_unique" {
   variables {
     containers = {
       "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
-      "agent-example-2" = { vm_id = 241, node_name = "node-example", vlan = "apps" }
     }
     agents = {
       "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records" }
-      "agent-example-2" = { name = "support-guide", display = "Scout", purpose = "Answer requests" }
+      "example-owner" = {
+        display    = "Scout", purpose = "Own example domain"
+        trust_tier = "trusted", native_binding_ref = "tests/runtime/example-owner"
+      }
     }
   }
 
@@ -373,6 +444,48 @@ run "agent_owns_values_must_be_unique_across_agents" {
     agents = {
       "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records", owns = ["cribl"] }
       "agent-example-2" = { name = "support-guide", display = "Guide", purpose = "Answer requests", owns = ["cribl"] }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_owns_values_must_be_unique_across_physical_and_logical_owners" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name = "research-scout", display = "Scout", purpose = "Search records", owns = ["example-domain"]
+      }
+      "example-owner" = {
+        display    = "Example Owner", purpose = "Own example domain", owns = ["example-domain"]
+        trust_tier = "trusted", native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "logical_owner_key_must_not_collide_with_physical_owner_name" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name = "example-owner", display = "Physical Owner", purpose = "Physical example owner"
+      }
+      "example-owner" = {
+        display    = "Logical Owner", purpose = "Logical example owner"
+        trust_tier = "trusted", native_binding_ref = "tests/runtime/example-owner"
+      }
     }
   }
 
@@ -400,6 +513,154 @@ run "agent_trust_tier_must_be_valid" {
   variables {
     agents = {
       "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search records", trust_tier = "bogus" }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_requires_explicit_trust_tier" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the trust-tier guard"
+        native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_requires_explicit_native_binding_ref" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display    = "Example Owner"
+        purpose    = "Exercise the binding-reference guard"
+        trust_tier = "trusted"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_trust_tier_must_not_be_blank" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the trust-tier guard"
+        trust_tier         = ""
+        native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_native_binding_ref_must_not_be_blank" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the binding-reference guard"
+        trust_tier         = "trusted"
+        native_binding_ref = "  "
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_key_must_match_open_slug_pattern" {
+  command = plan
+
+  variables {
+    agents = {
+      "Example Owner" = {
+        display    = "Example Owner", purpose = "Exercise the owner-key guard"
+        trust_tier = "trusted", native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_native_binding_ref_must_be_nonblank" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display    = "Example Owner", purpose = "Exercise the binding-reference guard"
+        trust_tier = "trusted", native_binding_ref = "  "
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_native_binding_ref_can_be_an_existing_native_url" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display    = "Example Owner", purpose = "Exercise the binding-reference guard"
+        trust_tier = "trusted", native_binding_ref = "https://fixture.invalid/native/example-owner"
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.agents["example-owner"].native_binding_ref == "https://fixture.invalid/native/example-owner"
+    error_message = "Native binding URLs must be projected unchanged."
+  }
+}
+
+run "blank_physical_name_is_not_a_logical_owner_discriminator" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        name       = "", display = "Example Owner", purpose = "Exercise the name guard"
+        trust_tier = "trusted", native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
+run "logical_owner_specialization_names_must_be_unique" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display    = "Example Owner", purpose = "Exercise specialization validation"
+        trust_tier = "trusted", native_binding_ref = "tests/runtime/example-owner"
+        specializations = [
+          { name = "example-search", description = "First synthetic specialization" },
+          { name = "example-search", description = "Duplicate synthetic specialization" }
+        ]
+      }
     }
   }
 

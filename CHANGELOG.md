@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.53.0](https://github.com/dryvist/tofu-proxmox/compare/v3.52.1...v3.53.0) (2026-11-01)
+
+
+### Features
+
+* **placement:** refuse a guest on a node of a different CPU vendor ([#1398](https://github.com/dryvist/tofu-proxmox/issues/1398)) ([a98f2aa](https://github.com/dryvist/tofu-proxmox/commit/a98f2aa3581bfb2b59ad1355a0cdeeb356332b02))
+
 ## [3.52.1](https://github.com/dryvist/tofu-proxmox/compare/v3.52.0...v3.52.1) (2026-10-31)
 
 
