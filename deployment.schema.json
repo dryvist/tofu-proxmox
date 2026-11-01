@@ -320,6 +320,7 @@
           "minLength": 1,
           "description": "Per-node role label, e.g. node-1."
         },
+        "cpu_vendor": { "type": "string", "enum": ["amd", "intel"] },
         "hardware": {
           "type": "string",
           "minLength": 1,
@@ -435,6 +436,7 @@
       ],
       "additionalProperties": true,
       "properties": {
+        "cpu_vendor": { "type": "string", "enum": ["amd", "intel"] },
         "vm_id": {
           "type": "integer",
           "minimum": 100

@@ -66,6 +66,20 @@ modules/proxmox-container/main.tf), so mounts are effectively set-once.
 This default governs newly created containers; an existing one needs the
 flag set out of band, landing in its pending config until it next stops.
 
+## `cpu_vendor` — placement guard
+
+Nodes, containers and VMs may declare `cpu_vendor` as `amd` or `intel`. When a
+guest and its `node_name` node both declare it, the values must match, or plan
+fails. Missing values remain valid.
+
+Why: a live migration between CPU vendors can hang the guest, even with a
+generic CPU model, and the provider live-migrates a running HA guest on any
+`node_name` change. To move a guest to another vendor, migrate it cold (stop,
+migrate, start) first, then change `node_name` and `cpu_vendor` together, so the
+plan shows no move. HA failover is a cold restart from a replica, so it may
+still land on another vendor. No strict vendor HA rule is emitted, because that
+would block the fallback.
+
 ## `ha_replication_target` — the only relocation target
 
 The node holding this guest's storage-replication (pvesr) copy, and so the

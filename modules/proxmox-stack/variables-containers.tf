@@ -30,14 +30,10 @@ variable "containers" {
     # See docs/CONTAINER_SCHEMA.md.
     dhcp = optional(bool, false)
 
-    # Node placement. REQUIRED, deliberately: this was `optional(string)` with
-    # main.tf falling back to var.proxmox_node, and the fallback was silent — a
-    # guest that simply omitted the field landed on the primary node with no
-    # signal that a placement decision had been skipped. That is how the primary
-    # node accumulated the majority of the estate's containers, including every
-    # tier of the log pipeline, without anyone choosing to put them there.
-    # Placement is now an explicit declaration; there is no default to inherit.
-    node_name = string
+    # Node placement is REQUIRED; the former silent fallback to var.proxmox_node
+    # hid skipped decisions. No default is inherited.
+    node_name  = string
+    cpu_vendor = optional(string)
     # Defaults to ha_replication_target != null; explicit values win.
     migrate = optional(bool)
 

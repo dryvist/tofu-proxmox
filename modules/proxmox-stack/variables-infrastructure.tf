@@ -133,6 +133,7 @@ variable "nodes" {
     role         = string               # role label: node-1 | node-2 | node-3
     hardware     = optional(string)     # capability-shaped label, e.g. compact-node, standard-node, storage-node
     commissioned = optional(bool, true) # false = declared but not yet installed
+    cpu_vendor   = optional(string)
     # Distinct from commissioned: an already-installed node can still be
     # temporarily ineligible for per-node ("DaemonSet-style") service
     # placement, e.g. mid storage-rebuild. Gates the root main.tf
