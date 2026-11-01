@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.55.0](https://github.com/dryvist/tofu-proxmox/compare/v3.54.0...v3.55.0) (2026-11-01)
+
+
+### Features
+
+* **ingress:** pool hatchet routes over docker-ai guests with an h2c engine route ([#1407](https://github.com/dryvist/tofu-proxmox/issues/1407)) ([4d6e778](https://github.com/dryvist/tofu-proxmox/commit/4d6e7784d6830e0f78a1d2ea9ebea5e1f822d0c0))
+
 ## [3.54.0](https://github.com/dryvist/tofu-proxmox/compare/v3.53.0...v3.54.0) (2026-11-01)
 
 
