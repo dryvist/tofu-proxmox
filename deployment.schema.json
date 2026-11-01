@@ -166,7 +166,6 @@
             "type": "string",
             "minLength": 1,
             "pattern": "\\S",
-            "not": { "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://" },
             "description": "Opaque reference to an existing runtime configuration. Required for logical owners; not a prompt URI or wire protocol."
           },
           "specializations": {

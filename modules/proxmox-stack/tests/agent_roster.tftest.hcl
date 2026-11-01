@@ -563,19 +563,22 @@ run "logical_owner_native_binding_ref_must_be_nonblank" {
   expect_failures = [var.agents]
 }
 
-run "logical_owner_native_binding_ref_must_not_be_a_protocol_uri" {
+run "logical_owner_native_binding_ref_can_be_an_existing_native_url" {
   command = plan
 
   variables {
     agents = {
       "example-owner" = {
         display    = "Example Owner", purpose = "Exercise the binding-reference guard"
-        trust_tier = "trusted", native_binding_ref = "mcp://example-owner"
+        trust_tier = "trusted", native_binding_ref = "https://fixture.invalid/native/example-owner"
       }
     }
   }
 
-  expect_failures = [var.agents]
+  assert {
+    condition     = output.ansible_inventory.agents["example-owner"].native_binding_ref == "https://fixture.invalid/native/example-owner"
+    error_message = "Native binding URLs must be projected unchanged."
+  }
 }
 
 run "blank_physical_name_is_not_a_logical_owner_discriminator" {

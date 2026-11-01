@@ -38,8 +38,7 @@ variable "agents" {
       (
         agent.native_binding_ref == null ||
         try(
-          length(trimspace(agent.native_binding_ref)) > 0 &&
-          !can(regex("^[A-Za-z][A-Za-z0-9+.-]*://", trimspace(agent.native_binding_ref))),
+          length(trimspace(agent.native_binding_ref)) > 0,
           false
         )
       ) &&
@@ -48,8 +47,7 @@ variable "agents" {
           agent.trust_tier != null &&
           try(contains(["trusted", "untrusted"], agent.trust_tier), false) &&
           try(
-            length(trimspace(agent.native_binding_ref)) > 0 &&
-            !can(regex("^[A-Za-z][A-Za-z0-9+.-]*://", trimspace(agent.native_binding_ref))),
+            length(trimspace(agent.native_binding_ref)) > 0,
             false
           )
         )
@@ -69,6 +67,6 @@ variable "agents" {
         )
       )
     ])
-    error_message = "Physical agents keep a <function>-<persona> name; logical owners omit name and use an owner slug key. Every owner needs a non-empty display and purpose, valid owns slugs, and a valid router_key_class. Logical owners also need an explicit valid trust_tier and a nonblank native_binding_ref without a URI or protocol prefix. Specialization names must be unique slugs with non-empty descriptions."
+    error_message = "Physical agents keep a <function>-<persona> name; logical owners omit name and use an owner slug key. Every owner needs a non-empty display and purpose, valid owns slugs, and a valid router_key_class. Logical owners also need an explicit valid trust_tier and a nonblank native_binding_ref. Specialization names must be unique slugs with non-empty descriptions."
   }
 }
