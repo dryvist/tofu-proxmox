@@ -13,6 +13,7 @@ locals {
     local.firewall_container_tags.zammad,
     local.firewall_container_tags.firecrawl,
     local.firewall_container_tags.llm_router,
+    local.firewall_container_tags.docker_ai,
   ]
   tag_backend_pools = {
     for tag in local.pooled_backend_tags : tag => [
@@ -65,6 +66,10 @@ locals {
   # silently drop the ingress route the moment the guest moves nodes
   # (locals-ingress-backends.tf filters routes whose backend key is absent).
   firecrawl_backends = local.tag_backend_pools["firecrawl"]
+
+  # Docker AI's Hatchet dashboard and engine guests share the same stateless
+  # service pool; tag membership keeps desired-state names independent here.
+  docker_ai_backends = local.tag_backend_pools[local.firewall_container_tags.docker_ai]
 
   # Zammad HA pool (sticky sessions at the route).
   zammad_backends = local.tag_backend_pools["zammad"]

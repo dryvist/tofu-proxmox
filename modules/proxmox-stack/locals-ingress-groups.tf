@@ -45,13 +45,15 @@ locals {
     autobrr = "media_svc"
 
     # AI tier pools.
-    llm             = "ai"
-    "llm-ui"        = "ai"
-    "llm-ui-legacy" = "ai"
-    mcp             = "ai"
-    agentgateway    = "ai"
-    hindsight       = "ai"
-    "hindsight-cp"  = "ai"
+    llm              = "ai"
+    "llm-ui"         = "ai"
+    "llm-ui-legacy"  = "ai"
+    mcp              = "ai"
+    agentgateway     = "ai"
+    hatchet          = "ai"
+    "hatchet-engine" = "ai"
+    hindsight        = "ai"
+    "hindsight-cp"   = "ai"
 
     # Apps tier pools.
     zammad = "apps"

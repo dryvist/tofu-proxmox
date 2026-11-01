@@ -23,6 +23,7 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.n8n_web), source = local.internal_src, comment = "n8n web UI (TCP ${local.svc_ports.n8n_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hatchet_web), source = local.internal_src, comment = "Hatchet web UI (TCP ${local.svc_ports.hatchet_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hatchet_grpc), source = local.internal_src, comment = "Hatchet engine gRPC (TCP ${local.svc_ports.hatchet_grpc}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.hatchet_health), source = local.internal_src, comment = "Hatchet engine health (TCP ${local.svc_ports.hatchet_health}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.langflow_web), source = local.internal_src, comment = "LangFlow web UI (TCP ${local.svc_ports.langflow_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.dify_web), source = local.internal_src, comment = "Dify web UI (TCP ${local.svc_ports.dify_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.langgraph_api), source = local.internal_src, comment = "LangGraph server API (TCP ${local.svc_ports.langgraph_api}) from internal" },

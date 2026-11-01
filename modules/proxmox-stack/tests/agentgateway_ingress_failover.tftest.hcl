@@ -190,6 +190,95 @@ run "third_only_tag_fails_without_pool_fallback" {
   }
 }
 
+run "docker_ai_pair_publishes_pooled_hatchet_routes" {
+  command = plan
+
+  variables {
+    containers = {
+      hatchet = {
+        vm_id     = 150
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["hatchet", "ai-orchestration", "docker"]
+      }
+      "hatchet-dashboard-fixture" = {
+        vm_id     = 151
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["docker-ai", "ai-orchestration", "docker", "managed-secrets"]
+      }
+      "hatchet-engine-fixture" = {
+        vm_id     = 152
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["docker-ai", "ai-orchestration", "docker", "managed-secrets"]
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      length([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]) == 1 &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).backends == [
+        local.container_address["hatchet-dashboard-fixture"],
+        local.container_address["hatchet-engine-fixture"],
+      ] &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).sso &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).health_check &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).health_check_path == "/api/ready"
+    )
+    error_message = "The docker-ai pool must publish exactly one SSO-gated Hatchet dashboard route with both sorted backends and /api/ready health."
+  }
+
+  assert {
+    condition = (
+      length([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]) == 1 &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]).backends == [
+        local.container_address["hatchet-dashboard-fixture"],
+        local.container_address["hatchet-engine-fixture"],
+      ] &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]).port == local.pipeline_constants.service_ports.hatchet_grpc &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]).scheme == "h2c" &&
+      !one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]).sso &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]).health_check &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]).health_check_path == "/ready" &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]).health_check_scheme == "http" &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]).health_check_port == local.pipeline_constants.service_ports.hatchet_health &&
+      output.ansible_inventory.constants.service_ports.hatchet_health == 8733
+    )
+    error_message = "The pooled Hatchet engine route must publish h2c, machine access, and its HTTP /ready probe on hatchet_health 8733."
+  }
+}
+
+run "legacy_hatchet_route_remains_when_docker_ai_pool_is_empty" {
+  command = plan
+
+  variables {
+    containers = {
+      hatchet = {
+        vm_id     = 153
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["hatchet", "ai-orchestration", "docker"]
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      length([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]) == 1 &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).owner == "hatchet" &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).ip == local.container_address["hatchet"] &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).port == local.pipeline_constants.service_ports.hatchet_web &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).sso &&
+      try(one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).health_check, null) == null &&
+      try(one([for r in output.ansible_inventory.ingress : r if r.name == "hatchet"]).health_check_path, null) == null &&
+      length([for r in output.ansible_inventory.ingress : r if r.name == "hatchet-engine"]) == 0
+    )
+    error_message = "With no docker-ai tags, the existing Hatchet guest must retain its one single-backend SSO web route."
+  }
+}
+
 run "missing_fallback_key_fails_closed" {
   command         = plan
   expect_failures = [var.containers]
