@@ -19,17 +19,19 @@ locals {
   # outbound internal/HTTPS groups on the container. LangGraph opens two ports: its
   # in-memory `langgraph dev` API and the self-hosted Agent Chat UI that fronts it.
   # Ports DRY from pipeline_constants.
-  ai_orchestration_services_rules = [
+  ai_orchestration_services_rules = concat([
     { proto = "tcp", dport = tostring(local.svc_ports.n8n_web), source = local.internal_src, comment = "n8n web UI (TCP ${local.svc_ports.n8n_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hatchet_web), source = local.internal_src, comment = "Hatchet web UI (TCP ${local.svc_ports.hatchet_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hatchet_grpc), source = local.internal_src, comment = "Hatchet engine gRPC (TCP ${local.svc_ports.hatchet_grpc}) from internal" },
-    { proto = "tcp", dport = tostring(local.svc_ports.hatchet_health), source = local.internal_src, comment = "Hatchet engine health (TCP ${local.svc_ports.hatchet_health}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.langflow_web), source = local.internal_src, comment = "LangFlow web UI (TCP ${local.svc_ports.langflow_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.dify_web), source = local.internal_src, comment = "Dify web UI (TCP ${local.svc_ports.dify_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.langgraph_api), source = local.internal_src, comment = "LangGraph server API (TCP ${local.svc_ports.langgraph_api}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.agent_chat_ui_web), source = local.internal_src, comment = "LangGraph Agent Chat UI (TCP ${local.svc_ports.agent_chat_ui_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.docling_serve_api), source = local.internal_src, comment = "docling-serve convert API (TCP ${local.svc_ports.docling_serve_api}) from internal" },
-  ]
+    # Only the ingress health checker probes the engine health listener; omitted without an ingress address.
+    ], var.hatchet_health_ingress_src == "" ? [] : [
+    { proto = "tcp", dport = tostring(local.svc_ports.hatchet_health), source = var.hatchet_health_ingress_src, comment = "Hatchet engine health (TCP ${local.svc_ports.hatchet_health}) from ingress" },
+  ])
 
   # Langfuse — web UI + OTLP-receive on the same port (path-based). Inbound from
   # internal covers both the admin UI and Cribl's trace push from the pipeline VLAN.
