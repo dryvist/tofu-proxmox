@@ -30,7 +30,7 @@ variable "agents" {
       &&
       length(agent.display) > 0 &&
       length(agent.purpose) > 0 &&
-      contains(["all", "standard", "zdr"], agent.router_key_class) &&
+      contains(["all", "standard", "zdr", "local"], agent.router_key_class) &&
       (
         agent.trust_tier == null ||
         try(contains(["trusted", "untrusted"], agent.trust_tier), false)
