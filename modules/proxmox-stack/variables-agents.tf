@@ -15,9 +15,20 @@ variable "agents" {
     slack = optional(object({
       home_channel     = optional(string)
       requests_channel = optional(string)
+      profile_channels = optional(map(string))
     }))
   }))
   default = {}
+
+  validation {
+    condition = alltrue(flatten([
+      for agent in values(var.agents) : [
+        for profile, channel in try(coalesce(agent.slack.profile_channels, {}), {}) :
+        can(regex("^[a-z][a-z0-9-]*$", profile)) && can(regex("^C[A-Z0-9]+$", channel))
+      ]
+    ]))
+    error_message = "slack.profile_channels keys must be profile slugs and values Slack channel ids (C followed by uppercase letters or digits)."
+  }
 
   validation {
     condition = alltrue([
