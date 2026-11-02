@@ -41,7 +41,10 @@ variable "agents" {
       &&
       length(agent.display) > 0 &&
       length(agent.purpose) > 0 &&
-      contains(["all", "standard", "zdr", "local"], agent.router_key_class) &&
+      contains(
+        jsondecode(file("${path.module}/../../deployment.schema.json")).properties.agents.additionalProperties.properties.router_key_class.enum,
+        agent.router_key_class
+      ) &&
       (
         agent.trust_tier == null ||
         try(contains(["trusted", "untrusted"], agent.trust_tier), false)

@@ -88,6 +88,27 @@ run "logical_owner_accepts_local_router_key_class" {
   }
 }
 
+run "logical_owner_accepts_public_router_key_class" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the public router key class"
+        router_key_class   = "public"
+        trust_tier         = "untrusted"
+        native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.agents["example-owner"].router_key_class == "public"
+    error_message = "A logical owner must retain the public router key class."
+  }
+}
+
 run "agent_router_key_class_must_be_known" {
   command = plan
 

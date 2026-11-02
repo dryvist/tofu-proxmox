@@ -152,8 +152,9 @@
             }
           },
           "router_key_class": {
+            "$comment": "Pinned from homelab-contracts v5.45.0: schemas/ansible-inventory-v1.json#/properties/agents/items/properties/router_key_class.",
             "type": "string",
-            "enum": ["all", "standard", "zdr", "local"],
+            "enum": ["all", "standard", "zdr", "local", "public"],
             "default": "standard"
           },
           "trust_tier": {
