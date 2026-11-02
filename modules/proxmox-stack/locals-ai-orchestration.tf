@@ -8,11 +8,32 @@ locals {
   ai_network = nonsensitive(var.network_cidrs["ai"])
 
   # AI orchestration LXCs (ai-orchestration tag): n8n, Hatchet, Dify, LangFlow,
-  # LangGraph, agent-exec. Inbound service ports from internal + outbound internal/HTTPS (model endpoints,
-  # external APIs). agent-exec carries the tag too (egress-only; no UI rule fires).
+  # LangGraph, agent-exec. Inbound service ports from internal + outbound
+  # internal/HTTPS (model endpoints, external APIs). specialist-eval guests
+  # use their narrower profile even if they also carry ai-orchestration.
+  # agent-exec is egress-only (no UI rule fires).
   ai_orchestration_container_ids = {
     for k, v in var.containers : k => v.vm_id
-    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ai_orchestration)
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ai_orchestration) &&
+    !contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.specialist_eval)
+  }
+
+  # Evaluation guests carry one platform tag alongside specialist-eval. Keep
+  # unrecognised or ambiguous platform tags in the set so the firewall check
+  # can flag them while leaving their service-port group unattached.
+  specialist_eval_container_ids = {
+    for k, v in var.containers : k => {
+      vm_id = v.vm_id
+      platform_tag = try(one([
+        for tag in coalesce(try(v.tags, null), []) : tag
+        if contains([
+          local.firewall_container_tags.sim_eval,
+          local.firewall_container_tags.langflow_eval,
+          local.firewall_container_tags.dify_eval,
+        ], tag)
+      ]), "")
+    }
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.specialist_eval)
   }
 
   # Langfuse LLM-observability LXC (langfuse tag): web + OTLP ingest on 3000.

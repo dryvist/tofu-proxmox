@@ -84,6 +84,7 @@ locals {
       n8n_web      = 5678
       dify_web     = 80
       langflow_web = 7860
+      sim_web      = 3000
       langfuse_web = 3000
       # Arize Phoenix (LLM observability — traces/evals), the Langfuse sibling on
       # the siem VLAN. phoenix_web serves the UI plus the OTLP/HTTP ingest path
