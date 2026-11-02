@@ -825,13 +825,14 @@
       "dhcp": true,
       "vlan": "apps",
       "hostname": "youtrack",
-      "description": "JetBrains YouTrack issue tracker - web on 8080 fronted by Traefik; own OIDC login. HA-enrolled, with its pvesr replica on a second node.",
+      "description": "JetBrains YouTrack issue tracker - OCI image pinned by version tag in code, web on 8080 fronted by Traefik; own OIDC login. HA-enrolled, with its pvesr replica on a second node.",
       "cpu_cores": 4,
       "memory_dedicated": 6144,
       "tags": [
         "terraform",
         "container",
-        "youtrack"
+        "youtrack",
+        "oci-app"
       ],
       "pool_id": "infrastructure",
       "node_name": "proxmox-1",
@@ -839,12 +840,39 @@
       "ha_affinity_group": "youtrack",
       "ha_replication_target": "proxmox-3",
       "unprivileged": true,
+      "ct_template": "youtrack-oci.tar",
+      "os_type": "unmanaged",
+      "environment_variables": {
+        "JAVA_TOOL_OPTIONS": "-Xmx3g -XX:MaxMetaspaceSize=350m"
+      },
       "features": {
         "nesting": false
       },
       "root_disk": {
         "size": 16
-      }
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "10G",
+          "path": "/opt/youtrack/data"
+        },
+        {
+          "volume": "local-zfs",
+          "size": "1G",
+          "path": "/opt/youtrack/conf"
+        },
+        {
+          "volume": "local-zfs",
+          "size": "2G",
+          "path": "/opt/youtrack/logs"
+        },
+        {
+          "volume": "local-zfs",
+          "size": "20G",
+          "path": "/opt/youtrack/backups"
+        }
+      ]
     },
     "leantime": {
       "vm_id": 605090,

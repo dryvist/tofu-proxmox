@@ -15,6 +15,9 @@ variable "containers" {
     template_file_id = string
     os_type          = optional(string, "debian")
 
+    # Runtime environment variables for the container init process.
+    environment_variables = optional(map(string))
+
     # Resource configuration
     cpu_cores        = optional(number, 1)
     memory_dedicated = optional(number, 512)

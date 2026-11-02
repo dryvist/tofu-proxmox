@@ -40,3 +40,39 @@ resource "proxmox_download_file" "nixos_ct_template" {
   # same posture base_templates.tf takes with the Debian cloud image.
   overwrite = false
 }
+
+# OCI application images. Each key is pulled onto every commissioned node as a
+# vztmpl tarball named by that key, so a guest's ct_template selects it the way
+# it selects the NixOS template above. Every-node placement for the same reason:
+# a relocated HA guest must find its template on the node it lands on.
+locals {
+  oci_ct_templates = {
+    # Stable file name: a version bump changes the tarball, not the guest's
+    # ct_template, so the guest declaration does not change with the pin.
+    "youtrack-oci.tar" = var.youtrack_oci_reference
+  }
+
+  oci_ct_template_pulls = merge([
+    for name, node in var.nodes : {
+      for file, reference in local.oci_ct_templates : "${name}/${file}" => {
+        node_name = name
+        file_name = file
+        reference = reference
+      }
+    } if node.commissioned
+  ]...)
+}
+
+resource "proxmox_oci_image" "oci_ct_template" {
+  for_each = local.oci_ct_template_pulls
+
+  node_name    = each.value.node_name
+  datastore_id = var.datastore_iso
+  reference    = each.value.reference
+  file_name    = each.value.file_name
+
+  # Unlike the NixOS template, this one is pinned in code, so a copy whose size
+  # no longer matches the reference is replaced, not adopted.
+  overwrite      = true
+  upload_timeout = 1800
+}

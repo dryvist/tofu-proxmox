@@ -110,6 +110,10 @@ variable "containers" {
     # ct_templates.tf carries the rest.
     ct_template = optional(string)
 
+    # Runtime environment variables for the container init process (OCI-image
+    # guests set their application's runtime options here).
+    environment_variables = optional(map(string))
+
     # HA opt-in; enrolling also accepts the relocation hazard imports.tf
     # documents. ha_affinity_group keeps members on separate nodes via a
     # proxmox_harule and is meaningful only with ha = true. See ha.tf.

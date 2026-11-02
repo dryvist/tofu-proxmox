@@ -161,7 +161,7 @@ module "containers" {
   default_datastore = var.datastore_default
   domain            = var.domain
 
-  depends_on = [module.pools, module.storage]
+  depends_on = [module.pools, module.storage, proxmox_oci_image.oci_ct_template]
 }
 
 # Splunk VM module - Docker-based Splunk Enterprise
