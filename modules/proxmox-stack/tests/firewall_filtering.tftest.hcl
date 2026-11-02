@@ -573,6 +573,48 @@ run "vikunja_tag_filters_correctly" {
   }
 }
 
+# --- youtrack_container_ids and leantime_container_ids tests ---
+
+run "youtrack_and_leantime_tag_filters_correctly" {
+  command = plan
+
+  variables {
+    containers = {
+      "youtrack" = {
+        vm_id     = 605080
+        node_name = "proxmox-1"
+        hostname  = "youtrack"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "youtrack"]
+      }
+      "leantime" = {
+        vm_id     = 605090
+        node_name = "proxmox-1"
+        hostname  = "leantime"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "leantime"]
+      }
+    }
+  }
+
+  assert {
+    condition     = local.youtrack_container_ids["youtrack"] == 605080 && length(local.youtrack_container_ids) == 1
+    error_message = "youtrack-tagged container must be the sole member of youtrack_container_ids"
+  }
+
+  assert {
+    condition     = local.leantime_container_ids["leantime"] == 605090 && length(local.leantime_container_ids) == 1
+    error_message = "leantime-tagged container must be the sole member of leantime_container_ids"
+  }
+
+  assert {
+    condition     = !contains(keys(local.pipeline_container_ids), "youtrack") && !contains(keys(local.pipeline_container_ids), "leantime")
+    error_message = "youtrack and leantime must not land in pipeline_container_ids"
+  }
+}
+
 # --- authelia_container_ids test ---
 
 run "authelia_tag_filters_correctly" {

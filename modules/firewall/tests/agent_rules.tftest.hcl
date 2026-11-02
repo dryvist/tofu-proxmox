@@ -19,6 +19,7 @@ variables {
       object_storage_s3         = 9000, object_storage_console = 9001, openbao_api = 8200
       openbao_cluster           = 8201, postgres_default = 5432, redis_default = 6379
       nautobot_web              = 8080, vikunja_web = 3456, homebox_web = 7745, homarr_web = 7575, homepage_web = 3000
+      youtrack_web              = 8080, leantime_web = 80
       glance_web                = 8080, wall_web = 8080, gatus_web = 8080, uptime_kuma_web = 3001
       grafana_web               = 3000, victoriametrics = 8428, authelia_portal = 9091, zammad_web = 8080
       mcp_gateway_web           = 4444, ntp = 123, idrac_kvm_r410 = 5410, idrac_kvm_r710 = 5710

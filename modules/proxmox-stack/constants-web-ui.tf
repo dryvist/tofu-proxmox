@@ -17,5 +17,7 @@ locals {
     homeassistant_web = 8123
     openproject_web   = 80
     prometheus_web    = 9090
+    youtrack_web      = 8080
+    leantime_web      = 80
   }
 }
