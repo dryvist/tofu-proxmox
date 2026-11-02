@@ -99,6 +99,7 @@ variables {
       n8n_web                   = 5678
       hatchet_web               = 8090
       hatchet_grpc              = 7072
+      hatchet_health            = 8733
       dify_web                  = 80
       langflow_web              = 7860
       langfuse_web              = 3000
@@ -217,6 +218,44 @@ run "single_network_no_comma_in_src" {
   assert {
     condition     = local.internal_src == "192.168.0.0/16"
     error_message = "Single network should be the source as-is, got '${local.internal_src}'"
+  }
+}
+
+run "hatchet_health_inbound_rule_is_ingress_only" {
+  command = plan
+
+  variables {
+    hatchet_health_ingress_src = "192.0.2.10,192.0.2.11"
+  }
+
+  assert {
+    condition = (
+      length([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
+      ]) == 1 &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
+      ]).proto == "tcp" &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
+      ]).source == "192.0.2.10,192.0.2.11"
+    )
+    error_message = "The ai-orch-svc group must allow Hatchet health on hatchet_health from the ingress addresses only."
+  }
+}
+
+run "hatchet_health_rule_omitted_without_ingress_src" {
+  command = plan
+
+  assert {
+    condition = length([
+      for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+      if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
+    ]) == 0
+    error_message = "Without an ingress address the Hatchet health rule must be omitted, never opened to a wider source."
   }
 }
 

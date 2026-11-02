@@ -12,6 +12,7 @@ locals {
     authelia         = "authelia"
     clickhouse       = "clickhouse"
     cribl            = "cribl"
+    docker_ai        = "docker-ai"
     edge             = "edge"
     firecrawl        = "firecrawl"
     git_mirror       = "git-mirror"
