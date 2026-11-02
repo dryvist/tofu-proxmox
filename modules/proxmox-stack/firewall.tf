@@ -134,6 +134,9 @@ module "firewall" {
   # Langfuse LLM-observability LXC: tagged "langfuse"
   langfuse_container_ids = local.langfuse_container_ids
 
+  # Specialist evaluation LXCs: specialist-eval plus one platform tag.
+  specialist_eval_container_ids = local.specialist_eval_container_ids
+
   # Arize Phoenix LLM-observability LXC: tagged "phoenix"
   phoenix_container_ids = local.phoenix_container_ids
 
