@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.56.0](https://github.com/dryvist/tofu-proxmox/compare/v3.55.0...v3.56.0) (2026-11-02)
+
+
+### Features
+
+* **agents:** allow the local router key class ([#1412](https://github.com/dryvist/tofu-proxmox/issues/1412)) ([f7c3e01](https://github.com/dryvist/tofu-proxmox/commit/f7c3e0145796510e0b37157a41b19b9438e133a5))
+* **ingress:** pool hatchet routes over docker-ai guests with an h2c engine route ([#1409](https://github.com/dryvist/tofu-proxmox/issues/1409)) ([e2810cc](https://github.com/dryvist/tofu-proxmox/commit/e2810cc8438c2b2dffca3817336d97921ce8310c))
+
+
+### Bug Fixes
+
+* **firewall:** limit the Hatchet engine health port to the ingress hosts ([#1410](https://github.com/dryvist/tofu-proxmox/issues/1410)) ([125bcbd](https://github.com/dryvist/tofu-proxmox/commit/125bcbd55984e2ecb377f20b0c8111b0bde8a3d9))
+
 ## [3.55.0](https://github.com/dryvist/tofu-proxmox/compare/v3.54.0...v3.55.0) (2026-11-01)
 
 
