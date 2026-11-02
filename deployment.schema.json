@@ -153,7 +153,7 @@
           },
           "router_key_class": {
             "type": "string",
-            "enum": ["all", "standard", "zdr"],
+            "enum": ["all", "standard", "zdr", "local"],
             "default": "standard"
           },
           "trust_tier": {
