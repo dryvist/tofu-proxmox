@@ -67,6 +67,45 @@ variables {
   nodes                   = { node-example = { role = "node-1" } }
 }
 
+run "logical_owner_accepts_local_router_key_class" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the local router key class"
+        router_key_class   = "local"
+        trust_tier         = "untrusted"
+        native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  assert {
+    condition     = output.ansible_inventory.agents["example-owner"].router_key_class == "local"
+    error_message = "A logical owner must retain the local router key class."
+  }
+}
+
+run "agent_router_key_class_must_be_known" {
+  command = plan
+
+  variables {
+    agents = {
+      "example-owner" = {
+        display            = "Example Owner"
+        purpose            = "Exercise the router key class guard"
+        router_key_class   = "unknown"
+        trust_tier         = "untrusted"
+        native_binding_ref = "tests/runtime/example-owner"
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
+
 run "agent_owned_cribl_requires_a_host" {
   command = plan
 
