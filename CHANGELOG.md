@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.57.0](https://github.com/dryvist/tofu-proxmox/compare/v3.56.1...v3.57.0) (2026-11-02)
+
+
+### Features
+
+* accept the public router_key_class ([#1419](https://github.com/dryvist/tofu-proxmox/issues/1419)) ([78548b4](https://github.com/dryvist/tofu-proxmox/commit/78548b485baabef0265043872de57d3e02d7fb57))
+* accept the public router_key_class and read the class list from the schema ([78548b4](https://github.com/dryvist/tofu-proxmox/commit/78548b485baabef0265043872de57d3e02d7fb57))
+* **agents:** accept per-profile Slack report channels on an agent ([#1417](https://github.com/dryvist/tofu-proxmox/issues/1417)) ([17b6d46](https://github.com/dryvist/tofu-proxmox/commit/17b6d46299744708fd11213d3ecbdaf992e2b681))
+
 ## [3.56.1](https://github.com/dryvist/tofu-proxmox/compare/v3.56.0...v3.56.1) (2026-11-02)
 
 
