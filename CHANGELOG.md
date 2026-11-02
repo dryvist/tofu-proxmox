@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.56.1](https://github.com/dryvist/tofu-proxmox/compare/v3.56.0...v3.56.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **schema:** accept the local router key class for agents ([#1415](https://github.com/dryvist/tofu-proxmox/issues/1415)) ([aead700](https://github.com/dryvist/tofu-proxmox/commit/aead700c50a72032d174dd2823c72b9dfb8cf5c1))
+
 ## [3.56.0](https://github.com/dryvist/tofu-proxmox/compare/v3.55.0...v3.56.0) (2026-11-02)
 
 

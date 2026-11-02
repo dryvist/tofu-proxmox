@@ -87,6 +87,7 @@ run "agent_roster_projects_two_agents" {
         slack = {
           home_channel     = "agent-home-example"
           requests_channel = "agent-requests-example"
+          profile_channels = { "example-profile" = "C0EXAMPLE1" }
         }
       }
     }
@@ -134,7 +135,8 @@ run "agent_roster_projects_two_agents" {
       output.ansible_inventory.agents["support-guide"].trust_tier == "trusted" &&
       sort(keys(output.ansible_inventory.agents["support-guide"])) == tolist(["container", "display", "hostname", "owns", "purpose", "router_key_class", "slack", "trust_tier"]) &&
       output.ansible_inventory.agents["support-guide"].slack.home_channel == "agent-home-example" &&
-      output.ansible_inventory.agents["support-guide"].slack.requests_channel == "agent-requests-example"
+      output.ansible_inventory.agents["support-guide"].slack.requests_channel == "agent-requests-example" &&
+      output.ansible_inventory.agents["support-guide"].slack.profile_channels == tomap({ "example-profile" = "C0EXAMPLE1" })
     )
     error_message = "The roster entry with Slack must preserve its source container, hostname, fields, and optional channels."
   }
@@ -261,6 +263,24 @@ run "agent_owns_may_use_an_open_slug_outside_the_firewall_catalog" {
     )
     error_message = "Open ownership slugs must publish as metadata without generating uncataloged firewall rules."
   }
+}
+
+run "agent_slack_profile_channel_rejects_a_non_channel_id" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name  = "research-scout", display = "Scout", purpose = "Search example records"
+        slack = { profile_channels = { "example-profile" = "#not-an-id" } }
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
 }
 
 run "agent_container_must_not_have_a_firewall_profile_tag" {

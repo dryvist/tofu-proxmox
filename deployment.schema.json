@@ -153,7 +153,7 @@
           },
           "router_key_class": {
             "type": "string",
-            "enum": ["all", "standard", "zdr"],
+            "enum": ["all", "standard", "zdr", "local"],
             "default": "standard"
           },
           "trust_tier": {
@@ -185,7 +185,13 @@
             "additionalProperties": false,
             "properties": {
               "home_channel": { "type": "string" },
-              "requests_channel": { "type": "string" }
+              "requests_channel": { "type": "string" },
+              "profile_channels": {
+                "type": "object",
+                "description": "Slack channel id per named agent profile.",
+                "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+                "additionalProperties": { "type": "string", "pattern": "^C[A-Z0-9]+$" }
+              }
             }
           }
         }
