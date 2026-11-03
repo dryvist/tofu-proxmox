@@ -42,7 +42,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "homarr_s
 resource "proxmox_virtual_environment_firewall_options" "homarr_container" {
   for_each = var.homarr_container_ids
 
-  node_name     = var.node_name
+  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -61,7 +61,7 @@ resource "proxmox_virtual_environment_firewall_options" "homarr_container" {
 resource "proxmox_virtual_environment_firewall_rules" "homarr_container" {
   for_each = var.homarr_container_ids
 
-  node_name    = var.node_name
+  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id = each.value
 
   rule {
