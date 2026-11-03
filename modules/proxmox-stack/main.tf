@@ -143,6 +143,8 @@ module "containers" {
         for ni in v.network_interfaces : merge(ni, {
           vlan_id     = lookup(var.vlan_ids, v.vlan, null)
           mac_address = try(v.dhcp, false) ? local.container_mac[k] : null
+          # OCI app images (os_type unmanaged) have no DHCP client; the host leases for them.
+          host_managed = try(v.dhcp, false) && try(v.os_type, null) == "unmanaged" ? true : null
         })
       ]
       # DRY: Always inject SSH key for Ansible access
@@ -161,7 +163,7 @@ module "containers" {
   default_datastore = var.datastore_default
   domain            = var.domain
 
-  depends_on = [module.pools, module.storage]
+  depends_on = [module.pools, module.storage, proxmox_oci_image.oci_ct_template]
 }
 
 # Splunk VM module - Docker-based Splunk Enterprise

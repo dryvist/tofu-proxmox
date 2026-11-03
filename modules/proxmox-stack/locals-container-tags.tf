@@ -33,6 +33,7 @@ locals {
     ingress          = "ingress"
     langflow_eval    = "langflow-eval"
     langfuse         = "langfuse"
+    leantime         = "leantime"
     llm_fast         = "llm-fast"
     llm_classify     = local.gpu_classify_role_tag
     llm_gpu_router   = "llm-gpu-small-router"
@@ -60,6 +61,7 @@ locals {
     vikunja          = "vikunja"
     vpn              = "vpn"
     wall             = "wall"
+    youtrack         = "youtrack"
     zammad           = "zammad"
   }
 }

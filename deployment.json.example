@@ -820,6 +820,80 @@
         }
       ]
     },
+    "youtrack": {
+      "vm_id": 605080,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "youtrack",
+      "description": "JetBrains YouTrack issue tracker - OCI image pinned by version tag in code, web on 8080 fronted by Traefik; own OIDC login. HA-enrolled, with its pvesr replica on a second node.",
+      "cpu_cores": 4,
+      "memory_dedicated": 6144,
+      "tags": [
+        "terraform",
+        "container",
+        "youtrack",
+        "oci-app"
+      ],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-1",
+      "ha": true,
+      "ha_affinity_group": "youtrack",
+      "ha_replication_target": "proxmox-3",
+      "unprivileged": true,
+      "ct_template": "youtrack-oci.tar",
+      "os_type": "unmanaged",
+      "environment_variables": {
+        "JAVA_TOOL_OPTIONS": "-Xmx3g -XX:MaxMetaspaceSize=350m"
+      },
+      "features": {
+        "nesting": false
+      },
+      "root_disk": {
+        "size": 16
+      },
+      "mount_points": [
+        {
+          "volume": "local-zfs",
+          "size": "10G",
+          "path": "/opt/youtrack/data"
+        },
+        {
+          "volume": "local-zfs",
+          "size": "1G",
+          "path": "/opt/youtrack/conf"
+        },
+        {
+          "volume": "local-zfs",
+          "size": "2G",
+          "path": "/opt/youtrack/logs"
+        },
+        {
+          "volume": "local-zfs",
+          "size": "20G",
+          "path": "/opt/youtrack/backups"
+        }
+      ]
+    },
+    "leantime": {
+      "vm_id": 605090,
+      "dhcp": true,
+      "vlan": "apps",
+      "hostname": "leantime",
+      "description": "Leantime project management - native PHP install, web on 80 fronted by Traefik; own OIDC login. No HA.",
+      "cpu_cores": 2,
+      "memory_dedicated": 2048,
+      "tags": [
+        "terraform",
+        "container",
+        "leantime"
+      ],
+      "pool_id": "infrastructure",
+      "node_name": "proxmox-1",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 8
+      }
+    },
     "_dashboards_comment": "Estate dashboards (`dashboard` tag, apps VLAN). All three render their service list from the SAME published ingress table (modules/proxmox-stack/locals-ingress-backends.tf), so a service is filed on every board by adding its Traefik route \u2014 never by editing three boards. Grouping comes from each backend container's `vlan`, so no second tag list is maintained. Every board is Authelia-gated at the ingress: Glance in particular ships no authentication of its own, so that gate is the only thing in front of it. Homarr is the community-scripts install-layer pilot; Homepage and Glance are file-configured, so their rendered config is idempotent, whereas Homarr's API create always inserts and its role must diff by name.",
     "homarr": {
       "vm_id": 605030,

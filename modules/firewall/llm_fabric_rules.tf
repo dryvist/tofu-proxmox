@@ -63,7 +63,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "llm_fast
 resource "proxmox_virtual_environment_firewall_options" "llm_router_container" {
   for_each = var.llm_router_container_ids
 
-  node_name     = var.node_name
+  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -81,7 +81,7 @@ resource "proxmox_virtual_environment_firewall_options" "llm_router_container" {
 resource "proxmox_virtual_environment_firewall_rules" "llm_router_container" {
   for_each = var.llm_router_container_ids
 
-  node_name    = var.node_name
+  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id = each.value
 
   rule {
@@ -126,7 +126,7 @@ resource "proxmox_virtual_environment_firewall_rules" "llm_router_container" {
 resource "proxmox_virtual_environment_firewall_options" "llm_fast_container" {
   for_each = local.llm_gpu_serving_container_ids
 
-  node_name     = var.node_name
+  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -142,7 +142,7 @@ resource "proxmox_virtual_environment_firewall_options" "llm_fast_container" {
 resource "proxmox_virtual_environment_firewall_rules" "llm_fast_container" {
   for_each = local.llm_gpu_serving_container_ids
 
-  node_name    = var.node_name
+  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id = each.value
 
   rule {
@@ -253,7 +253,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "llm_redi
 resource "proxmox_virtual_environment_firewall_options" "llm_redis_container" {
   for_each = var.llm_redis_container_ids
 
-  node_name     = var.node_name
+  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -269,7 +269,7 @@ resource "proxmox_virtual_environment_firewall_options" "llm_redis_container" {
 resource "proxmox_virtual_environment_firewall_rules" "llm_redis_container" {
   for_each = var.llm_redis_container_ids
 
-  node_name    = var.node_name
+  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id = each.value
 
   rule {

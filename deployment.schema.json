@@ -528,6 +528,15 @@
           "minLength": 1,
           "description": "OS template override, as a bare vztmpl filename on datastore_iso. Absent = the estate's shared Debian template. A NixOS guest sets this together with os_type=\"unmanaged\". SET-ONCE: template_file_id is in the container module's lifecycle.ignore_changes, so changing it on a live guest is a no-op."
         },
+        "environment_variables": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Runtime environment variables for the container init process. OCI-image guests set their application's runtime options here."
+        },
+        "entrypoint": {
+          "type": "string",
+          "description": "Init command for an OCI-image guest. Proxmox copies it from the image at create; set it here so an update keeps it."
+        },
         "ha": {
           "type": "boolean",
           "description": "Enrol this guest in Proxmox HA (modules/proxmox-stack/ha.tf). Default false. Enrolling also accepts the relocation-vs-state hazard documented in imports.tf: HA moves a guest, refresh 404s it on the node recorded in state, and the failed apply freezes the published ansible_inventory. Enrol a guest whose state cannot be rebuilt from code."

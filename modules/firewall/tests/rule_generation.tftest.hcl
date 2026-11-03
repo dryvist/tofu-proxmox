@@ -43,6 +43,8 @@ variables {
       redis_default          = 6379
       nautobot_web           = 8080
       vikunja_web            = 3456
+      youtrack_web           = 8080
+      leantime_web           = 80
       homebox_web            = 7745
       homarr_web             = 7575
       # Estate dashboards alongside Homarr (referenced by homepage/glance rules)
@@ -1118,6 +1120,54 @@ run "vikunja_rule_tracks_constant_and_internal_scope" {
   }
 }
 
+run "youtrack_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  variables {
+    internal_networks = ["198.51.100.0/24", "203.0.113.0/24"]
+  }
+
+  # Exactly one live rule: TCP youtrack_web (8080) from the internal networks.
+  assert {
+    condition     = length(local.youtrack_services_rules) == 1
+    error_message = "youtrack_services_rules must be exactly 1 (TCP youtrack_web), got ${length(local.youtrack_services_rules)}"
+  }
+
+  assert {
+    condition     = local.youtrack_services_rules[0].proto == "tcp" && local.youtrack_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.youtrack_web)
+    error_message = "youtrack rule must be TCP tracking service_ports.youtrack_web, got proto='${local.youtrack_services_rules[0].proto}' dport='${local.youtrack_services_rules[0].dport}'"
+  }
+
+  assert {
+    condition     = local.youtrack_services_rules[0].source == "198.51.100.0/24,203.0.113.0/24"
+    error_message = "youtrack rule source must be the comma-joined internal networks, got '${local.youtrack_services_rules[0].source}'"
+  }
+}
+
+run "leantime_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  variables {
+    internal_networks = ["198.51.100.0/24", "203.0.113.0/24"]
+  }
+
+  # Exactly one live rule: TCP leantime_web (80) from the internal networks.
+  assert {
+    condition     = length(local.leantime_services_rules) == 1
+    error_message = "leantime_services_rules must be exactly 1 (TCP leantime_web), got ${length(local.leantime_services_rules)}"
+  }
+
+  assert {
+    condition     = local.leantime_services_rules[0].proto == "tcp" && local.leantime_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.leantime_web)
+    error_message = "leantime rule must be TCP tracking service_ports.leantime_web, got proto='${local.leantime_services_rules[0].proto}' dport='${local.leantime_services_rules[0].dport}'"
+  }
+
+  assert {
+    condition     = local.leantime_services_rules[0].source == "198.51.100.0/24,203.0.113.0/24"
+    error_message = "leantime rule source must be the comma-joined internal networks, got '${local.leantime_services_rules[0].source}'"
+  }
+}
+
 run "homebox_rule_tracks_constant_and_internal_scope" {
   command = plan
 
@@ -1690,5 +1740,31 @@ run "legacy_hermes_rules_are_unchanged_without_owned_systems" {
       ]
     )
     error_message = "Without an owned system, Hermes must keep its existing group list and order."
+  }
+}
+
+# --- per-guest node resolution for container firewall resources ---
+
+run "container_firewall_resolves_the_placement_node_per_guest" {
+  command = plan
+
+  variables {
+    youtrack_container_ids = {
+      "placed-guest"   = 301
+      "unlisted-guest" = 302
+    }
+    container_nodes = {
+      "301" = "node-two"
+    }
+  }
+
+  assert {
+    condition     = proxmox_virtual_environment_firewall_options.youtrack_container["placed-guest"].node_name == "node-two" && proxmox_virtual_environment_firewall_rules.youtrack_container["placed-guest"].node_name == "node-two"
+    error_message = "A guest whose VM ID is in container_nodes must get its firewall options and rules on that node."
+  }
+
+  assert {
+    condition     = proxmox_virtual_environment_firewall_options.youtrack_container["unlisted-guest"].node_name == var.node_name && proxmox_virtual_environment_firewall_rules.youtrack_container["unlisted-guest"].node_name == var.node_name
+    error_message = "A guest whose VM ID is absent from container_nodes must keep the stack node_name."
   }
 }

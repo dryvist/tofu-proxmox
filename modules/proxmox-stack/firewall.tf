@@ -22,11 +22,23 @@ locals {
   )))
 }
 
+# Per-container guest placement: container VM ID (as a string) => the node the
+# containers module places it on — same input and node_name expression as the
+# containers block in main.tf, so this map cannot drift from actual placement.
+locals {
+  container_nodes = {
+    for k, v in local.containers_with_engine_runtime : tostring(v.vm_id) => v.node_name
+  }
+}
+
 # Firewall module - rules for Splunk and containers
 module "firewall" {
   source = "../firewall"
 
   node_name = var.proxmox_node
+
+  # Container firewall resources resolve their node per guest from this map.
+  container_nodes = local.container_nodes
 
   splunk_vm_ids = merge(
     {
@@ -101,6 +113,10 @@ module "firewall" {
   wall_container_ids        = local.wall_container_ids
   status_container_ids      = local.status_container_ids
   grafana_container_ids     = local.grafana_container_ids
+
+  # YouTrack + Leantime containers — 8080 / 80 from internal
+  youtrack_container_ids = local.youtrack_container_ids
+  leantime_container_ids = local.leantime_container_ids
 
   # Ingress (Traefik HA) containers (ingress tag) — define-disabled guest firewall
   # that pre-allows keepalived VRRP + 80/443 so a later enforcement flip is safe.
