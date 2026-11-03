@@ -113,6 +113,10 @@ variable "containers" {
     # Runtime environment variables for the container init process.
     environment_variables = optional(map(string))
 
+    # OCI-image guests: the image init command. Proxmox copies it from the image
+    # at create, so an update that leaves it unset clears it.
+    entrypoint = optional(string)
+
     # HA opt-in; enrolling also accepts the relocation hazard imports.tf
     # documents. ha_affinity_group keeps members on separate nodes via a
     # proxmox_harule and is meaningful only with ha = true. See ha.tf.
