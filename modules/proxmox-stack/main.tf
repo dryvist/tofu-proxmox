@@ -8,7 +8,7 @@ terraform {
     # Publishes ansible_inventory to homelab RustFS (inventory_publish.tf).
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.69.1"
+      version = "= 6.70.0"
     }
     tls = {
       source  = "hashicorp/tls"
