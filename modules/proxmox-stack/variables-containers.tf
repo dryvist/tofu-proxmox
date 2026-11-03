@@ -1,4 +1,4 @@
-# Container variables: LXC container definitions and configuration
+# Container variables: LXC container definitions
 
 variable "containers" {
   description = "Map of containers to create"
@@ -110,12 +110,9 @@ variable "containers" {
     # ct_templates.tf carries the rest.
     ct_template = optional(string)
 
-    # Runtime environment variables for the container init process.
+    # OCI-image guests: runtime env and init command, kept across updates.
     environment_variables = optional(map(string))
-
-    # OCI-image guests: the image init command. Proxmox copies it from the image
-    # at create, so an update that leaves it unset clears it.
-    entrypoint = optional(string)
+    entrypoint            = optional(string)
 
     # HA opt-in; enrolling also accepts the relocation hazard imports.tf
     # documents. ha_affinity_group keeps members on separate nodes via a
@@ -135,8 +132,8 @@ variable "containers" {
     # trust is verified. Mirrors var.vms[k].ansible_connection (variables-vms.tf).
     ansible_connection = optional(string, "community.proxmox.proxmox_pct_remote")
 
-    # LXC features (set nesting=true for Docker-in-LXC on unprivileged containers;
-    # privileged containers run Docker without features — requires root@pam to set any flag)
+    # LXC features: nesting=true for Docker in an unprivileged LXC (privileged
+    # ones need none; setting any flag requires root@pam).
     features = optional(object({
       nesting = optional(bool, false)
       keyctl  = optional(bool, false)
