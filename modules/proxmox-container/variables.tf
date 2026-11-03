@@ -69,6 +69,9 @@ variable "containers" {
       # local.container_mac). Null for static guests, so the provider keeps
       # auto-generating their MAC and existing containers are not disrupted.
       mac_address = optional(string)
+      # Host runs DHCP for the interface (PVE 9.1+): OCI app images carry no DHCP
+      # client. Null leaves existing interfaces untouched.
+      host_managed = optional(bool)
     })), [{ name = "eth0", bridge = "vmbr0", firewall = true }])
 
     # Initialization
