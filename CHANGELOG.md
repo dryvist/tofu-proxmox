@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.58.0](https://github.com/dryvist/tofu-proxmox/compare/v3.57.0...v3.58.0) (2026-11-03)
+
+
+### Features
+
+* add YouTrack (OCI) and Leantime guest support ([#1424](https://github.com/dryvist/tofu-proxmox/issues/1424)) ([5667352](https://github.com/dryvist/tofu-proxmox/commit/56673527ba410d37a4c66816ac0be13ed494f6a1))
+* **firewall:** admit each specialist-eval guest's platform port ([#1421](https://github.com/dryvist/tofu-proxmox/issues/1421)) ([f8052f2](https://github.com/dryvist/tofu-proxmox/commit/f8052f2274655534c90dd20416152bd7f8397d7c))
+* **proxmox-stack:** add youtrack (OCI image) and leantime guests ([5667352](https://github.com/dryvist/tofu-proxmox/commit/56673527ba410d37a4c66816ac0be13ed494f6a1))
+
 ## [3.57.0](https://github.com/dryvist/tofu-proxmox/compare/v3.56.1...v3.57.0) (2026-11-02)
 
 
