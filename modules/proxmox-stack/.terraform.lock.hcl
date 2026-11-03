@@ -3,7 +3,7 @@
 
 provider "registry.opentofu.org/bpg/proxmox" {
   version     = "0.118.0"
-  constraints = "= 0.118.0"
+  constraints = "0.118.0"
   hashes = [
     "h1:0Hhv6YiCsbrDMqJJCv2byCJOZM4B43TtSTpt9XAHsB0=",
     "h1:IAkra/f95pnYd6cFMHQnkMV4M/ALnn+s2ZKNXrlZOjA=",
