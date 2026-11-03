@@ -59,7 +59,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "speciali
 resource "proxmox_virtual_environment_firewall_options" "specialist_eval_container" {
   for_each = var.specialist_eval_container_ids
 
-  node_name     = var.node_name
+  node_name     = lookup(var.container_nodes, tostring(each.value.vm_id), var.node_name)
   container_id  = each.value.vm_id
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -74,7 +74,7 @@ resource "proxmox_virtual_environment_firewall_options" "specialist_eval_contain
 resource "proxmox_virtual_environment_firewall_rules" "specialist_eval_container" {
   for_each = var.specialist_eval_container_ids
 
-  node_name    = var.node_name
+  node_name    = lookup(var.container_nodes, tostring(each.value.vm_id), var.node_name)
   container_id = each.value.vm_id
 
   rule {
