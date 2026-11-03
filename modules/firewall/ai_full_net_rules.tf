@@ -58,7 +58,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "ai_full_
 resource "proxmox_virtual_environment_firewall_options" "ai_full_net_container" {
   for_each = var.ai_full_net_container_ids
 
-  node_name     = var.node_name
+  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -77,7 +77,7 @@ resource "proxmox_virtual_environment_firewall_options" "ai_full_net_container" 
 resource "proxmox_virtual_environment_firewall_rules" "ai_full_net_container" {
   for_each = var.ai_full_net_container_ids
 
-  node_name    = var.node_name
+  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
   container_id = each.value
 
   rule {
