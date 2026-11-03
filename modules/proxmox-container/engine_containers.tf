@@ -42,7 +42,8 @@ resource "proxmox_virtual_environment_container" "engine_containers" {
 
   # Container initialization
   initialization {
-    hostname = each.value.hostname
+    hostname   = each.value.hostname
+    entrypoint = each.value.entrypoint
 
     # IP configuration. address is either a CIDR (static, vm_id-derived) or the
     # literal "dhcp" for DNS-first guests; in the DHCP case the caller passes a
