@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.59.0](https://github.com/dryvist/tofu-proxmox/compare/v3.58.0...v3.59.0) (2026-11-03)
+
+
+### Features
+
+* allow gated targeted applies ([#1433](https://github.com/dryvist/tofu-proxmox/issues/1433)) ([15de093](https://github.com/dryvist/tofu-proxmox/commit/15de09389454c2fb117a8e209d0790d2531f0bff))
+
+
+### Bug Fixes
+
+* **firewall:** bind per-service rules to each container's node ([#1431](https://github.com/dryvist/tofu-proxmox/issues/1431)) ([17ca4f3](https://github.com/dryvist/tofu-proxmox/commit/17ca4f3a061023b9b6f831bc7b0861463b071246))
+* **proxmox-container:** keep an OCI app container's entrypoint across updates ([#1430](https://github.com/dryvist/tofu-proxmox/issues/1430)) ([d74fbdc](https://github.com/dryvist/tofu-proxmox/commit/d74fbdc7bd9282123185ec1a6a7bf9936d6e6cb6))
+* **proxmox-container:** let the host run DHCP for OCI app containers ([#1428](https://github.com/dryvist/tofu-proxmox/issues/1428)) ([a300baf](https://github.com/dryvist/tofu-proxmox/commit/a300baf74216f109eb67363b33f4e670bff0ed65))
+* **proxmox-stack:** pull an OCI template only when a container selects it ([#1427](https://github.com/dryvist/tofu-proxmox/issues/1427)) ([e48a4f6](https://github.com/dryvist/tofu-proxmox/commit/e48a4f6f4ca9b79281e29970cb450835f27c0426))
+
 ## [3.58.0](https://github.com/dryvist/tofu-proxmox/compare/v3.57.0...v3.58.0) (2026-11-03)
 
 
