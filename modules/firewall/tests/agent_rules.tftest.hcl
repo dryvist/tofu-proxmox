@@ -115,3 +115,28 @@ run "agent_owned_ports_must_not_overlap_shared_ai_egress" {
 
   expect_failures = [proxmox_virtual_environment_firewall_rules.agent_container["research-scout"]]
 }
+
+run "agent_container_resolves_the_placement_node_per_guest" {
+  command = plan
+
+  variables {
+    agent_ingress_vip = "192.0.2.9"
+    agent_containers = {
+      "placed-agent"   = { vm_id = 240, owns = [] }
+      "unlisted-agent" = { vm_id = 241, owns = [] }
+    }
+    container_nodes = {
+      "240" = "node-two"
+    }
+  }
+
+  assert {
+    condition     = proxmox_virtual_environment_firewall_options.agent_container["placed-agent"].node_name == "node-two" && proxmox_virtual_environment_firewall_rules.agent_container["placed-agent"].node_name == "node-two"
+    error_message = "An agent container whose VM ID is in container_nodes must get its firewall options and rules on that node."
+  }
+
+  assert {
+    condition     = proxmox_virtual_environment_firewall_options.agent_container["unlisted-agent"].node_name == var.node_name && proxmox_virtual_environment_firewall_rules.agent_container["unlisted-agent"].node_name == var.node_name
+    error_message = "An agent container whose VM ID is absent from container_nodes must keep the stack node_name."
+  }
+}
