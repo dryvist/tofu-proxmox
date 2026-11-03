@@ -12,6 +12,13 @@
       ],
       "extractVersionTemplate": "^(?:proxmox-backup-server_|debian-13-standard_)(?<version>\\d+\\.\\d+-\\d+)(?:\\.iso|_amd64\\.tar\\.zst)$",
       "versioningTemplate": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)-(?<build>\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/variables-oci\\.tf$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+default\\s*=\\s*\"[^\"]*:(?<currentValue>[^\"]+)\""
+      ]
     }
   ],
   "customDatasources": {

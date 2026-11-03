@@ -162,6 +162,9 @@ resource "proxmox_virtual_environment_container" "engine_containers" {
     }
   }
 
+  # Runtime environment for the container init process (OCI-image guests).
+  environment_variables = each.value.environment_variables
+
   # Operating system
   operating_system {
     template_file_id = each.value.template_file_id
