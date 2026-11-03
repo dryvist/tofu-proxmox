@@ -143,6 +143,8 @@ module "containers" {
         for ni in v.network_interfaces : merge(ni, {
           vlan_id     = lookup(var.vlan_ids, v.vlan, null)
           mac_address = try(v.dhcp, false) ? local.container_mac[k] : null
+          # OCI app images (os_type unmanaged) have no DHCP client; the host leases for them.
+          host_managed = try(v.dhcp, false) && try(v.os_type, null) == "unmanaged" ? true : null
         })
       ]
       # DRY: Always inject SSH key for Ansible access

@@ -168,7 +168,8 @@ resource "proxmox_virtual_environment_container" "containers" {
       vlan_id  = network_interface.value.vlan_id
       # Deterministic MAC for DHCP-first guests; null for static guests lets the
       # provider keep its auto-generated MAC (no churn on existing containers).
-      mac_address = network_interface.value.mac_address
+      mac_address  = network_interface.value.mac_address
+      host_managed = network_interface.value.host_managed
     }
   }
 
