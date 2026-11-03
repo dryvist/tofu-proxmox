@@ -19,6 +19,8 @@ locals {
     "qdrant",
     "plex",
     "vikunja",
+    "youtrack",
+    "leantime",
     "homeassistant",
     "proxmox",
     "pbs",

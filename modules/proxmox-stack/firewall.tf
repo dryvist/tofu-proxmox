@@ -102,6 +102,10 @@ module "firewall" {
   status_container_ids      = local.status_container_ids
   grafana_container_ids     = local.grafana_container_ids
 
+  # YouTrack + Leantime containers — 8080 / 80 from internal
+  youtrack_container_ids = local.youtrack_container_ids
+  leantime_container_ids = local.leantime_container_ids
+
   # Ingress (Traefik HA) containers (ingress tag) — define-disabled guest firewall
   # that pre-allows keepalived VRRP + 80/443 so a later enforcement flip is safe.
   ingress_container_ids = local.ingress_container_ids

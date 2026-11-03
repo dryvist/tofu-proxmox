@@ -120,5 +120,8 @@ locals {
     zot          = { backend = "registry", port = local.pipeline_constants.service_ports.zot_web }
     autobrr      = { backend = "download-vpn", port = local.pipeline_constants.service_ports.autobrr_web }
     "idrac-kvm"  = { backend = "idrac-kvm", port = local.pipeline_constants.service_ports.idrac_kvm_web }
+    # youtrack and leantime: own OIDC login and token-authenticated APIs, so no Authelia gate (sso = false).
+    youtrack = { backend = "youtrack", port = local.pipeline_constants.service_ports.youtrack_web, sso = false }
+    leantime = { backend = "leantime", port = local.pipeline_constants.service_ports.leantime_web, sso = false }
   })
 }

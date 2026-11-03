@@ -110,6 +110,9 @@ variable "containers" {
     # ct_templates.tf carries the rest.
     ct_template = optional(string)
 
+    # Runtime environment variables for the container init process.
+    environment_variables = optional(map(string))
+
     # HA opt-in; enrolling also accepts the relocation hazard imports.tf
     # documents. ha_affinity_group keeps members on separate nodes via a
     # proxmox_harule and is meaningful only with ha = true. See ha.tf.
@@ -123,11 +126,9 @@ variable "containers" {
     ha_replication_target = optional(string)
 
     # Ansible connection method published in ansible_inventory
-    # (inventory_publish.tf). Every container defaults to
-    # "community.proxmox.proxmox_pct_remote" (the current transport, via the
-    # node's pct CLI) — this is a no-op field until an operator flips a
-    # specific, sshd-ready container to "ssh" once its SSH-CA trust is
-    # verified. Mirrors var.vms[k].ansible_connection (variables-vms.tf).
+    # (inventory_publish.tf). Every container defaults to the pct transport, so this
+    # is a no-op until an sshd-ready container is flipped to "ssh" after its SSH-CA
+    # trust is verified. Mirrors var.vms[k].ansible_connection (variables-vms.tf).
     ansible_connection = optional(string, "community.proxmox.proxmox_pct_remote")
 
     # LXC features (set nesting=true for Docker-in-LXC on unprivileged containers;

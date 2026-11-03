@@ -108,6 +108,18 @@ run "splunk_vm_id_out_of_range_rejected" {
   ]
 }
 
+run "youtrack_oci_reference_must_be_version_tag" {
+  command = plan
+
+  variables {
+    youtrack_oci_reference = "jetbrains/youtrack:latest"
+  }
+
+  expect_failures = [
+    var.youtrack_oci_reference,
+  ]
+}
+
 run "vm_with_invalid_vga_type_rejected" {
   command = plan
 
