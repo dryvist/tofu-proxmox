@@ -50,6 +50,11 @@ what must survive — at minimum the operator's own network and the one
 configuration management runs from, without which no converge can reach the
 guest while the VPN is connected.
 
+`vlan_cidrs` is a top-level map from VLAN name to subnet, for consumers that
+limit access by subnet. It holds only the VLANs listed in
+`inventory_published_vlans` (default `["apps"]`). A listed name that is missing
+from `network_cidrs` is left out, so a consumer that needs it fails closed.
+
 A publish precondition rejects a guest tagged `vdi` that has no gateway, so a
 guest whose VLAN does not resolve fails the plan rather than publishing
 destinations with nothing to point them at. `ansible-proxmox-apps` consumes both keys in its

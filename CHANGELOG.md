@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.60.0](https://github.com/dryvist/tofu-proxmox/compare/v3.59.0...v3.60.0) (2026-11-04)
+
+
+### Features
+
+* **agent:** zcode run j-8986d5c84de425c6 ([2fad171](https://github.com/dryvist/tofu-proxmox/commit/2fad17122001edc9782e740acf423ce32a455e98))
+
 ## [3.59.0](https://github.com/dryvist/tofu-proxmox/compare/v3.58.0...v3.59.0) (2026-11-03)
 
 

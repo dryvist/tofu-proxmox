@@ -3,12 +3,12 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "= 0.116.1"
+      version = "= 0.118.0"
     }
     # Publishes ansible_inventory to homelab RustFS (inventory_publish.tf).
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.69.1"
+      version = "= 6.70.0"
     }
     tls = {
       source  = "hashicorp/tls"
