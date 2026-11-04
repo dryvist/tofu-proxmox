@@ -92,3 +92,11 @@ output "rack_servers" {
   }
   sensitive = true
 }
+
+# Route rows dropped because their backend container is not deployed. A dropped
+# route is absent from the published ingress and from every dashboard. Plan
+# shows this list so a missing tile is visible instead of silent.
+output "ingress_dropped_routes" {
+  description = "Ingress route names dropped because their backend container is not in var.containers."
+  value       = local.ingress_dropped_routes
+}

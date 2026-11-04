@@ -258,3 +258,46 @@ run "external_ingress_rejects_invalid_port" {
   }
   expect_failures = [var.external_ingress]
 }
+
+run "routes_without_a_deployed_backend_are_named_as_dropped" {
+  command = plan
+
+  variables {
+    containers = {
+      homebox = {
+        vm_id     = 999
+        node_name = "test"
+        vlan      = keys(var.vlan_ids)[0]
+        dhcp      = true
+        tags      = ["homebox"]
+      }
+    }
+    nodes = {
+      test = { role = "test" }
+    }
+  }
+
+  assert {
+    condition     = contains(local.ingress_dropped_routes, "wall")
+    error_message = "A route whose backend container is not deployed must be named as dropped"
+  }
+
+  assert {
+    condition     = length([for r in output.ansible_inventory.ingress : r if r.name == "wall"]) == 0
+    error_message = "The dropped route must also be absent from the published ingress, or the name would be wrong"
+  }
+
+  assert {
+    condition     = !contains(local.ingress_dropped_routes, "homebox")
+    error_message = "A route whose backend is deployed must not be named as dropped"
+  }
+}
+
+run "zcode_route_has_an_explicit_dashboard_group" {
+  command = plan
+
+  assert {
+    condition     = local.ingress_route_groups.zcode == "ai"
+    error_message = "zcode has no container VLAN, so its dashboard group must come from the map"
+  }
+}

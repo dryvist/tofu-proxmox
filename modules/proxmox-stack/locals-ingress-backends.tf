@@ -213,3 +213,13 @@ locals {
     })
   ]
 }
+
+locals {
+  # Table rows whose backend is not in var.containers. The assembly above drops
+  # them without a trace, which is the normal state of a partial deployment, so
+  # they are named here. The check block below reports them on every plan.
+  ingress_dropped_routes = sort([
+    for name, svc in local.ingress_services : name
+    if !contains(keys(var.containers), svc.backend)
+  ])
+}

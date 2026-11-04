@@ -57,5 +57,8 @@ locals {
 
     # Apps tier pools.
     zammad = "apps"
+
+    # AI sandbox web UI, a VM-backed route with no container VLAN to inherit.
+    zcode = "ai"
   }
 }
