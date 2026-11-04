@@ -3,12 +3,6 @@ variable "node_name" {
   type        = string
 }
 
-variable "container_nodes" {
-  description = "Container VM ID (as a string) => the node the guest is placed on. Container-keyed firewall resources resolve their node per guest from this map; an ID absent from the map keeps node_name."
-  type        = map(string)
-  default     = {}
-}
-
 variable "management_network" {
   description = "CIDR of management network for SSH/Web access. Configure in terraform.tfvars for your environment."
   type        = string

@@ -18,10 +18,6 @@ variable "containers" {
     # Runtime environment variables for the container init process.
     environment_variables = optional(map(string))
 
-    # OCI-image guests: the image init command. Proxmox copies it from the image
-    # at create, so an update that leaves it unset clears it.
-    entrypoint = optional(string)
-
     # Resource configuration
     cpu_cores        = optional(number, 1)
     memory_dedicated = optional(number, 512)
@@ -73,9 +69,6 @@ variable "containers" {
       # local.container_mac). Null for static guests, so the provider keeps
       # auto-generating their MAC and existing containers are not disrupted.
       mac_address = optional(string)
-      # Host runs DHCP for the interface (PVE 9.1+): OCI app images carry no DHCP
-      # client. Null leaves existing interfaces untouched.
-      host_managed = optional(bool)
     })), [{ name = "eth0", bridge = "vmbr0", firewall = true }])
 
     # Initialization

@@ -52,16 +52,9 @@ locals {
     "youtrack-oci.tar" = var.youtrack_oci_reference
   }
 
-  # Only templates some container selects are pulled, so an unused pin never
-  # puts a pull (and its node privileges) on the apply path.
-  oci_ct_templates_in_use = {
-    for file, reference in local.oci_ct_templates : file => reference
-    if contains([for c in values(var.containers) : try(c.ct_template, null)], file)
-  }
-
   oci_ct_template_pulls = merge([
     for name, node in var.nodes : {
-      for file, reference in local.oci_ct_templates_in_use : "${name}/${file}" => {
+      for file, reference in local.oci_ct_templates : "${name}/${file}" => {
         node_name = name
         file_name = file
         reference = reference

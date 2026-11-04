@@ -52,8 +52,7 @@ resource "proxmox_virtual_environment_container" "containers" {
 
   # Container initialization
   initialization {
-    hostname   = each.value.hostname
-    entrypoint = each.value.entrypoint
+    hostname = each.value.hostname
 
     # IP configuration. address is either a CIDR (static, vm_id-derived) or the
     # literal "dhcp" for DNS-first guests; in the DHCP case the caller passes a
@@ -169,8 +168,7 @@ resource "proxmox_virtual_environment_container" "containers" {
       vlan_id  = network_interface.value.vlan_id
       # Deterministic MAC for DHCP-first guests; null for static guests lets the
       # provider keep its auto-generated MAC (no churn on existing containers).
-      mac_address  = network_interface.value.mac_address
-      host_managed = network_interface.value.host_managed
+      mac_address = network_interface.value.mac_address
     }
   }
 

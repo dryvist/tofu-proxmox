@@ -51,7 +51,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "herdr_cl
 resource "proxmox_virtual_environment_firewall_options" "herdr_container" {
   for_each = var.herdr_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -67,7 +67,7 @@ resource "proxmox_virtual_environment_firewall_options" "herdr_container" {
 resource "proxmox_virtual_environment_firewall_rules" "herdr_container" {
   for_each = var.herdr_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {
@@ -93,7 +93,7 @@ resource "proxmox_virtual_environment_firewall_rules" "herdr_container" {
 resource "proxmox_virtual_environment_firewall_options" "herdr_client_container" {
   for_each = var.herdr_client_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -109,7 +109,7 @@ resource "proxmox_virtual_environment_firewall_options" "herdr_client_container"
 resource "proxmox_virtual_environment_firewall_rules" "herdr_client_container" {
   for_each = var.herdr_client_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {

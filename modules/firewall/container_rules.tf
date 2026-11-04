@@ -8,7 +8,7 @@
 resource "proxmox_virtual_environment_firewall_options" "cribl_stream_container" {
   for_each = var.cribl_stream_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -22,7 +22,7 @@ resource "proxmox_virtual_environment_firewall_options" "cribl_stream_container"
 resource "proxmox_virtual_environment_firewall_rules" "cribl_stream_container" {
   for_each = var.cribl_stream_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {
@@ -85,7 +85,7 @@ resource "proxmox_virtual_environment_firewall_rules" "cribl_stream_container" {
 resource "proxmox_virtual_environment_firewall_options" "notification_container" {
   for_each = var.notification_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -99,7 +99,7 @@ resource "proxmox_virtual_environment_firewall_options" "notification_container"
 resource "proxmox_virtual_environment_firewall_rules" "notification_container" {
   for_each = var.notification_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {
@@ -120,7 +120,7 @@ resource "proxmox_virtual_environment_firewall_rules" "notification_container" {
 resource "proxmox_virtual_environment_firewall_options" "apt_cacher_ng_container" {
   for_each = var.apt_cacher_ng_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -134,7 +134,7 @@ resource "proxmox_virtual_environment_firewall_options" "apt_cacher_ng_container
 resource "proxmox_virtual_environment_firewall_rules" "apt_cacher_ng_container" {
   for_each = var.apt_cacher_ng_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {
@@ -154,7 +154,7 @@ resource "proxmox_virtual_environment_firewall_rules" "apt_cacher_ng_container" 
 resource "proxmox_virtual_environment_firewall_options" "git_mirror_container" {
   for_each = var.git_mirror_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -168,7 +168,7 @@ resource "proxmox_virtual_environment_firewall_options" "git_mirror_container" {
 resource "proxmox_virtual_environment_firewall_rules" "git_mirror_container" {
   for_each = var.git_mirror_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {
@@ -199,7 +199,7 @@ resource "proxmox_virtual_environment_firewall_rules" "git_mirror_container" {
 resource "proxmox_virtual_environment_firewall_options" "vectordb_container" {
   for_each = var.vectordb_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -216,7 +216,7 @@ resource "proxmox_virtual_environment_firewall_options" "vectordb_container" {
 resource "proxmox_virtual_environment_firewall_rules" "vectordb_container" {
   for_each = var.vectordb_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {
@@ -247,7 +247,7 @@ resource "proxmox_virtual_environment_firewall_rules" "vectordb_container" {
 resource "proxmox_virtual_environment_firewall_options" "rag_container" {
   for_each = var.rag_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -264,7 +264,7 @@ resource "proxmox_virtual_environment_firewall_options" "rag_container" {
 resource "proxmox_virtual_environment_firewall_rules" "rag_container" {
   for_each = var.rag_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {

@@ -17,12 +17,8 @@ The private-data-repo versioned-mirror PR (the old `scripts/sync-inventory.sh`
 after-hook) is retired along with Terragrunt. Object versioning on the
 `iac-inventory` RustFS bucket is the replacement history/rollback mechanism.
 
-Targeted applies run through the gated targeted path (see `AGENTS.md`). A
-targeted run that excludes `aws_s3_object.ansible_inventory` does not republish
-the inventory, so consumers stay on the last published contract until the
-publisher is in scope or a full Terrakube workspace run completes. Add the
-publisher's address to the targets when the change must reach Ansible
-consumers. The publisher's preconditions still gate every write.
+Never use a targeted apply: excluding the publisher could leave consumers on
+an older contract. A full Terrakube workspace run is the only publish boundary.
 
 During migration, the former AWS inventory object is intentionally forgotten
 without destruction. Retire that orphan only after every consumer proves the

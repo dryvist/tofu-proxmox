@@ -22,23 +22,11 @@ locals {
   )))
 }
 
-# Per-container guest placement: container VM ID (as a string) => the node the
-# containers module places it on — same input and node_name expression as the
-# containers block in main.tf, so this map cannot drift from actual placement.
-locals {
-  container_nodes = {
-    for k, v in local.containers_with_engine_runtime : tostring(v.vm_id) => v.node_name
-  }
-}
-
 # Firewall module - rules for Splunk and containers
 module "firewall" {
   source = "../firewall"
 
   node_name = var.proxmox_node
-
-  # Container firewall resources resolve their node per guest from this map.
-  container_nodes = local.container_nodes
 
   splunk_vm_ids = merge(
     {

@@ -7,7 +7,7 @@
 resource "proxmox_virtual_environment_firewall_options" "splunk_container" {
   for_each = var.splunk_container_ids
 
-  node_name     = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name     = var.node_name
   container_id  = each.value
   enabled       = local.firewall_defaults.enabled
   input_policy  = local.firewall_defaults.input_policy
@@ -21,7 +21,7 @@ resource "proxmox_virtual_environment_firewall_options" "splunk_container" {
 resource "proxmox_virtual_environment_firewall_rules" "splunk_container" {
   for_each = var.splunk_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {

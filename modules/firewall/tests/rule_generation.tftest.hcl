@@ -1742,29 +1742,3 @@ run "legacy_hermes_rules_are_unchanged_without_owned_systems" {
     error_message = "Without an owned system, Hermes must keep its existing group list and order."
   }
 }
-
-# --- per-guest node resolution for container firewall resources ---
-
-run "container_firewall_resolves_the_placement_node_per_guest" {
-  command = plan
-
-  variables {
-    youtrack_container_ids = {
-      "placed-guest"   = 301
-      "unlisted-guest" = 302
-    }
-    container_nodes = {
-      "301" = "node-two"
-    }
-  }
-
-  assert {
-    condition     = proxmox_virtual_environment_firewall_options.youtrack_container["placed-guest"].node_name == "node-two" && proxmox_virtual_environment_firewall_rules.youtrack_container["placed-guest"].node_name == "node-two"
-    error_message = "A guest whose VM ID is in container_nodes must get its firewall options and rules on that node."
-  }
-
-  assert {
-    condition     = proxmox_virtual_environment_firewall_options.youtrack_container["unlisted-guest"].node_name == var.node_name && proxmox_virtual_environment_firewall_rules.youtrack_container["unlisted-guest"].node_name == var.node_name
-    error_message = "A guest whose VM ID is absent from container_nodes must keep the stack node_name."
-  }
-}

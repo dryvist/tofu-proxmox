@@ -16,7 +16,7 @@
 resource "proxmox_virtual_environment_firewall_options" "ingress_container" {
   for_each = var.ingress_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
   # DEFINE-DISABLED: inert until local.ingress_fw_enabled flips to true.
   enabled       = local.ingress_fw_enabled
@@ -31,7 +31,7 @@ resource "proxmox_virtual_environment_firewall_options" "ingress_container" {
 resource "proxmox_virtual_environment_firewall_rules" "ingress_container" {
   for_each = var.ingress_container_ids
 
-  node_name    = lookup(var.container_nodes, tostring(each.value), var.node_name)
+  node_name    = var.node_name
   container_id = each.value
 
   rule {

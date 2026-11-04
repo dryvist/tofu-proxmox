@@ -1445,35 +1445,3 @@ run "cribl_otel_and_remote_write_routes_share_backends_with_api_health_probe" {
     error_message = "the remote-write route must probe the same /api/v1/health endpoint on the cribl_stream_api port as the otel route"
   }
 }
-
-# --- OCI templates are pulled only when a container selects them ---
-
-run "oci_templates_skip_unselected_pins" {
-  command = plan
-
-  variables {
-    containers = {
-      "technitium-dns" = { node_name = "proxmox-1", vm_id = 103, hostname = "technitium-dns", vlan = "dns" }
-    }
-  }
-
-  assert {
-    condition     = length(local.oci_ct_template_pulls) == 0
-    error_message = "no container selects an OCI template, so nothing may be pulled; got ${jsonencode(keys(local.oci_ct_template_pulls))}"
-  }
-}
-
-run "oci_templates_pull_selected_pin_on_every_commissioned_node" {
-  command = plan
-
-  variables {
-    containers = {
-      "youtrack" = { node_name = "proxmox-1", vm_id = 604000, hostname = "youtrack", vlan = "apps", dhcp = true, ct_template = "youtrack-oci.tar", os_type = "unmanaged" }
-    }
-  }
-
-  assert {
-    condition     = length(local.oci_ct_template_pulls) == length([for n in values(var.nodes) : n if n.commissioned])
-    error_message = "a selected OCI template must reach every commissioned node (HA relocation); got ${jsonencode(keys(local.oci_ct_template_pulls))}"
-  }
-}

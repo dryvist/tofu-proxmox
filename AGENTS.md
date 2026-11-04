@@ -133,16 +133,10 @@ Credentialed ops (`tofu plan` against the live state backend) run
 interactively before an apply; the apply itself is a Terrakube job (above)
 — don't gate commits on either.
 
-> **Targeted applies (`-target=...`) run only through the gated targeted
-> path**: the Terrakube `Plan and apply (targeted)` template, with targets
-> passed as the job's `targetAddrs` (or `TARGET_ADDRS` through the gated
-> converge script). Never run a hand-built CLI `-target` apply that skips the
-> approval gate. The plan must show zero destroys and zero replaces unless the
-> operator approved those exact resources. A targeted run that excludes
-> `module.homelab.aws_s3_object.ansible_inventory` does not republish the
-> inventory: when the change must reach Ansible consumers, add that address to
-> the targets (its dependencies come along) or follow up with a full run. The
-> publisher's preconditions still gate any write.
+> **Never apply a targeted (`-target=...`) plan** — a partial apply still
+> runs the inventory publish with an incomplete `ansible_inventory`,
+> overwriting the full artifact all three consumer repos read. Always apply
+> the whole plan.
 
 Test in isolated pools, not production; use feature branches;
 conventional-commit subjects only.
