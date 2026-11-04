@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.61.0](https://github.com/dryvist/tofu-proxmox/compare/v3.60.0...v3.61.0) (2026-11-04)
+
+
+### Features
+
+* **agent:** zcode run j-c86d5bbdd8c9217c ([8669222](https://github.com/dryvist/tofu-proxmox/commit/8669222e1153036eda53533cfdd760cb80638eea))
+* **ingress:** bypass Authelia for the Dify machine API paths ([#1426](https://github.com/dryvist/tofu-proxmox/issues/1426)) ([220454e](https://github.com/dryvist/tofu-proxmox/commit/220454eabfcfb15731e4b9f4e93c7c8a6da731f3))
+* **inventory:** publish opt-in VLAN subnets as vlan_cidrs ([#1442](https://github.com/dryvist/tofu-proxmox/issues/1442)) ([51f1a98](https://github.com/dryvist/tofu-proxmox/commit/51f1a98bc1f10a06d37951c3d8a7dfadafb1b27d))
+
 ## [3.60.0](https://github.com/dryvist/tofu-proxmox/compare/v3.59.0...v3.60.0) (2026-11-04)
 
 
