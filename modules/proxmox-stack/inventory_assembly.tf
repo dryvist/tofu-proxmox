@@ -157,6 +157,15 @@ locals {
     vdi_preserved_cidrs = [
       for vlan in var.vdi_preserved_vlans : nonsensitive(var.network_cidrs[vlan])
     ]
+    # Subnets of the VLANs listed in var.inventory_published_vlans, keyed by VLAN,
+    # for consumers that bound access by subnet. Same nonsensitive() reasoning as
+    # vdi_preserved_cidrs above, and likewise scoped to the listed keys so the rest
+    # of network_cidrs stays out of the artifact. A listed key absent from
+    # network_cidrs is omitted, so a consumer that needs it fails closed.
+    vlan_cidrs = {
+      for vlan in var.inventory_published_vlans : vlan => nonsensitive(var.network_cidrs[vlan])
+      if nonsensitive(contains(keys(var.network_cidrs), vlan))
+    }
     # Every Hermes agent's OpenAI-compatible endpoint, so ONE Open WebUI can be
     # the single pane over every agent. Assembled in locals-hermes-routes.tf
     # (12 KB file-size gate); see there for the contract and why it is derived.
