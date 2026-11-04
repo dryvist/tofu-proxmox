@@ -1725,6 +1725,31 @@ run "vdi_routes_stay_empty_when_no_vlans_are_listed" {
   }
 }
 
+# vlan_cidrs publishes exactly the listed VLANs, keyed by name. The default lists
+# one VLAN. An explicit list replaces it, and a key missing from network_cidrs is
+# dropped, never invented, so a consumer that needs it fails closed.
+run "vlan_cidrs_publish_the_default_vlan_only" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.vlan_cidrs == { apps = var.network_cidrs["apps"] }
+    error_message = "vlan_cidrs did not publish exactly the default VLAN's subnet."
+  }
+}
+
+run "vlan_cidrs_follow_the_listed_vlans" {
+  command = plan
+
+  variables {
+    inventory_published_vlans = ["siem", "no-such-vlan"]
+  }
+
+  assert {
+    condition     = output.ansible_inventory.vlan_cidrs == { siem = var.network_cidrs["siem"] }
+    error_message = "vlan_cidrs published a VLAN that was not listed, or kept a key that network_cidrs lacks."
+  }
+}
+
 # Regression: the published gateway was originally the cloud-init one, which is
 # null on a DHCP-first guest. The estate is DHCP-first by design, so that guard
 # rejected every real VDI guest while every test passed — none of them declared

@@ -74,3 +74,11 @@ variable "vdi_preserved_vlans" {
   type        = list(string)
   default     = []
 }
+
+# Short opt-in list, like vdi_preserved_vlans: only the listed subnets reach the
+# published inventory, never the whole network_cidrs map.
+variable "inventory_published_vlans" {
+  description = "VLAN keys (into network_cidrs) whose subnets are published to the inventory as vlan_cidrs, for consumers that bound access by subnet."
+  type        = list(string)
+  default     = ["apps"]
+}
