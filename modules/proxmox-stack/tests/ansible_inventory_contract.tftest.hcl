@@ -931,6 +931,71 @@ run "ansible_inventory_ingress_nautobot_not_postgres" {
   }
 }
 
+# --- ingress: langfuse browser UI gated, OTLP ingest path ungated ---
+#
+# The langfuse hostname keeps one gated row for its browser UI. Its OTLP
+# ingest path has a second row on the same hostname, scoped to /api/public/
+# with sso = false.
+run "ansible_inventory_ingress_langfuse_otlp_ungated" {
+  command = plan
+
+  variables {
+    domain = "example.com"
+    containers = {
+      "langfuse" = {
+        vm_id     = 110
+        node_name = "proxmox-1"
+        hostname  = "langfuse"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "langfuse"]
+      }
+      "clickhouse" = {
+        vm_id     = 111
+        node_name = "proxmox-1"
+        hostname  = "clickhouse"
+        vlan      = "apps"
+        dhcp      = true
+        tags      = ["terraform", "container", "clickhouse"]
+      }
+    }
+  }
+
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "langfuse" && r.sso == true
+    ]) == 1
+    error_message = "the langfuse browser UI row must stay sso-gated"
+  }
+
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "langfuse-otlp" && r.hostname == "langfuse" && try(r.path_prefix, "") == "/api/public/" && r.sso == false
+    ]) == 1
+    error_message = "langfuse-otlp must front /api/public/ on the langfuse hostname with sso = false"
+  }
+
+  # Only /api/public/ on the langfuse hostname is ungated: the hostname has
+  # exactly one sso = false row, and that row is the /api/public/ path.
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.hostname == "langfuse" && r.sso == false
+    ]) == 1
+    error_message = "the langfuse hostname must carry exactly one sso = false row"
+  }
+
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.hostname == "langfuse" && r.sso == false && try(r.path_prefix, "") == "/api/public/"
+    ]) == 1
+    error_message = "the only ungated langfuse path must be /api/public/"
+  }
+}
+
 # --- ingress: vikunja fronted (issue #141) ---
 run "ansible_inventory_ingress_vikunja_fronted" {
   command = plan
