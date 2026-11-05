@@ -12,11 +12,17 @@ locals {
     "dify-plugin-e" = { hostname = "dify", path_prefix = "/e/", priority = 100, backend = "dify", port = local.pipeline_constants.service_ports.dify_web, sso = false }                # plugin endpoints called by external services
     langflow        = { backend = "langflow", port = local.pipeline_constants.service_ports.langflow_web }
     langfuse        = { backend = "langfuse", port = local.pipeline_constants.service_ports.langfuse_web }
+    # Langfuse OTLP ingest (/api/public/) on the langfuse hostname, routed
+    # without the forwardAuth gate. Langfuse authenticates this path with its
+    # own key pair, and the Authelia bypass for ^/api/public is unchanged. The
+    # browser UI stays on the row above, which remains sso-gated.
+    "langfuse-otlp" = { hostname = "langfuse", path_prefix = "/api/public/", priority = 100, backend = "langfuse", port = local.pipeline_constants.service_ports.langfuse_web, sso = false }
     # phoenix's OTLP/HTTP ingest path (/v1/traces) is exempted from the Authelia
     # forwardAuth middleware on the Ansible side (a resource regex in
-    # ansible-proxmox-apps), the same way Langfuse's ingest path is — this row
-    # stays a single sso-gated route, never a second sso = false row, or the
-    # whole UI would be exposed unauthenticated.
+    # ansible-proxmox-apps) — this row stays a single sso-gated route. A second
+    # sso = false row on a host is allowed only for one narrow machine API path
+    # (dify-api-v1, langfuse-otlp), never a whole-host row, or the whole UI
+    # would be exposed unauthenticated.
     phoenix = { backend = "phoenix", port = local.pipeline_constants.service_ports.phoenix_web }
     # docling-serve — Open WebUI's content-extraction (OCR/layout) backend. The
     # only caller is Open WebUI's server-side loader posting to /v1/convert/file,
