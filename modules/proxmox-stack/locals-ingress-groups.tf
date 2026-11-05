@@ -57,5 +57,8 @@ locals {
 
     # Apps tier pools.
     zammad = "apps"
+
+    # Explicit dashboard group for this route.
+    zcode = "ai"
   }
 }
