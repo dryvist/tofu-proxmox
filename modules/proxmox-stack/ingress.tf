@@ -101,7 +101,7 @@ locals {
     #
     # Its OTLP ingest paths are exempted from the Authelia forwardAuth
     # middleware on the Ansible side (a resource regex in
-    # ansible-proxmox-apps), exactly as phoenix and langfuse are: exporters
+    # ansible-proxmox-apps), exactly as phoenix is: exporters
     # are machine clients and cannot complete a browser login, so without
     # the exemption every push is redirected to the portal and dropped while
     # the pipeline still reports healthy. This stays ONE sso-gated row and
