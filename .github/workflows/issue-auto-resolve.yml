@@ -65,8 +65,12 @@ jobs:
   run-triage:
     if: github.event_name == 'workflow_dispatch'
     uses: JacobPEvans/.github-ai/.github/workflows/issue-triage.yml@v2
-    secrets: inherit
+    secrets:
+      LLM_ROUTER_BASE_URL: ${{ secrets.LLM_ROUTER_BASE_URL }}
+      LLM_ROUTER_API_KEY: ${{ secrets.LLM_ROUTER_API_KEY }}
+      GH_APP_CLAUDE_BOT_PRIVATE_KEY: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
     with:
+      runner_label: review
       issue_number: ${{ inputs.issue_number }}
 
   resolve-issue:
@@ -76,8 +80,12 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       (needs.run-triage.result == 'success' || needs.run-triage.result == 'skipped')
     uses: JacobPEvans/.github-ai/.github/workflows/cc-issue-resolver.yml@v2
-    secrets: inherit
+    secrets:
+      LLM_ROUTER_BASE_URL: ${{ secrets.LLM_ROUTER_BASE_URL }}
+      LLM_ROUTER_API_KEY: ${{ secrets.LLM_ROUTER_API_KEY }}
+      GH_APP_CLAUDE_BOT_PRIVATE_KEY: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
     with:
+      runner_label: review
       repo_context: "Terraform Proxmox VM/container provisioning"
       extra_tools: "Bash(terraform:*)"
       issue_number: ${{ inputs.issue_number }}

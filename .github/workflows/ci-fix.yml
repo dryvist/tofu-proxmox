@@ -26,8 +26,12 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.head_repository.full_name == github.repository
     uses: JacobPEvans/.github-ai/.github/workflows/cc-ci-fix.yml@v2
-    secrets: inherit
+    secrets:
+      LLM_ROUTER_BASE_URL: ${{ secrets.LLM_ROUTER_BASE_URL }}
+      LLM_ROUTER_API_KEY: ${{ secrets.LLM_ROUTER_API_KEY }}
+      GH_APP_CLAUDE_BOT_PRIVATE_KEY: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
     with:
+      runner_label: review
       repo_context: "Terraform/OpenTofu project managing Proxmox VE infrastructure."
       ci_structure: "CI Gate aggregates required checks: File Size (HARD 12KB per-file limit, docs especially), Markdown Lint, Secret Scan, and Terraform (tofu fmt/init/validate/test)."
       extra_tools: "Bash(tofu:*)"

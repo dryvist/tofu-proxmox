@@ -43,5 +43,5 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     uses: JacobPEvans/.github-ai/.github/workflows/cc-post-merge-tests.yml@v2
     with:
+      runner_label: review
       commit_sha: ${{ inputs.commit_sha || github.sha }}
-    secrets: inherit
