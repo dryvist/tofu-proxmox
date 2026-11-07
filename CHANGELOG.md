@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.64.0](https://github.com/dryvist/tofu-proxmox/compare/v3.63.0...v3.64.0) (2026-11-07)
+
+
+### Features
+
+* **constants:** publish the media metrics exporter port ([#1466](https://github.com/dryvist/tofu-proxmox/issues/1466)) ([4043dfa](https://github.com/dryvist/tofu-proxmox/commit/4043dfafdae5f7a6c14c4038ed82055e336640c4))
+
 ## [3.63.0](https://github.com/dryvist/tofu-proxmox/compare/v3.62.1...v3.63.0) (2026-11-07)
 
 
