@@ -115,7 +115,7 @@ resource "proxmox_virtual_environment_firewall_rules" "notification_container" {
   depends_on = [proxmox_virtual_environment_firewall_options.notification_container]
 }
 
-# APT caching proxy (apt-cacher-ng — outbound ACCEPT for upstream mirrors)
+# Package caches (outbound ACCEPT for upstream mirrors)
 
 resource "proxmox_virtual_environment_firewall_options" "apt_cacher_ng_container" {
   for_each = var.apt_cacher_ng_container_ids
@@ -144,7 +144,7 @@ resource "proxmox_virtual_environment_firewall_rules" "apt_cacher_ng_container" 
 
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.apt_cacher_ng_services.name
-    comment        = "APT caching proxy (port 3142)"
+    comment        = "Package cache service ports"
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.apt_cacher_ng_container]

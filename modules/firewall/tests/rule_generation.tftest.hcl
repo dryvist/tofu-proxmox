@@ -32,6 +32,9 @@ variables {
       cribl_pve_metrics   = 10370
       cribl_prometheus_rw = 9201
       apt_cacher_ng       = 3142
+      pypi_cache          = 3141
+      npm_cache           = 4873
+      raw_cache           = 8081
       # Agent-plane egress forward proxy (referenced by ai_proxied/squid rules)
       squid_proxy = 3128
       # Object storage (RustFS) — referenced by s3_services_rules
@@ -1210,6 +1213,56 @@ run "homarr_rule_tracks_constant_and_internal_scope" {
   assert {
     condition     = local.homarr_services_rules[0].source == "192.168.10.0/24,192.168.20.0/24"
     error_message = "homarr rule source must be the comma-joined internal networks, got '${local.homarr_services_rules[0].source}'"
+  }
+}
+
+run "apt_cache_listener_accepts_all_published_cache_ports" {
+  command = plan
+
+  variables {
+    apt_cacher_ng_container_ids = { cache = 108 }
+  }
+
+  assert {
+    condition = [for rule in local.apt_cacher_ng_services_rules : rule.dport] == [
+      tostring(var.pipeline_constants.service_ports.apt_cacher_ng),
+      tostring(var.pipeline_constants.service_ports.pypi_cache),
+      tostring(var.pipeline_constants.service_ports.npm_cache),
+      tostring(var.pipeline_constants.service_ports.raw_cache),
+    ]
+    error_message = "The cache guest must expose only the centrally defined APT, PyPI, npm, and raw cache ports."
+  }
+
+  assert {
+    condition = alltrue([
+      for rule in local.apt_cacher_ng_services_rules :
+      rule.proto == "tcp" && rule.source == local.internal_src
+    ])
+    error_message = "All package-cache listeners must accept TCP only from the existing internal networks."
+  }
+}
+
+run "pepper_cache_egress_targets_only_cache_guests" {
+  command = plan
+
+  variables {
+    hermes_pepper_container_ids = { pepper = 240 }
+    package_cache_destinations  = ["cache-guest-one", "cache-guest-two"]
+  }
+
+  assert {
+    condition = (
+      toset([for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule : rule.dport]) == toset([
+        tostring(var.pipeline_constants.service_ports.pypi_cache),
+        tostring(var.pipeline_constants.service_ports.npm_cache),
+        tostring(var.pipeline_constants.service_ports.raw_cache),
+      ])
+      && alltrue([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule :
+        rule.dest == join(",", var.package_cache_destinations) && rule.dest != local.internal_src
+      ])
+    )
+    error_message = "Pepper cache egress must target only the computed cache guest addresses on the new cache ports."
   }
 }
 
