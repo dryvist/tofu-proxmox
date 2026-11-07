@@ -118,7 +118,7 @@ run "pepper_tag_selects_only_the_proxied_hermes_guest" {
     containers = {
       "guest-pepper" = {
         vm_id = 240, node_name = "node-example", vlan = "ai"
-        tags  = ["hermes-agent", "hermes-pepper", "chromium", "hindsight-client", "firecrawl-client"]
+        tags  = ["hermes-agent", "hermes-pepper"]
       }
       "guest-plain" = {
         vm_id = 241, node_name = "node-example", vlan = "ai"
@@ -147,6 +147,36 @@ run "pepper_tag_without_hermes_agent_is_rejected" {
       "guest-pepper" = {
         vm_id = 240, node_name = "node-example", vlan = "ai"
         tags  = ["hermes-pepper"]
+      }
+    }
+  }
+
+  expect_failures = [var.containers]
+}
+
+run "pepper_tag_with_a_client_dependency_tag_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "guest-pepper" = {
+        vm_id = 240, node_name = "node-example", vlan = "ai"
+        tags  = ["hermes-agent", "hermes-pepper", "hindsight-client"]
+      }
+    }
+  }
+
+  expect_failures = [var.containers]
+}
+
+run "plain_hermes_guest_without_client_dependency_tags_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "guest-plain" = {
+        vm_id = 241, node_name = "node-example", vlan = "ai"
+        tags  = ["hermes-agent"]
       }
     }
   }
