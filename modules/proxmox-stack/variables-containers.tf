@@ -206,20 +206,17 @@ variable "containers" {
     error_message = "Every container tagged 'ai-runner' must carry exactly one egress-profile tag from: ai-github, ai-terrakube, ai-full-net, ai-proxied. A missing or misspelled profile tag would leave the agent guest with NO firewall; two would attach conflicting rule sets."
   }
 
-  # hermes-donna is a second Hermes agent instance and deliberately carries NO
-  # dedicated firewall map of its own — it relies on the hermes-agent tag's
-  # existing container-id filter to pick up the hermes-agent security groups
-  # and rules. The same hazard as the ai-runner check above applies: a guest
-  # tagged hermes-donna without also carrying hermes-agent would silently
-  # match no firewall map at all and come up with no firewall options and no
-  # rules, invisible in a plan diff.
+  # Hermes-specific tags rely on hermes-agent to select shared firewall resources.
   validation {
     condition = alltrue([
       for k, v in var.containers :
       contains(coalesce(try(v.tags, null), []), "hermes-agent")
-      if contains(coalesce(try(v.tags, null), []), "hermes-donna")
+      if length(setintersection(
+        toset(coalesce(try(v.tags, null), [])),
+        toset(["hermes-donna", "hermes-pepper"]),
+      )) > 0
     ])
-    error_message = "Every container tagged 'hermes-donna' must also carry the 'hermes-agent' tag — hermes-donna has no firewall map of its own and relies on hermes_agent_container_ids to pick it up. A missing hermes-agent tag would leave the guest with NO firewall."
+    error_message = "Every container tagged 'hermes-donna' or 'hermes-pepper' must also carry the 'hermes-agent' tag to select its firewall resources."
   }
 
   # App-dependency tags on the agent guests. Unlike the two checks above these
@@ -232,16 +229,18 @@ variable "containers" {
   # Enforced rather than advisory for the same reason as the firewall tags: an
   # agent guest missing 'chromium' is not a plan diff anyone would notice, and
   # the symptom — an agent that answers about pages it never actually read —
-  # surfaces far downstream from the cause.
+  # surfaces far downstream from the cause. The Pepper guest is the exception:
+  # its converge installs no browser and calls neither service, so it carries none.
   validation {
     condition = alltrue([
-      for k, v in var.containers : length(setsubtract(
-        toset(["chromium", "hindsight-client", "firecrawl-client"]),
-        toset(coalesce(try(v.tags, null), [])),
-      )) == 0
+      for k, v in var.containers : length(
+        contains(coalesce(try(v.tags, null), []), "hermes-pepper")
+        ? setintersection(toset(["chromium", "hindsight-client", "firecrawl-client"]), toset(coalesce(try(v.tags, null), [])))
+        : setsubtract(toset(["chromium", "hindsight-client", "firecrawl-client"]), toset(coalesce(try(v.tags, null), [])))
+      ) == 0
       if contains(coalesce(try(v.tags, null), []), "hermes-agent")
     ])
-    error_message = "Every container tagged 'hermes-agent' must also carry 'chromium', 'hindsight-client' and 'firecrawl-client'. These name the app dependencies the agent converge installs or calls — the browser on the guest, and the memory and extraction services off it. Note the -client suffixes are load-bearing: a bare 'hindsight' or 'firecrawl' tag would put the agent guest into that SERVICE's firewall map and treat it as a server instance."
+    error_message = "Every container tagged 'hermes-agent' must also carry 'chromium', 'hindsight-client' and 'firecrawl-client'; one tagged 'hermes-pepper' must carry none of them. These name the app dependencies the agent converge installs or calls — the browser on the guest, and the memory and extraction services off it. Note the -client suffixes are load-bearing: a bare 'hindsight' or 'firecrawl' tag would put the agent guest into that SERVICE's firewall map and treat it as a server instance."
   }
 
   # Proxmox stores startup order as a positive integer; 0 and fractions are
