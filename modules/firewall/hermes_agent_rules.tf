@@ -25,6 +25,9 @@
 #                        they cannot be split into their own guest and run ON
 #                        this one. Traefik-fronted, internal only.
 #
+# Guests selected by hermes-pepper use ai_proxied_egress instead of both broad
+# outbound groups, retaining the same inbound groups and default DROP policies.
+#
 # Hardening follow-up (not this PR): route egress through an audited Squid
 # forward-proxy and replace outbound_internal with a microsegmented allowlist so
 # the agent cannot reach arbitrary internal hosts. Tracked in the deployment plan.
@@ -102,13 +105,16 @@ resource "proxmox_virtual_environment_firewall_rules" "hermes_agent_container" {
   }
 
   rule {
-    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
-    comment        = "Outbound to internal only (model endpoint, DNS, NTP, Splunk logging)"
+    security_group = contains(keys(var.hermes_pepper_container_ids), each.key) ? proxmox_virtual_environment_cluster_firewall_security_group.ai_proxied_egress.name : proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
+    comment        = contains(keys(var.hermes_pepper_container_ids), each.key) ? "Shared proxied egress profile" : "Outbound to internal only (model endpoint, DNS, NTP, Splunk logging)"
   }
 
-  rule {
-    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
-    comment        = "Outbound HTTPS (TCP 443) for agent web/search/browser tools"
+  dynamic "rule" {
+    for_each = contains(keys(var.hermes_pepper_container_ids), each.key) ? [] : [true]
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
+      comment        = "Outbound HTTPS (TCP 443) for agent web/search/browser tools"
+    }
   }
 
   rule {
