@@ -138,3 +138,18 @@ run "pepper_tag_selects_only_the_proxied_hermes_guest" {
     error_message = "Only hermes-pepper selects proxied egress; both Hermes guests retain their shared service rules."
   }
 }
+
+run "pepper_tag_without_hermes_agent_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "guest-pepper" = {
+        vm_id = 240, node_name = "node-example", vlan = "ai"
+        tags  = ["hermes-pepper"]
+      }
+    }
+  }
+
+  expect_failures = [var.containers]
+}
