@@ -129,13 +129,14 @@ locals {
       #   blackbox_exporter  — DNS / HTTP(S) / TLS / TCP probes + reachability SLO
       #   atlas_exporter     — RIPE Atlas outside-in results (external vantage)
       #   irtt               — isochronous UDP RTT/jitter server (real RFC-3393 jitter / MOS)
-      smokeping_web      = 80
-      speedtest_exporter = 9798
-      smokeping_prober   = 9374
-      blackbox_exporter  = 9115
-      atlas_exporter     = 9400
-      dcgm_exporter      = 9400
-      irtt               = 2112
+      smokeping_web       = 80
+      speedtest_exporter  = 9798
+      smokeping_prober    = 9374
+      blackbox_exporter   = 9115
+      atlas_exporter      = 9400
+      dcgm_exporter       = 9400
+      irtt                = 2112
+      media_json_exporter = 7979
       # node_exporter on the Proxmox hosts (host metrics -> siem Cribl Edge scrape)
       node_exporter = 9100
       # Per-uplink network diagnosis (CT netmon-*, mgmt VLAN, Docker-in-LXC): the
