@@ -10,19 +10,24 @@ provider "vault" {
 
 # Terrakube supplies a short-lived OpenBao token from its workload identity.
 # The media credentials exist only for this run and never enter plan or state.
-ephemeral "vault_kv_secret_v2" "media" {
+ephemeral "vault_kv_secret_v2" "sonarr" {
   mount = var.openbao_kv_mount
-  name  = var.openbao_media_path
+  name  = var.openbao_sonarr_path
+}
+
+ephemeral "vault_kv_secret_v2" "radarr" {
+  mount = var.openbao_kv_mount
+  name  = var.openbao_radarr_path
 }
 
 provider "sonarr" {
-  url     = ephemeral.vault_kv_secret_v2.media.data["SONARR_URL"]
-  api_key = ephemeral.vault_kv_secret_v2.media.data["SONARR_API_KEY"]
+  url     = ephemeral.vault_kv_secret_v2.sonarr.data["SONARR_URL"]
+  api_key = ephemeral.vault_kv_secret_v2.sonarr.data["SONARR_API_KEY"]
 }
 
 provider "radarr" {
-  url     = ephemeral.vault_kv_secret_v2.media.data["RADARR_URL"]
-  api_key = ephemeral.vault_kv_secret_v2.media.data["RADARR_API_KEY"]
+  url     = ephemeral.vault_kv_secret_v2.radarr.data["RADARR_URL"]
+  api_key = ephemeral.vault_kv_secret_v2.radarr.data["RADARR_API_KEY"]
 }
 
 # --- Sonarr ------------------------------------------------------------------

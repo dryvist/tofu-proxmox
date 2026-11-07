@@ -7,10 +7,16 @@ variable "openbao_kv_mount" {
   default     = "secret"
 }
 
-variable "openbao_media_path" {
+variable "openbao_sonarr_path" {
   type        = string
-  description = "OpenBao path containing Sonarr, Radarr, and qBittorrent runtime values"
-  default     = "apps/media"
+  description = "OpenBao path holding the Sonarr URL and API key"
+  default     = "sonarr/main/rw"
+}
+
+variable "openbao_radarr_path" {
+  type        = string
+  description = "OpenBao path holding the Radarr URL and API key"
+  default     = "radarr/main/rw"
 }
 
 variable "tv_root_folder" {
