@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.62.0](https://github.com/dryvist/tofu-proxmox/compare/v3.61.0...v3.62.0) (2026-11-07)
+
+
+### Features
+
+* **firewall:** add the Pepper Hermes guest firewall profile ([#1451](https://github.com/dryvist/tofu-proxmox/issues/1451)) ([78ad33d](https://github.com/dryvist/tofu-proxmox/commit/78ad33d678ae64c5e94612ad25995299f869c896))
+
+
+### Bug Fixes
+
+* **ingress:** name the routes dropped for a missing backend ([#1449](https://github.com/dryvist/tofu-proxmox/issues/1449)) ([8886f39](https://github.com/dryvist/tofu-proxmox/commit/8886f398d7795ff7add96e1bcc2297fdba874009))
+* **ingress:** serve Langfuse OTLP ingest outside the forwardAuth gate ([#1447](https://github.com/dryvist/tofu-proxmox/issues/1447)) ([404e746](https://github.com/dryvist/tofu-proxmox/commit/404e7467693b314a0a4854eddcb0e6dd1033e337))
+
 ## [3.61.0](https://github.com/dryvist/tofu-proxmox/compare/v3.60.0...v3.61.0) (2026-11-04)
 
 
