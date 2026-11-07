@@ -16,6 +16,7 @@ variables {
       splunk_forwarding         = 9997, cribl_edge_api = 9420, cribl_stream_api = 9000
       cribl_s2s                 = 10300, cribl_s2s_metrics = 10360, cribl_pve_metrics = 10370
       cribl_prometheus_rw       = 9201, apt_cacher_ng = 3142, squid_proxy = 3128
+      pypi_cache                = 3141, npm_cache = 4873, raw_cache = 8081
       object_storage_s3         = 9000, object_storage_console = 9001, openbao_api = 8200
       openbao_cluster           = 8201, postgres_default = 5432, redis_default = 6379
       nautobot_web              = 8080, vikunja_web = 3456, homebox_web = 7745, homarr_web = 7575, homepage_web = 3000
@@ -147,6 +148,7 @@ run "pepper_uses_proxied_egress_and_plain_hermes_keeps_its_rules" {
   variables {
     hermes_agent_container_ids  = { pepper = 240, plain = 241 }
     hermes_pepper_container_ids = { pepper = 240 }
+    package_cache_destinations  = ["cache-guest-primary", "cache-guest-secondary"]
     container_nodes             = { "240" = "node-two" }
   }
 
@@ -154,9 +156,22 @@ run "pepper_uses_proxied_egress_and_plain_hermes_keeps_its_rules" {
     condition = [for rule in proxmox_virtual_environment_firewall_rules.hermes_agent_container["pepper"].rule : rule.security_group] == [
       proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
       proxmox_virtual_environment_cluster_firewall_security_group.ai_proxied_egress.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].name,
       proxmox_virtual_environment_cluster_firewall_security_group.hermes_webhook_services.name,
     ]
-    error_message = "Pepper must retain Hermes inbound services and attach only proxied egress, without outbound_internal or outbound_https."
+    error_message = "Pepper must retain Hermes inbound services and attach only proxied and package-cache egress, without outbound_internal or outbound_https."
+  }
+
+  assert {
+    condition = (
+      toset([for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule : rule.dport]) == toset([
+        tostring(var.pipeline_constants.service_ports.pypi_cache),
+        tostring(var.pipeline_constants.service_ports.npm_cache),
+        tostring(var.pipeline_constants.service_ports.raw_cache),
+      ]) &&
+      alltrue([for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule : rule.dest == join(",", var.package_cache_destinations) && rule.dest != join(",", var.internal_networks)])
+    )
+    error_message = "Pepper package-cache egress must allow exactly the three cache ports to the cache guests only."
   }
 
   assert {

@@ -163,7 +163,7 @@ run "logical_owner_is_published_without_physical_identity" {
 
   assert {
     condition = (
-      output.ansible_inventory.schema_version == "2.8.0" &&
+      output.ansible_inventory.schema_version == "2.9.0" &&
       sort(keys(output.ansible_inventory.agents)) == tolist(["example-owner"]) &&
       output.ansible_inventory.agents["example-owner"].display == "Example Owner" &&
       output.ansible_inventory.agents["example-owner"].owns == tolist(["example-domain"]) &&

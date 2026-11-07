@@ -252,7 +252,7 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "cribl_st
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "apt_cacher_ng_services" {
   name    = "apt-cacher-ng-svc"
-  comment = "APT caching proxy port: apt-cacher-ng (3142) from internal networks"
+  comment = "Package cache service ports from internal networks"
 
   dynamic "rule" {
     for_each = local.apt_cacher_ng_services_rules

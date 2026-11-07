@@ -95,10 +95,6 @@ locals {
   # the shared _file-size workflow's 12 KB limit. locals merge across files in a
   # module, so the rule lists referenced by the security groups resolve the same.
 
-  apt_cacher_ng_services_rules = [
-    { proto = "tcp", dport = tostring(local.svc_ports.apt_cacher_ng), source = local.internal_src, comment = "apt-cacher-ng from internal" },
-  ]
-
   git_mirror_services_rules = var.git_mirror_ingress_src == "" ? [] : [
     { proto = "tcp", dport = tostring(local.svc_ports.git_mirror_public), source = var.git_mirror_ingress_src, comment = "Git mirror public listener from ingress" },
     { proto = "tcp", dport = tostring(local.svc_ports.git_mirror_all), source = var.git_mirror_ingress_src, comment = "Git mirror authenticated listener from ingress" },

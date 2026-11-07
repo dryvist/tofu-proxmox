@@ -842,14 +842,27 @@ run "inventory_publishes_one_address_authority_per_guest" {
     error_message = "static guest must publish its derived address, got ${output.ansible_inventory.containers["apt-cacher-ng"].ip}"
   }
 
-  # Consumers share the proxy list projected from the published guest FQDNs.
+  # Cache URL names and Pepper's firewall networks derive from the tagged guest set.
   assert {
     condition = (
-      length(output.ansible_inventory.cache_proxy_urls.apt_cache) == 2
-      && output.ansible_inventory.cache_proxy_urls.apt_cache[0] == "http://cache-a.example.com:3142"
-      && output.ansible_inventory.cache_proxy_urls.apt_cache[1] == "http://cache-b.example.com:3142"
+      toset(keys(output.ansible_inventory.cache_proxy_urls)) == toset(["apt_cache", "pypi_cache", "npm_cache", "raw_cache"])
+      && alltrue([
+        for cache, port in {
+          apt_cache  = local.pipeline_constants.service_ports.apt_cacher_ng
+          pypi_cache = local.pipeline_constants.service_ports.pypi_cache
+          npm_cache  = local.pipeline_constants.service_ports.npm_cache
+          raw_cache  = local.pipeline_constants.service_ports.raw_cache
+          } : jsonencode(tolist(output.ansible_inventory.cache_proxy_urls[cache])) == jsonencode(tolist(sort([
+            for container in values(output.ansible_inventory.containers) : "http://${container.fqdn}:${port}"
+            if contains(container.tags, "apt-cache")
+        ])))
+      ])
+      && toset(local.cache_proxy_firewall_destinations) == toset([
+        for container in values(var.containers) : var.network_cidrs[container.vlan]
+        if contains(coalesce(try(container.tags, null), []), "apt-cache")
+      ])
     )
-    error_message = "APT cache URLs must preserve both tagged guest FQDNs and the published service port, got ${jsonencode(output.ansible_inventory.cache_proxy_urls.apt_cache)}"
+    error_message = "Cache URLs must preserve tagged guest FQDNs and service ports, and Pepper destinations must be limited to those guests' VLAN networks; got ${jsonencode(output.ansible_inventory.cache_proxy_urls)}."
   }
 
   # The leased guest keeps its lease-stabilizing MAC.

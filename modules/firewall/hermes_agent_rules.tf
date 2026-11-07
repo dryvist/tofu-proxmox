@@ -110,6 +110,14 @@ resource "proxmox_virtual_environment_firewall_rules" "hermes_agent_container" {
   }
 
   dynamic "rule" {
+    for_each = contains(keys(var.hermes_pepper_container_ids), each.key) ? [true] : []
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].name
+      comment        = "Package cache endpoints on internal networks"
+    }
+  }
+
+  dynamic "rule" {
     for_each = contains(keys(var.hermes_pepper_container_ids), each.key) ? [] : [true]
     content {
       security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
