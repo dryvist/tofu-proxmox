@@ -31,5 +31,6 @@ provider "registry.opentofu.org/bpg/proxmox" {
     "zh:bbeaef8094f15e3cbfe08a18d0bd51541a0f5dc7ebde4dceb72b490993dea100",
     "zh:c833d9f23dc118cf91b5f4fa84c2bcf2237db04bdd17fc1a075e7565440b8f7c",
     "zh:d6fbf7beafa4dd15a6d72933d3ffc2a555a361d53c4afea460bb7132504c2c04",
+    "zh:f26e0763dbe6a6b2195c94b44696f2110f7f55433dc142839be16b9697fa5597",
   ]
 }
