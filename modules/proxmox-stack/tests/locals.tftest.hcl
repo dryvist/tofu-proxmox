@@ -842,7 +842,7 @@ run "inventory_publishes_one_address_authority_per_guest" {
     error_message = "static guest must publish its derived address, got ${output.ansible_inventory.containers["apt-cacher-ng"].ip}"
   }
 
-  # Published cache URLs and Pepper's firewall destinations share the tagged guest set.
+  # Cache URL names and Pepper's firewall networks derive from the tagged guest set.
   assert {
     condition = (
       toset(keys(output.ansible_inventory.cache_proxy_urls)) == toset(["apt_cache", "pypi_cache", "npm_cache", "raw_cache"])
@@ -857,12 +857,12 @@ run "inventory_publishes_one_address_authority_per_guest" {
             if contains(container.tags, "apt-cache")
         ])))
       ])
-      && toset(local.cache_proxy_addresses) == toset([
-        for container in values(output.ansible_inventory.containers) : container.ip
-        if contains(container.tags, "apt-cache")
+      && toset(local.cache_proxy_firewall_destinations) == toset([
+        for container in values(var.containers) : var.network_cidrs[container.vlan]
+        if contains(coalesce(try(container.tags, null), []), "apt-cache")
       ])
     )
-    error_message = "All published cache URLs must preserve the tagged guest FQDNs and centrally defined service ports; got ${jsonencode(output.ansible_inventory.cache_proxy_urls)}."
+    error_message = "Cache URLs must preserve tagged guest FQDNs and service ports, and Pepper destinations must be limited to those guests' VLAN networks; got ${jsonencode(output.ansible_inventory.cache_proxy_urls)}."
   }
 
   # The leased guest keeps its lease-stabilizing MAC.

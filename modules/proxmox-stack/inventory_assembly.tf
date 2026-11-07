@@ -20,9 +20,12 @@ locals {
     for container in values(local.cache_proxy_containers) : container.fqdn
   ])
 
-  cache_proxy_addresses = sort([
-    for container in values(local.cache_proxy_containers) : container.ip
-  ])
+  # shortcut: DHCP FQDNs are not valid firewall destinations, so Pepper can
+  # reach other guests on the cache guests' VLANs at these ports. Replace this
+  # with guest-specific aliases or IP sets once they can track DHCP identities.
+  cache_proxy_firewall_destinations = nonsensitive(sort(distinct([
+    for name in keys(local.cache_proxy_containers) : var.network_cidrs[var.containers[name].vlan]
+  ])))
 
   # The inventory value, shared by output.ansible_inventory and the publish
   # resource below (a resource cannot reference an output, so this lives here).

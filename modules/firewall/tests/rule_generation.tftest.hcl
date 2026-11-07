@@ -1247,7 +1247,7 @@ run "pepper_cache_egress_targets_only_cache_guests" {
 
   variables {
     hermes_pepper_container_ids = { pepper = 240 }
-    package_cache_destinations  = ["cache-guest-one", "cache-guest-two"]
+    package_cache_destinations  = ["cache-network-one", "cache-network-two"]
   }
 
   assert {
@@ -1262,7 +1262,20 @@ run "pepper_cache_egress_targets_only_cache_guests" {
         rule.dest == join(",", var.package_cache_destinations) && rule.dest != local.internal_src
       ])
     )
-    error_message = "Pepper cache egress must target only the computed cache guest addresses on the new cache ports."
+    error_message = "Pepper cache egress must target only computed cache guest networks on the new cache ports."
+  }
+}
+
+run "package_cache_security_group_name_respects_proxmox_limit" {
+  command = plan
+
+  variables {
+    hermes_pepper_container_ids = { pepper = 240 }
+  }
+
+  assert {
+    condition     = length(proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].name) <= 18
+    error_message = "Proxmox security group names must be at most 18 characters."
   }
 }
 

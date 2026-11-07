@@ -79,8 +79,8 @@ module "firewall" {
   # APT caching proxy containers: apt-cacher-ng (apt-cache tag)
   apt_cacher_ng_container_ids = local.apt_cacher_ng_container_ids
 
-  # Pepper can reach the same cache guests used to publish package URLs.
-  package_cache_destinations = local.cache_proxy_addresses
+  # Pepper can reach the cache guest networks used to publish package URLs.
+  package_cache_destinations = local.cache_proxy_firewall_destinations
 
   # Git mirror containers: only ingress proxies reach either listener.
   git_mirror_container_ids = local.git_mirror_container_ids
