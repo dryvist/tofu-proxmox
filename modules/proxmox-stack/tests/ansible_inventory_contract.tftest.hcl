@@ -80,8 +80,8 @@ run "ansible_inventory_schema_version" {
   command = plan
 
   assert {
-    condition     = output.ansible_inventory.schema_version == "2.8.0"
-    error_message = "ansible_inventory must carry schema_version \"2.8.0\" for the logical agent owner contract"
+    condition     = output.ansible_inventory.schema_version == "2.9.0"
+    error_message = "ansible_inventory must carry schema_version \"2.9.0\" for the logical agent owner contract"
   }
 
   assert {

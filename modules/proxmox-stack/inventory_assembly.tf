@@ -11,6 +11,22 @@
 # (a resource cannot reference an output, which is why this is a local).
 
 locals {
+  cache_proxy_containers = {
+    for name, container in local.inventory_containers : name => container
+    if contains(container.tags, "apt-cache")
+  }
+
+  cache_proxy_fqdns = sort([
+    for container in values(local.cache_proxy_containers) : container.fqdn
+  ])
+
+  # shortcut: DHCP FQDNs are not valid firewall destinations, so Pepper can
+  # reach other guests on the cache guests' VLANs at these ports. Replace this
+  # with guest-specific aliases or IP sets once they can track DHCP identities.
+  cache_proxy_firewall_destinations = nonsensitive(sort(distinct([
+    for name in keys(local.cache_proxy_containers) : var.network_cidrs[var.containers[name].vlan]
+  ])))
+
   # The inventory value, shared by output.ansible_inventory and the publish
   # resource below (a resource cannot reference an output, so this lives here).
   ansible_inventory = {
@@ -30,7 +46,7 @@ locals {
     # The schema that DOES run against real output is consumer-side
     # (ansible-proxmox-apps tests/inventory_load/tofu_inventory.schema.json) and
     # is additionalProperties:true, which is why an added key is safe here.
-    schema_version = "2.8.0"
+    schema_version = "2.9.0"
     # Which desired state this came from — see the variables' own descriptions.
     desired_state = {
       etag = var.desired_state_etag
@@ -42,15 +58,18 @@ locals {
     agents = local.agents
     # Non-secret workstation identities supplied by deployment.json.
     workstations = var.workstations
-    # Shared APT cache URLs, derived once from capability-tagged guest FQDNs.
+    # Shared cache URLs, derived once from capability-tagged guest FQDNs.
     # Every Ansible consumer reads this list; cache membership and preference
     # order stay owned by the published inventory.
     cache_proxy_urls = {
-      apt_cache = sort([
-        for container in values(local.inventory_containers) :
-        "http://${container.fqdn}:${local.pipeline_constants.service_ports.apt_cacher_ng}"
-        if contains(container.tags, "apt-cache")
-      ])
+      for cache, port in {
+        apt_cache  = local.pipeline_constants.service_ports.apt_cacher_ng
+        pypi_cache = local.pipeline_constants.service_ports.pypi_cache
+        npm_cache  = local.pipeline_constants.service_ports.npm_cache
+        raw_cache  = local.pipeline_constants.service_ports.raw_cache
+        } : cache => [
+        for fqdn in local.cache_proxy_fqdns : "http://${fqdn}:${port}"
+      ]
     }
     git_mirror_urls = length(local.git_mirror_container_ids) == 0 ? {} : {
       public = "https://git-mirror.${var.domain}/public"

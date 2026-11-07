@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.63.0](https://github.com/dryvist/tofu-proxmox/compare/v3.62.1...v3.63.0) (2026-11-07)
+
+
+### Features
+
+* **cache:** publish the package cache endpoints ([#1463](https://github.com/dryvist/tofu-proxmox/issues/1463)) ([db3620a](https://github.com/dryvist/tofu-proxmox/commit/db3620a017f71ae2e193fe0c3a15f1e81f62b00f))
+
 ## [3.62.1](https://github.com/dryvist/tofu-proxmox/compare/v3.62.0...v3.62.1) (2026-11-07)
 
 
