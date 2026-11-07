@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.62.1](https://github.com/dryvist/tofu-proxmox/compare/v3.62.0...v3.62.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* **proxmox-stack:** exempt the Pepper guest from the Hermes client-tag rule ([#1453](https://github.com/dryvist/tofu-proxmox/issues/1453)) ([d1c870a](https://github.com/dryvist/tofu-proxmox/commit/d1c870af564d3529fde2ae721f803586e0267b20))
+
 ## [3.62.0](https://github.com/dryvist/tofu-proxmox/compare/v3.61.0...v3.62.0) (2026-11-07)
 
 
