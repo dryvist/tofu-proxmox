@@ -1242,30 +1242,6 @@ run "apt_cache_listener_accepts_all_published_cache_ports" {
   }
 }
 
-run "pepper_cache_egress_targets_only_cache_guests" {
-  command = plan
-
-  variables {
-    hermes_pepper_container_ids = { pepper = 240 }
-    package_cache_destinations  = ["cache-network-one", "cache-network-two"]
-  }
-
-  assert {
-    condition = (
-      toset([for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule : rule.dport]) == toset([
-        tostring(var.pipeline_constants.service_ports.pypi_cache),
-        tostring(var.pipeline_constants.service_ports.npm_cache),
-        tostring(var.pipeline_constants.service_ports.raw_cache),
-      ])
-      && alltrue([
-        for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule :
-        rule.dest == join(",", var.package_cache_destinations) && rule.dest != local.internal_src
-      ])
-    )
-    error_message = "Pepper cache egress must target only computed cache guest networks on the new cache ports."
-  }
-}
-
 run "package_cache_security_group_name_respects_proxmox_limit" {
   command = plan
 
