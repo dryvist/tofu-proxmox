@@ -157,7 +157,7 @@ variable "monitoring_container_ids" {
 }
 
 variable "hermes_agent_container_ids" {
-  description = "Map of Hermes Agent LXC names to IDs (tag-driven). Autonomous agent: internal access + outbound to internal services + outbound HTTPS for its web tools."
+  description = "Map of Hermes Agent LXC names to IDs (tag-driven). Internal access and Hermes services; Pepper guests use proxied egress, other guests use internal and HTTPS egress."
   type        = map(number)
   default     = {}
 }

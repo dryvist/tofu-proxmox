@@ -140,3 +140,44 @@ run "agent_container_resolves_the_placement_node_per_guest" {
     error_message = "An agent container whose VM ID is absent from container_nodes must keep the stack node_name."
   }
 }
+
+run "pepper_uses_proxied_egress_and_plain_hermes_keeps_its_rules" {
+  command = plan
+
+  variables {
+    hermes_agent_container_ids  = { pepper = 240, plain = 241 }
+    hermes_pepper_container_ids = { pepper = 240 }
+    container_nodes             = { "240" = "node-two" }
+  }
+
+  assert {
+    condition = [for rule in proxmox_virtual_environment_firewall_rules.hermes_agent_container["pepper"].rule : rule.security_group] == [
+      proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.ai_proxied_egress.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.hermes_webhook_services.name,
+    ]
+    error_message = "Pepper must retain Hermes inbound services and attach only proxied egress, without outbound_internal or outbound_https."
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_firewall_options.hermes_agent_container["pepper"].enabled &&
+      proxmox_virtual_environment_firewall_options.hermes_agent_container["pepper"].input_policy == "DROP" &&
+      proxmox_virtual_environment_firewall_options.hermes_agent_container["pepper"].output_policy == "DROP" &&
+      proxmox_virtual_environment_firewall_options.hermes_agent_container["pepper"].dhcp &&
+      proxmox_virtual_environment_firewall_options.hermes_agent_container["pepper"].node_name == "node-two" &&
+      proxmox_virtual_environment_firewall_rules.hermes_agent_container["pepper"].node_name == "node-two"
+    )
+    error_message = "Pepper must keep enabled default-deny policies, DHCP, and per-guest placement."
+  }
+
+  assert {
+    condition = [for rule in proxmox_virtual_environment_firewall_rules.hermes_agent_container["plain"].rule : rule.security_group] == [
+      proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.hermes_webhook_services.name,
+    ]
+    error_message = "A plain Hermes guest must keep its existing group list and order alongside Pepper."
+  }
+}

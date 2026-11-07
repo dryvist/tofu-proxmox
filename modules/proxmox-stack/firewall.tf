@@ -132,8 +132,9 @@ module "firewall" {
   # killswitch is the boundary; see locals-media.tf)
   media_container_ids = local.media_container_ids
 
-  # Hermes Agent LXC: tagged "hermes-agent" (autonomous agent, broad HTTPS egress)
-  hermes_agent_container_ids = local.hermes_agent_container_ids
+  # Hermes guests retain their service rules with tag-selected egress profiles.
+  hermes_agent_container_ids  = local.hermes_agent_container_ids
+  hermes_pepper_container_ids = local.hermes_pepper_container_ids
 
   # hermes-ui LXC: tagged "hermes-ui" (companion web UI guest, own tag so its
   # egress can be tightened later without touching the hermes-agent profile)
