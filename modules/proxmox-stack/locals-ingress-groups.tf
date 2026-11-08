@@ -60,5 +60,9 @@ locals {
 
     # Explicit dashboard group for this route.
     zcode = "ai"
+
+    # OpenHands VM routes (browser UI + automation-events webhook).
+    openhands          = "ai"
+    "openhands-events" = "ai"
   }
 }
