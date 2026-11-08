@@ -52,8 +52,10 @@ resource "proxmox_virtual_environment_vm" "vms" {
   # CPU configuration: "host" by default for single-node homelab stability
   # Exposes all host CPU features with zero emulation overhead
   cpu {
-    cores      = each.value.cpu_cores
-    type       = each.value.cpu_type
+    cores = each.value.cpu_cores
+    type  = each.value.cpu_type
+    # Unset (null) is the same as omitting it: the guest keeps its weight.
+    units      = each.value.cpu_units
     hotplugged = 0
     numa       = each.value.memory_hotplug # NUMA is memory hotplug's prerequisite
   }

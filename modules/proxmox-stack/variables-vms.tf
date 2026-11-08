@@ -42,8 +42,11 @@ variable "vms" {
     dhcp = optional(bool, false)
 
     # Resource configuration
-    cpu_cores        = optional(number, 4)
-    cpu_type         = optional(string, "x86-64-v2-AES")
+    cpu_cores = optional(number, 4)
+    cpu_type  = optional(string, "x86-64-v2-AES")
+    # CPU weight relative to the other guests on the node; validated and
+    # applied by the proxmox-vm module. Unset keeps the provider default.
+    cpu_units        = optional(number)
     memory_dedicated = optional(number, 2048)
     memory_floating  = optional(number)
     # See the extended rationale on this field in the proxmox-vm module
