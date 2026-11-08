@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.65.0](https://github.com/dryvist/tofu-proxmox/compare/v3.64.0...v3.65.0) (2026-11-08)
+
+
+### Features
+
+* **ingress:** add OpenHands routes and keep ZCode Web on its own sandbox host ([#1470](https://github.com/dryvist/tofu-proxmox/issues/1470)) ([1e5d888](https://github.com/dryvist/tofu-proxmox/commit/1e5d88820228fedced446f6e445588de603a9177))
+
 ## [3.64.0](https://github.com/dryvist/tofu-proxmox/compare/v3.63.0...v3.64.0) (2026-11-07)
 
 
