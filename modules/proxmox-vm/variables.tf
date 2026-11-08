@@ -18,7 +18,10 @@ variable "vms" {
     cpu_cores = optional(number, 2)
     # cpu_type: "host" for single-node homelab stability (zero CPU emulation overhead)
     # VMs inherit all host CPU features. Not portable across different CPUs.
-    cpu_type         = optional(string, "host")
+    cpu_type = optional(string, "host")
+    # Proxmox CPU weight relative to the other guests on the node (cgroup v2
+    # range 1-10000); unset keeps the provider-computed default.
+    cpu_units        = optional(number)
     memory_dedicated = optional(number, 1024)
     memory_floating  = optional(number)
     # Enables reboot-free memory raises: PVE only skips the reboot on a
@@ -159,6 +162,14 @@ variable "vms" {
 
   # VGA type is validated against allowed types
   # Allowed values: std, cirrus, vmware, qxl
+
+  validation {
+    condition = alltrue([
+      for k, v in var.vms :
+      v.cpu_units == null || (floor(v.cpu_units) == v.cpu_units && v.cpu_units >= 1 && v.cpu_units <= 10000)
+    ])
+    error_message = "vms.<name>.cpu_units must be a whole number from 1 to 10000 — Proxmox's CPU weight range under cgroup v2."
+  }
 
   validation {
     condition = alltrue([
