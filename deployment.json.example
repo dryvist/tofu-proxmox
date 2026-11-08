@@ -368,6 +368,7 @@
     }
   },
   "vms": {
+    "_cpu_units_comment": "Optional per-VM cpu_units: the Proxmox CPU weight relative to the other guests on the node, a whole number from 1 to 10000. Unset keeps the provider default.",
     "example-vm": {
       "vm_id": 250,
       "node_name": "proxmox-1",

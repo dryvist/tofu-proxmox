@@ -166,9 +166,9 @@ variable "vms" {
   validation {
     condition = alltrue([
       for k, v in var.vms :
-      v.cpu_units == null || (v.cpu_units >= 1 && v.cpu_units <= 10000)
+      v.cpu_units == null || (floor(v.cpu_units) == v.cpu_units && v.cpu_units >= 1 && v.cpu_units <= 10000)
     ])
-    error_message = "vms.<name>.cpu_units must be between 1 and 10000 — Proxmox's allowed CPU weight range under cgroup v2."
+    error_message = "vms.<name>.cpu_units must be a whole number from 1 to 10000 — Proxmox's CPU weight range under cgroup v2."
   }
 
   validation {

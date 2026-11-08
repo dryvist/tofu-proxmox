@@ -103,3 +103,27 @@ run "cpu_units_out_of_range_fails_validation" {
 
   expect_failures = [var.vms]
 }
+
+# cpuunits is an integer in Proxmox; a fractional weight is rejected at the
+# variable too.
+run "fractional_cpu_units_fails_validation" {
+  command = plan
+
+  variables {
+    vms = {
+      bad = {
+        vm_id     = 269
+        name      = "bad"
+        node_name = "proxmox-1"
+        cpu_units = 512.5
+        user_account = {
+          username = "test"
+          password = "test"
+          keys     = []
+        }
+      }
+    }
+  }
+
+  expect_failures = [var.vms]
+}
