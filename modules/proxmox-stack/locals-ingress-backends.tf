@@ -139,20 +139,25 @@ locals {
         ui           = true
       }
     ] : [],
-    # ZCode Web runs on the Docker VM selected by the agent-sandbox tag. The
-    # host publishes HTTP on 443; Traefik terminates external TLS and applies
-    # the default SSO gate. The Ansible role supports one sandbox host.
-    length(local.ai_sandbox_vm_ids) == 1 ? [
+    # ZCode Web runs on the agent-sandbox VM that does not carry the "openhands"
+    # tag (locals-ai-sandbox.tf), so a second agent-sandbox VM never displaces
+    # it. The host publishes HTTP on 443; Traefik terminates external TLS and
+    # applies the default SSO gate. The Ansible role supports one sandbox host.
+    length(local.zcode_web_vm_ids) == 1 ? [
       {
         name   = "zcode"
-        owner  = keys(local.ai_sandbox_vm_ids)[0]
-        ip     = local.vm_address[keys(local.ai_sandbox_vm_ids)[0]]
+        owner  = keys(local.zcode_web_vm_ids)[0]
+        ip     = local.vm_address[keys(local.zcode_web_vm_ids)[0]]
         port   = local.pipeline_constants.service_ports.zcode_web
         scheme = "http"
         sso    = true
       }
     ] : [],
     local.ingress_lb_routes,
+    # OpenHands routes (browser UI + automation-events webhook) live in
+    # locals-ingress-openhands.tf to keep this file under the shared _file-size
+    # 12 KB gate — same split as locals-ingress-iac.tf.
+    local.openhands_routes,
     # IaC automation platform routes (Terrakube + Semaphore on the iac-platform
     # VM) — assembled in locals-ingress-iac.tf to keep this file under the shared
     # _file-size 12 KB gate.

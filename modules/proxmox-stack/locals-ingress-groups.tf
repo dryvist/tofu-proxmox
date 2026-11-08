@@ -58,7 +58,11 @@ locals {
     # Apps tier pools.
     zammad = "apps"
 
-    # Explicit dashboard group for this route.
+    # Explicit dashboard groups for these routes.
     zcode = "ai"
+
+    # OpenHands VM routes (locals-ingress-openhands.tf).
+    openhands          = "ai"
+    "openhands-events" = "ai"
   }
 }
