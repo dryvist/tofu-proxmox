@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.66.1](https://github.com/dryvist/tofu-proxmox/compare/v3.66.0...v3.66.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* **ingress:** serve Dify without the Authelia gate ([c9864c3](https://github.com/dryvist/tofu-proxmox/commit/c9864c398d98d6100ce8fbedfedb06f4f9d77960))
+* **ingress:** update the Dify route ([#1476](https://github.com/dryvist/tofu-proxmox/issues/1476)) ([c9864c3](https://github.com/dryvist/tofu-proxmox/commit/c9864c398d98d6100ce8fbedfedb06f4f9d77960))
+
 ## [3.66.0](https://github.com/dryvist/tofu-proxmox/compare/v3.65.0...v3.66.0) (2026-11-08)
 
 
