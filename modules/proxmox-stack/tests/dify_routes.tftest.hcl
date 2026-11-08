@@ -1,6 +1,5 @@
-# Tests for the Dify route set: the browser UI row stays SSO-gated with no
-# path prefix, while the four machine paths on the shared dify hostname
-# bypass the Authelia forwardAuth (shaped like the nautobot-api row).
+# Tests for the Dify route set: Dify Community has no SSO, so its one route
+# skips the Authelia forwardAuth and Dify's own login protects every path.
 # All runs use mocked providers and plan only.
 
 mock_provider "proxmox" {
@@ -68,7 +67,7 @@ variables {
   nodes                   = { node-example = { role = "node-1" } }
 }
 
-run "dify_ui_stays_gated_and_machine_paths_bypass_sso" {
+run "dify_is_one_route_without_the_authelia_gate" {
   command = plan
 
   variables {
@@ -79,23 +78,12 @@ run "dify_ui_stays_gated_and_machine_paths_bypass_sso" {
   }
 
   assert {
-    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "dify"]).sso == true && one([for r in output.ansible_inventory.ingress : r if r.name == "dify"]).path_prefix == null
-    error_message = "The dify browser UI route must stay SSO-gated with no path prefix."
+    condition     = one([for r in output.ansible_inventory.ingress : r if r.name == "dify"]).sso == false && one([for r in output.ansible_inventory.ingress : r if r.name == "dify"]).path_prefix == null
+    error_message = "The dify route must skip the Authelia gate and carry no path prefix."
   }
 
   assert {
-    condition = alltrue([
-      for name, prefix in {
-        "dify-api-v1"   = "/v1"
-        "dify-setup"    = "/console/api/setup"
-        "dify-files"    = "/files"
-        "dify-plugin-e" = "/e/"
-      } :
-      one([for r in output.ansible_inventory.ingress : r if r.name == name]).hostname == "dify" &&
-      one([for r in output.ansible_inventory.ingress : r if r.name == name]).path_prefix == prefix &&
-      one([for r in output.ansible_inventory.ingress : r if r.name == name]).priority == 100 &&
-      one([for r in output.ansible_inventory.ingress : r if r.name == name]).sso == false
-    ])
-    error_message = "Each Dify machine path must carry hostname dify, its declared path prefix, priority 100, and no Authelia gate."
+    condition     = length([for r in output.ansible_inventory.ingress : r if r.name != "dify" && try(r.hostname, null) == "dify"]) == 0
+    error_message = "Dify needs no separate machine-path rows once its whole host skips the gate."
   }
 }
