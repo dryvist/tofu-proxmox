@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.66.0](https://github.com/dryvist/tofu-proxmox/compare/v3.65.0...v3.66.0) (2026-11-08)
+
+
+### Features
+
+* **proxmox-vm:** optional cpu_units weight per VM ([0c01cf5](https://github.com/dryvist/tofu-proxmox/commit/0c01cf5719d15d4d71f0fae6d403f7c126d05273))
+* **proxmox-vm:** optional cpu_units weight per VM ([#1473](https://github.com/dryvist/tofu-proxmox/issues/1473)) ([0c01cf5](https://github.com/dryvist/tofu-proxmox/commit/0c01cf5719d15d4d71f0fae6d403f7c126d05273))
+
 ## [3.65.0](https://github.com/dryvist/tofu-proxmox/compare/v3.64.0...v3.65.0) (2026-11-08)
 
 
