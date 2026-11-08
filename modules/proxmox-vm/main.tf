@@ -54,9 +54,7 @@ resource "proxmox_virtual_environment_vm" "vms" {
   cpu {
     cores = each.value.cpu_cores
     type  = each.value.cpu_type
-    # cpu.units is Optional+Computed in the provider schema with no default of
-    # its own: null stays unknown-until-apply, exactly as when the attribute is
-    # omitted, so unset guests keep the node's value.
+    # Unset (null) is the same as omitting it: the guest keeps its weight.
     units      = each.value.cpu_units
     hotplugged = 0
     numa       = each.value.memory_hotplug # NUMA is memory hotplug's prerequisite
