@@ -29,7 +29,7 @@ resource "proxmox_virtual_environment_firewall_rules" "node" {
 
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.node_exporter.name
-    comment        = "node_exporter host metrics (TCP/9100) scraped by siem-VLAN Cribl Edge"
+    comment        = "node_exporter/zfs_exporter host metrics (TCP/9100, TCP/9134) scraped by siem-VLAN Cribl Edge"
   }
 
   depends_on = [proxmox_node_firewall.node]
@@ -37,7 +37,7 @@ resource "proxmox_virtual_environment_firewall_rules" "node" {
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "node_exporter" {
   name    = "node-exporter"
-  comment = "Prometheus node_exporter (TCP 9100) on the Proxmox hosts, scraped by the siem-VLAN Cribl Edge prometheus input (paired with the ansible-proxmox node_exporter role)"
+  comment = "Prometheus node_exporter (TCP 9100) + zfs_exporter (TCP 9134) on the Proxmox hosts, scraped by the siem-VLAN Cribl Edge prometheus input (paired with the ansible-proxmox node_exporter role)"
 
   dynamic "rule" {
     for_each = local.node_exporter_rules
