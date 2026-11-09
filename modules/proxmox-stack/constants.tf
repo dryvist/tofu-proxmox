@@ -141,6 +141,9 @@ locals {
       media_json_exporter = 7979
       # node_exporter on the Proxmox hosts (host metrics -> siem Cribl Edge scrape)
       node_exporter = 9100
+      # zfs_exporter on the Proxmox hosts (per-dataset ZFS pool/dataset metrics,
+      # scraped by the same siem Cribl Edge prometheus input as node_exporter)
+      zfs_exporter = 9134
       # Per-uplink network diagnosis (CT netmon-*, mgmt VLAN, Docker-in-LXC): the
       # satellite gRPC exporter scraped by each prober's Telegraf, alongside DOCSIS
       # modem SNMP and native active probes. Pushes to Cribl -> Splunk

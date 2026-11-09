@@ -77,6 +77,7 @@ variables {
       dcgm_exporter      = 9400
       irtt               = 2112
       node_exporter      = 9100
+      zfs_exporter       = 9134
       # LLM fabric + agentgateway (referenced by llm_fabric/agentgateway rules)
       llm_fast_api         = 10434
       llm_gpu_serving_api  = 10440
@@ -802,8 +803,8 @@ run "node_exporter_rule_tracks_constant_and_siem_scope" {
   }
 
   assert {
-    condition     = length(local.node_exporter_rules) == 1
-    error_message = "node_exporter_rules must be exactly 1 (TCP 9100), got ${length(local.node_exporter_rules)}"
+    condition     = length(local.node_exporter_rules) == 2
+    error_message = "node_exporter_rules must be exactly 2 (node_exporter TCP 9100 + zfs_exporter TCP 9134), got ${length(local.node_exporter_rules)}"
   }
 
   assert {
@@ -818,6 +819,26 @@ run "node_exporter_rule_tracks_constant_and_siem_scope" {
   }
 }
 
+run "zfs_exporter_rule_tracks_constant_and_siem_scope" {
+  command = plan
+
+  variables {
+    internal_networks = ["198.51.100.0/24", "203.0.113.0/24"]
+    network_cidrs     = { siem = "192.0.2.0/24" }
+  }
+
+  assert {
+    condition     = local.node_exporter_rules[1].dport == tostring(var.pipeline_constants.service_ports.zfs_exporter)
+    error_message = "zfs_exporter rule must track service_ports.zfs_exporter, got '${local.node_exporter_rules[1].dport}'"
+  }
+
+  # Same siem-VLAN scope as the 9100 rule — one consumer for host metrics.
+  assert {
+    condition     = local.node_exporter_rules[1].source == "192.0.2.0/24"
+    error_message = "zfs_exporter rule source must be the siem CIDR only, got '${local.node_exporter_rules[1].source}'"
+  }
+}
+
 run "node_exporter_rule_inert_without_siem_cidr" {
   command = plan
 
@@ -829,6 +850,11 @@ run "node_exporter_rule_inert_without_siem_cidr" {
   assert {
     condition     = local.node_exporter_rules[0].source == ""
     error_message = "node_exporter rule must be inert (empty source) when the siem CIDR is absent"
+  }
+
+  assert {
+    condition     = local.node_exporter_rules[1].source == ""
+    error_message = "zfs_exporter rule must be inert (empty source) when the siem CIDR is absent"
   }
 }
 
