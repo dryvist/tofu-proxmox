@@ -9,6 +9,8 @@
 #                            grafana route), Authelia-gated.
 #   victoriametrics (8428) — Prometheus remote_write receiver + Grafana
 #                            datasource; internal pipeline writers push here.
+#   vmauth (8427)          — read-only quota route, Traefik-fronted (ingress.tf
+#                            vmauth row); clients authenticate with a bearer token.
 #
 # Egress: internal, plus HTTPS/HTTP. HTTPS is load-bearing — the compose stack
 # pulls its pinned container images from a public registry at converge time.
@@ -16,12 +18,13 @@ locals {
   grafana_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.grafana_web), source = local.internal_src, comment = "Grafana UI from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.victoriametrics), source = local.internal_src, comment = "VictoriaMetrics remote_write + datasource from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.vmauth), source = local.internal_src, comment = "vmauth read-only quota route from internal" },
   ]
 }
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "grafana_services" {
   name    = "grafana-svc"
-  comment = "Grafana UI (${local.svc_ports.grafana_web}) + VictoriaMetrics (${local.svc_ports.victoriametrics}) from internal networks — Traefik-fronted UI"
+  comment = "Grafana UI (${local.svc_ports.grafana_web}) + VictoriaMetrics (${local.svc_ports.victoriametrics}) + vmauth (${local.svc_ports.vmauth}) from internal networks — Traefik-fronted UI"
 
   dynamic "rule" {
     for_each = local.grafana_services_rules
@@ -68,7 +71,7 @@ resource "proxmox_virtual_environment_firewall_rules" "grafana_container" {
 
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.grafana_services.name
-    comment        = "Grafana UI + VictoriaMetrics (TCP/${local.svc_ports.grafana_web}, TCP/${local.svc_ports.victoriametrics})"
+    comment        = "Grafana UI + VictoriaMetrics + vmauth (TCP/${local.svc_ports.grafana_web}, TCP/${local.svc_ports.victoriametrics}, TCP/${local.svc_ports.vmauth})"
   }
 
   rule {

@@ -45,6 +45,8 @@ locals {
       # Prometheus remote_write from the pipeline (internal-only).
       grafana_web     = 3000
       victoriametrics = 8428
+      # VictoriaMetrics auth proxy, read-only quota route fronted by Traefik.
+      vmauth          = 8427
       docs_static_web = 80 # nginx document root on the static file host
       homarr_web      = 7575
       # Proxmox cluster web UI (:8006) — fronted by Traefik at the ingress
