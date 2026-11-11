@@ -461,8 +461,8 @@ run "pipeline_constants_serving" {
   # The active serving profile and MLX publish separate admission ceilings.
   # Each consumer derives from the matching field.
   assert {
-    condition     = local.pipeline_constants.serving.llm_concurrency == 8
-    error_message = "serving.llm_concurrency should follow the active eight-slot profile"
+    condition     = local.pipeline_constants.serving.llm_concurrency == 16
+    error_message = "serving.llm_concurrency should follow the active sixteen-slot profile"
   }
   assert {
     condition     = local.pipeline_constants.serving.mlx_llm_concurrency == 2
