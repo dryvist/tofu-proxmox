@@ -22,7 +22,7 @@ variables {
       nautobot_web              = 8080, vikunja_web = 3456, homebox_web = 7745, homarr_web = 7575, homepage_web = 3000
       youtrack_web              = 8080, leantime_web = 80
       glance_web                = 8080, wall_web = 8080, gatus_web = 8080, uptime_kuma_web = 3001
-      grafana_web               = 3000, victoriametrics = 8428, authelia_portal = 9091, zammad_web = 8080
+      grafana_web               = 3000, victoriametrics = 8428, vmauth = 8427, authelia_portal = 9091, zammad_web = 8080
       mcp_gateway_web           = 4444, ntp = 123, idrac_kvm_r410 = 5410, idrac_kvm_r710 = 5710
       smokeping_web             = 80, speedtest_exporter = 9798, smokeping_prober = 9374
       blackbox_exporter         = 9115, atlas_exporter = 9400, dcgm_exporter = 9400, irtt = 2112, node_exporter = 9100, zfs_exporter = 9134

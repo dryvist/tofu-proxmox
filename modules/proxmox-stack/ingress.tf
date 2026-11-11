@@ -95,6 +95,10 @@ locals {
     "uptime-kuma" = { backend = "status", port = local.pipeline_constants.service_ports.uptime_kuma_web }
     # Grafana metrics UI (observability guest). Browser-only, default gate.
     grafana = { backend = "grafana", port = local.pipeline_constants.service_ports.grafana_web }
+    # Read-only quota route on the same guest, on its own hostname and limited to
+    # the instant-query path. vmauth checks a bearer token on every request and
+    # allows one fixed query, so an SSO redirect would only break the client.
+    vmauth = { path_prefix = "/api/v1/query", backend = "grafana", port = local.pipeline_constants.service_ports.vmauth, sso = false }
     # The metrics store on the same guest. Agent metric exporters had no
     # fronted name to send to and reached the guest record directly on its
     # port, which is the one addressing form the estate does not use.

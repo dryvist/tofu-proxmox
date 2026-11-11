@@ -61,6 +61,7 @@ variables {
       # Grafana observability guest (referenced by grafana rules)
       grafana_web     = 3000
       victoriametrics = 8428
+      vmauth          = 8427
       authelia_portal = 9091
       zammad_web      = 8080
       # MCP gateway web/API (referenced by mcp_gateway_services_rules)
@@ -1338,11 +1339,11 @@ run "grafana_rules_track_constants_and_internal_scope" {
     grafana_container_ids = { grafana = 410040 }
   }
 
-  # Exactly two live rules: TCP grafana_web (3000) and TCP victoriametrics
-  # (8428), both from the internal networks only.
+  # Exactly three live rules: TCP grafana_web (3000), TCP victoriametrics
+  # (8428) and TCP vmauth (8427), all from the internal networks only.
   assert {
-    condition     = length(local.grafana_services_rules) == 2
-    error_message = "grafana_services_rules must be exactly 2 (grafana_web + victoriametrics), got ${length(local.grafana_services_rules)}"
+    condition     = length(local.grafana_services_rules) == 3
+    error_message = "grafana_services_rules must be exactly 3 (grafana_web + victoriametrics + vmauth), got ${length(local.grafana_services_rules)}"
   }
 
   assert {
@@ -1353,6 +1354,11 @@ run "grafana_rules_track_constants_and_internal_scope" {
   assert {
     condition     = local.grafana_services_rules[1].dport == tostring(var.pipeline_constants.service_ports.victoriametrics)
     error_message = "victoriametrics rule must track the victoriametrics service-port constant"
+  }
+
+  assert {
+    condition     = local.grafana_services_rules[2].dport == tostring(var.pipeline_constants.service_ports.vmauth)
+    error_message = "vmauth rule must track the vmauth service-port constant (8427)"
   }
 
   assert {
