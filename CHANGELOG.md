@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.67.0](https://github.com/dryvist/tofu-proxmox/compare/v3.66.1...v3.67.0) (2026-11-09)
+
+
+### Features
+
+* **agent:** opencode-local run j-562a866f4c10d3e3 ([6a965d8](https://github.com/dryvist/tofu-proxmox/commit/6a965d853b4a6fefc8d23e6aad23de1f8bb729d0))
+* **firewall:** admit the zfs_exporter scrape on the Proxmox hosts ([#1480](https://github.com/dryvist/tofu-proxmox/issues/1480)) ([6a965d8](https://github.com/dryvist/tofu-proxmox/commit/6a965d853b4a6fefc8d23e6aad23de1f8bb729d0))
+
 ## [3.66.1](https://github.com/dryvist/tofu-proxmox/compare/v3.66.0...v3.66.1) (2026-11-08)
 
 

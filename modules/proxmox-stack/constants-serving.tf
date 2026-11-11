@@ -8,7 +8,7 @@
 locals {
   # Per-model concurrency for the active GPU serving profile. The model
   # registry owns each profile's slot count; this published value mirrors the
-  # active eight-slot profile used by shared serving consumers.
+  # active sixteen-slot profile used by shared serving consumers.
   #
   # MLX has a separate measured admission limit, published below. nix-darwin's
   # flake evaluation is hermetic, so its CI checks serveConcurrency against
@@ -35,7 +35,7 @@ locals {
   # lands in private object storage, not git, so publishing it there is not
   # what this design is protecting against; committing it is.
   serving = {
-    llm_concurrency     = 8
+    llm_concurrency     = 16
     mlx_llm_concurrency = 2
     host                = var.llm_large_serving_host
     ip                  = nonsensitive(var.llm_large_serving_ip)

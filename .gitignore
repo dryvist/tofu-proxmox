@@ -78,7 +78,7 @@ tmp/
 .docs/
 
 # Local context files with sensitive data (never commit)
-# Note: Real infrastructure context is maintained in private int_homelab repo
+# Note: Real infrastructure context is maintained in a separate private repository
 *_LOCAL.md
 *.local.*
 
