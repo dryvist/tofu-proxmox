@@ -102,6 +102,7 @@ variables {
       hermes_studio = 8648
       # AI orchestration + observability (referenced by ai_orchestration rules)
       n8n_web                   = 5678
+      crawl4ai_api              = 11235
       hatchet_web               = 8090
       hatchet_grpc              = 7072
       hatchet_health            = 8733
@@ -261,6 +262,28 @@ run "hatchet_health_rule_omitted_without_ingress_src" {
       if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
     ]) == 0
     error_message = "Without an ingress address the Hatchet health rule must be omitted, never opened to a wider source."
+  }
+}
+
+run "crawl4ai_api_rule_uses_the_shared_port_and_internal_source" {
+  command = plan
+
+  assert {
+    condition = (
+      length([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
+      ]) == 1 &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
+      ]).proto == "tcp" &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
+      ]).source == local.internal_src
+    )
+    error_message = "The Crawl4AI API rule must use the shared port and allow internal sources only."
   }
 }
 

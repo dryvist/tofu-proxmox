@@ -49,7 +49,7 @@ locals {
     # GPU serving guests: own HTTPS names for machine API clients (no SSO gate).
     "llm-blackwell-7-96GB-medium" = { backend = "llm-blackwell-7-96GB-medium", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
     "llm-blackwell-7-96GB-small"  = { backend = "llm-blackwell-7-96GB-small", port = local.pipeline_constants.service_ports.llm_fast_api, sso = false }
-    # AI orchestration stack UIs and Langfuse/Phoenix/docling-serve routes (n8n
+    # AI orchestration services and Langfuse/Phoenix/docling-serve routes (n8n
     # through docling-serve) are defined in locals-ingress-ai-routes.tf and
     # merged into ingress_services above.
     # agentgateway + mcp are fronted as load-balanced pools (agentgateway_backends

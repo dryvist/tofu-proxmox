@@ -1587,6 +1587,31 @@
         "nesting": true
       }
     },
+    "crawl4ai": {
+      "vm_id": 505070,
+      "dhcp": true,
+      "vlan": "ai",
+      "hostname": "crawl4ai-example",
+      "description": "Crawl4AI web extraction API (Docker-in-LXC)",
+      "cpu_cores": 2,
+      "memory_dedicated": 4096,
+      "tags": [
+        "terraform",
+        "container",
+        "ai",
+        "ai-orchestration",
+        "crawl4ai",
+        "docker"
+      ],
+      "pool_id": "ai",
+      "unprivileged": true,
+      "root_disk": {
+        "size": 16
+      },
+      "features": {
+        "nesting": true
+      }
+    },
     "dify": {
       "vm_id": 505010,
       "node_name": "proxmox-1",

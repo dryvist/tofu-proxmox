@@ -81,11 +81,12 @@ locals {
       # instance (own container) running the SAME software as hermes-agent,
       # so it resolves the same hermes_webhook/hermes_dashboard/hermes_api
       # keys above — no separate port constants needed.
-      # AI orchestration stack web UIs (Traefik-fronted) — n8n, Hatchet, Dify,
+      # AI orchestration stack services (Traefik-fronted) — n8n, Crawl4AI, Hatchet, Dify,
       # LangFlow, LangGraph, and Langfuse (LLM trace/cost/eval). ingress.tf references these.
       n8n_web      = 5678
       dify_web     = 80
       langflow_web = 7860
+      crawl4ai_api = 11235
       sim_web      = 3000
       langfuse_web = 3000
       # Arize Phoenix (LLM observability — traces/evals), the Langfuse sibling on

@@ -28,7 +28,7 @@ variables {
       agentgateway_admin        = 15000, agentgateway_metrics = 15020, hermes_webhook = 8644
       hermes_api                = 8642, hermes_a2a = 9901, hermes_dashboard = 8080, hermes_ui_workspace = 3000
       hermes_ui_mission_control = 3001, herdr_relay_ws = 8375, hermes_webui = 8787
-      hermes_studio             = 8648, n8n_web = 5678, hatchet_web = 8090, hatchet_grpc = 7072, hatchet_health = 8733
+      hermes_studio             = 8648, n8n_web = 5678, crawl4ai_api = 11235, hatchet_web = 8090, hatchet_grpc = 7072, hatchet_health = 8733
       dify_web                  = 80, langflow_web = 7860, sim_web = 3000
       langfuse_web              = 3000, phoenix_web = 6006, phoenix_grpc = 4317, phoenix_metrics = 9090
       phoenix_postgres_exporter = 9187
@@ -118,7 +118,7 @@ run "specialist_eval_guests_get_only_their_platform_port" {
     condition = (
       contains([for rule in proxmox_virtual_environment_firewall_rules.ai_orchestration_container["production"].rule : rule.security_group], "ai-orch-svc") &&
       sort([for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule.dport]) == sort([
-        tostring(local.svc_ports.n8n_web), tostring(local.svc_ports.hatchet_web),
+        tostring(local.svc_ports.n8n_web), tostring(local.svc_ports.crawl4ai_api), tostring(local.svc_ports.hatchet_web),
         tostring(local.svc_ports.hatchet_grpc), tostring(local.svc_ports.langflow_web),
         tostring(local.svc_ports.dify_web), tostring(local.svc_ports.langgraph_api),
         tostring(local.svc_ports.agent_chat_ui_web), tostring(local.svc_ports.docling_serve_api),

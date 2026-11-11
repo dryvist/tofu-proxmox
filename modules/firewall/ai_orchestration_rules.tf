@@ -14,13 +14,14 @@ locals {
   # enforced at UniFi; this scopes the Proxmox guest firewall to match.
   ai_src = var.ai_network
 
-  # AI orchestration UIs (n8n, Hatchet, Dify, LangFlow, LangGraph) — inbound from internal
-  # so admins reach the builders; egress (model endpoints, external APIs) via
+  # AI orchestration UIs and APIs (n8n, Crawl4AI, Hatchet, Dify, LangFlow, LangGraph) — inbound from internal
+  # so admins and internal clients reach the services; egress (model endpoints, external APIs) via
   # outbound internal/HTTPS groups on the container. LangGraph opens two ports: its
   # in-memory `langgraph dev` API and the self-hosted Agent Chat UI that fronts it.
   # Ports DRY from pipeline_constants.
   ai_orchestration_services_rules = concat([
     { proto = "tcp", dport = tostring(local.svc_ports.n8n_web), source = local.internal_src, comment = "n8n web UI (TCP ${local.svc_ports.n8n_web}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.crawl4ai_api), source = local.internal_src, comment = "Crawl4AI API (TCP ${local.svc_ports.crawl4ai_api}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hatchet_web), source = local.internal_src, comment = "Hatchet web UI (TCP ${local.svc_ports.hatchet_web}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hatchet_grpc), source = local.internal_src, comment = "Hatchet engine gRPC (TCP ${local.svc_ports.hatchet_grpc}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.langflow_web), source = local.internal_src, comment = "LangFlow web UI (TCP ${local.svc_ports.langflow_web}) from internal" },
@@ -69,7 +70,7 @@ locals {
   ]
 }
 
-# AI orchestration containers (n8n, Hatchet, Dify, LangFlow, LangGraph, agent-exec)
+# AI orchestration containers (n8n, Crawl4AI, Hatchet, Dify, LangFlow, LangGraph, agent-exec)
 
 resource "proxmox_virtual_environment_firewall_options" "ai_orchestration_container" {
   for_each = var.ai_orchestration_container_ids
@@ -106,7 +107,7 @@ resource "proxmox_virtual_environment_firewall_rules" "ai_orchestration_containe
     for_each = each.key != "agent-exec" ? [1] : []
     content {
       security_group = proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.name
-      comment        = "AI orchestration UIs (n8n, Hatchet, Dify, LangFlow, LangGraph)"
+      comment        = "AI orchestration services (n8n, Crawl4AI, Hatchet, Dify, LangFlow, LangGraph)"
     }
   }
 

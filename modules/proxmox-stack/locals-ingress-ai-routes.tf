@@ -1,8 +1,9 @@
 # AI orchestration stack route rows, merged into ingress_services in ingress.tf.
 locals {
   ai_stack_routes = merge({
-    # AI orchestration stack UIs (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
-    n8n = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
+    # AI orchestration services (ai VLAN) + Langfuse/Phoenix LLM observability (siem VLAN).
+    n8n      = { backend = "n8n", port = local.pipeline_constants.service_ports.n8n_web }
+    crawl4ai = { backend = "crawl4ai", port = local.pipeline_constants.service_ports.crawl4ai_api }
     # Dify Community has no SSO, so the whole host skips the forwardAuth gate and
     # Dify's own login protects the UI, console API and machine paths alike.
     dify     = { backend = "dify", port = local.pipeline_constants.service_ports.dify_web, sso = false }

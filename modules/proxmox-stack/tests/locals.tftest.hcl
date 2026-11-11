@@ -277,6 +277,11 @@ run "pipeline_constants_service_ports" {
     condition     = local.pipeline_constants.service_ports.llm_fast_trial_api == 10436
     error_message = "llm_fast_trial_api port should be 10436"
   }
+
+  assert {
+    condition     = local.pipeline_constants.service_ports.crawl4ai_api == 11235
+    error_message = "crawl4ai_api port should be 11235"
+  }
 }
 
 run "pipeline_constants_monitoring_ports" {
