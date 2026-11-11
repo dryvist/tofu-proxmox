@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.68.0](https://github.com/dryvist/tofu-proxmox/compare/v3.67.0...v3.68.0) (2026-11-11)
+
+
+### Features
+
+* **agent:** autonomous zcode run j-f51e9711c66375a9 ([#1482](https://github.com/dryvist/tofu-proxmox/issues/1482)) ([d37174e](https://github.com/dryvist/tofu-proxmox/commit/d37174e4adee199728bb6bfaa6f337473f9f3679))
+* **agent:** zcode run j-f51e9711c66375a9 ([d37174e](https://github.com/dryvist/tofu-proxmox/commit/d37174e4adee199728bb6bfaa6f337473f9f3679))
+* **ingress:** add the vmauth read-only quota route ([#1485](https://github.com/dryvist/tofu-proxmox/issues/1485)) ([0d990e0](https://github.com/dryvist/tofu-proxmox/commit/0d990e05b9fa447b6b37338f4773101578e303ec))
+
+
+### Bug Fixes
+
+* **constants:** set serving.llm_concurrency to 16 ([#1483](https://github.com/dryvist/tofu-proxmox/issues/1483)) ([fcaec3b](https://github.com/dryvist/tofu-proxmox/commit/fcaec3b836f8e3bd2ed737ebb5a276092bcddae2))
+
 ## [3.67.0](https://github.com/dryvist/tofu-proxmox/compare/v3.66.1...v3.67.0) (2026-11-09)
 
 
