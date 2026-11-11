@@ -1589,9 +1589,9 @@
     },
     "crawl4ai": {
       "vm_id": 505070,
+      "node_name": "proxmox-1",
       "dhcp": true,
       "vlan": "ai",
-      "hostname": "crawl4ai-example",
       "description": "Crawl4AI web extraction API (Docker-in-LXC)",
       "cpu_cores": 2,
       "memory_dedicated": 4096,
