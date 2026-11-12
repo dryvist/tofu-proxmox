@@ -267,25 +267,37 @@ run "hatchet_health_rule_omitted_without_ingress_src" {
   }
 }
 
-run "crawl4ai_api_rule_uses_the_shared_port_and_internal_source" {
+run "crawl4ai_api_rule_uses_ingress_source_and_stays_out_of_shared_group" {
   command = plan
+
+  variables {
+    crawl4ai_container_ids = { service = 201 }
+  }
 
   assert {
     condition = (
       length([
-        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.rule : rule
         if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
       ]) == 1 &&
       one([
-        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.rule : rule
         if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
       ]).proto == "tcp" &&
       one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
+      ]).source == local.ai_src &&
+      length([
         for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
         if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
-      ]).source == local.internal_src
+      ]) == 0 &&
+      [
+        for rule in proxmox_virtual_environment_firewall_rules.crawl4ai_container["service"].rule : rule.security_group
+        if rule.security_group == proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.name
+      ] == ["crawl4ai-svc"]
     )
-    error_message = "The Crawl4AI API rule must use the shared port and allow internal sources only."
+    error_message = "Crawl4AI must use its dedicated group for the shared API port, allow only the AI VLAN ingress source, and stay out of the shared orchestration group."
   }
 }
 

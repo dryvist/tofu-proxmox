@@ -177,8 +177,11 @@ run "crawl4ai_ingress_uses_api_port_and_default_sso" {
   }
 
   assert {
-    condition     = local.ai_orchestration_container_ids == { crawl4ai = 505070 }
-    error_message = "The Crawl4AI tag set must select this guest for AI orchestration firewall rules."
+    condition = (
+      local.ai_orchestration_container_ids == {} &&
+      local.crawl4ai_container_ids == { crawl4ai = 505070 }
+    )
+    error_message = "The Crawl4AI tag set must select its dedicated firewall map and stay out of shared AI orchestration rules."
   }
 
   assert {
