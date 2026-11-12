@@ -299,6 +299,17 @@ run "crawl4ai_api_rule_uses_ingress_source_and_stays_out_of_shared_group" {
     )
     error_message = "Crawl4AI must use its dedicated group for the shared API port, allow only the AI VLAN ingress source, and stay out of the shared orchestration group."
   }
+
+  assert {
+    condition = toset([for r in proxmox_virtual_environment_firewall_rules.crawl4ai_container["service"].rule : r.security_group]) == toset([
+      proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_http.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.name,
+    ])
+    error_message = "Crawl4AI must attach exactly internal_access, outbound_internal, outbound_https, outbound_http and crawl4ai_services"
+  }
 }
 
 run "three_networks_comma_joined_src" {

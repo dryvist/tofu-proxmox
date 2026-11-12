@@ -62,6 +62,11 @@ resource "proxmox_virtual_environment_firewall_rules" "crawl4ai_container" {
   }
 
   rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_http.name
+    comment        = "Outbound HTTP (apt package mirrors, plain-HTTP crawl targets)"
+  }
+
+  rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.name
     comment        = "Inbound API from the AI VLAN ingress source"
   }
