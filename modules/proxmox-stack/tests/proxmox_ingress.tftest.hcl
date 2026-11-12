@@ -154,6 +154,43 @@ run "homebox_ingress_uses_service_port_and_default_sso" {
   }
 }
 
+run "crawl4ai_ingress_uses_api_port_and_default_sso" {
+  command = plan
+
+  variables {
+    containers = {
+      authelia = {
+        vm_id     = 998
+        node_name = "test-node"
+        vlan      = keys(var.vlan_ids)[0]
+        dhcp      = true
+        tags      = ["authelia"]
+      }
+      crawl4ai = {
+        vm_id     = 505070
+        node_name = "test-node"
+        vlan      = "ai"
+        dhcp      = true
+        tags      = ["terraform", "container", "ai", "ai-orchestration", "crawl4ai", "docker"]
+      }
+    }
+  }
+
+  assert {
+    condition     = local.ai_orchestration_container_ids == { crawl4ai = 505070 }
+    error_message = "The Crawl4AI tag set must select this guest for AI orchestration firewall rules."
+  }
+
+  assert {
+    condition = length([
+      for route in output.ansible_inventory.ingress : route
+      if route.name == "crawl4ai" && route.owner == "crawl4ai" &&
+      route.port == local.pipeline_constants.service_ports.crawl4ai_api && route.sso
+    ]) == 1
+    error_message = "Crawl4AI must publish one API route on its configured port with the default SSO gate."
+  }
+}
+
 run "external_ingress_is_optional_and_sso_gated" {
   command = plan
   variables {
