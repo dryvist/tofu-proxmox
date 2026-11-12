@@ -118,7 +118,7 @@ run "specialist_eval_guests_get_only_their_platform_port" {
     condition = (
       contains([for rule in proxmox_virtual_environment_firewall_rules.ai_orchestration_container["production"].rule : rule.security_group], "ai-orch-svc") &&
       sort([for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule.dport]) == sort([
-        tostring(local.svc_ports.n8n_web), tostring(local.svc_ports.crawl4ai_api), tostring(local.svc_ports.hatchet_web),
+        tostring(local.svc_ports.n8n_web), tostring(local.svc_ports.hatchet_web),
         tostring(local.svc_ports.hatchet_grpc), tostring(local.svc_ports.langflow_web),
         tostring(local.svc_ports.dify_web), tostring(local.svc_ports.langgraph_api),
         tostring(local.svc_ports.agent_chat_ui_web), tostring(local.svc_ports.docling_serve_api),
