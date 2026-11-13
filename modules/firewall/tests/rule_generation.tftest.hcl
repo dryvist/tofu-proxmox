@@ -98,12 +98,15 @@ variables {
       hermes_ui_mission_control = 3001
       # herdr-remote relay + dashboard (referenced by herdr_client_services_rules)
       herdr_relay_ws = 8375
+      # Orca server on the herdr runtime (referenced by herdr_runtime_services_rules)
+      orca_server = 6768
       # The two third-party Hermes UIs co-located on each agent guest
       # (referenced by hermes_webhook_services_rules)
       hermes_webui  = 8787
       hermes_studio = 8648
       # AI orchestration + observability (referenced by ai_orchestration rules)
       n8n_web                   = 5678
+      crawl4ai_api              = 11235
       hatchet_web               = 8090
       hatchet_grpc              = 7072
       hatchet_health            = 8733
@@ -263,6 +266,51 @@ run "hatchet_health_rule_omitted_without_ingress_src" {
       if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
     ]) == 0
     error_message = "Without an ingress address the Hatchet health rule must be omitted, never opened to a wider source."
+  }
+}
+
+run "crawl4ai_api_rule_uses_ingress_source_and_stays_out_of_shared_group" {
+  command = plan
+
+  variables {
+    crawl4ai_container_ids = { service = 201 }
+  }
+
+  assert {
+    condition = (
+      length([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
+      ]) == 1 &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
+      ]).proto == "tcp" &&
+      one([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
+      ]).source == local.ai_src &&
+      length([
+        for rule in proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.rule : rule
+        if rule.dport == tostring(var.pipeline_constants.service_ports.crawl4ai_api)
+      ]) == 0 &&
+      [
+        for rule in proxmox_virtual_environment_firewall_rules.crawl4ai_container["service"].rule : rule.security_group
+        if rule.security_group == proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.name
+      ] == ["crawl4ai-svc"]
+    )
+    error_message = "Crawl4AI must use its dedicated group for the shared API port, allow only the AI VLAN ingress source, and stay out of the shared orchestration group."
+  }
+
+  assert {
+    condition = toset([for r in proxmox_virtual_environment_firewall_rules.crawl4ai_container["service"].rule : r.security_group]) == toset([
+      proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_http.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.crawl4ai_services.name,
+    ])
+    error_message = "Crawl4AI must attach exactly internal_access, outbound_internal, outbound_https, outbound_http and crawl4ai_services"
   }
 }
 
@@ -1577,6 +1625,27 @@ run "herdr_client_rules_track_constants_and_internal_scope" {
   assert {
     condition     = alltrue([for r in local.herdr_client_services_rules : r.source == local.internal_src])
     error_message = "every herdr client service rule must be scoped to the internal networks"
+  }
+}
+
+run "herdr_runtime_rules_track_constants_and_internal_scope" {
+  command = plan
+
+  # Exactly one live rule: the Orca server port on the herdr runtime, from
+  # internal networks only.
+  assert {
+    condition     = length(local.herdr_runtime_services_rules) == 1
+    error_message = "herdr_runtime_services_rules must be exactly 1 (the Orca server), got ${length(local.herdr_runtime_services_rules)}"
+  }
+
+  assert {
+    condition     = local.herdr_runtime_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.orca_server)
+    error_message = "Orca server rule must track the orca_server service-port constant"
+  }
+
+  assert {
+    condition     = alltrue([for r in local.herdr_runtime_services_rules : r.source == local.internal_src])
+    error_message = "every herdr runtime service rule must be scoped to the internal networks"
   }
 }
 

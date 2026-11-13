@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.69.0](https://github.com/dryvist/tofu-proxmox/compare/v3.68.0...v3.69.0) (2026-11-12)
+
+
+### Features
+
+* **ai:** declare the Crawl4AI guest, firewall rule and ingress route ([#1487](https://github.com/dryvist/tofu-proxmox/issues/1487)) ([801f9b5](https://github.com/dryvist/tofu-proxmox/commit/801f9b574643177845b404103b012fdd7ceaa34e))
+
 ## [3.68.0](https://github.com/dryvist/tofu-proxmox/compare/v3.67.0...v3.68.0) (2026-11-11)
 
 

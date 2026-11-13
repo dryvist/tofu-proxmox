@@ -146,6 +146,7 @@ module "firewall" {
   herdr_container_ids        = local.herdr_container_ids
   herdr_client_container_ids = local.herdr_client_container_ids
   firecrawl_container_ids    = local.firecrawl_container_ids
+  crawl4ai_container_ids     = local.crawl4ai_container_ids
 
   # AI orchestration LXCs: tagged "ai-orchestration" (n8n, Hatchet, Dify,
   # LangFlow, LangGraph, agent-exec)

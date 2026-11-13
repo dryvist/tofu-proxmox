@@ -12,6 +12,7 @@ locals {
     authelia         = "authelia"
     clickhouse       = "clickhouse"
     cribl            = "cribl"
+    crawl4ai         = "crawl4ai"
     dify_eval        = "dify-eval"
     docker_ai        = "docker-ai"
     edge             = "edge"

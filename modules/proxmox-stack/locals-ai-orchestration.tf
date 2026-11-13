@@ -7,15 +7,16 @@ locals {
   # the full network_cidrs map stays sensitive.
   ai_network = nonsensitive(var.network_cidrs["ai"])
 
-  # AI orchestration LXCs (ai-orchestration tag): n8n, Hatchet, Dify, LangFlow,
-  # LangGraph, agent-exec. Inbound service ports from internal + outbound
-  # internal/HTTPS (model endpoints, external APIs). specialist-eval guests
-  # use their narrower profile even if they also carry ai-orchestration.
+  # AI orchestration LXCs (ai-orchestration tag): n8n, Hatchet, Dify,
+  # LangFlow, LangGraph, agent-exec. Inbound service ports from internal + outbound
+  # internal/HTTPS (model endpoints, external APIs). Crawl4AI and specialist-eval
+  # guests use their dedicated profiles even if they also carry ai-orchestration.
   # agent-exec is egress-only (no UI rule fires).
   ai_orchestration_container_ids = {
     for k, v in var.containers : k => v.vm_id
     if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.ai_orchestration) &&
-    !contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.specialist_eval)
+    !contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.specialist_eval) &&
+    !contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.crawl4ai)
   }
 
   # Evaluation guests carry one platform tag alongside specialist-eval. Keep
