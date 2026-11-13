@@ -7,7 +7,8 @@
 # Two profiles, because the three herdr guests do not need the same reach and a
 # single tag would hand the bridge and the dashboard the runtime's egress:
 #
-#   herdr (runtime)  — internal_access, outbound_internal, outbound_https.
+#   herdr (runtime)  — internal_access, outbound_internal, outbound_https, plus
+#                      herdr_runtime_services (Orca server TCP port, from internal).
 #                      Every agent pane calls model providers, package
 #                      registries and git forges from here, so broad outbound
 #                      443 is the point of the guest, not an oversight.
@@ -17,8 +18,8 @@
 #                      over SSH, which internal_access already covers. Slack
 #                      Socket Mode and the Cloudflare-free relay are both
 #                      OUTBOUND WebSockets, so neither guest needs an inbound
-#                      rule for its messaging path — the only inbound listener
-#                      in the set is the dashboard, and Traefik fronts it.
+#                      rule for its messaging path. The dashboard is the
+#                      clients' only inbound listener, and Traefik fronts it.
 #
 # Both sets are DHCP-first guests, so `dhcp = true` is required behind the DROP
 # policies or they never lease — the same note hermes_ui_rules.tf carries.
@@ -26,6 +27,10 @@
 locals {
   herdr_client_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.herdr_relay_ws), source = local.internal_src, comment = "herdr-remote relay + dashboard (TCP ${local.svc_ports.herdr_relay_ws}) from internal" },
+  ]
+
+  herdr_runtime_services_rules = [
+    { proto = "tcp", dport = tostring(local.svc_ports.orca_server), source = local.internal_src, comment = "Orca server (TCP ${local.svc_ports.orca_server}) from internal" },
   ]
 }
 
@@ -35,6 +40,23 @@ resource "proxmox_virtual_environment_cluster_firewall_security_group" "herdr_cl
 
   dynamic "rule" {
     for_each = local.herdr_client_services_rules
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = rule.value.proto
+      dport   = rule.value.dport
+      source  = rule.value.source
+      comment = rule.value.comment
+    }
+  }
+}
+
+resource "proxmox_virtual_environment_cluster_firewall_security_group" "herdr_runtime_services" {
+  name    = "herdr-runtime-svc"
+  comment = "Orca server (${local.svc_ports.orca_server}) from internal networks"
+
+  dynamic "rule" {
+    for_each = local.herdr_runtime_services_rules
     content {
       type    = "in"
       action  = "ACCEPT"
@@ -83,6 +105,11 @@ resource "proxmox_virtual_environment_firewall_rules" "herdr_container" {
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name
     comment        = "Outbound HTTPS (TCP 443) for the agent CLIs' model providers, registries and git forges"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.herdr_runtime_services.name
+    comment        = "Inbound Orca server port from internal"
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.herdr_container]

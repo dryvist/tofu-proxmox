@@ -9,11 +9,14 @@
 #   herdr_relay_ws — herdr-remote's relay and web dashboard. Upstream binds
 #     127.0.0.1:8375. WebSocket, so it needs Traefik's default HTTP/1.1
 #     Upgrade handling and nothing more.
+#   orca_server — Orca server on the herdr runtime guest. TCP, reached
+#     directly from internal networks; no route in ingress.tf.
 #
 # The herdr runtime is reached over SSH and the Slack bridge speaks outbound
-# Socket Mode, so neither takes a port here or a route in ingress.tf.
+# Socket Mode, so neither has a route in ingress.tf.
 locals {
   herdr_ports = {
     herdr_relay_ws = 8375
+    orca_server    = 6768
   }
 }
