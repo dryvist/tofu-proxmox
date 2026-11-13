@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.70.0](https://github.com/dryvist/tofu-proxmox/compare/v3.69.0...v3.70.0) (2026-11-13)
+
+
+### Features
+
+* **firewall:** allow Orca server port on the Herdr guest ([#1492](https://github.com/dryvist/tofu-proxmox/issues/1492)) ([1d504d1](https://github.com/dryvist/tofu-proxmox/commit/1d504d19e13a3f51de3762f8cd5a2b435e7be576))
+
+
+### Bug Fixes
+
+* **containers:** document the nixos OS type for NixOS templates ([#1494](https://github.com/dryvist/tofu-proxmox/issues/1494)) ([83a4259](https://github.com/dryvist/tofu-proxmox/commit/83a42596ba6033e89913726482618abb31e1782a))
+* **firewall:** attach outbound HTTP to the Crawl4AI guest ([#1491](https://github.com/dryvist/tofu-proxmox/issues/1491)) ([7386dbc](https://github.com/dryvist/tofu-proxmox/commit/7386dbc64a9161bf68b32a6b837b393a358c9cd6))
+* **firewall:** give the Crawl4AI guest its own API security group ([#1490](https://github.com/dryvist/tofu-proxmox/issues/1490)) ([d6e73a0](https://github.com/dryvist/tofu-proxmox/commit/d6e73a03a9af5abbce23f5759ea11a956d66ae12))
+
 ## [3.69.0](https://github.com/dryvist/tofu-proxmox/compare/v3.68.0...v3.69.0) (2026-11-12)
 
 
