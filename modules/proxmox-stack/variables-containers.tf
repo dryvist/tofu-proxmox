@@ -105,7 +105,8 @@ variable "containers" {
     startup_order = optional(number)
 
     # Bare vztmpl filename on var.datastore_iso; null = the shared Debian
-    # template. Pair with os_type = "unmanaged" for NixOS. SET-ONCE:
+    # template. Pair with os_type = "nixos" for NixOS: Proxmox then writes the
+    # guest's networkd config, hostname and root SSH keys. SET-ONCE:
     # template_file_id is in the container module's ignore_changes, and
     # ct_templates.tf carries the rest.
     ct_template = optional(string)
