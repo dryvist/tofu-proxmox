@@ -27,7 +27,7 @@ variables {
       llm_fast_api              = 10434, llm_gpu_serving_api = 10440, llm_fast_trial_api = 10436, llm_classify_api = 8000, llm_router_api = 4000, agentgateway_proxy = 8080
       agentgateway_admin        = 15000, agentgateway_metrics = 15020, hermes_webhook = 8644
       hermes_api                = 8642, hermes_a2a = 9901, hermes_dashboard = 8080, hermes_ui_workspace = 3000
-      hermes_ui_mission_control = 3001, herdr_relay_ws = 8375, hermes_webui = 8787
+      hermes_ui_mission_control = 3001, herdr_relay_ws = 8375, orca_server = 6768, hermes_webui = 8787
       hermes_studio             = 8648, n8n_web = 5678, crawl4ai_api = 11235, hatchet_web = 8090, hatchet_grpc = 7072, hatchet_health = 8733
       dify_web                  = 80, langflow_web = 7860, sim_web = 3000
       langfuse_web              = 3000, phoenix_web = 6006, phoenix_grpc = 4317, phoenix_metrics = 9090

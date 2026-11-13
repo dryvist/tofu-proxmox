@@ -98,6 +98,8 @@ variables {
       hermes_ui_mission_control = 3001
       # herdr-remote relay + dashboard (referenced by herdr_client_services_rules)
       herdr_relay_ws = 8375
+      # Orca server on the herdr runtime (referenced by herdr_runtime_services_rules)
+      orca_server = 6768
       # The two third-party Hermes UIs co-located on each agent guest
       # (referenced by hermes_webhook_services_rules)
       hermes_webui  = 8787
@@ -1623,6 +1625,27 @@ run "herdr_client_rules_track_constants_and_internal_scope" {
   assert {
     condition     = alltrue([for r in local.herdr_client_services_rules : r.source == local.internal_src])
     error_message = "every herdr client service rule must be scoped to the internal networks"
+  }
+}
+
+run "herdr_runtime_rules_track_constants_and_internal_scope" {
+  command = plan
+
+  # Exactly one live rule: the Orca server port on the herdr runtime, from
+  # internal networks only.
+  assert {
+    condition     = length(local.herdr_runtime_services_rules) == 1
+    error_message = "herdr_runtime_services_rules must be exactly 1 (the Orca server), got ${length(local.herdr_runtime_services_rules)}"
+  }
+
+  assert {
+    condition     = local.herdr_runtime_services_rules[0].dport == tostring(var.pipeline_constants.service_ports.orca_server)
+    error_message = "Orca server rule must track the orca_server service-port constant"
+  }
+
+  assert {
+    condition     = alltrue([for r in local.herdr_runtime_services_rules : r.source == local.internal_src])
+    error_message = "every herdr runtime service rule must be scoped to the internal networks"
   }
 }
 
