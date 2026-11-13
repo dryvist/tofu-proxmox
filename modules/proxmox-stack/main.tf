@@ -163,7 +163,8 @@ module "containers" {
   default_datastore = var.datastore_default
   domain            = var.domain
 
-  depends_on = [module.pools, module.storage, proxmox_oci_image.oci_ct_template]
+  # template_file_id is a string, so the vztmpl downloads need explicit ordering.
+  depends_on = [module.pools, module.storage, proxmox_oci_image.oci_ct_template, proxmox_download_file.nixos_ct_template]
 }
 
 # Splunk VM module - Docker-based Splunk Enterprise
