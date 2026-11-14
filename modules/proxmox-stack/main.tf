@@ -3,12 +3,12 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.119.0"
+      version = "0.120.0"
     }
     # Publishes ansible_inventory to homelab RustFS (inventory_publish.tf).
     aws = {
       source  = "hashicorp/aws"
-      version = "6.71.0"
+      version = "6.73.0"
     }
     tls = {
       source  = "hashicorp/tls"
@@ -163,7 +163,8 @@ module "containers" {
   default_datastore = var.datastore_default
   domain            = var.domain
 
-  depends_on = [module.pools, module.storage, proxmox_oci_image.oci_ct_template]
+  # template_file_id is a string, so the vztmpl downloads need explicit ordering.
+  depends_on = [module.pools, module.storage, proxmox_oci_image.oci_ct_template, proxmox_download_file.nixos_ct_template]
 }
 
 # Splunk VM module - Docker-based Splunk Enterprise

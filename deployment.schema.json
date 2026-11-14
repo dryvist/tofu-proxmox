@@ -526,7 +526,7 @@
         "ct_template": {
           "type": "string",
           "minLength": 1,
-          "description": "OS template override, as a bare vztmpl filename on datastore_iso. Absent = the estate's shared Debian template. A NixOS guest sets this together with os_type=\"unmanaged\". SET-ONCE: template_file_id is in the container module's lifecycle.ignore_changes, so changing it on a live guest is a no-op."
+          "description": "OS template override, as a bare vztmpl filename on datastore_iso. Absent = the estate's shared Debian template. A NixOS guest sets this together with os_type=\"nixos\", so Proxmox writes its network config, hostname and root SSH keys. SET-ONCE: template_file_id is in the container module's lifecycle.ignore_changes, so changing it on a live guest is a no-op."
         },
         "environment_variables": {
           "type": "object",
