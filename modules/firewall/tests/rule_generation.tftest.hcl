@@ -1695,7 +1695,8 @@ run "ai_sandbox_vm_denies_by_default_and_attaches_the_profile_groups" {
   command = plan
 
   variables {
-    ai_sandbox_vm_ids = { "ai-sandbox-01" = 515100 }
+    ai_sandbox_vm_ids          = { "ai-sandbox-01" = 515100 }
+    package_cache_destinations = ["cache-guest-primary"]
   }
 
   assert {
@@ -1713,6 +1714,14 @@ run "ai_sandbox_vm_denies_by_default_and_attaches_the_profile_groups" {
       proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].name,
     ])
     error_message = "the ai_sandbox VM must attach exactly internal_access, ai_proxied_egress, outbound_https, outbound_http, ai_sandbox_ingress and package_cache_egress"
+  }
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule) == 4 &&
+      alltrue([for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule : rule.type == "out" && rule.dest == "cache-guest-primary"])
+    )
+    error_message = "with no Pepper container, the ai_sandbox VM alone must create the package-cache egress group with its four rules to the cache guests only"
   }
 }
 
