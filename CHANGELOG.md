@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.70.1](https://github.com/dryvist/tofu-proxmox/compare/v3.70.0...v3.70.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **containers:** create NixOS containers after their template downloads ([#1495](https://github.com/dryvist/tofu-proxmox/issues/1495)) ([eb550c5](https://github.com/dryvist/tofu-proxmox/commit/eb550c5f99bda51228ae94a300e42c5bf8cb611b))
+
 ## [3.70.0](https://github.com/dryvist/tofu-proxmox/compare/v3.69.0...v3.70.0) (2026-11-13)
 
 

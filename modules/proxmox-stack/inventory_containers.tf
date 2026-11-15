@@ -10,7 +10,7 @@
 
 locals {
   inventory_containers = {
-    for k, v in(length(var.containers) > 0 ? module.containers[0].container_details : {}) : k => {
+    for k, v in(length(var.containers) > 0 ? module.containers[0].container_details : {}) : k => merge({
       vmid     = v.id
       hostname = local.guest_hostname_containers[k]
       ip       = local.container_address[k] # static: per-VLAN cidrhost IP (CIDR stripped); DHCP guests: FQDN (DNS-first)
@@ -158,6 +158,9 @@ locals {
         for mp in local.container_mount_points[k] : mp.path
         if mp.path == var.llm_models_cache_mount_path
       ])
-    }
+      },
+      # Published only when declared: the contract types it as a string.
+      { for lane in compact([var.containers[k].llm_gpu_accelerator]) : "llm_gpu_accelerator" => lane },
+    )
   }
 }

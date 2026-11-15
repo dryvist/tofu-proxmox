@@ -16,6 +16,8 @@
 #                         image pulls.
 #   - ai_sandbox_ingress: HTTPS from the ingress Traefik instances only, for
 #                         interactive agent sessions.
+#   - package_cache_egress: the apt, PyPI, npm and raw cache ports on the
+#                         cache guests, for the host's own package installs.
 
 locals {
   # Omitted (not emptied) without an ingress address: a sourceless rule would
@@ -89,6 +91,11 @@ resource "proxmox_virtual_environment_firewall_rules" "ai_sandbox_vm" {
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.ai_sandbox_ingress.name
     comment        = "HTTPS inbound from the ingress Traefik instances"
+  }
+
+  rule {
+    security_group = proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].name
+    comment        = "Package cache endpoints on internal networks"
   }
 
   depends_on = [proxmox_virtual_environment_firewall_options.ai_sandbox_vm]
