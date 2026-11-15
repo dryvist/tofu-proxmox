@@ -38,9 +38,6 @@ jobs:
         && 'review' || 'ubuntu-latest' }}
       agent: openhands
       local_model: medium
-      # shortcut: every CI Gate completion counts as a run, so the default of 5 is spent on
-      # passing runs; lower this once the shared limit counts fix runs only.
-      daily_run_limit: "100"
       repo_context: "Terraform/OpenTofu project managing Proxmox VE infrastructure."
       ci_structure: "CI Gate aggregates required checks: File Size (HARD 12KB per-file limit, docs especially), Markdown Lint, Secret Scan, and Terraform (tofu fmt/init/validate/test)."
       extra_tools: "Bash(tofu:*)"
