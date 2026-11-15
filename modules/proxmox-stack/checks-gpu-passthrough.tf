@@ -161,3 +161,16 @@ resource "terraform_data" "gpu_passthrough_guard" {
     }
   }
 }
+
+# Catches a value the published contract would reject. Whether a GPU guest
+# declares a lane at all is the consumer's check, where the lane is used.
+check "llm_gpu_accelerator_valid" {
+  assert {
+    condition = alltrue([
+      for container in values(var.containers) :
+      contains(["gpu-primary", "gpu-secondary"], container.llm_gpu_accelerator)
+      if container.llm_gpu_accelerator != null
+    ])
+    error_message = "llm_gpu_accelerator must be gpu-primary or gpu-secondary."
+  }
+}

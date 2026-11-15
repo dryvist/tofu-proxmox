@@ -149,6 +149,9 @@ node. The shared `llm_gpu_engine` selector chooses the only guest that starts
 and starts on boot; its default remains `llama_cpp`, so a declared Strata guest
 stays stopped by default. Every engine candidate must carry `gpu-passthrough`.
 
+`llm_gpu_accelerator` names the accelerator lane a GPU guest runs on:
+`gpu-primary` or `gpu-secondary`. The inventory publishes it only when set.
+
 The Strata guest is a separate, disposable LXC. Keep secrets and secret mounts
 out of it. Before a Strata run, select `strata` and set every other container on
 that node to `started = false` and `start_on_boot = false` in the desired

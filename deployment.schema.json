@@ -523,6 +523,11 @@
           "enum": ["llama_cpp", "vllm", "strata"],
           "description": "Immutable engine identity for one member of the GPU serving LXC set."
         },
+        "llm_gpu_accelerator": {
+          "type": "string",
+          "enum": ["gpu-primary", "gpu-secondary"],
+          "description": "Accelerator lane this GPU guest runs on. Published in the inventory only when set."
+        },
         "ct_template": {
           "type": "string",
           "minLength": 1,
