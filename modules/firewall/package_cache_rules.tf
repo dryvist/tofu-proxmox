@@ -14,10 +14,10 @@ locals {
 }
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "package_cache_egress" {
-  for_each = length(var.hermes_pepper_container_ids) > 0 ? { active = true } : {}
+  for_each = length(var.hermes_pepper_container_ids) + length(var.ai_sandbox_vm_ids) > 0 ? { active = true } : {}
 
   name    = "pkg-cache-egress"
-  comment = "Pepper package-cache ports on cache guest networks"
+  comment = "Package-cache ports on cache guest networks"
 
   dynamic "rule" {
     for_each = local.package_cache_egress_rules

@@ -1710,8 +1710,9 @@ run "ai_sandbox_vm_denies_by_default_and_attaches_the_profile_groups" {
       proxmox_virtual_environment_cluster_firewall_security_group.outbound_https.name,
       proxmox_virtual_environment_cluster_firewall_security_group.outbound_http.name,
       proxmox_virtual_environment_cluster_firewall_security_group.ai_sandbox_ingress.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].name,
     ])
-    error_message = "the ai_sandbox VM must attach exactly internal_access, ai_proxied_egress, outbound_https, outbound_http and ai_sandbox_ingress"
+    error_message = "the ai_sandbox VM must attach exactly internal_access, ai_proxied_egress, outbound_https, outbound_http, ai_sandbox_ingress and package_cache_egress"
   }
 }
 
