@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.71.0](https://github.com/dryvist/tofu-proxmox/compare/v3.70.1...v3.71.0) (2026-11-15)
+
+
+### Features
+
+* **inventory:** publish llm_gpu_accelerator per GPU container ([#1502](https://github.com/dryvist/tofu-proxmox/issues/1502)) ([e26be3c](https://github.com/dryvist/tofu-proxmox/commit/e26be3cf4c0036aeb4a5de0f7063092f8486016b))
+
+
+### Bug Fixes
+
+* **firewall:** package-cache egress covers apt and the agent-sandbox VMs ([#1501](https://github.com/dryvist/tofu-proxmox/issues/1501)) ([c5bfacf](https://github.com/dryvist/tofu-proxmox/commit/c5bfacf1cea5b55b3b9f317a3fa828199049b49b))
+
 ## [3.70.1](https://github.com/dryvist/tofu-proxmox/compare/v3.70.0...v3.70.1) (2026-11-15)
 
 
