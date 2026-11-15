@@ -165,13 +165,14 @@ run "pepper_uses_proxied_egress_and_plain_hermes_keeps_its_rules" {
   assert {
     condition = (
       toset([for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule : rule.dport]) == toset([
+        tostring(var.pipeline_constants.service_ports.apt_cacher_ng),
         tostring(var.pipeline_constants.service_ports.pypi_cache),
         tostring(var.pipeline_constants.service_ports.npm_cache),
         tostring(var.pipeline_constants.service_ports.raw_cache),
       ]) &&
       alltrue([for rule in proxmox_virtual_environment_cluster_firewall_security_group.package_cache_egress["active"].rule : rule.dest == join(",", var.package_cache_destinations) && rule.dest != join(",", var.internal_networks)])
     )
-    error_message = "Pepper package-cache egress must allow exactly the three cache ports to the cache guests only."
+    error_message = "Pepper package-cache egress must allow exactly the four cache ports to the cache guests only."
   }
 
   assert {

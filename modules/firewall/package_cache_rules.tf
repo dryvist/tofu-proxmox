@@ -7,6 +7,7 @@ locals {
   ]
 
   package_cache_egress_rules = length(var.package_cache_destinations) == 0 ? [] : [
+    { proto = "tcp", dport = tostring(local.svc_ports.apt_cacher_ng), dest = join(",", var.package_cache_destinations), comment = "apt cache guest" },
     { proto = "tcp", dport = tostring(local.svc_ports.pypi_cache), dest = join(",", var.package_cache_destinations), comment = "PyPI cache guest" },
     { proto = "tcp", dport = tostring(local.svc_ports.npm_cache), dest = join(",", var.package_cache_destinations), comment = "npm cache guest" },
     { proto = "tcp", dport = tostring(local.svc_ports.raw_cache), dest = join(",", var.package_cache_destinations), comment = "Raw HTTP cache guest" },

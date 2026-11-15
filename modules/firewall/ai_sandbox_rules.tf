@@ -16,8 +16,8 @@
 #                         image pulls.
 #   - ai_sandbox_ingress: HTTPS from the ingress Traefik instances only, for
 #                         interactive agent sessions.
-#   - package_cache_egress: the PyPI, npm and raw cache ports on the cache
-#                         guests, for the host's own package installs.
+#   - package_cache_egress: the apt, PyPI, npm and raw cache ports on the
+#                         cache guests, for the host's own package installs.
 
 locals {
   # Omitted (not emptied) without an ingress address: a sourceless rule would
