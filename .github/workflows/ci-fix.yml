@@ -1,14 +1,15 @@
-name: CI Fix (Claude)
+---
+name: CI Fix (OpenHands)
 
-# Thin caller for JacobPEvans/.github-ai cc-ci-fix. When CI Gate fails on a PR
-# branch, Claude analyzes the failure and pushes a verified fix commit to that
-# branch (max 2 attempts/PR). The reusable handles gating, attempt-capping,
-# daily limits, and concurrency — so this wrapper stays minimal.
+# Thin caller for the shared CI-fix workflow. When CI Gate fails on a PR
+# branch, OpenHands reads the failure and pushes a fix commit to that branch
+# (max 2 attempts/PR). The reusable handles gating, attempt-capping, daily
+# limits, and concurrency, so this wrapper stays minimal.
 on:
   workflow_run:
-    workflows: ["CI Gate"] # the required merge gate (File Size, Markdown, Secret Scan, Terraform)
+    workflows: ["CI Gate"]
     types: [completed]
-  workflow_dispatch: # manual trigger for testing / re-runs
+  workflow_dispatch:
 
 permissions:
   actions: read
@@ -25,13 +26,21 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: JacobPEvans/.github-ai/.github/workflows/cc-ci-fix.yml@v2
+    uses: JacobPEvans/.github-ai/.github/workflows/cc-ci-fix.yml@5737c65c9a6ba4bf9df44dc2bdefb96029fa8b08 # v2.11.3
     secrets:
       LLM_ROUTER_BASE_URL: ${{ secrets.LLM_ROUTER_BASE_URL }}
       LLM_ROUTER_API_KEY: ${{ secrets.LLM_ROUTER_API_KEY }}
       GH_APP_CLAUDE_BOT_PRIVATE_KEY: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
     with:
-      runner_label: review
+      runner_label: >-
+        ${{ (github.event_name != 'workflow_run' ||
+        github.event.workflow_run.head_repository.full_name == github.repository)
+        && 'review' || 'ubuntu-latest' }}
+      agent: openhands
+      local_model: medium
+      # shortcut: every CI Gate completion counts as a run, so the default of 5 is spent on
+      # passing runs; lower this once the shared limit counts fix runs only.
+      daily_run_limit: "100"
       repo_context: "Terraform/OpenTofu project managing Proxmox VE infrastructure."
       ci_structure: "CI Gate aggregates required checks: File Size (HARD 12KB per-file limit, docs especially), Markdown Lint, Secret Scan, and Terraform (tofu fmt/init/validate/test)."
       extra_tools: "Bash(tofu:*)"
