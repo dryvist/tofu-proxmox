@@ -100,8 +100,9 @@ variable "containers" {
     start_on_boot           = optional(bool, true)
     started                 = optional(bool, true)
     llm_gpu_engine_identity = optional(string)
+    llm_gpu_accelerator     = optional(string)
 
-    # Boot order override; lower starts first. Unset uses the VMID-derived order.
+    # Boot order override; lower starts first. Unset = VMID order.
     startup_order = optional(number)
 
     # Bare vztmpl filename on var.datastore_iso; null = the shared Debian

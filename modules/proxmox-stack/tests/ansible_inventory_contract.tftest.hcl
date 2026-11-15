@@ -2760,6 +2760,7 @@ run "gpu_engine_selector_drives_the_published_pair_state" {
         dhcp                    = true
         tags                    = ["gpu-passthrough"]
         llm_gpu_engine_identity = "llama_cpp"
+        llm_gpu_accelerator     = "gpu-secondary"
       }
       "engine-b" = {
         hostname                = "llm-ada-lovelace-6-24GB-engine-b"
@@ -2794,6 +2795,14 @@ run "gpu_engine_selector_drives_the_published_pair_state" {
       output.ansible_inventory.containers["engine-b"].llm_gpu_engine_identity == "vllm"
     )
     error_message = "each GPU guest must publish its fixed engine identity."
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.containers["engine-a"].llm_gpu_accelerator == "gpu-secondary" &&
+      !can(output.ansible_inventory.containers["engine-b"].llm_gpu_accelerator)
+    )
+    error_message = "a GPU guest must publish its accelerator lane only when it declares one."
   }
 
   assert {
