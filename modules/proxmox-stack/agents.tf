@@ -65,11 +65,24 @@ locals {
     toset(local.llm_cpu_scaler.pool_tags),
   )
 
+  # An isolated Hermes guest keeps its two Hermes tags: the Hermes firewall, not the agent firewall, owns it.
   agent_firewall_profile_conflicts = sort([
     for container_key, agent in var.agents : agent.name
     if agent.name != null && length(setintersection(
-      toset(coalesce(try(var.containers[container_key].tags, null), [])),
+      setsubtract(
+        toset(coalesce(try(var.containers[container_key].tags, null), [])),
+        contains(local.hermes_isolated_container_keys, container_key)
+        ? toset([local.firewall_container_tags.hermes_agent, local.firewall_container_tags.hermes_isolated])
+        : toset([]),
+      ),
       toset(local.agent_firewall_profile_tags),
+    )) > 0
+  ])
+
+  agent_isolated_owned_systems = sort([
+    for container_key, agent in var.agents : agent.name
+    if agent.name != null && contains(local.hermes_isolated_container_keys, container_key) && length(setintersection(
+      toset(agent.owns), toset(local.agent_systems),
     )) > 0
   ])
 
@@ -112,7 +125,8 @@ locals {
         if contains(keys(local.agent_system_port_catalog), slug)
       ])
     }
-    if try(agent.container, null) != null && contains(keys(var.containers), try(agent.container, ""))
+    if try(agent.container, null) != null && contains(keys(var.containers), try(agent.container, "")) &&
+    !contains(local.hermes_isolated_container_keys, try(agent.container, ""))
   }
 }
 
@@ -163,5 +177,15 @@ output "agents" {
   precondition {
     condition     = length(local.agent_firewall_profile_conflicts) == 0
     error_message = "Agent containers must not carry firewall-profile tags; offending agents: ${jsonencode(local.agent_firewall_profile_conflicts)}."
+  }
+
+  precondition {
+    condition     = length(setsubtract(toset(local.hermes_isolated_container_keys), toset(local.agent_physical_container_keys))) == 0
+    error_message = "Every hermes-isolated container needs a container-bound roster agent."
+  }
+
+  precondition {
+    condition     = length(local.agent_isolated_owned_systems) == 0
+    error_message = "An agent on a hermes-isolated container must not own a firewall system; offending agents: ${jsonencode(local.agent_isolated_owned_systems)}."
   }
 }
