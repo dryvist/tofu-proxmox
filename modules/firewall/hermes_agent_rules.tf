@@ -25,7 +25,7 @@
 #                        they cannot be split into their own guest and run ON
 #                        this one. Traefik-fronted, internal only.
 #
-# Guests selected by hermes-pepper use ai_proxied_egress instead of both broad
+# Guests selected by hermes-pepper or hermes-isolated use ai_proxied_egress instead of both broad
 # outbound groups, retaining the same inbound groups and default DROP policies.
 #
 # Hardening follow-up (not this PR): route egress through an audited Squid

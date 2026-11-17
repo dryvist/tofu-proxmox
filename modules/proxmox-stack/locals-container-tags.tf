@@ -24,6 +24,7 @@ locals {
     herdr            = "herdr"
     herdr_ui         = "herdr-ui"
     hermes_agent     = "hermes-agent"
+    hermes_isolated  = "hermes-isolated"
     hermes_pepper    = "hermes-pepper"
     hermes_ui        = "hermes-ui"
     hindsight        = "hindsight"
