@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.72.0](https://github.com/dryvist/tofu-proxmox/compare/v3.71.0...v3.72.0) (2026-11-17)
+
+
+### Features
+
+* **proxmox-stack:** add the hermes-isolated container tag ([#1507](https://github.com/dryvist/tofu-proxmox/issues/1507)) ([4c6e25c](https://github.com/dryvist/tofu-proxmox/commit/4c6e25cc1f1af645f3305655adafdcf375869ce9))
+
 ## [3.71.0](https://github.com/dryvist/tofu-proxmox/compare/v3.70.1...v3.71.0) (2026-11-15)
 
 
