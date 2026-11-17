@@ -301,6 +301,115 @@ run "agent_container_must_not_have_a_firewall_profile_tag" {
   expect_failures = [output.agents]
 }
 
+run "isolated_hermes_guest_carries_its_roster_agent_on_proxied_egress" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["hermes-agent", "hermes-isolated"]
+      }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search example records" }
+    }
+  }
+
+  assert {
+    condition = (
+      output.agents["research-scout"].container == "agent-example-1" &&
+      local.hermes_pepper_container_ids == { "agent-example-1" = 240 } &&
+      local.hermes_agent_container_ids == { "agent-example-1" = 240 } &&
+      length(local.agent_firewall_containers) == 0
+    )
+    error_message = "An isolated Hermes guest publishes its roster agent and takes the Hermes proxied-egress firewall, not the agent firewall."
+  }
+}
+
+run "isolated_hermes_guest_without_a_roster_agent_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["hermes-agent", "hermes-isolated"]
+      }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "isolated_hermes_agent_must_not_own_a_firewall_system" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["hermes-agent", "hermes-isolated"]
+      }
+    }
+    agents = {
+      "agent-example-1" = {
+        name = "research-scout", display = "Scout", purpose = "Search example records", owns = ["splunk"]
+      }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "isolated_hermes_guest_with_another_hermes_profile_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["hermes-agent", "hermes-isolated", "hermes-pepper"]
+      }
+    }
+    agents = {
+      "agent-example-1" = { name = "research-scout", display = "Scout", purpose = "Search example records" }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "isolated_tag_without_hermes_agent_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["hermes-isolated"]
+      }
+    }
+  }
+
+  expect_failures = [var.containers]
+}
+
+run "isolated_hermes_guest_with_a_client_dependency_tag_is_rejected" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = {
+        vm_id = 240, node_name = "node-example", vlan = "apps"
+        tags  = ["hermes-agent", "hermes-isolated", "chromium"]
+      }
+    }
+  }
+
+  expect_failures = [var.containers]
+}
+
 run "agent_owned_system_rejects_a_dhcp_splunk_host" {
   command = plan
 
