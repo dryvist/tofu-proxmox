@@ -5,28 +5,28 @@ variable "containers" {
   type = map(object({
     vm_id = number
     # Omit to get the generated name (<app>-<vm_id>, local.guest_hostname_containers
-    # in locals-guest-naming.tf); a declared value here is kept as-is until its own
+    # in locals-guest-naming.tf); a declared value is kept as-is until its
     # rename wave. See docs/GUEST_NAMING.md.
     hostname    = optional(string)
     description = optional(string)
 
-    # One-line board subtitle. Not `description`: that carries placement
-    # rationale and is far too long for a link.
+    # One-line board subtitle. Not `description`: that is placement rationale
+    # and far too long for a link.
     summary = optional(string)
 
     tags    = optional(list(string), ["terraform", "container"])
     pool_id = optional(string)
 
     # Service VLAN name (required). Selects the guest's subnet + 802.1Q tag:
-    # IP = cidrhost(network_cidrs[vlan], vm_id) (unless ip_config.ipv4_address pins a
-    # static address, or dhcp = true); NIC vlan_id = vlan_ids[vlan]. Must be a key in
-    # network_cidrs; a key ABSENT from vlan_ids yields an UNTAGGED NIC (native VLAN,
-    # e.g. mgmt_native).
+    # IP = cidrhost(network_cidrs[vlan], vm_id) (unless ip_config.ipv4_address
+    # pins a static address, or dhcp = true); NIC vlan_id = vlan_ids[vlan].
+    # Must be a key in network_cidrs; a key ABSENT from vlan_ids yields an
+    # UNTAGGED NIC (native VLAN, e.g. mgmt_native).
     vlan = string
 
-    # DNS-first addressing: the guest takes its address by DHCP and is referenced
-    # by FQDN everywhere. The default for ordinary guests. Set false ONLY for
-    # network and critical guests, which pin ip_config.ipv4_address.
+    # DNS-first addressing: the guest takes its address by DHCP and is
+    # referenced by FQDN everywhere; the default for ordinary guests. Set
+    # false ONLY for network/critical guests, which pin ip_config.ipv4_address.
     # See docs/CONTAINER_SCHEMA.md.
     dhcp = optional(bool, false)
 
@@ -58,9 +58,9 @@ variable "containers" {
       path   = string
       backup = optional(bool, true)
       # Nullable (no default): main.tf derives read_only for the llm fabric's
-      # models mount when this is unset, so a null here must stay
-      # distinguishable from an explicit false. See
-      # local.llm_fast_container_ids and var.llm_models_mount_path.
+      # models mount when this is unset, so null must stay distinguishable
+      # from an explicit false. See local.llm_fast_container_ids and
+      # var.llm_models_mount_path.
       read_only = optional(bool)
     })), [])
 
@@ -106,10 +106,8 @@ variable "containers" {
     startup_order = optional(number)
 
     # Bare vztmpl filename on var.datastore_iso; null = the shared Debian
-    # template. Pair with os_type = "nixos" for NixOS: Proxmox then writes the
-    # guest's networkd config, hostname and root SSH keys. SET-ONCE:
-    # template_file_id is in the container module's ignore_changes, and
-    # ct_templates.tf carries the rest.
+    # template. Pair with os_type = "nixos" for NixOS. SET-ONCE: template_file_id
+    # is in the container module's ignore_changes; ct_templates.tf carries the rest.
     ct_template = optional(string)
 
     # OCI-image guests: runtime env and init command, kept across updates.
@@ -124,18 +122,17 @@ variable "containers" {
 
     # The node holding this guest's pvesr replica, and so the ONLY node HA may
     # relocate it to on node loss. Unset = no replica; consumers must read that
-    # as "not replicated", never as a default node.
-    # See docs/CONTAINER_SCHEMA.md.
+    # as "not replicated", never as a default node. See docs/CONTAINER_SCHEMA.md.
     ha_replication_target = optional(string)
 
     # Ansible connection method published in ansible_inventory
-    # (inventory_publish.tf). Every container defaults to the pct transport, so this
-    # is a no-op until an sshd-ready container is flipped to "ssh" after its SSH-CA
-    # trust is verified. Mirrors var.vms[k].ansible_connection (variables-vms.tf).
+    # (inventory_publish.tf). Every container defaults to the pct transport; a
+    # no-op until an sshd-ready container is flipped to "ssh" after SSH-CA trust
+    # is verified. Mirrors var.vms[k].ansible_connection (variables-vms.tf).
     ansible_connection = optional(string, "community.proxmox.proxmox_pct_remote")
 
-    # LXC features: nesting=true for Docker in an unprivileged LXC (privileged
-    # ones need none; setting any flag requires root@pam).
+    # LXC features: nesting=true for Docker in an unprivileged LXC; setting any
+    # flag requires root@pam.
     features = optional(object({
       nesting = optional(bool, false)
       keyctl  = optional(bool, false)
@@ -176,10 +173,10 @@ variable "containers" {
 
   # A static guest must actually declare its address. dhcp = false with no
   # ipv4_address falls through to the vm_id-derived cidrhost() branch, which
-  # silently produces a wrong (or out-of-range) address for any guest carrying a
-  # positional 6-digit VMID. This is the inverse of the rule that used to live
-  # here: the old one demanded a hand-picked octet from every LEASED guest, which
-  # is exactly backwards — leases need no declaration, static addresses do.
+  # silently produces a wrong (or out-of-range) address for any guest carrying
+  # a positional 6-digit VMID. The inverse of the old rule here demanded a
+  # hand-picked octet from every LEASED guest — exactly backwards: leases need
+  # no declaration, static addresses do.
   validation {
     condition = alltrue([
       for k, v in var.containers :
@@ -191,11 +188,10 @@ variable "containers" {
 
   # An AI runner/agent guest runs a coding agent in permission-skipping mode, so
   # the container firewall is the ONLY safety control. Its egress profile is
-  # selected by tag, and the firewall module's per-profile maps are built by
-  # filtering on that tag — which means a MISSING or MISSPELLED profile tag
-  # silently matches no map at all and the guest comes up with no firewall
-  # options and no rules. That failure mode is invisible in a plan diff, so it
-  # is a hard error here rather than an advisory check: every ai-runner-tagged
+  # selected by tag; the firewall module's per-profile maps are built by filtering
+  # on that tag, so a MISSING or MISSPELLED profile tag silently matches no map
+  # and the guest comes up with no firewall options or rules. That failure mode
+  # is invisible in a plan diff, so this is a hard error: every ai-runner-tagged
   # guest must carry exactly one known profile tag.
   validation {
     condition = alltrue([
@@ -221,18 +217,15 @@ variable "containers" {
     error_message = "Every container tagged 'hermes-donna', 'hermes-pepper' or 'hermes-isolated' must also carry the 'hermes-agent' tag to select its firewall resources."
   }
 
-  # App-dependency tags on the agent guests. Unlike the two checks above these
-  # do not gate a firewall map — they record what the guest's converge installs
-  # or calls, including services that live outside the container. That makes
-  # them the inventory answer to "which guests have Chromium on them" and
-  # "which guests break if the extraction service is down", questions the tag
-  # list is the only place to ask.
-  #
-  # Enforced rather than advisory for the same reason as the firewall tags: an
-  # agent guest missing 'chromium' is not a plan diff anyone would notice, and
-  # the symptom — an agent that answers about pages it never actually read —
-  # surfaces far downstream from the cause. Pepper and isolated guests are the
-  # exception: their converge installs no browser and calls neither service, so they carry none.
+  # App-dependency tags on the agent guests. Unlike the two checks above these do
+  # not gate a firewall map — they record what the guest's converge installs or
+  # calls, including services that live outside the container, and are the
+  # inventory answer to "which guests have Chromium" / "which break if the
+  # extraction service is down". Enforced for the same reason as the firewall
+  # tags: an agent guest missing 'chromium' is not a plan diff anyone would
+  # notice, and the symptom (an agent reporting pages it never read) surfaces far
+  # downstream. Pepper and isolated guests are the exception: their converge
+  # installs no browser and calls neither service, so they carry none.
   validation {
     condition = alltrue([
       for k, v in var.containers : length(
