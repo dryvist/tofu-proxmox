@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.73.0](https://github.com/dryvist/tofu-proxmox/compare/v3.72.0...v3.73.0) (2026-11-18)
+
+
+### Features
+
+* **firewall:** allow the pgBackRest exporter scrape on Postgres guests ([#1511](https://github.com/dryvist/tofu-proxmox/issues/1511)) ([8fe37c4](https://github.com/dryvist/tofu-proxmox/commit/8fe37c4ca6afe535a9a0ec464b4400b39e68bd9a))
+
 ## [3.72.0](https://github.com/dryvist/tofu-proxmox/compare/v3.71.0...v3.72.0) (2026-11-17)
 
 
