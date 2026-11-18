@@ -1,7 +1,7 @@
-# Postgres LXC firewall — the shared native Postgres backing Nautobot (and later
-# Vikunja/EspoCRM). Its security group and *_services_rules local live here, not
-# in security_groups.tf / locals_rules.tf, to keep those files under the shared
-# _file-size workflow's 12 KB gate — same split as honeypot_rules.tf.
+# Postgres LXC firewall — the shared native Postgres backing Nautobot and the
+# AI memory cluster. Its security group and *_services_rules local live here,
+# not in security_groups.tf / locals_rules.tf, to keep those files under the
+# shared _file-size workflow's 12 KB gate — same split as honeypot_rules.tf.
 #
 # Live guest-layer rule: 5432 open from internal RFC1918, following the existing
 # default-deny per-service allow model (openbao/s3/vectordb). The tighter
@@ -11,9 +11,11 @@
 # is outbound-internal only (same as openbao/s3, no outbound_https).
 
 locals {
-  postgres_services_rules = [
+  postgres_services_rules = concat([
     { proto = "tcp", dport = tostring(local.svc_ports.postgres_default), source = local.internal_src, comment = "Postgres (TCP ${local.svc_ports.postgres_default}) from internal" },
-  ]
+    ], var.prometheus_scraper_trusted_src == "" || !contains(keys(local.svc_ports), "pgbackrest_exporter") ? [] : [
+    { proto = "tcp", dport = tostring(local.svc_ports.pgbackrest_exporter), source = var.prometheus_scraper_trusted_src, comment = "pgBackRest exporter scrape from the Prometheus scraper" },
+  ])
 }
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "postgres_services" {

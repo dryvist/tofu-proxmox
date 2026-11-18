@@ -122,3 +122,12 @@ run "cribl_pve_metrics_plans_nothing_without_haproxy" {
     error_message = "an estate with no haproxy-tagged container must plan zero metrics-server resources"
   }
 }
+
+run "pgbackrest_exporter_service_port_is_published" {
+  command = plan
+
+  assert {
+    condition     = output.ansible_inventory.constants.service_ports.pgbackrest_exporter == 9854
+    error_message = "the pgBackRest exporter service port must be published to the Ansible inventory"
+  }
+}
