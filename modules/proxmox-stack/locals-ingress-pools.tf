@@ -71,6 +71,10 @@ locals {
   # service pool; tag membership keeps desired-state names independent here.
   docker_ai_backends = local.tag_backend_pools[local.firewall_container_tags.docker_ai]
 
+  next_ai_drawio_backends = [
+    for k in sort(keys(local.next_ai_drawio_container_ids)) : local.container_address[k]
+  ]
+
   # Zammad HA pool (sticky sessions at the route).
   zammad_backends = local.tag_backend_pools["zammad"]
 

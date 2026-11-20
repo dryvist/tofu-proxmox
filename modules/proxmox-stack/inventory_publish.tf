@@ -151,5 +151,12 @@ resource "aws_s3_object" "ansible_inventory" {
       ])
       error_message = "One or more ingress entries are malformed — each needs a name, a port > 0, and either a non-empty ip (single-backend route) or a non-empty backends pool (load-balanced route, apex or not — e.g. the openbao HA pool). Inspect ingress.tf."
     }
+    precondition {
+      condition = (
+        length(local.next_ai_drawio_tagged_container_ids) <= 1 &&
+        length(local.next_ai_drawio_tagged_container_ids) == length(local.next_ai_drawio_container_ids)
+      )
+      error_message = "At most one container may carry the next-ai-drawio tag, and it must also be an eligible Docker AI orchestration guest; refusing to publish an ineligible or multi-guest Draw.io ingress route."
+    }
   }
 }

@@ -110,6 +110,8 @@ variables {
       hatchet_web               = 8090
       hatchet_grpc              = 7072
       hatchet_health            = 8733
+      next_ai_drawio_web        = 3070
+      next_ai_drawio_mcp        = 3071
       dify_web                  = 80
       langflow_web              = 7860
       langfuse_web              = 3000
@@ -266,6 +268,46 @@ run "hatchet_health_rule_omitted_without_ingress_src" {
       if rule.dport == tostring(var.pipeline_constants.service_ports.hatchet_health)
     ]) == 0
     error_message = "Without an ingress address the Hatchet health rule must be omitted, never opened to a wider source."
+  }
+}
+
+run "next_ai_drawio_rules_are_restricted_and_added_to_shared_guest" {
+  command = plan
+
+  variables {
+    ai_orchestration_container_ids = {
+      "docker-ai-shared" = 201
+      "other-ai"         = 202
+    }
+    next_ai_drawio_container_ids = { "docker-ai-shared" = 201 }
+    next_ai_drawio_ingress_src   = "192.0.2.10,192.0.2.11"
+    next_ai_drawio_mcp_src       = "192.0.2.20,192.0.2.21"
+  }
+
+  assert {
+    condition = (
+      length(proxmox_virtual_environment_cluster_firewall_security_group.next_ai_drawio_services.rule) == 2 &&
+      one([for rule in proxmox_virtual_environment_cluster_firewall_security_group.next_ai_drawio_services.rule : rule if rule.dport == "3070"]).source == var.next_ai_drawio_ingress_src &&
+      one([for rule in proxmox_virtual_environment_cluster_firewall_security_group.next_ai_drawio_services.rule : rule if rule.dport == "3071"]).source == var.next_ai_drawio_mcp_src &&
+      alltrue([for rule in proxmox_virtual_environment_cluster_firewall_security_group.next_ai_drawio_services.rule : rule.proto == "tcp" && rule.action == "ACCEPT"])
+    )
+    error_message = "Draw.io web must allow only ingress sources and MCP must allow only LiteLLM router sources on their configured TCP ports."
+  }
+
+  assert {
+    condition = (
+      contains(
+        [for rule in proxmox_virtual_environment_firewall_rules.ai_orchestration_container["docker-ai-shared"].rule : rule.security_group],
+        proxmox_virtual_environment_cluster_firewall_security_group.ai_orchestration_services.name,
+        ) && contains(
+        [for rule in proxmox_virtual_environment_firewall_rules.ai_orchestration_container["docker-ai-shared"].rule : rule.security_group],
+        proxmox_virtual_environment_cluster_firewall_security_group.next_ai_drawio_services.name,
+        ) && !contains(
+        [for rule in proxmox_virtual_environment_firewall_rules.ai_orchestration_container["other-ai"].rule : rule.security_group],
+        proxmox_virtual_environment_cluster_firewall_security_group.next_ai_drawio_services.name,
+      )
+    )
+    error_message = "The Draw.io group must be additive on the tagged shared guest and absent from unrelated orchestration guests."
   }
 }
 
