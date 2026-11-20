@@ -112,6 +112,12 @@ locals {
           for key, value in agent.slack : key => value
           if value != null
         }
+      },
+      # null, not {}: merge() skips a null argument, and {} cannot unify with this mixed-type object.
+      agent.a2a == null || agent.name == null ? null : {
+        a2a_url     = "http://${try(local.container_address[input_key], "")}:${try(local.pipeline_constants.service_ports[agent.a2a.port], 0)}${agent.a2a.path}"
+        a2a_callers = agent.a2a.callers
+        a2a_peers   = agent.a2a.peers
       }
     )...
   }
@@ -152,6 +158,22 @@ output "agents" {
   precondition {
     condition     = length(local.agent_unknown_physical_container_keys) == 0
     error_message = "Physical agent roster keys must be existing container keys; unknown keys: ${jsonencode(local.agent_unknown_physical_container_keys)}."
+  }
+
+  precondition {
+    condition = alltrue([
+      for agent in values(var.agents) :
+      agent.a2a == null ? true : contains(keys(local.pipeline_constants.service_ports), agent.a2a.port)
+    ])
+    error_message = "Agent A2A port must be a key in local.pipeline_constants.service_ports."
+  }
+
+  precondition {
+    condition = alltrue([
+      for agent in values(var.agents) :
+      agent.a2a == null ? true : agent.name != null
+    ])
+    error_message = "Only physical agents with name set may declare a2a."
   }
 
   precondition {
