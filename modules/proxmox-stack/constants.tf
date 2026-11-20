@@ -11,7 +11,7 @@ locals {
     # web_ui_ports: see constants-web-ui.tf (same gate).
     # zcode_ports: see constants-zcode.tf (12 KB file-size gate).
     # openhands_ports: see constants-openhands.tf (same gate).
-    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, local.zcode_ports, local.openhands_ports, local.llm_fabric_ports, local.web_ui_ports, local.package_cache_ports, local.postgres_ports, {
+    service_ports = merge(local.dashboard_ports, local.herdr_ports, local.cribl_metrics_ports, local.zcode_ports, local.openhands_ports, local.llm_fabric_ports, local.web_ui_ports, local.package_cache_ports, local.postgres_ports, local.next_ai_drawio_ports, {
       haproxy_stats     = 8404
       splunk_web        = 8000
       splunk_hec        = 8088

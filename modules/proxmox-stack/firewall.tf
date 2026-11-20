@@ -151,6 +151,9 @@ module "firewall" {
   # AI orchestration LXCs: tagged "ai-orchestration" (n8n, Hatchet, Dify,
   # LangFlow, LangGraph, agent-exec)
   ai_orchestration_container_ids = local.ai_orchestration_container_ids
+  next_ai_drawio_container_ids   = local.next_ai_drawio_container_ids
+  next_ai_drawio_ingress_src     = local.next_ai_drawio_ingress_src
+  next_ai_drawio_mcp_src         = local.next_ai_drawio_mcp_src
 
   # Langfuse LLM-observability LXC: tagged "langfuse"
   langfuse_container_ids = local.langfuse_container_ids

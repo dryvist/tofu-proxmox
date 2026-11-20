@@ -110,6 +110,14 @@ resource "proxmox_virtual_environment_firewall_rules" "ai_orchestration_containe
     }
   }
 
+  dynamic "rule" {
+    for_each = contains(keys(var.next_ai_drawio_container_ids), each.key) ? [1] : []
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.next_ai_drawio_services.name
+      comment        = "Next AI Draw.io web and MCP listeners"
+    }
+  }
+
   rule {
     security_group = proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name
     comment        = "Outbound to internal (model endpoints, Cribl OTLP, DNS)"
