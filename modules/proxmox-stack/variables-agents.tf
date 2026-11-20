@@ -17,6 +17,12 @@ variable "agents" {
       requests_channel = optional(string)
       profile_channels = optional(map(string))
     }))
+    a2a = optional(object({
+      port    = string
+      path    = optional(string, "/")
+      callers = optional(list(string), [])
+      peers   = optional(list(string), [])
+    }))
   }))
   default = {}
 
@@ -28,6 +34,14 @@ variable "agents" {
       ]
     ]))
     error_message = "slack.profile_channels keys must be profile slugs and values Slack channel ids (C followed by uppercase letters or digits)."
+  }
+
+  validation {
+    condition = alltrue([
+      for agent in values(var.agents) :
+      agent.a2a == null ? true : startswith(agent.a2a.path, "/")
+    ])
+    error_message = "Agent A2A paths must start with '/'."
   }
 
   validation {

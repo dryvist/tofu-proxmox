@@ -825,3 +825,121 @@ run "agent_roster_keys_must_be_container_keys" {
 
   expect_failures = [output.agents]
 }
+
+run "physical_agent_a2a_publishes_endpoint_and_access_lists" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name    = "research-scout"
+        display = "Scout"
+        purpose = "Search example records"
+        a2a = {
+          port    = "hermes_a2a"
+          path    = "/a2a"
+          callers = ["requester-one"]
+          peers   = ["peer-one"]
+        }
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.agents["research-scout"].a2a_url == format(
+        "http://%s:%s/a2a",
+        local.container_address["agent-example-1"],
+        local.pipeline_constants.service_ports.hermes_a2a,
+      ) &&
+      output.ansible_inventory.agents["research-scout"].a2a_callers == tolist(["requester-one"]) &&
+      output.ansible_inventory.agents["research-scout"].a2a_peers == tolist(["peer-one"])
+    )
+    error_message = "The A2A roster fields must use the derived guest address and preserve the caller and peer lists."
+  }
+}
+
+run "physical_agent_without_a2a_omits_a2a_fields" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name = "research-scout", display = "Scout", purpose = "Search example records"
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      !contains(keys(output.ansible_inventory.agents["research-scout"]), "a2a_url") &&
+      !contains(keys(output.ansible_inventory.agents["research-scout"]), "a2a_callers") &&
+      !contains(keys(output.ansible_inventory.agents["research-scout"]), "a2a_peers")
+    )
+    error_message = "Agents without A2A must omit all A2A roster fields."
+  }
+}
+
+run "agent_a2a_rejects_unknown_service_port" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name    = "research-scout"
+        display = "Scout"
+        purpose = "Search example records"
+        a2a     = { port = "unknown_service" }
+      }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "logical_agent_cannot_declare_a2a" {
+  command = plan
+
+  variables {
+    agents = {
+      "logical-owner" = {
+        display            = "Logical Owner"
+        purpose            = "Own a logical capability"
+        trust_tier         = "trusted"
+        native_binding_ref = "https://example.test/agent"
+        a2a                = { port = "hermes_a2a" }
+      }
+    }
+  }
+
+  expect_failures = [output.agents]
+}
+
+run "agent_a2a_path_must_start_with_slash" {
+  command = plan
+
+  variables {
+    containers = {
+      "agent-example-1" = { vm_id = 240, node_name = "node-example", vlan = "apps" }
+    }
+    agents = {
+      "agent-example-1" = {
+        name    = "research-scout"
+        display = "Scout"
+        purpose = "Search example records"
+        a2a     = { port = "hermes_a2a", path = "a2a" }
+      }
+    }
+  }
+
+  expect_failures = [var.agents]
+}
