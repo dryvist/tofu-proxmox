@@ -123,6 +123,7 @@ locals {
     ] : [],
     local.agentgateway_ingress_routes,
     local.firecrawl_routes,
+    local.next_ai_drawio_ingress_routes,
     # Docker AI's dashboard/API route replaces the legacy single Hatchet route
     # only when at least one docker-ai guest exists. The engine is a separate
     # machine gRPC route and probes its HTTP health listener on 8733.

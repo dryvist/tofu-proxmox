@@ -248,6 +248,11 @@ run "docker_ai_pair_publishes_pooled_hatchet_routes" {
     )
     error_message = "The pooled Hatchet engine route must publish h2c, machine access, and its HTTP /ready probe on hatchet_health 8733."
   }
+
+  assert {
+    condition     = length([for r in output.ansible_inventory.ingress : r if r.name == "drawio"]) == 0
+    error_message = "Docker AI guests must not publish Draw.io until one carries the next-ai-drawio service tag."
+  }
 }
 
 run "legacy_hatchet_route_remains_when_docker_ai_pool_is_empty" {
@@ -327,5 +332,102 @@ run "blank_selected_address_fails_inventory_publication_guard" {
   assert {
     condition     = local.container_address["agentgateway-2"] == ""
     error_message = "The blank static address must exercise the inventory publication precondition."
+  }
+}
+
+run "next_ai_drawio_is_tag_derived_web_only_and_authelia_gated" {
+  command = plan
+
+  variables {
+    containers = {
+      "drawio-fixture" = {
+        vm_id     = 153
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["docker-ai", "next-ai-drawio", "ai-orchestration", "docker", "managed-secrets"]
+      }
+      "docker-ai-peer" = {
+        vm_id     = 154
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["docker-ai", "ai-orchestration", "docker", "managed-secrets"]
+      }
+      "llm-router-fixture" = {
+        vm_id            = 155
+        node_name        = "node-example"
+        vlan             = "ai"
+        tags             = ["llm-router"]
+        memory_dedicated = 4096
+      }
+      "ingress-fixture" = {
+        vm_id     = 156
+        node_name = "node-example"
+        vlan      = "mgmt"
+        dhcp      = true
+        tags      = ["ingress"]
+      }
+    }
+  }
+
+  assert {
+    condition = (
+      output.ansible_inventory.constants.service_ports.next_ai_drawio_web == 3070 &&
+      output.ansible_inventory.constants.service_ports.next_ai_drawio_mcp == 3071 &&
+      local.next_ai_drawio_container_ids == { "drawio-fixture" = 153 } &&
+      local.next_ai_drawio_ingress_src == join(",", local.ingress_hosts) &&
+      local.next_ai_drawio_mcp_src == local.container_address["llm-router-fixture"]
+    )
+    error_message = "Next AI Draw.io ports and firewall selection must be published from their constants and service tag."
+  }
+
+  assert {
+    condition = (
+      length([for r in output.ansible_inventory.ingress : r if r.name == "drawio"]) == 1 &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "drawio"]).backends == [
+        for k in sort(keys(local.next_ai_drawio_container_ids)) : local.container_address[k]
+      ] &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "drawio"]).port == local.pipeline_constants.service_ports.next_ai_drawio_web &&
+      one([for r in output.ansible_inventory.ingress : r if r.name == "drawio"]).sso &&
+      length([for r in output.ansible_inventory.ingress : r if r.port == local.pipeline_constants.service_ports.next_ai_drawio_mcp]) == 0
+    )
+    error_message = "Only the tagged Draw.io web listener may be routed, and it must remain Authelia-gated."
+  }
+}
+
+run "next_ai_drawio_ineligible_tag_fails_inventory_publication_guard" {
+  command         = plan
+  expect_failures = [aws_s3_object.ansible_inventory]
+
+  variables {
+    containers = {
+      "ineligible-drawio" = {
+        vm_id     = 157
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["next-ai-drawio"]
+      }
+    }
+  }
+}
+
+run "second_next_ai_drawio_tag_fails_inventory_publication_guard" {
+  command         = plan
+  expect_failures = [aws_s3_object.ansible_inventory]
+
+  variables {
+    containers = {
+      "drawio-fixture" = {
+        vm_id     = 153
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["docker-ai", "next-ai-drawio", "ai-orchestration"]
+      }
+      "drawio-second" = {
+        vm_id     = 158
+        node_name = "node-example"
+        vlan      = "ai"
+        tags      = ["docker-ai", "next-ai-drawio", "ai-orchestration"]
+      }
+    }
   }
 }

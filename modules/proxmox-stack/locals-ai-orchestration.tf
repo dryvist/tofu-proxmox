@@ -19,6 +19,22 @@ locals {
     !contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.crawl4ai)
   }
 
+  # Draw.io shares the Docker AI guest's existing orchestration firewall
+  # profile; the service tag adds only its dedicated inbound security group.
+  # Derive eligibility from the base firewall set so exclusions such as
+  # specialist-eval and crawl4ai stay consistent with the attached rules.
+  next_ai_drawio_tagged_container_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.next_ai_drawio)
+  }
+
+  next_ai_drawio_container_ids = {
+    for k, v in var.containers : k => v.vm_id
+    if contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.next_ai_drawio) &&
+    contains(coalesce(try(v.tags, null), []), local.firewall_container_tags.docker_ai) &&
+    contains(keys(local.ai_orchestration_container_ids), k)
+  }
+
   # Evaluation guests carry one platform tag alongside specialist-eval. Keep
   # unrecognised or ambiguous platform tags in the set so the firewall check
   # can flag them while leaving their service-port group unattached.

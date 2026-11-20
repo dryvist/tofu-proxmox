@@ -46,6 +46,7 @@ locals {
     media            = "media"
     monitoring       = "monitoring"
     nautobot         = "nautobot"
+    next_ai_drawio   = "next-ai-drawio"
     notifications    = "notifications"
     notify           = "notify"
     object_storage   = "object-storage"
