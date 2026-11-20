@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.74.0](https://github.com/dryvist/tofu-proxmox/compare/v3.73.0...v3.74.0) (2026-11-20)
+
+
+### Features
+
+* **agents:** publish an A2A endpoint, callers and peers for roster agents that declare A2A ([#1517](https://github.com/dryvist/tofu-proxmox/issues/1517)) ([e3eb7f4](https://github.com/dryvist/tofu-proxmox/commit/e3eb7f445dd77c13577c2c1f31e7a7fb7bd3161e))
+* **ingress:** add Next AI Draw.io service routes ([#1514](https://github.com/dryvist/tofu-proxmox/issues/1514)) ([817b8e4](https://github.com/dryvist/tofu-proxmox/commit/817b8e4805c91c2236cc4758068989c0bc24044e))
+
 ## [3.73.0](https://github.com/dryvist/tofu-proxmox/compare/v3.72.0...v3.73.0) (2026-11-18)
 
 
