@@ -375,7 +375,7 @@ run "next_ai_drawio_is_tag_derived_web_only_and_authelia_gated" {
       output.ansible_inventory.constants.service_ports.next_ai_drawio_mcp == 3071 &&
       local.next_ai_drawio_container_ids == { "drawio-fixture" = 153 } &&
       local.next_ai_drawio_ingress_src == join(",", local.ingress_hosts) &&
-      local.next_ai_drawio_mcp_src == local.container_address["llm-router-fixture"]
+      local.next_ai_drawio_mcp_src == var.network_cidrs["ai"]
     )
     error_message = "Next AI Draw.io ports and firewall selection must be published from their constants and service tag."
   }
