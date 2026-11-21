@@ -8,7 +8,7 @@ variable "youtrack_oci_reference" {
   # Tag pin only: digest pinning waits on provider support (bpg/proxmox 0.116.1 rejects @sha256 references).
   # An image bump does not replace the container (template_file_id is in ignore_changes); upgrades run through the OCI app upgrade procedure.
   # renovate: datasource=docker depName=jetbrains/youtrack versioning=loose
-  default = "jetbrains/youtrack:2026.2.19728"
+  default = "jetbrains/youtrack:2026.2.19766"
 
   validation {
     condition     = can(regex("^[a-z0-9._/-]+:[0-9]{4}\\.[0-9]+\\.[0-9]+$", var.youtrack_oci_reference))
