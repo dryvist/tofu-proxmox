@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.74.1](https://github.com/dryvist/tofu-proxmox/compare/v3.74.0...v3.74.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **firewall:** source the drawio MCP rule from router VLAN networks ([#1524](https://github.com/dryvist/tofu-proxmox/issues/1524)) ([14be73d](https://github.com/dryvist/tofu-proxmox/commit/14be73dc779c0fdf09b0beac5899315e3f29a639))
+
 ## [3.74.0](https://github.com/dryvist/tofu-proxmox/compare/v3.73.0...v3.74.0) (2026-11-20)
 
 
