@@ -65,6 +65,38 @@
         "minLength": 1
       }
     },
+    "splunk_firewall": {
+      "type": "object",
+      "description": "Optional point-to-point source CIDRs for the Splunk VM firewall. Empty or omitted lists preserve existing behavior; populated service lists restrict that port to the listed sources. OpenTofu validates CIDR syntax.",
+      "additionalProperties": false,
+      "properties": {
+        "subnet_sources": {
+          "type": "array",
+          "description": "CIDRs allowed TCP, UDP, and ICMP access to Splunk VMs.",
+          "items": { "type": "string", "pattern": "^[0-9.]+/[0-9]+$" }
+        },
+        "web_sources": {
+          "type": "array",
+          "description": "CIDRs allowed TCP access to Splunk Web (8000).",
+          "items": { "type": "string", "pattern": "^[0-9.]+/[0-9]+$" }
+        },
+        "mgmt_sources": {
+          "type": "array",
+          "description": "CIDRs allowed TCP access to the Splunk REST API (8089).",
+          "items": { "type": "string", "pattern": "^[0-9.]+/[0-9]+$" }
+        },
+        "hec_sources": {
+          "type": "array",
+          "description": "CIDRs allowed TCP access to Splunk HEC (8088).",
+          "items": { "type": "string", "pattern": "^[0-9.]+/[0-9]+$" }
+        },
+        "forwarding_sources": {
+          "type": "array",
+          "description": "CIDRs allowed TCP access to the Splunk forwarding port.",
+          "items": { "type": "string", "pattern": "^[0-9.]+/[0-9]+$" }
+        }
+      }
+    },
     "llm_large_serving_host": {
       "type": "string",
       "minLength": 1,

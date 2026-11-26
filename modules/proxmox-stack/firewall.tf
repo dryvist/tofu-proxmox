@@ -243,5 +243,11 @@ module "firewall" {
   # Per-VLAN CIDR map for zero-trust rule source scoping (staged disabled).
   network_cidrs = nonsensitive(var.network_cidrs)
 
+  splunk_subnet_sources     = var.splunk_subnet_sources
+  splunk_web_sources        = var.splunk_web_sources
+  splunk_mgmt_sources       = var.splunk_mgmt_sources
+  splunk_hec_sources        = var.splunk_hec_sources
+  splunk_forwarding_sources = var.splunk_forwarding_sources
+
   depends_on = [module.vms, module.containers, module.splunk_vm]
 }

@@ -27,9 +27,29 @@ resource "proxmox_virtual_environment_firewall_rules" "splunk_vm" {
     comment        = "Internal access (SSH, ICMP)"
   }
 
-  rule {
-    security_group = proxmox_virtual_environment_cluster_firewall_security_group.splunk_services.name
-    comment        = "Splunk services (Web, HEC, Forwarding)"
+  # A populated per-port source list needs the shared internal-wide service
+  # group replaced by per-VM rules. Unconfigured service ports retain their
+  # existing internal source in splunk_vm_point_to_point_rules.
+  dynamic "rule" {
+    for_each = local.splunk_vm_service_sources_configured ? [] : [true]
+
+    content {
+      security_group = proxmox_virtual_environment_cluster_firewall_security_group.splunk_services.name
+      comment        = "Splunk services (Web, HEC, Forwarding)"
+    }
+  }
+
+  dynamic "rule" {
+    for_each = local.splunk_vm_point_to_point_rules
+
+    content {
+      type    = "in"
+      action  = "ACCEPT"
+      proto   = rule.value.proto
+      dport   = rule.value.dport
+      source  = rule.value.source
+      comment = rule.value.comment
+    }
   }
 
   rule {
