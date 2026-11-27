@@ -244,13 +244,22 @@ variable "containers" {
     error_message = "Every container tagged 'hermes-agent' must also carry 'chromium', 'hindsight-client' and 'firecrawl-client'; one tagged 'hermes-pepper' or 'hermes-isolated' must carry none of them. These name the app dependencies the agent converge installs or calls — the browser on the guest, and the memory and extraction services off it. Note the -client suffixes are load-bearing: a bare 'hindsight' or 'firecrawl' tag would put the agent guest into that SERVICE's firewall map and treat it as a server instance."
   }
 
-  # Proxmox stores startup order as a positive integer; 0 and fractions are
-  # silently coerced, which would reorder a guest without saying so.
+  # Proxmox coerces 0 and fractions; a positive whole number avoids silent reordering.
   validation {
     condition = alltrue([
       for name, c in var.containers :
       c.startup_order == null || (c.startup_order >= 1 && floor(c.startup_order) == c.startup_order)
     ])
     error_message = "containers.<name>.startup_order must be a positive whole number (lower starts first), or unset to keep the VMID-derived order."
+  }
+
+  validation {
+    condition = !anytrue([
+      for c in values(var.containers) : try(contains(c.tags, "agentgateway"), false)
+    ]) || alltrue([
+      for k in ["agentgateway", "agentgateway-2"] :
+      try(contains(var.containers[k].tags, "agentgateway"), false)
+    ])
+    error_message = "Tagged ingress requires both selected keys tagged 'agentgateway'."
   }
 }
