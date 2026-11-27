@@ -46,6 +46,15 @@ containers, IPs, ports, and firewall rules.
   repo's docs). Add a new inter-VLAN flow at the guest layer first; the
   UniFi rule is written alongside it but ships `enabled = false` until the
   gap closes.
+- **Splunk VM access**: the VM firewall options and rules follow the node
+  selected for the Splunk VM. Optional `splunk_firewall` source lists in
+  `deployment.json` create named per-VM rules for its subnet, Web (8000), REST
+  API (8089), HEC (8088), and forwarding port. Populated Web, HEC, or
+  forwarding lists replace that port's internal-wide allowance; an empty list
+  retains the existing internal source. The REST API rule is absent when its
+  list is empty. Set Web and REST sources to the reverse proxies, HEC sources
+  to log shippers, and subnet sources for direct access from Splunk's own
+  subnet. All lists default empty, preserving current behavior until configured.
 - **Media appdata**: each app's persistent config lives on its own
   `<pool>/appdata/<app>` ZFS dataset (declared in `node_storage.zfs_pools`),
   bind-mounted by `ansible-proxmox`'s `media_lxc_features` — never on the

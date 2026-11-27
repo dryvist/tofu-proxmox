@@ -29,6 +29,14 @@ locals {
   container_nodes = {
     for k, v in local.containers_with_engine_runtime : tostring(v.vm_id) => v.node_name
   }
+
+  splunk_vm_nodes = merge(
+    {
+      for k, v in var.vms : k => v.node_name
+      if contains(try(v.tags, []), local.firewall_container_tags.splunk)
+    },
+    { "splunk-vm" = var.splunk_node_name }
+  )
 }
 
 # Firewall module - rules for Splunk and containers
@@ -36,6 +44,11 @@ module "firewall" {
   source = "../firewall"
 
   node_name = var.proxmox_node
+
+  # The adopted Splunk VM can live away from the default Proxmox node;
+  # tagged Splunk VMs retain the node declared in their own VM input.
+  splunk_node_name = var.splunk_node_name
+  splunk_vm_nodes  = local.splunk_vm_nodes
 
   # Container firewall resources resolve their node per guest from this map.
   container_nodes = local.container_nodes
@@ -229,6 +242,12 @@ module "firewall" {
   ai_network = local.ai_network
   # Per-VLAN CIDR map for zero-trust rule source scoping (staged disabled).
   network_cidrs = nonsensitive(var.network_cidrs)
+
+  splunk_subnet_sources     = var.splunk_subnet_sources
+  splunk_web_sources        = var.splunk_web_sources
+  splunk_mgmt_sources       = var.splunk_mgmt_sources
+  splunk_hec_sources        = var.splunk_hec_sources
+  splunk_forwarding_sources = var.splunk_forwarding_sources
 
   depends_on = [module.vms, module.containers, module.splunk_vm]
 }
