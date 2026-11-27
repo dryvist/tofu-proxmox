@@ -55,6 +55,14 @@
   "splunk_data_disk_size": 200,
   "_splunk_placement_comment": "Placement for the all-in-one Splunk VM. splunk_node_name was previously hardwired to proxmox_node, so the indexer could not be placed anywhere but the primary node. Relocating it has THREE prerequisites and they are ordered: (1) splunk_cpu_type must leave \"host\" \u2014 a host-CPU guest cannot move between CPU vendors, because the feature set it booted with does not exist on the destination; x86-64-v2 is portable to every node here, x86-64-v3 where every candidate node has AVX2. The change needs a guest reboot to take effect, so verify the VM is healthy on the portable model BEFORE going further. (2) splunk_migrate must be true \u2014 otherwise a splunk_node_name change is a destroy-and-recreate, which destroys the index volumes. (3) Every storage id the VM's disks target must exist on the destination node; a node-scoped pool id is the real constraint on where this VM can go, independent of CPU and memory.",
   "splunk_node_name": "proxmox-1",
+  "_splunk_firewall_comment": "Example-only documentation CIDRs. Configure each list from deployment-specific reverse-proxy, shipper, forwarding, or Splunk-subnet sources; empty lists preserve existing behavior.",
+  "splunk_firewall": {
+    "subnet_sources": ["192.0.2.0/24"],
+    "web_sources": ["198.51.100.0/24"],
+    "mgmt_sources": ["198.51.100.0/24"],
+    "hec_sources": ["192.0.2.0/24"],
+    "forwarding_sources": ["192.0.2.0/24"]
+  },
   "splunk_cpu_type": "host",
   "splunk_migrate": false,
   "splunk_adopt": false,

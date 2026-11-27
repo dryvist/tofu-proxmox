@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.74.2](https://github.com/dryvist/tofu-proxmox/compare/v3.74.1...v3.74.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **firewall:** point-to-point Splunk VM rules on the node it runs on ([#1541](https://github.com/dryvist/tofu-proxmox/issues/1541)) ([61f3353](https://github.com/dryvist/tofu-proxmox/commit/61f335322b4e04cef1d0093426f6621990eb2552))
+
 ## [3.74.1](https://github.com/dryvist/tofu-proxmox/compare/v3.74.0...v3.74.1) (2026-11-21)
 
 

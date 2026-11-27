@@ -1963,3 +1963,123 @@ run "container_firewall_resolves_the_placement_node_per_guest" {
     error_message = "A guest whose VM ID is absent from container_nodes must keep the stack node_name."
   }
 }
+
+# --- Splunk VM node targeting and point-to-point source rules ---
+
+run "splunk_vm_firewall_uses_its_configured_node" {
+  command = plan
+
+  variables {
+    splunk_vm_ids    = { "splunk-vm" = 200 }
+    splunk_node_name = "node-two"
+  }
+
+  assert {
+    condition = (
+      proxmox_virtual_environment_firewall_options.splunk_vm["splunk-vm"].node_name == "node-two" &&
+      proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].node_name == "node-two"
+    )
+    error_message = "Splunk VM firewall options and rules must use splunk_node_name when it differs from node_name."
+  }
+}
+
+run "empty_splunk_sources_keep_existing_service_group" {
+  command = plan
+
+  variables {
+    splunk_vm_ids = { "splunk-vm" = 200 }
+  }
+
+  assert {
+    condition = [
+      for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule.security_group
+      ] == [
+      proxmox_virtual_environment_cluster_firewall_security_group.internal_access.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.splunk_services.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.syslog.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.splunk_cluster.name,
+      proxmox_virtual_environment_cluster_firewall_security_group.outbound_internal.name,
+    ]
+    error_message = "Empty Splunk source lists must preserve the existing firewall group list and order."
+  }
+}
+
+run "configured_splunk_sources_render_scoped_per_port_rules" {
+  command = plan
+
+  variables {
+    splunk_vm_ids             = { "splunk-vm" = 200 }
+    splunk_subnet_sources     = ["192.0.2.0/24"]
+    splunk_web_sources        = ["198.51.100.0/24"]
+    splunk_mgmt_sources       = ["198.51.100.0/24"]
+    splunk_hec_sources        = ["192.0.2.0/24"]
+    splunk_forwarding_sources = ["192.0.2.0/24"]
+  }
+
+  assert {
+    condition = !contains(
+      [for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule.security_group],
+      proxmox_virtual_environment_cluster_firewall_security_group.splunk_services.name
+    )
+    error_message = "A configured Splunk service source must remove the shared internal-wide service group."
+  }
+
+  assert {
+    condition = (
+      length([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8000"]) == 1 &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8000"]).proto == "tcp" &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8000"]).source == "198.51.100.0/24"
+    )
+    error_message = "Splunk Web must have one TCP rule from its configured sources."
+  }
+
+  assert {
+    condition = (
+      length([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8089"]) == 1 &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8089"]).proto == "tcp" &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8089"]).source == "198.51.100.0/24"
+    )
+    error_message = "The Splunk REST API must have one TCP rule from its configured sources."
+  }
+
+  assert {
+    condition = (
+      length([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8088"]) == 1 &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8088"]).proto == "tcp" &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "8088"]).source == "192.0.2.0/24"
+    )
+    error_message = "Splunk HEC must have one TCP rule from its configured sources."
+  }
+
+  assert {
+    condition = (
+      length([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "9997"]) == 1 &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "9997"]).proto == "tcp" &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.dport == "9997"]).source == "192.0.2.0/24"
+    )
+    error_message = "Splunk forwarding must have one TCP rule from its configured sources."
+  }
+
+  assert {
+    condition = (
+      length([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.comment == "Splunk subnet TCP from configured CIDRs"]) == 1 &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.comment == "Splunk subnet TCP from configured CIDRs"]).proto == "tcp" &&
+      length([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.comment == "Splunk subnet UDP from configured CIDRs"]) == 1 &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.comment == "Splunk subnet UDP from configured CIDRs"]).proto == "udp" &&
+      length([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.comment == "Splunk subnet ICMP from configured CIDRs"]) == 1 &&
+      one([for rule in proxmox_virtual_environment_firewall_rules.splunk_vm["splunk-vm"].rule : rule if rule.comment == "Splunk subnet ICMP from configured CIDRs"]).proto == "icmp"
+    )
+    error_message = "The Splunk subnet must receive named TCP, UDP, and ICMP rules."
+  }
+}
+
+run "splunk_source_lists_reject_invalid_cidr" {
+  command = plan
+
+  variables {
+    splunk_vm_ids      = { "splunk-vm" = 200 }
+    splunk_hec_sources = ["invalid-cidr"]
+  }
+
+  expect_failures = [var.splunk_hec_sources]
+}
