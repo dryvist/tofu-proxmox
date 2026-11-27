@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.75.1](https://github.com/dryvist/tofu-proxmox/compare/v3.75.0...v3.75.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **proxmox-stack:** treat a dataset quota of none as no quota ([#1548](https://github.com/dryvist/tofu-proxmox/issues/1548)) ([f2c5dde](https://github.com/dryvist/tofu-proxmox/commit/f2c5ddec94d68fc6b02fb429802b4a6689fc7164))
+
 ## [3.75.0](https://github.com/dryvist/tofu-proxmox/compare/v3.74.2...v3.75.0) (2026-11-27)
 
 
