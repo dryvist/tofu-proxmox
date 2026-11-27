@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.76.0](https://github.com/dryvist/tofu-proxmox/compare/v3.75.1...v3.76.0) (2026-11-27)
+
+
+### Features
+
+* **proxmox-stack:** require a replica for critical containers ([#1550](https://github.com/dryvist/tofu-proxmox/issues/1550)) ([8434d39](https://github.com/dryvist/tofu-proxmox/commit/8434d39a5736c04ebf3ba7900026d421b899caa5))
+
 ## [3.75.1](https://github.com/dryvist/tofu-proxmox/compare/v3.75.0...v3.75.1) (2026-11-27)
 
 
