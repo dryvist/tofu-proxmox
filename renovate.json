@@ -34,7 +34,7 @@
   "packageRules": [
     {
       "matchDatasources": ["custom.proxmox-iso"],
-      "minimumReleaseAge": "30 days"
+      "minimumReleaseAge": "3 days"
     }
   ]
 }
