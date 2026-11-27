@@ -52,14 +52,15 @@ locals {
     raidz3 = 3
   }
 
-  # Every size string in the declaration, parsed exactly once. Sizes are ZFS
+  # Every size string in the declaration, parsed exactly once ("none" means no
+  # quota, as in the zfs_pools role, so it is not a size). Sizes are ZFS
   # canonical forms ("15T", "400G", "5.46T"), so a leading number and an
   # optional binary unit is the whole grammar.
   node_storage_size_strings = distinct(concat(
     flatten([
       for node, cfg in var.node_storage : [
         for pool_name, pool in cfg.pools : [
-          for ds_name, ds in pool.datasets : ds.quota if ds.quota != null
+          for ds_name, ds in pool.datasets : ds.quota if ds.quota != null && ds.quota != "none"
         ]
       ]
     ]),
@@ -95,9 +96,9 @@ locals {
         # test is whether ANY ancestor caps this path, not the nearest one.
         quotas = [
           for ds_name, ds in pool.datasets : ds.quota
-          if ds.quota != null && !anytrue([
+          if ds.quota != null && ds.quota != "none" && !anytrue([
             for ancestor_name, ancestor in pool.datasets :
-            ancestor.quota != null
+            ancestor.quota != null && ancestor.quota != "none"
             && ancestor_name != ds_name
             && startswith(ds_name, "${ancestor_name}/")
           ])
