@@ -106,6 +106,40 @@ run "six_wide_pool_accepted" {
   }
 }
 
+# --- Positive: quota "none" (no quota, as the zfs_pools role reads it) is not a size ---
+
+run "none_quota_is_not_counted" {
+  command = plan
+
+  variables {
+    node_storage = {
+      test-node = {
+        pools = {
+          poolA = {
+            topology = { type = "raidz2", width = 6, ashift = 12, device_size = "5.46T" }
+            datasets = {
+              alpha   = { quota = "15T" }
+              media   = { quota = "none" }
+              "a/sub" = { quota = "1T" }
+              a       = { quota = "none" }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  assert {
+    condition     = length(local.overcommitted_storage_pools) == 0 && !contains(local.node_storage_size_strings, "none")
+    error_message = "A dataset quota of \"none\" must plan and must not be parsed or counted as a size."
+  }
+
+  assert {
+    condition     = sort(local.checkable_storage_pools["test-node/poolA"].quotas) == sort(["15T", "1T"])
+    error_message = "An ancestor with quota \"none\" does not cap its children, so the child's quota still counts."
+  }
+}
+
 # --- Negative: THE SAME QUOTAS, one device narrower, must be rejected ---
 #
 # 3 data devices x 5.46T x 31/32 = 15.86 TiB usable; 17 TiB declared.
