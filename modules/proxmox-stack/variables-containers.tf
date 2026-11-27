@@ -125,6 +125,12 @@ variable "containers" {
     # as "not replicated", never as a default node. See docs/CONTAINER_SCHEMA.md.
     ha_replication_target = optional(string)
 
+    # Marks a guest whose loss stops other services. A critical guest must set
+    # ha = true and name an ha_replication_target, or share an ha_affinity_group
+    # with at least one other guest; the plan fails otherwise
+    # (checks-critical-replica.tf). Default false.
+    critical = optional(bool, false)
+
     # Ansible connection method published in ansible_inventory
     # (inventory_publish.tf). Every container defaults to the pct transport; a
     # no-op until an sshd-ready container is flipped to "ssh" after SSH-CA trust

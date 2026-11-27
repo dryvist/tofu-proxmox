@@ -578,6 +578,10 @@
           "type": "boolean",
           "description": "Enrol this guest in Proxmox HA (modules/proxmox-stack/ha.tf). Default false. Enrolling also accepts the relocation-vs-state hazard documented in imports.tf: HA moves a guest, refresh 404s it on the node recorded in state, and the failed apply freezes the published ansible_inventory. Enrol a guest whose state cannot be rebuilt from code."
         },
+        "critical": {
+          "type": "boolean",
+          "description": "Marks a guest whose loss stops other services. A critical guest must set ha=true and name an ha_replication_target, or share an ha_affinity_group with at least one other guest; the plan fails otherwise."
+        },
         "ha_affinity_group": {
           "type": "string",
           "minLength": 1,
@@ -682,6 +686,10 @@
               "type": "string",
               "minLength": 1,
               "description": "Node holding each generated peer's pvesr copy and its only HA relocation target."
+            },
+            "critical": {
+              "type": "boolean",
+              "description": "Marks a guest whose loss stops other services. A critical guest must set ha=true and name an ha_replication_target, or share an ha_affinity_group with at least one other guest; the plan fails otherwise."
             }
           }
         },
