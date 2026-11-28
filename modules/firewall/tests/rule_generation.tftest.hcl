@@ -96,6 +96,7 @@ variables {
       # hermes-ui companion web apps (referenced by hermes_ui_services_rules)
       hermes_ui_workspace       = 3000
       hermes_ui_mission_control = 3001
+      hermes_ui_paperclip       = 3100
       # herdr-remote relay + dashboard (referenced by herdr_client_services_rules)
       herdr_relay_ws = 8375
       # Orca server on the herdr runtime (referenced by herdr_runtime_services_rules)
@@ -685,6 +686,43 @@ run "monitoring_rules_track_constants_ports" {
   assert {
     condition     = local.monitoring_services_rules[5].proto == "udp" && local.monitoring_services_rules[5].dport == tostring(var.pipeline_constants.service_ports.irtt)
     error_message = "monitoring_services_rules[5] must be UDP irtt, got proto='${local.monitoring_services_rules[5].proto}' dport='${local.monitoring_services_rules[5].dport}'"
+  }
+}
+
+run "hermes_ui_services_rules_track_constants_ports" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.0.0/16"]
+  }
+
+  # The hermes-ui services group is always created (no for_each), so every
+  # plan evaluates this list: all three apps' host ports must track the
+  # shared port map.
+  assert {
+    condition     = length(local.hermes_ui_services_rules) == 3
+    error_message = "hermes_ui_services_rules must be exactly 3 (workspace, mission-control, fleet board), got ${length(local.hermes_ui_services_rules)}"
+  }
+
+  assert {
+    condition     = local.hermes_ui_services_rules[2].dport == tostring(var.pipeline_constants.service_ports.hermes_ui_paperclip)
+    error_message = "hermes_ui_services_rules[2].dport must track service_ports.hermes_ui_paperclip, got '${local.hermes_ui_services_rules[2].dport}'"
+  }
+
+  assert {
+    condition     = alltrue([for r in local.hermes_ui_services_rules : r.source == local.internal_src])
+    error_message = "every hermes-ui services rule must be internal-only (source == internal_src)"
+  }
+
+  # The group resource itself must carry the fleet board rule: a rule whose
+  # dport equals the fixture's hermes_ui_paperclip port and whose source is
+  # the internal source.
+  assert {
+    condition = one([
+      for rule in proxmox_virtual_environment_cluster_firewall_security_group.hermes_ui_services.rule :
+      rule if rule.dport == tostring(var.pipeline_constants.service_ports.hermes_ui_paperclip)
+    ]).source == local.internal_src
+    error_message = "the hermes-ui services group must hold a fleet board rule (dport = service_ports.hermes_ui_paperclip) sourced from the internal network"
   }
 }
 

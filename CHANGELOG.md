@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.77.0](https://github.com/dryvist/tofu-proxmox/compare/v3.76.0...v3.77.0) (2026-11-28)
+
+
+### Features
+
+* **stack:** add the fleet board port, ingress route and firewall rule ([#1557](https://github.com/dryvist/tofu-proxmox/issues/1557)) ([6938ea0](https://github.com/dryvist/tofu-proxmox/commit/6938ea0c4575d17a83f760e42fe59c26a4491a24))
+
 ## [3.76.0](https://github.com/dryvist/tofu-proxmox/compare/v3.75.1...v3.76.0) (2026-11-27)
 
 

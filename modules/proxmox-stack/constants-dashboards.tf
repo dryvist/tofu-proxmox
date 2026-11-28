@@ -45,8 +45,10 @@ locals {
     # hermes-ui — the companion guest running two DIFFERENT apps that both
     # default to 3000 upstream (hermes-workspace, the remote-capable Hermes web
     # workspace, and mission-control, an unrelated co-located product), mapped
-    # to distinct host ports so Traefik can route each independently.
+    # to distinct host ports so Traefik can route each independently. The fleet
+    # board (paperclip) is the third app in that guest.
     hermes_ui_workspace       = 3000
     hermes_ui_mission_control = 3001
+    hermes_ui_paperclip       = 3100
   }
 }

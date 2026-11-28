@@ -13,19 +13,21 @@
 #   - outbound_internal: reach internal services (DNS, NTP, Splunk logging).
 #   - outbound_https   : TCP 443 to anywhere, for the app that calls model
 #                        providers directly.
-#   - hermes_ui_services: the two web apps (both default to 3000 upstream,
-#                        mapped to distinct host ports), from internal only.
+#   - hermes_ui_services: the three web apps (the first two default to
+#                        3000 upstream, all mapped to distinct host ports),
+#                        from internal only.
 
 locals {
   hermes_ui_services_rules = [
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_ui_workspace), source = local.internal_src, comment = "hermes-ui primary app (TCP ${local.svc_ports.hermes_ui_workspace}) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.hermes_ui_mission_control), source = local.internal_src, comment = "mission-control app (TCP ${local.svc_ports.hermes_ui_mission_control}) from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.hermes_ui_paperclip), source = local.internal_src, comment = "fleet board app (TCP ${local.svc_ports.hermes_ui_paperclip}) from internal" },
   ]
 }
 
 resource "proxmox_virtual_environment_cluster_firewall_security_group" "hermes_ui_services" {
   name    = "hermes-ui-svc"
-  comment = "hermes-ui web apps (${local.svc_ports.hermes_ui_workspace}, ${local.svc_ports.hermes_ui_mission_control}) from internal networks — Traefik-fronted"
+  comment = "hermes-ui web apps (${local.svc_ports.hermes_ui_workspace}, ${local.svc_ports.hermes_ui_mission_control}, ${local.svc_ports.hermes_ui_paperclip}) from internal networks — Traefik-fronted"
 
   dynamic "rule" {
     for_each = local.hermes_ui_services_rules
