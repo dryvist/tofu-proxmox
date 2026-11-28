@@ -11,5 +11,7 @@ locals {
     cribl_prometheus_rw = 9201
     # Graphite wire-protocol receiver on Cribl Stream's Metrics source.
     cribl_pve_metrics = 10370
+    # Task tracker (Vikunja) change-event push from the tracker guest.
+    vikunja_task_events = 10371
   }
 }

@@ -30,6 +30,7 @@ variables {
       cribl_s2s           = 10300
       cribl_s2s_metrics   = 10360
       cribl_pve_metrics   = 10370
+      vikunja_task_events = 10371
       cribl_prometheus_rw = 9201
       apt_cacher_ng       = 3142
       pypi_cache          = 3141
@@ -427,22 +428,48 @@ run "outbound_rules_always_three" {
   }
 }
 
-run "cribl_stream_rules_always_six" {
+run "cribl_stream_rules_always_seven" {
   command = plan
 
   variables {
     internal_networks = ["192.168.10.0/24", "192.168.20.0/24", "192.168.30.0/24"]
   }
 
-  # Cribl Stream API (9000) + HEC input (8088) + S2S input (10300) + S2S metrics (10360) + PVE metrics (10370) + Prometheus remote_write (9201)
+  # Cribl Stream API (9000) + HEC input (8088) + S2S input (10300) + S2S metrics (10360) + PVE metrics (10370) + Prometheus remote_write (9201) + task tracker events (10371)
   assert {
-    condition     = length(local.cribl_stream_services_rules) == 6
-    error_message = "cribl_stream_services_rules must be exactly 6, got ${length(local.cribl_stream_services_rules)}"
+    condition     = length(local.cribl_stream_services_rules) == 7
+    error_message = "cribl_stream_services_rules must be exactly 7, got ${length(local.cribl_stream_services_rules)}"
   }
 
   assert {
     condition     = local.cribl_stream_services_rules[1].dport == tostring(var.pipeline_constants.service_ports.splunk_hec)
     error_message = "Cribl Stream HEC input must use service_ports.splunk_hec"
+  }
+}
+
+run "vikunja_task_events_rule_tracks_constant_and_internal_scope" {
+  command = plan
+
+  variables {
+    internal_networks = ["192.168.10.0/24", "192.168.20.0/24"]
+  }
+
+  # Exactly one stream-worker rule for the tracker change-event port (one()
+  # fails on zero or several), TCP, sourced from the internal networks.
+  assert {
+    condition = one([
+      for r in local.cribl_stream_services_rules :
+      r if r.dport == tostring(var.pipeline_constants.service_ports.vikunja_task_events)
+    ]).proto == "tcp"
+    error_message = "cribl_stream_services_rules must hold exactly one TCP rule for service_ports.vikunja_task_events"
+  }
+
+  assert {
+    condition = one([
+      for r in local.cribl_stream_services_rules :
+      r if r.dport == tostring(var.pipeline_constants.service_ports.vikunja_task_events)
+    ]).source == local.internal_src
+    error_message = "the vikunja_task_events rule source must be local.internal_src"
   }
 }
 
