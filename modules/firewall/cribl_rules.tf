@@ -19,5 +19,6 @@ locals {
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_s2s_metrics), source = local.internal_src, comment = "Cribl S2S metrics input (HAProxy -> Stream) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_pve_metrics), source = local.internal_src, comment = "Cribl PVE metrics input (HAProxy -> Stream) from internal" },
     { proto = "tcp", dport = tostring(local.svc_ports.cribl_prometheus_rw), source = local.internal_src, comment = "Prometheus remote_write receiver from internal" },
+    { proto = "tcp", dport = tostring(local.svc_ports.vikunja_task_events), source = local.internal_src, comment = "task tracker change events (TCP ${local.svc_ports.vikunja_task_events})" },
   ]
 }

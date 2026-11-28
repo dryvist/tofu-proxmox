@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.78.0](https://github.com/dryvist/tofu-proxmox/compare/v3.77.0...v3.78.0) (2026-11-28)
+
+
+### Features
+
+* **stack:** publish the task event port and open it on the stream workers ([#1561](https://github.com/dryvist/tofu-proxmox/issues/1561)) ([e2596a0](https://github.com/dryvist/tofu-proxmox/commit/e2596a0578f3b825658e9d0cd92f0b347b5aabe8))
+
 ## [3.77.0](https://github.com/dryvist/tofu-proxmox/compare/v3.76.0...v3.77.0) (2026-11-28)
 
 
