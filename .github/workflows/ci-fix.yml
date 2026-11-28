@@ -26,7 +26,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.head_repository.full_name == github.repository
-    uses: JacobPEvans/.github-ai/.github/workflows/cc-ci-fix.yml@de16ea20e01e2dec6e97107266adedbf586507aa # v2.87.0
+    uses: JacobPEvans/.github-ai/.github/workflows/cc-ci-fix.yml@2f877615fff055cb6d29f82106abf05f763e33f6 # v2.91.0
     secrets:
       LLM_ROUTER_BASE_URL: ${{ secrets.LLM_ROUTER_BASE_URL }}
       LLM_ROUTER_API_KEY: ${{ secrets.LLM_ROUTER_API_KEY }}
