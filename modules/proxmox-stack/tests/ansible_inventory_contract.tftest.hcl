@@ -630,6 +630,17 @@ run "ansible_inventory_ingress_route_table" {
         hostname  = "s3"
         vlan      = "siem"
       }
+      # hermes-ui companion web UI guest (hermes-ui tag) — the serving backend
+      # for the fleet board (paperclip) route; DHCP-first 6-digit positional
+      # VMID (apps tier).
+      "hermes-ui" = {
+        vm_id     = 605090
+        node_name = "proxmox-1"
+        dhcp      = true
+        hostname  = "hermes-ui"
+        vlan      = "apps"
+        tags      = ["terraform", "container", "hermes-ui"]
+      }
       # Two Homarr guests: routes come from the homarr tag (locals-homarr.tf),
       # one per guest, named by container key. The second key is arbitrary.
       "homarr" = {
@@ -710,6 +721,18 @@ run "ansible_inventory_ingress_route_table" {
       r if r.name == "hatchet" && r.owner == "hatchet" && r.port == local.pipeline_constants.service_ports.hatchet_web && r.sso
     ]) == 1
     error_message = "Hatchet web ingress must publish its service port with browser SSO"
+  }
+
+  # hermes-ui guest's third app: the fleet board (paperclip) route must exist,
+  # be served by the hermes-ui backend, publish the hermes_ui_paperclip port
+  # from the shared port map, and keep the default SSO gate (sso omitted in
+  # the table row).
+  assert {
+    condition = length([
+      for r in output.ansible_inventory.ingress :
+      r if r.name == "paperclip" && r.owner == "hermes-ui" && r.port == local.pipeline_constants.service_ports.hermes_ui_paperclip && r.sso
+    ]) == 1
+    error_message = "ingress must front the fleet board (paperclip) on the hermes-ui backend at the hermes_ui_paperclip port with the default SSO gate"
   }
 
   # Every published ingress row carries an explicit sso flag (the forwardAuth

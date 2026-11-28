@@ -64,10 +64,11 @@ locals {
     # tag in locals-hermes-routes.tf and merged in below — adding an agent to
     # the desired state publishes its whole route set with no edit here.
     #
-    # hermes-ui companion guest runs two DIFFERENT apps behind two distinct
-    # host ports (both default to 3000 upstream): hermes-workspace (the
-    # Hermes web workspace, primary UI) and mission-control (an unrelated
-    # product co-located in this container, gateway target is OpenClaw).
+    # hermes-ui companion guest runs three DIFFERENT apps behind three
+    # distinct host ports (the first two default to 3000 upstream):
+    # hermes-workspace (the Hermes web workspace, primary UI), mission-control
+    # (an unrelated product co-located in this container, gateway target is
+    # OpenClaw), and the fleet board (paperclip), the third app in that guest.
     # herdr — the agent multiplexer. Only the UI half is fronted: herdr-remote's
     # relay serves the web/phone dashboard and the approve-a-blocked-agent
     # buttons. Its own token auth stays on underneath, but the Authelia gate
@@ -81,6 +82,7 @@ locals {
 
     "hermes-ui"       = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_workspace, title = "Hermes Workspace" }
     "mission-control" = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_mission_control, title = "Mission Control" } # unrelated co-located product, not a Hermes surface
+    paperclip         = { backend = "hermes-ui", port = local.pipeline_constants.service_ports.hermes_ui_paperclip, title = "Fleet Board" }           # third app in the hermes-ui guest
     # Estate dashboards. All three are populated from local.ingress itself, so
     # every fronted service appears on every board without a second list.
     # Browser-only surfaces: each takes the default gate (sso omitted => true).
