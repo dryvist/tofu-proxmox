@@ -14,7 +14,7 @@ variables {
     service_ports = {
       haproxy_stats             = 8404, splunk_web = 8000, splunk_hec = 8088, splunk_mgmt = 8089
       splunk_forwarding         = 9997, cribl_edge_api = 9420, cribl_stream_api = 9000
-      cribl_s2s                 = 10300, cribl_s2s_metrics = 10360, cribl_pve_metrics = 10370
+      cribl_s2s                 = 10300, cribl_s2s_metrics = 10360, cribl_pve_metrics = 10370, vikunja_task_events = 10371
       cribl_prometheus_rw       = 9201, apt_cacher_ng = 3142, squid_proxy = 3128
       pypi_cache                = 3141, npm_cache = 4873, raw_cache = 8081
       object_storage_s3         = 9000, object_storage_console = 9001, openbao_api = 8200
